@@ -17,22 +17,26 @@
 
 	The Initial Developer of the Original Code is
 	Mark J Crane <markjcrane@fusionpbx.com>
-	Portions created by the Initial Developer are Copyright (C) 2008-2016
+	Portions created by the Initial Developer are Copyright (C) 2008-2019
 	the Initial Developer. All Rights Reserved.
 
 	Contributor(s):
 	Mark J Crane <markjcrane@fusionpbx.com>
 */
-include "root.php";
-require_once "resources/require.php";
-require_once "resources/check_auth.php";
-if (permission_exists('menu_add') || permission_exists('menu_edit')) {
-	//access granted
-}
-else {
-	echo "access denied";
-	return;
-}
+
+//includes
+	include "root.php";
+	require_once "resources/require.php";
+	require_once "resources/check_auth.php";
+
+//check permissions
+	if (permission_exists('menu_add') || permission_exists('menu_edit')) {
+		//access granted
+	}
+	else {
+		echo "access denied";
+		return;
+	}
 
 //add multi-lingual support
 	$language = new text;
@@ -55,7 +59,7 @@ else {
 			unset($array);
 		//redirect the browser
 			message::add($text['message-delete']);
-			header("Location: menu_item_edit.php?id=".$menu_uuid."&menu_item_uuid=".$menu_item_uuid."&menu_uuid=".$menu_uuid);
+			header("Location: menu_item_edit.php?id=".urlencode($menu_uuid)."&menu_item_uuid=".urlencode($menu_item_uuid)."&menu_uuid=".urlencode($menu_uuid));
 			return;
 	}
 
@@ -67,10 +71,6 @@ else {
 	else {
 		$action = "add";
 	}
-
-
-//clear the menu session so it will rebuild with the update
-	$_SESSION["menu"] = "";
 
 //get the HTTP POST variables and set them as PHP variables
 	if (count($_POST) > 0) {
@@ -93,6 +93,14 @@ else {
 		if ($action == "update") {
 			$menu_item_uuid = $_POST["menu_item_uuid"];
 		}
+
+		//validate the token
+			$token = new token;
+			if (!$token->validate($_SERVER['PHP_SELF'])) {
+				message::add($text['message-invalid_token'],'negative');
+				header('Location: menu.php');
+				exit;
+			}
 
 		//check for all required data
 			$msg = '';
@@ -188,6 +196,16 @@ else {
 					unset($array);
 				}
 
+			//update child menu items to protected true or false
+				$sql = "update v_menu_items ";
+				$sql .= "set menu_item_protected = :menu_item_protected ";
+				$sql .= "where menu_item_parent_uuid = :menu_item_parent_uuid ";
+				$parameters['menu_item_parent_uuid'] = $menu_item_uuid;
+				$parameters['menu_item_protected'] = $menu_item_protected;
+				$database = new database;
+				$database->execute($sql, $parameters);
+				unset($parameters);
+
 			//add a group to the menu
 				if ($_REQUEST["a"] != "delete" && strlen($group_uuid_name) > 0 && permission_exists('menu_add')) {
 					$group_data = explode('|', $group_uuid_name);
@@ -209,7 +227,7 @@ else {
 						}
 				}
 
-			//add title to menu languages
+			//add the menu item label
 				if ($_REQUEST["a"] != "delete" && strlen($menu_item_title) > 0 && permission_exists('menu_add')) {
 					$sql = "select count(*) from v_menu_languages ";
 					$sql .= "where menu_item_uuid = :menu_item_uuid ";
@@ -256,17 +274,17 @@ else {
 
 			//redirect the user
 				if ($_REQUEST['submit'] == $text['button-add']) {
-					header("Location: menu_item_edit.php?id=".$menu_uuid."&menu_item_uuid=".$menu_item_uuid."&menu_uuid=".$menu_uuid);
+					header("Location: menu_item_edit.php?id=".urlencode($menu_uuid)."&menu_item_uuid=".urlencode($menu_item_uuid)."&menu_uuid=".urlencode($menu_uuid));
 				}
 				else {
-					header("Location: menu_edit.php?id=".$menu_uuid);
+					header("Location: menu_edit.php?id=".urlencode($menu_uuid));
 				}
 				return;
 		}
 	}
 
 //pre-populate the form
-	if (count($_GET)>0 && $_POST["persistformvar"] != "true") {
+	if (count($_GET) > 0 && $_POST["persistformvar"] != "true") {
 		$menu_item_uuid = $_GET["menu_item_uuid"];
 
 		$sql = "select * from v_menu_items ";
@@ -346,6 +364,10 @@ else {
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	$groups = $database->select($sql, $parameters, 'all');
 	unset($sql, $sql_where, $parameters);
+
+//create token
+	$object = new token;
+	$token = $object->create($_SERVER['PHP_SELF']);
 
 //include the header
 	require_once "resources/header.php";
@@ -547,6 +569,7 @@ else {
 		}
 		echo "				<input type='hidden' name='menu_uuid' value='".escape($menu_uuid)."'>";
 		echo "				<input type='hidden' name='menu_item_uuid' value='".escape($menu_item_uuid)."'>";
+		echo "				<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
 		echo "				<br>";
 		echo "				<input type='submit' class='btn' name='submit' value='".$text['button-save']."'>\n";
 		echo "			</td>";

@@ -55,7 +55,7 @@
 	switch ($_GET['type']) {
 		case 'inbound': $destination_type = 'inbound'; break;
 		case 'outbound': $destination_type = 'outbound'; break;
-		case 'local': $destination_type = 'local'; break;
+		//case 'local': $destination_type = 'local'; break;
 		default: $destination_type = 'inbound';
 	}
 
@@ -104,26 +104,16 @@
 			$destination_type_fax = $_POST["destination_type_fax"];
 			$destination_type_text = $_POST["destination_type_text"];
 			$destination_carrier = trim($_POST["destination_carrier"]);
-		//convert the number to a regular expression
-			$destination_number_regex = string_to_regex($destination_number, $destination_prefix);
-			$_POST["destination_number_regex"] = $destination_number_regex;
+
 		//get the destination app and data
 			$destination_array = explode(":", $_POST["destination_action"], 2);
 			$destination_app = $destination_array[0];
 			$destination_data = $destination_array[1];
-			unset($_POST["destination_action"]);
+
 		//get the alternate destination app and data
 			$destination_alternate_array = explode(":", $_POST["destination_alternate_action"], 2);
 			$destination_alternate_app = $destination_alternate_array[0];
 			$destination_alternate_data = $destination_alternate_array[1];
-			unset($_POST["destination_alternate_action"]);
-		//set the application and data
-			$_POST["destination_app"] = $destination_app;
-			$_POST["destination_data"] = $destination_data;
-			$_POST["destination_alternate_app"] = $destination_alternate_app;
-			$_POST["destination_alternate_data"] = $destination_alternate_data;
-		//unset the db_destination_number
-			unset($_POST["db_destination_number"]);
 	}
 
 //process the http post
@@ -145,17 +135,25 @@
 				$destination_context = $_SESSION['domain_name'];
 			}
 
+		//validate the token
+			$token = new token;
+			if (!$token->validate($_SERVER['PHP_SELF'])) {
+				message::add($text['message-invalid_token'],'negative');
+				header('Location: destinations.php');
+				exit;
+			}
+
 		//check for all required data
 			$msg = '';
 			if (strlen($destination_type) == 0) { $msg .= $text['message-required']." ".$text['label-destination_type']."<br>\n"; }
-			if (strlen($destination_number) == 0) { $msg .= $text['message-required']." ".$text['label-destination_number']."<br>\n"; }
+			//if (strlen($destination_number) == 0) { $msg .= $text['message-required']." ".$text['label-destination_number']."<br>\n"; }
 			if (strlen($destination_context) == 0) { $msg .= $text['message-required']." ".$text['label-destination_context']."<br>\n"; }
 			if (strlen($destination_enabled) == 0) { $msg .= $text['message-required']." ".$text['label-destination_enabled']."<br>\n"; }
 
 		//check for duplicates
 			if ($destination_type == 'inbound' && $destination_number != $db_destination_number) {
 				$sql = "select count(*) from v_destinations ";
-				$sql .= "where destination_number = :destination_number ";
+				$sql .= "where (destination_number = :destination_number or destination_prefix || destination_number = :destination_number) ";
 				$sql .= "and destination_type = 'inbound' ";
 				$parameters['destination_number'] = $destination_number;
 				$database = new database;
@@ -194,14 +192,14 @@
 					}
 
 				//get the fax information
-					if (strlen($fax_uuid) > 0) {
+					if (is_uuid($fax_uuid)) {
 						$sql = "select * from v_fax ";
 						$sql .= "where fax_uuid = :fax_uuid ";
-						if (!permission_exists('destination_domain')) {
-							$sql .= "and domain_uuid = :domain_uuid ";
-						}
+						//if (!permission_exists('destination_domain')) {
+						//	$sql .= "and domain_uuid = :domain_uuid ";
+						//}
 						$parameters['fax_uuid'] = $fax_uuid;
-						$parameters['domain_uuid'] = $domain_uuid;
+						//$parameters['domain_uuid'] = $domain_uuid;
 						$database = new database;
 						$row = $database->select($sql, $parameters, 'row');
 						if (is_array($row) && @sizeof($row) != 0) {
@@ -217,6 +215,29 @@
 						}
 						unset($sql, $parameters, $row);
 					}
+
+				//if the user doesn't have the correct permission then 
+				//override destination_number and destination_context values
+					if ($action == 'update' && is_uuid($destination_uuid)) {
+						$sql = "select * from v_destinations ";
+						$sql .= "where destination_uuid = :destination_uuid ";
+						$parameters['destination_uuid'] = $destination_uuid;
+						$database = new database;
+						$row = $database->select($sql, $parameters, 'row');
+						if (is_array($row) && @sizeof($row) != 0) {
+							if (!permission_exists('destination_number')) {
+								$destination_number = $row["destination_number"];
+								$destination_prefix = $row["destination_prefix"];
+							}
+							if (!permission_exists('destination_context')) {
+								$destination_context = $row["destination_context"];
+							}
+						}
+						unset($sql, $parameters, $row);
+					}
+
+				//convert the number to a regular expression
+					$destination_number_regex = string_to_regex($destination_number, $destination_prefix);
 
 				//if empty then get new uuid
 					if (!is_uuid($dialplan_uuid)) {
@@ -393,7 +414,7 @@
 							}
 
 						//add fax detection
-							if (strlen($fax_uuid) > 0) {
+							if (is_uuid($fax_uuid)) {
 
 								//add set tone detect_hits=1
 									$dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
@@ -570,9 +591,6 @@
 								$database->execute($sql, $parameters);
 								unset($sql, $parameters);
 							}
-
-						//remove empty dialplan details from the POST array
-							unset($_POST["dialplan_details"]);
 					}
 
 				//build the destination array
@@ -581,9 +599,11 @@
 					$destination["dialplan_uuid"] = $dialplan_uuid;
 					$destination["fax_uuid"] = $fax_uuid;
 					$destination["destination_type"] = $destination_type;
-					$destination["destination_number"] = $destination_number;
-					$destination["destination_number_regex"] = $destination_number_regex;
-					$destination["destination_prefix"] = $destination_prefix;
+					if (permission_exists('destination_number')) {
+						$destination["destination_number"] = $destination_number;
+						$destination["destination_number_regex"] = $destination_number_regex;
+						$destination["destination_prefix"] = $destination_prefix;
+					}
 					$destination["destination_caller_id_name"] = $destination_caller_id_name;
 					$destination["destination_caller_id_number"] = $destination_caller_id_number;
 					$destination["destination_cid_name_prefix"] = $destination_cid_name_prefix;
@@ -641,7 +661,12 @@
 				//clear the cache
 					$cache = new cache;
 					$cache->delete("dialplan:".$destination_context);
-					$cache->delete("dialplan:".$destination_context.":".$destination_number);
+					if (isset($destination_number) && is_numeric($destination_number)) {
+						$cache->delete("dialplan:".$destination_context.":".$destination_number);
+					}
+					if (isset($destination_prefix) && is_numeric($destination_prefix) && isset($destination_number) && is_numeric($destination_number)) {
+						$cache->delete("dialplan:".$destination_context.":".$destination_prefix.$destination_number);
+					}
 			}
 
 		//save the outbound destination
@@ -672,10 +697,10 @@
 			if ($action == "update") {
 				message::add($text['message-update']);
 			}
-			header("Location: destination_edit.php?id=".escape($destination_uuid)."&type=".$destination_type);
+			header("Location: destination_edit.php?id=".urlencode($destination_uuid)."&type=".urlencode($destination_type));
 			return;
 
-	} //(count($_POST) > 0 && strlen($_POST["persistformvar"]) == 0)
+	}
 
 //initialize the destinations object
 	$destination = new destinations;
@@ -748,7 +773,7 @@
 	unset($limit);
 
 //remove previous fax details
-	$x=0;
+	$x = 0;
 	foreach($dialplan_details as $row) {
 		if ($row['dialplan_detail_data'] == "tone_detect_hits=1") {
 			unset($dialplan_details[$x]);
@@ -776,16 +801,20 @@
 	if (strlen($destination_type) == 0) { $destination_type = 'inbound'; }
 	if (strlen($destination_context) == 0) { $destination_context = 'public'; }
 	if ($destination_type =="outbound") { $destination_context = $_SESSION['domain_name']; }
-	if ($destination_type =="local") { $destination_context = $_SESSION['domain_name']; }
+	//if ($destination_type =="local") { $destination_context = $_SESSION['domain_name']; }
 
-//show the header
-	require_once "resources/header.php";
+//create token
+	$object = new token;
+	$token = $object->create($_SERVER['PHP_SELF']);
+
+//include the header
 	if ($action == "update") {
 		$document['title'] = $text['title-destination-edit'];
 	}
 	else if ($action == "add") {
 		$document['title'] = $text['title-destination-add'];
 	}
+	require_once "resources/header.php";
 
 //js controls
 	echo "<script type='text/javascript'>\n";
@@ -814,24 +843,24 @@
 	echo "			document.getElementById('tr_account_code').style.display = '';\n";
 	echo "			document.getElementById('destination_context').value = 'public'";
 	echo "		}\n";
-	echo "		else if (dir == 'local') {\n";
-	echo "			if (document.getElementById('tr_caller_id_name')) { document.getElementById('tr_caller_id_name').style.display = 'none'; }\n";
-	echo "			if (document.getElementById('tr_caller_id_number')) { document.getElementById('tr_caller_id_number').style.display = 'none'; }\n";
-	echo "			document.getElementById('tr_actions').style.display = '';\n";
-	echo "			if (document.getElementById('tr_fax_detection')) { document.getElementById('tr_fax_detection').style.display = 'none'; }\n";
-	echo "			document.getElementById('tr_cid_name_prefix').style.display = 'none';\n";
-	echo "			if (document.getElementById('tr_sell')) { document.getElementById('tr_sell').style.display = 'none'; }\n";
-	echo "			if (document.getElementById('tr_buy')) { document.getElementById('tr_buy').style.display = 'none'; }\n";
-	echo "			if (document.getElementById('tr_carrier')) { document.getElementById('tr_carrier').style.display = 'none'; }\n";
-	echo "			document.getElementById('tr_account_code').style.display = '';\n";
-//	echo "			document.getElementById('destination_context').value = '".$destination_context."'";
-	echo "		}\n";
+	//echo "		else if (dir == 'local') {\n";
+	//echo "			if (document.getElementById('tr_caller_id_name')) { document.getElementById('tr_caller_id_name').style.display = 'none'; }\n";
+	//echo "			if (document.getElementById('tr_caller_id_number')) { document.getElementById('tr_caller_id_number').style.display = 'none'; }\n";
+	//echo "			document.getElementById('tr_actions').style.display = '';\n";
+	//echo "			if (document.getElementById('tr_fax_detection')) { document.getElementById('tr_fax_detection').style.display = 'none'; }\n";
+	//echo "			document.getElementById('tr_cid_name_prefix').style.display = 'none';\n";
+	//echo "			if (document.getElementById('tr_sell')) { document.getElementById('tr_sell').style.display = 'none'; }\n";
+	//echo "			if (document.getElementById('tr_buy')) { document.getElementById('tr_buy').style.display = 'none'; }\n";
+	//echo "			if (document.getElementById('tr_carrier')) { document.getElementById('tr_carrier').style.display = 'none'; }\n";
+	//echo "			document.getElementById('tr_account_code').style.display = '';\n";
+	//echo "			document.getElementById('destination_context').value = '".$destination_context."'";
+	//echo "		}\n";
 	echo "		";
 	echo "	}\n";
 	echo "	\n";
 	echo "	function context_control() {\n";
 	echo "		destination_type = document.getElementById('destination_type');\n";
-	echo" 		destination_domain = document.getElementById('destination_domain');\n";
+	echo " 		destination_domain = document.getElementById('destination_domain');\n";
 	echo "		if (destination_type.options[destination_type.selectedIndex].value == 'outbound') {\n";
 	echo "			if (destination_domain.options[destination_domain.selectedIndex].value != '') {\n";
 	echo "				document.getElementById('destination_context').value = destination_domain.options[destination_domain.selectedIndex].innerHTML;\n";
@@ -844,40 +873,43 @@
 	echo "</script>\n";
 
 //show the content
-	echo "<form method='post' name='frm' action=''>\n";
-	echo "<table width='100%' border='0' cellpadding='0' cellspacing='0'>\n";
-	echo "<tr>\n";
+	echo "<form method='post' name='frm'>\n";
+
+	echo "<div class='action_bar' id='action_bar'>\n";
+	echo "	<div class='heading'>";
 	if ($action == "add") {
-		echo "<td align='left' width='30%' nowrap='nowrap' valign='top'><b>".$text['header-destination-add']."</b></td>\n";
+		echo "<b>".$text['header-destination-add']."</b>";
 	}
 	if ($action == "update") {
-		echo "<td align='left' width='30%' nowrap='nowrap' valign='top'><b>".$text['header-destination-edit']."</b></td>\n";
+		echo "<b>".$text['header-destination-edit']."</b>";
 	}
-	echo "<td width='70%' align='right' valign='top'>";
-	echo "	<input type='button' class='btn' alt='".$text['button-back']."' onclick=\"window.location='destinations.php?type=".escape($destination_type)."'\" value='".$text['button-back']."'>";
-	echo "	<input type='submit' class='btn' value='".$text['button-save']."'>\n";
-	echo "</td>\n";
-	echo "</tr>\n";
-	echo "<tr>\n";
-	echo "<td align='left' colspan='2'>\n";
-	echo $text['description-destinations']."<br /><br />\n";
-	echo "</td>\n";
-	echo "</tr>\n";
+	echo 	"</div>\n";
+	echo "	<div class='actions'>\n";
+	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$_SESSION['theme']['button_icon_back'],'style'=>'margin-right: 15px;','link'=>'destinations.php?type='.urlencode($destination_type)]);
+	echo button::create(['type'=>'submit','label'=>$text['button-save'],'icon'=>$_SESSION['theme']['button_icon_save']]);
+	echo "	</div>\n";
+	echo "	<div style='clear: both;'></div>\n";
+	echo "</div>\n";
+
+	echo $text['description-destinations']."\n";
+	echo "<br /><br />\n";
+
+	echo "<table width='100%' border='0' cellpadding='0' cellspacing='0'>\n";
 
 	echo "<tr>\n";
-	echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
+	echo "<td width='30%' class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 	echo "	".$text['label-destination_type']."\n";
 	echo "</td>\n";
-	echo "<td class='vtable' align='left'>\n";
+	echo "<td width='70%' class='vtable' align='left'>\n";
 	echo "	<select class='formfld' name='destination_type' id='destination_type' onchange='type_control(this.options[this.selectedIndex].value);context_control();'>\n";
 	switch ($destination_type) {
 		case "inbound" :	$selected[0] = "selected='selected'";	break;
 		case "outbound" :	$selected[1] = "selected='selected'";	break;
-		case "local" :	$selected[2] = "selected='selected'";	break;
+		//case "local" :	$selected[2] = "selected='selected'";	break;
 	}
 	echo "	<option value='inbound' ".$selected[0].">".$text['option-inbound']."</option>\n";
 	echo "	<option value='outbound' ".$selected[1].">".$text['option-outbound']."</option>\n";
-	echo "	<option value='local' ".$selected[2].">".$text['option-local']."</option>\n";
+	//echo "	<option value='local' ".$selected[2].">".$text['option-local']."</option>\n";
 	unset($selected);
 	echo "	</select>\n";
 	echo "<br />\n";
@@ -885,25 +917,32 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	echo "<tr>\n";
-	echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
-	echo "	".$text['label-destination_prefix']."\n";
-	echo "</td>\n";
-	echo "<td class='vtable' align='left'>\n";
-	echo "	<input class='formfld' type='text' name='destination_prefix' maxlength='32' value=\"".escape($destination_prefix)."\">\n";
-	echo "<br />\n";
-	echo $text['description-destination_prefix']."\n";
-	echo "</td>\n";
-	echo "</tr>\n";
+	if (permission_exists('destination_number')) {
+		echo "<tr>\n";
+		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
+		echo "	".$text['label-destination_prefix']."\n";
+		echo "</td>\n";
+		echo "<td class='vtable' align='left'>\n";
+		echo "	<input class='formfld' type='text' name='destination_prefix' maxlength='32' value=\"".escape($destination_prefix)."\">\n";
+		echo "<br />\n";
+		echo $text['description-destination_prefix']."\n";
+		echo "</td>\n";
+		echo "</tr>\n";
+	}
 
 	echo "<tr>\n";
 	echo "<td class='vncellreq' valign='top' align='left' nowrap='nowrap'>\n";
 	echo "	".$text['label-destination_number']."\n";
 	echo "</td>\n";
 	echo "<td class='vtable' align='left'>\n";
-	echo "	<input class='formfld' type='text' name='destination_number' maxlength='255' value=\"".escape($destination_number)."\" required='required'>\n";
-	echo "<br />\n";
-	echo $text['description-destination_number']."\n";
+	if (permission_exists('destination_number')) {
+		echo "	<input class='formfld' type='text' name='destination_number' maxlength='255' value=\"".escape($destination_number)."\" required='required'>\n";
+		echo "<br />\n";
+		echo $text['description-destination_number']."\n";
+	}
+	else {
+		echo escape($destination_number)."\n";
+	}
 	echo "</td>\n";
 	echo "</tr>\n";
 
@@ -1154,19 +1193,17 @@
 	echo $text['description-destination_description']."\n";
 	echo "</td>\n";
 	echo "</tr>\n";
-	echo "	<tr>\n";
-	echo "		<td colspan='2' align='right'>\n";
-	if ($action == "update") {
-		echo "		<input type='hidden' name='db_destination_number' value='".escape($destination_number)."'>\n";
-		echo "		<input type='hidden' name='dialplan_uuid' value='".escape($dialplan_uuid)."'>\n";
-		echo "		<input type='hidden' name='destination_uuid' value='".escape($destination_uuid)."'>\n";
-	}
-	echo "			<br>";
-	echo "			<input type='submit' class='btn' value='".$text['button-save']."'>\n";
-	echo "		</td>\n";
-	echo "	</tr>";
+
 	echo "</table>";
 	echo "<br><br>";
+
+	if ($action == "update") {
+		echo "<input type='hidden' name='db_destination_number' value='".escape($destination_number)."'>\n";
+		echo "<input type='hidden' name='dialplan_uuid' value='".escape($dialplan_uuid)."'>\n";
+		echo "<input type='hidden' name='destination_uuid' value='".escape($destination_uuid)."'>\n";
+	}
+	echo "<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
+
 	echo "</form>";
 
 //adjust form if outbound destination

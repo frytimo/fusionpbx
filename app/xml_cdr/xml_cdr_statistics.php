@@ -17,19 +17,21 @@
 
 	The Initial Developer of the Original Code is
 	Mark J Crane <markjcrane@fusionpbx.com>
-	Portions created by the Initial Developer are Copyright (C) 2008-2018
+	Portions created by the Initial Developer are Copyright (C) 2008-2019
 	the Initial Developer. All Rights Reserved.
 
 	Contributor(s):
 	Mark J Crane <markjcrane@fusionpbx.com>
 */
+
 //includes
 	require_once "root.php";
 	require_once "resources/require.php";
 	require_once "resources/check_auth.php";
+	require_once "xml_cdr_statistics_inc.php";
 
 //check permissions
-	if (permission_exists('xml_cdr_view')) {
+	if (permission_exists('xml_cdr_statistics')) {
 		//access granted
 	}
 	else {
@@ -42,7 +44,7 @@
 	$text = $language->get();
 
 //additional includes
-	require_once "xml_cdr_statistics_inc.php";
+	$document['title'] = $text['title-call-statistics'];
 	require_once "resources/header.php";
 
 //search url
@@ -132,7 +134,7 @@
 //page title and description
 	echo "<table width='100%' border='0' cellpadding='0' cellspacing='0'>\n";
 	echo "<tr>\n";
-	echo "	<td width='30%' align='left' valign='top' nowrap='nowrap'><b>".$text['label-call-statistics']."</b></td>\n";
+	echo "	<td width='30%' align='left' valign='top' nowrap='nowrap'><b>".$text['title-call-statistics']."</b></td>\n";
 	echo "	<td width='70%' align='right' valign='top'>\n";
 	echo "		<input type='button' class='btn' name='' alt='".$text['button-back']."' onclick=\"window.location='xml_cdr.php'\" value='".$text['button-back']."'>\n";
 	if (permission_exists('xml_cdr_search_advanced')) {
@@ -247,13 +249,15 @@
 					},
 					yaxis: { min: 0 },
 					<?php
-						if ($hours <= 48) {
-							echo "xaxis: {mode: \"time\",timeformat: \"%d:%H\",minTickSize: [1, \"hour\"]}";
-						} else if ($hours > 48 && $hours < 168) {
-							echo "xaxis: {mode: \"time\",timeformat: \"%m:%d\",minTickSize: [1, \"day\"]}";
-						} else {
-							echo "xaxis: {mode: \"time\",timeformat: \"%m:%d\",minTickSize: [1, \"month\"]}";
-						}
+					if ($hours <= 48) {
+						echo "xaxis: {mode: \"time\",timeformat: \"%d:%H\",minTickSize: [1, \"hour\"]}";
+					}
+					else if ($hours > 48 && $hours < 168) {
+						echo "xaxis: {mode: \"time\",timeformat: \"%m:%d\",minTickSize: [1, \"day\"]}";
+					}
+					else {
+						echo "xaxis: {mode: \"time\",timeformat: \"%m:%d\",minTickSize: [1, \"month\"]}";
+					}
 					?>
 				});
 		}
@@ -283,7 +287,7 @@
 		if ($i <= $hours) {
 			echo "	<td valign='top' class='".$row_style[$c]."'>".($i+1)."</td>\n";
 		}
-		elseif ($i == $hours+1) {
+		else if ($i == $hours+1) {
 			echo "	<br /><br />\n";
 			echo "</tr>\n";
 			echo "<tr>\n";
@@ -322,7 +326,7 @@
 		echo "	<td valign='top' class='".$row_style[$c]."'>".(round(escape($row['asr']),2))."&nbsp;</td>\n";
 		echo "	<td valign='top' class='".$row_style[$c]."'>".(round(escape($row['aloc']),2))."&nbsp;</td>\n";
 		echo "</tr >\n";
-		if ($c==0) { $c=1; } else { $c=0; }
+		$c = $c ? 0 : 1;
 		$i++;
 	}
 	echo "</table>\n";

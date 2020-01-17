@@ -76,6 +76,14 @@
 				$var_uuid = $_POST["var_uuid"];
 			}
 
+		//validate the token
+			$token = new token;
+			if (!$token->validate($_SERVER['PHP_SELF'])) {
+				message::add($text['message-invalid_token'],'negative');
+				header('Location: vars.php');
+				exit;
+			}
+
 		//check for all required data
 			$msg = '';
 			//if (strlen($var_category) == 0) { $msg .= $text['message-required'].$text['label-category']."<br>\n"; }
@@ -167,26 +175,20 @@
 		unset($sql, $parameters);
 	}
 
+//create token
+	$object = new token;
+	$token = $object->create($_SERVER['PHP_SELF']);
+
 //include header
+	$document['title'] = $text['title-variable'];
 	require_once "resources/header.php";
-	if ($action == "add") {
-		$document['title'] = $text['title-var_add'];
-	}
-	if ($action == "update") {
-		$document['title'] = $text['title-var_edit'];
-	}
 
 //show contents
 	echo "<form method='post' name='frm' action=''>\n";
 	echo "<table width='100%' border='0' cellpadding='0' cellspacing='0'>\n";
 
 	echo "<tr>\n";
-	if ($action == "add") {
-		echo "<td width='30%' align='left'nowrap><b>".$text['header-variable_add']."</b><br><br></td>\n";
-	}
-	if ($action == "update") {
-		echo "<td width='30%' align='left' nowrap><b>".$text['header-variable_edit']."</b><br><br></td>\n";
-	}
+	echo "<td width='30%' align='left'nowrap><b>".$text['header-variable']."</b><br><br></td>\n";
 	echo "<td width='70%' align='right'>";
 	echo "	<input type='button' class='btn' name='' alt='".$text['button-back']."' onclick=\"window.location='vars.php'\" value='".$text['button-back']."'>";
 	echo "	<input type='submit' name='submit' class='btn' value='".$text['button-save']."'>\n";
@@ -329,6 +331,7 @@
 	if ($action == "update") {
 		echo "		<input type='hidden' name='var_uuid' value='".escape($var_uuid)."'>\n";
 	}
+	echo "			<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
 	echo "			<br>";
 	echo "			<input type='submit' name='submit' class='btn' value='".$text['button-save']."'>\n";
 	echo "		</td>\n";

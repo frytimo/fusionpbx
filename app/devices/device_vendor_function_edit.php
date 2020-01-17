@@ -100,6 +100,14 @@
 				$device_vendor_function_uuid = $_POST["device_vendor_function_uuid"];
 			}
 
+		//validate the token
+			$token = new token;
+			if (!$token->validate($_SERVER['PHP_SELF'])) {
+				message::add($text['message-invalid_token'],'negative');
+				header('Location: devices.php');
+				exit;
+			}
+
 		//check for all required data
 			$msg = '';
 			//if (strlen($label) == 0) { $msg .= $text['message-required']." ".$text['label-label']."<br>\n"; }
@@ -242,7 +250,7 @@
 			$parameters['group_uuid_'.$index] = $group_uuid;
 		}
 		if (is_array($sql_where) && @sizeof($sql_where) != 0) {
-			$sql .= implode(' and ', $sql_where);
+			$sql .= implode(' and ', $sql_where).' ';
 		}
 	}
 	$sql .= "order by domain_uuid desc, group_name asc ";
@@ -250,36 +258,33 @@
 	$groups = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters, $sql_where, $index);
 
+//create token
+	$object = new token;
+	$token = $object->create($_SERVER['PHP_SELF']);
+
 //show the header
+	$document['title'] = $text['title-device_vendor_function'];
 	require_once "resources/header.php";
 
 //show the content
 	echo "<form name='frm' id='frm' method='post' action=''>\n";
-	echo "<table width='100%'  border='0' cellpadding='0' cellspacing='0'>\n";
-	echo "<tr>\n";
-	echo "<td align='left' width='30%' nowrap='nowrap' valign='top'><b>".$text['title-device_vendor_function']."</b><br><br></td>\n";
-	echo "<td width='70%' align='right' valign='top'>\n";
-	echo "	<input type='button' class='btn' name='' alt='".$text['button-back']."' onclick=\"window.location='device_vendor_edit.php?id=".escape($device_vendor_uuid)."'\" value='".$text['button-back']."'>";
-	echo "	<input type='submit' name='submit' class='btn' value='".$text['button-save']."'>";
-	echo "</td>\n";
-	echo "</tr>\n";
 
-	//echo "<tr>\n";
-	//echo "<td class='vncellreq' valign='top' align='left' nowrap='nowrap'>\n";
-	//echo "	".$text['label-label']."\n";
-	//echo "</td>\n";
-	//echo "<td class='vtable' align='left'>\n";
-	//echo "	<input class='formfld' type='text' name='label' maxlength='255' value=\"".escape($label)."\">\n";
-	//echo "<br />\n";
-	//echo $text['description-label']."\n";
-	//echo "</td>\n";
-	//echo "</tr>\n";
+	echo "<div class='action_bar' id='action_bar'>\n";
+	echo "	<div class='heading'><b>".$text['title-device_vendor_function']."</b></div>\n";
+	echo "	<div class='actions'>\n";
+	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$_SESSION['theme']['button_icon_back'],'link'=>'device_vendor_edit.php?id='.urlencode($device_vendor_uuid)]);
+	echo button::create(['type'=>'submit','label'=>$text['button-save'],'icon'=>$_SESSION['theme']['button_icon_save'],'style'=>'margin-left: 15px;']);
+	echo "	</div>\n";
+	echo "	<div style='clear: both;'></div>\n";
+	echo "</div>\n";
+
+	echo "<table width='100%' border='0' cellpadding='0' cellspacing='0'>\n";
 
 	echo "<tr>\n";
-	echo "<td class='vncellreq' valign='top' align='left' nowrap='nowrap'>\n";
+	echo "<td width='30%' class='vncellreq' valign='top' align='left' nowrap='nowrap'>\n";
 	echo "	".$text['label-name']."\n";
 	echo "</td>\n";
-	echo "<td class='vtable' align='left'>\n";
+	echo "<td width='70%' class='vtable' align='left'>\n";
 	echo "	<input class='formfld' type='text' name='name' maxlength='255' value=\"".escape($name)."\">\n";
 	echo "<br />\n";
 	echo $text['description-name']."\n";
@@ -302,7 +307,7 @@
 	echo "		<td class='vtable'>";
 	if (is_array($function_groups) && @sizeof($function_groups) != 0) {
 		echo "<table cellpadding='0' cellspacing='0' border='0'>\n";
-		foreach($function_groups as $field) {
+		foreach ($function_groups as $field) {
 			if (strlen($field['group_name']) > 0) {
 				echo "<tr>\n";
 				echo "	<td class='vtable' style='white-space: nowrap; padding-right: 30px;' nowrap='nowrap'>";
@@ -322,7 +327,7 @@
 		echo "<br />\n";
 		echo "<select name='group_uuid_name' class='formfld' style='width: auto; margin-right: 3px;'>\n";
 		echo "	<option value=''></option>\n";
-		foreach($groups as $field) {
+		foreach ($groups as $field) {
 			if ($field['group_name'] == "superadmin" && !if_group("superadmin")) { continue; }	//only show the superadmin group to other superadmins
 			if ($field['group_name'] == "admin" && (!if_group("superadmin") && !if_group("admin") )) { continue; }	//only show the admin group to other admins
 			if (!in_array($field["group_uuid"], $assigned_groups)) {
@@ -372,11 +377,11 @@
 	echo "</tr>\n";
 	echo "	<tr>\n";
 	echo "		<td colspan='2' align='right'>\n";
-	echo "				<input type='hidden' name='device_vendor_uuid' value='".escape($device_vendor_uuid)."'>\n";
+	echo "			<input type='hidden' name='device_vendor_uuid' value='".escape($device_vendor_uuid)."'>\n";
 	if ($action == "update") {
-		echo "				<input type='hidden' name='device_vendor_function_uuid' value='".escape($device_vendor_function_uuid)."'>\n";
+		echo "			<input type='hidden' name='device_vendor_function_uuid' value='".escape($device_vendor_function_uuid)."'>\n";
 	}
-	echo "				<input type='submit' name='submit' class='btn' value='".$text['button-save']."'>\n";
+	echo "			<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
 	echo "		</td>\n";
 	echo "	</tr>";
 	echo "</table>";

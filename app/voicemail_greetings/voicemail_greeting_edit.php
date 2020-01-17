@@ -17,7 +17,7 @@
 
 	The Initial Developer of the Original Code is
 	Mark J Crane <markjcrane@fusionpbx.com>
-	Portions created by the Initial Developer are Copyright (C) 2008-2018
+	Portions created by the Initial Developer are Copyright (C) 2008-2019
 	the Initial Developer. All Rights Reserved.
 
 	Contributor(s):
@@ -42,13 +42,15 @@
 	$language = new text;
 	$text = $language->get();
 
-//get greeting id
+//validate the uuids
 	if (is_uuid($_REQUEST["id"])) {
 		$voicemail_greeting_uuid = $_REQUEST["id"];
 	}
+	if (is_numeric($_REQUEST["voicemail_id"])) {
+		$voicemail_id = $_REQUEST["voicemail_id"];
+	}
 
 //get the form value and set to php variables
-	$voicemail_id = $_REQUEST["voicemail_id"];
 	if (count($_POST) > 0) {
 		$greeting_name = $_POST["greeting_name"];
 		$greeting_description = $_POST["greeting_description"];
@@ -58,8 +60,14 @@
 	}
 
 if (count($_POST) > 0 && strlen($_POST["persistformvar"]) == 0) {
-	//get greeting uuid to edit
-		$voicemail_greeting_uuid = $_POST["voicemail_greeting_uuid"];
+
+	//validate the token
+		$token = new token;
+		if (!$token->validate($_SERVER['PHP_SELF'])) {
+			message::add($text['message-invalid_token'],'negative');
+			header('Location: ../voicemails/voicemails.php');
+			exit;
+		}
 
 	//check for all required data
 		$msg = '';
@@ -99,7 +107,6 @@ if (count($_POST) > 0 && strlen($_POST["persistformvar"]) == 0) {
 
 //pre-populate the form
 	if (count($_GET) > 0 && $_POST["persistformvar"] != "true") {
-		$voicemail_greeting_uuid = $_GET["id"];
 		$sql = "select * from v_voicemail_greetings ";
 		$sql .= "where domain_uuid = :domain_uuid ";
 		$sql .= "and voicemail_greeting_uuid = :voicemail_greeting_uuid ";
@@ -114,6 +121,10 @@ if (count($_POST) > 0 && strlen($_POST["persistformvar"]) == 0) {
 		unset($sql, $parameters, $row);
 	}
 
+//create token
+	$object = new token;
+	$token = $object->create($_SERVER['PHP_SELF']);
+
 //show the header
 	$document['title'] = $text['label-edit'];
 	require_once "resources/header.php";
@@ -124,7 +135,7 @@ if (count($_POST) > 0 && strlen($_POST["persistformvar"]) == 0) {
 	echo "<table cellpadding='0' cellspacing='0' border='0' align='right'>\n";
 	echo "<tr>\n";
 	echo "<td nowrap='nowrap'>\n";
-	echo "	<input type='button' class='btn' name='' alt='".$text['button-back']."' onclick=\"window.location='voicemail_greetings.php?id=".$voicemail_id."'\" value='".$text['button-back']."'>";
+	echo "	<input type='button' class='btn' name='' alt='".$text['button-back']."' onclick=\"window.location='voicemail_greetings.php?id=".urlencode($voicemail_id)."'\" value='".$text['button-back']."'>";
 	echo "	<input type='submit' name='submit' class='btn' value='".$text['button-save']."'>\n";
 	echo "</td>\n";
 	echo "</tr>\n";
@@ -159,6 +170,7 @@ if (count($_POST) > 0 && strlen($_POST["persistformvar"]) == 0) {
 	echo "		<td colspan='2' align='right'>\n";
 	echo "			<input type='hidden' name='voicemail_greeting_uuid' value='".$voicemail_greeting_uuid."'>\n";
 	echo "			<input type='hidden' name='voicemail_id' value='".$voicemail_id."'>\n";
+	echo "			<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
 	echo "			<br>";
 	echo "			<input type='submit' name='submit' class='btn' value='".$text['button-save']."'>\n";
 	echo "		</td>\n";

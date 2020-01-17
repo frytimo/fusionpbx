@@ -82,6 +82,14 @@
 				}
 			}
 
+		//validate the token
+			$token = new token;
+			if (!$token->validate($_SERVER['PHP_SELF'])) {
+				message::add($text['message-invalid_token'],'negative');
+				header('Location: devices.php');
+				exit;
+			}
+
 		//check for all required data
 			$msg = '';
 			if (strlen($device_profile_name) == 0) { $msg .= $text['message-required']." ".$text['label-device_profile_name']."<br>\n"; }
@@ -198,6 +206,10 @@
 		$sql .= "when 'expansion' then 4 ";
 		$sql .= "when 'expansion-1' then 5 ";
 		$sql .= "when 'expansion-2' then 6 ";
+		$sql .= "when 'expansion-3' then 7 ";
+		$sql .= "when 'expansion-4' then 8 ";
+		$sql .= "when 'expansion-5' then 9 ";
+		$sql .= "when 'expansion-6' then 10 ";
 		$sql .= "else 100 end, ";
 		$sql .= "profile_key_id asc ";
 		//$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
@@ -209,10 +221,12 @@
 
 //get the vendor count
 	$vendor_count = 0;
-	foreach($device_profile_keys as $row) {
-		if ($previous_vendor != $row['profile_key_vendor']) {
-			$previous_vendor = $row['profile_key_vendor'];
-			$vendor_count++;
+	if (is_array($device_profile_keys) && @sizeof($device_profile_keys) != 0) {
+		foreach($device_profile_keys as $row) {
+			if ($previous_vendor != $row['profile_key_vendor']) {
+				$previous_vendor = $row['profile_key_vendor'];
+				$vendor_count++;
+			}
 		}
 	}
 
@@ -242,7 +256,7 @@
 	}
 
 //add an empty row
-	$x = count($device_profile_keys);
+	$x = is_array($device_profile_keys) ? count($device_profile_keys) : 0;
 	$device_profile_keys[$x]['domain_uuid'] = $domain_uuid;
 	$device_profile_keys[$x]['device_profile_uuid'] = $device_profile_uuid;
 	$device_profile_keys[$x]['device_profile_key_uuid'] = uuid();
@@ -276,7 +290,7 @@
 	}
 
 //add an empty row
-	$x = count($device_profile_settings);
+	$x = is_array($device_profile_settings) ? count($device_profile_settings) : 0;
 	$device_profile_settings[$x]['domain_uuid'] = $domain_uuid;
 	$device_profile_settings[$x]['device_profile_uuid'] = $device_profile_uuid;
 	$device_profile_settings[$x]['device_profile_setting_uuid'] = uuid();
@@ -290,32 +304,37 @@
 		$device_profile_uuid = null;
 	}
 
+//create token
+	$object = new token;
+	$token = $object->create($_SERVER['PHP_SELF']);
+
 //show the header
+	$document['title'] = $text['title-device_profile'];
 	require_once "resources/header.php";
 
 //show the content
 	echo "<form name='frm' id='frm' method='post' action=''>\n";
+
+	echo "<div class='action_bar' id='action_bar'>\n";
+	echo "	<div class='heading'><b>".$text['title-device_profile']."</b></div>\n";
+	echo "	<div class='actions'>\n";
+	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$_SESSION['theme']['button_icon_back'],'style'=>'margin-right: 15px;','link'=>'device_profiles.php']);
+	echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$_SESSION['theme']['button_icon_copy'],'link'=>'device_profile_copy.php?id='.urlencode($device_profile_uuid),'onclick'=>"if (!confirm('".$text['confirm-copy']."')) { this.blur(); return false; }"]);
+	echo button::create(['type'=>'submit','label'=>$text['button-save'],'icon'=>$_SESSION['theme']['button_icon_save'],'style'=>'margin-left: 15px;']);
+	echo "	</div>\n";
+	echo "	<div style='clear: both;'></div>\n";
+	echo "</div>\n";
+
+	echo $text['description-device_profiles']."\n";
+	echo "<br /><br />\n";
+
 	echo "<table width='100%'  border='0' cellpadding='0' cellspacing='0'>\n";
 
 	echo "<tr>\n";
-	echo "<td align='left' width='30%' nowrap='nowrap' valign='top'><b>".$text['title-device_profile']."</b><br><br></td>\n";
-	echo "<td width='70%' align='right' valign='top'>\n";
-	echo "	<input type='button' class='btn' name='' alt='".$text['button-back']."' onclick=\"window.location='device_profiles.php'\" value='".$text['button-back']."'>";
-	echo "	<input type='button' class='btn' name='' alt='".$text['button-copy']."' onclick=\"window.location='device_profile_copy.php?id=".urlencode($device_profile_uuid)."'\" value='".$text['button-copy']."'>";
-	echo "	<input type='submit' class='btn' value='".$text['button-save']."'>";
-	echo "</td>\n";
-	echo "</tr>\n";
-	echo "<tr>\n";
-	echo "<td colspan='2'>\n";
-	echo "	".$text['description-device_profiles']."<br /><br />\n";
-	echo "</td>\n";
-	echo "</tr>\n";
-
-	echo "<tr>\n";
-	echo "<td class='vncellreq' valign='top' align='left' nowrap='nowrap'>\n";
+	echo "<td width='30%' class='vncellreq' valign='top' align='left' nowrap='nowrap'>\n";
 	echo "	".$text['label-device_profile_name']."\n";
 	echo "</td>\n";
-	echo "<td class='vtable' style='position: relative;' align='left'>\n";
+	echo "<td width='70%' class='vtable' style='position: relative;' align='left'>\n";
 	echo "	<input class='formfld' type='text' name='device_profile_name' maxlength='255' value='".escape($device_profile_name)."'>\n";
 	echo "<br />\n";
 	echo $text['description-device_profile_name']."\n";
@@ -344,7 +363,7 @@
 		}
 		echo "			<td class='vtable'>".$text['label-device_key_label']."</td>\n";
 		echo "			<td class='vtable'>".$text['label-device_key_icon']."</td>\n";
-		echo "			<td class='vtable'></td>\n";
+		echo "			<td></td>\n";
 		echo "		</tr>\n";
 	}
 
@@ -364,11 +383,11 @@
 		//set the column names
 		if ($previous_profile_key_vendor != $row['profile_key_vendor']) {
 			echo "			<tr>\n";
-			echo "				<td class='vtablereq'>".$text['label-device_key_category']."</td>\n";
-			echo "				<td class='vtablereq'>".$text['label-device_key_id']."</td>\n";
-			echo "				<td class='vtablereq'>".$text['label-device_vendor']."</td>\n";
-			echo "				<td class='vtablereq'>".$text['label-device_key_type']."</td>\n";
-			echo "				<td class='vtablereq'>".$text['label-device_key_line']."</td>\n";
+			echo "				<th class='vtablereq'>".$text['label-device_key_category']."</td>\n";
+			echo "				<th class='vtablereq'>".$text['label-device_key_id']."</td>\n";
+			echo "				<th class='vtablereq'>".$text['label-device_vendor']."</td>\n";
+			echo "				<th class='vtablereq'>".$text['label-device_key_type']."</td>\n";
+			echo "				<th class='vtablereq'>".$text['label-device_key_line']."</td>\n";
 			echo "				<td class='vtable'>".$text['label-device_key_value']."</td>\n";
 			if (permission_exists('device_key_extension')) {
 				echo "				<td class='vtable'>".$text['label-device_key_extension']."</td>\n";
@@ -423,28 +442,68 @@
 				else {
 					echo "					<option value='expansion-2'>".$text['label-expansion']." 2</option>\n";
 				}
+				if ($row['profile_key_category'] == "expansion-3") {
+					echo "					<option value='expansion-3' selected='selected'>".$text['label-expansion']." 3</option>\n";
+				}
+				else {
+					echo "					<option value='expansion-3'>".$text['label-expansion']." 3</option>\n";
+				}
+				if ($row['profile_key_category'] == "expansion-4") {
+					echo "					<option value='expansion-4' selected='selected'>".$text['label-expansion']." 4</option>\n";
+				}
+				else {
+					echo "					<option value='expansion-4'>".$text['label-expansion']." 4</option>\n";
+				}
+				if ($row['profile_key_category'] == "expansion-5") {
+					echo "					<option value='expansion-5' selected='selected'>".$text['label-expansion']." 5</option>\n";
+				}
+				else {
+					echo "					<option value='expansion-5'>".$text['label-expansion']." 5</option>\n";
+				}
+				if ($row['profile_key_category'] == "expansion-6") {
+					echo "					<option value='expansion-6' selected='selected'>".$text['label-expansion']." 6</option>\n";
+				}
+				else {
+					echo "					<option value='expansion-6'>".$text['label-expansion']." 6</option>\n";
+				}
 			}
 			else {
 				if (strtolower($row['device_key_vendor']) == "cisco" or strtolower($row['device_key_vendor']) == "yealink") {
-					if ($row['profile_key_category'] == "expansion-1" || $row['device_key_category'] == "expansion") {
-						echo "					<option value='expansion-1' selected='selected'>".$text['label-expansion']." 1</option>\n";
+					if ($row['profile_key_category'] == "expansion-1" || $row['profile_key_category'] == "expansion") {
+						echo "	<option value='expansion-1' selected='selected'>".$text['label-expansion']." 1</option>\n";
 					}
 					else {
-						echo "					<option value='expansion-1'>".$text['label-expansion']." 1</option>\n";
+						echo "	<option value='expansion-1'>".$text['label-expansion']." 1</option>\n";
 					}
 					if ($row['profile_key_category'] == "expansion-2") {
-						echo "					<option value='expansion-2' selected='selected'>".$text['label-expansion']." 2</option>\n";
+						echo "	<option value='expansion-2' selected='selected'>".$text['label-expansion']." 2</option>\n";
 					}
 					else {
-						echo "					<option value='expansion-2'>".$text['label-expansion']." 2</option>\n";
+						echo "	<option value='expansion-2'>".$text['label-expansion']." 2</option>\n";
 					}
-				}
-				else {
-					if ($row['profile_key_category'] == "expansion") {
-						echo "					<option value='expansion' selected='selected'>".$text['label-expansion']."</option>\n";
+					if ($row['profile_key_category'] == "expansion-3") {
+						echo "	<option value='expansion-3' selected='selected'>".$text['label-expansion']." 3</option>\n";
 					}
 					else {
-						echo "					<option value='expansion'>".$text['label-expansion']."</option>\n";
+						echo "	<option value='expansion-3'>".$text['label-expansion']." 3</option>\n";
+					}
+					if ($row['profile_key_category'] == "expansion-4") {
+						echo "	<option value='expansion-4' selected='selected'>".$text['label-expansion']." 4</option>\n";
+					}
+					else {
+						echo "	<option value='expansion-4'>".$text['label-expansion']." 4</option>\n";
+					}
+					if ($row['profile_key_category'] == "expansion-5") {
+						echo "	<option value='expansion-5' selected='selected'>".$text['label-expansion']." 5</option>\n";
+					}
+					else {
+						echo "	<option value='expansion-5'>".$text['label-expansion']." 5</option>\n";
+					}
+					if ($row['profile_key_category'] == "expansion-6") {
+						echo "	<option value='expansion-6' selected='selected'>".$text['label-expansion']." 6</option>\n";
+					}
+					else {
+						echo "	<option value='expansion-6'>".$text['label-expansion']." 6</option>\n";
 					}
 				}
 			}
@@ -574,7 +633,7 @@
 	echo "			<td class='vtable'>".$text['label-device_setting_value']."</td>\n";
 	echo "			<th class='vtablereq'>".$text['label-enabled']."</th>\n";
 	echo "			<td class='vtable'>".$text['label-device_setting_description']."</td>\n";
-	echo "			<td class='vtable'></td>\n";
+	echo "			<td></td>\n";
 	echo "		</tr>\n";
 	$x = 0;
 	foreach($device_profile_settings as $row) {
@@ -649,24 +708,13 @@
 	}
 
 	echo "<tr>\n";
-	echo "<td class='vncellreq' valign='top' align='left' nowrap='nowrap'>\n";
+	echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 	echo "	".$text['label-device_profile_enabled']."\n";
 	echo "</td>\n";
 	echo "<td class='vtable' style='position: relative;' align='left'>\n";
 	echo "	<select class='formfld' name='device_profile_enabled'>\n";
-	echo "		<option value=''></option>\n";
-	if ($device_profile_enabled == "true") {
-		echo "		<option value='true' selected='selected'>".$text['label-true']."</option>\n";
-	}
-	else {
-		echo "		<option value='true'>".$text['label-true']."</option>\n";
-	}
-	if ($device_profile_enabled == "false") {
-		echo "		<option value='false' selected='selected'>".$text['label-false']."</option>\n";
-	}
-	else {
-		echo "		<option value='false'>".$text['label-false']."</option>\n";
-	}
+	echo "		<option value='true'>".$text['label-true']."</option>\n";
+	echo "		<option value='false' ".($device_profile_enabled == "false" ? "selected='selected'" : null).">".$text['label-false']."</option>\n";
 	echo "	</select>\n";
 	echo "<br />\n";
 	echo $text['description-device_profile_enabled']."\n";
@@ -686,8 +734,8 @@
 
 	echo "	<tr>\n";
 	echo "		<td colspan='2' align='right'>\n";
-	echo "				<input type='hidden' name='device_profile_uuid' value='".escape($device_profile_uuid)."'>\n";
-	echo "				<input type='submit' class='btn' value='".$text['button-save']."'>\n";
+	echo "			<input type='hidden' name='device_profile_uuid' value='".escape($device_profile_uuid)."'>\n";
+	echo "			<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
 	echo "		</td>\n";
 	echo "	</tr>";
 	echo "</table>";

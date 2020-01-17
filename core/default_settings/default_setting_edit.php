@@ -74,6 +74,14 @@
 				$default_setting_uuid = uuid();
 			}
 
+		//validate the token
+			$token = new token;
+			if (!$token->validate($_SERVER['PHP_SELF'])) {
+				message::add($text['message-invalid_token'],'negative');
+				header('Location: default_settings.php');
+				exit;
+			}
+
 		//check for all required data
 			$msg = '';
 			if (strlen($default_setting_category) == 0) { $msg .= $text['message-required'].$text['label-category']."<br>\n"; }
@@ -185,6 +193,10 @@
 		}
 		unset($sql, $parameters);
 	}
+
+//create token
+	$object = new token;
+	$token = $object->create($_SERVER['PHP_SELF']);
 
 //show the header
 	require_once "resources/header.php";
@@ -558,6 +570,14 @@
 	elseif ($category == "theme" && $subcategory == "custom_css_code" && $name == "text" ) {
 		echo "	<textarea class='formfld' style='min-width: 100%; height: 300px; font-family: courier, monospace; overflow: auto; resize: vertical' id='default_setting_value' name='default_setting_value' wrap='off'>".$default_setting_value."</textarea>\n";
 	}
+	elseif ($category == "theme" && $subcategory == "button_icons" && $name == "text" ) {
+		echo "    <select class='formfld' id='default_setting_value' name='default_setting_value'>\n";
+		echo "    	<option value='auto'>".$text['option-button_icons_auto']."</option>\n";
+		echo "    	<option value='only' ".($default_setting_value == "only" ? "selected='selected'" : null).">".$text['option-button_icons_only']."</option>\n";
+		echo "    	<option value='always' ".($default_setting_value == "always" ? "selected='selected'" : null).">".$text['option-button_icons_always']."</option>\n";
+		echo "    	<option value='never' ".($default_setting_value == "never" ? "selected='selected'" : null).">".$text['option-button_icons_never']."</option>\n";
+		echo "    </select>\n";
+	}
 	elseif ($category == "voicemail" && $subcategory == "voicemail_file" && $name == "text" ) {
 		echo "    <select class='formfld' id='default_setting_value' name='default_setting_value'>\n";
 		echo "    	<option value='listen' ".(($default_setting_value == "listen") ? "selected='selected'" : null).">".$text['option-voicemail_file_listen']."</option>\n";
@@ -569,6 +589,12 @@
 		echo "	<select class='formfld' id='default_setting_value' name='default_setting_value'>\n";
 		echo "    	<option value='true' ".(($default_setting_value == "true") ? "selected='selected'" : null).">".$text['label-true']."</option>\n";
 		echo "    	<option value='false' ".(($default_setting_value == "false") ? "selected='selected'" : null).">".$text['label-false']."</option>\n";
+		echo "	</select>\n";
+	}
+	elseif ($category == "recordings" && $subcategory == "storage_type" && $name == "text" ) {
+		echo "	<select class='formfld' id='default_setting_value' name='default_setting_value'>\n";
+		echo "    	<option value='file'>".$text['label-file']."</option>\n";
+		echo "    	<option value='base64' ".(($default_setting_value == "base64") ? "selected='selected'" : null).">".$text['label-base64']."</option>\n";
 		echo "	</select>\n";
 	}
 	elseif (is_json($default_setting_value)) {
@@ -656,6 +682,7 @@
 		echo "		<input type='hidden' name='default_setting_uuid' value='".$default_setting_uuid."'>\n";
 		echo "		<input type='hidden' name='search' value='".$search."'>\n";
 	}
+	echo "			<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
 	echo "			<br>";
 	echo "			<input type='button' class='btn' value='".$text['button-save']."' onclick='submit_form();'>\n";
 	echo "		</td>\n";

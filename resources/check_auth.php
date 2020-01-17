@@ -36,9 +36,6 @@
 	}
 
 //start the session
-	ini_set("session.use_only_cookies", True);
-	ini_set("session.cookie_httponly", True);
-	if ($_SERVER["HTTPS"] == "on") { ini_set("session.cookie_secure", True); }
 	if (!isset($_SESSION)) { session_start(); }
 
 //define variables
@@ -74,13 +71,14 @@
 			}
 			$auth->debug = false;
 			$result = $auth->validate();
-			if ($result["authorized"] == "true") {
+			if ($result["authorized"] === "true") {
 				//set the session variables
 					$_SESSION["domain_uuid"] = $result["domain_uuid"];
 					$_SESSION["user_uuid"] = $result["user_uuid"];
 
 				//user session array
 					$_SESSION["user"]["domain_uuid"] = $result["domain_uuid"];
+					$_SESSION["user"]["domain_name"] = $result["domain_name"];
 					$_SESSION["user"]["user_uuid"] = $result["user_uuid"];
 					$_SESSION["user"]["username"] = $result["username"];
 					$_SESSION["user"]["contact_uuid"] = $result["contact_uuid"];
@@ -204,7 +202,7 @@
 					isset($_SESSION["user"]) &&
 					is_uuid($_SESSION["user_uuid"]) &&
 					is_uuid($_SESSION["domain_uuid"]) &&
-					count($_SESSION['user']['extension']) == 0
+					!isset($_SESSION['user']['extension'])
 					) {
 					//get the user extension list
 						$_SESSION['user']['extension'] = null;

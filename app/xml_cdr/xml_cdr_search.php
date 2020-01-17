@@ -43,6 +43,7 @@
 	$text = $language->get();
 
 //send the header
+	$document['title'] = $text['title-advanced_search'];
 	require_once "resources/header.php";
 
 //javascript to toggle input/select boxes
@@ -59,17 +60,18 @@
 	echo "</script>";
 
 //start the html form
-	if (strlen(check_str($_GET['redirect'])) > 0) {
-		echo "<form method='get' action='" . $_GET['redirect'] . ".php'>\n";
-	} else {
+	if ($_GET['redirect'] == 'xml_cdr_statistics') {
+		echo "<form method='get' action='xml_cdr_statistics.php'>\n";
+	}
+	else {
 		echo "<form method='get' action='xml_cdr.php'>\n";
 	}
 	
 	echo "<table width='100%' cellpadding='0' cellspacing='0'>\n";
 	echo "	<tr>\n";
-	echo "		<td width='30%' nowrap='nowrap' valign='top'><b>Advanced Search</b></td>\n";
+	echo "		<td width='30%' nowrap='nowrap' valign='top'><b>".$text['title-advanced_search']."</b></td>\n";
 	echo "		<td width='70%' align='right' valign='top'>";
-	echo "			<input type='button' class='btn' name='' alt='back' onclick=\"window.location='xml_cdr.php'\" value='Back'>";
+	echo "			<input type='button' class='btn' name='' alt='back' onclick=\"window.location='xml_cdr.php'\" value='".$text['button-back']."'>";
 	echo "			<input type='submit' name='submit' class='btn' value='Search'>";
 	echo "			<br /><br />";
 	echo "		</td>\n";
@@ -124,23 +126,23 @@
 	echo "		<td class='vtable'><input type='text' class='formfld' name='caller_id_name' value='".escape($caller_id_name)."'></td>";
 	echo "	</tr>";
 	echo "	<tr>";
-	echo "		<td class='vncell'>".$text['label-caller_id_number']."</td>"; //source number
+	echo "		<td class='vncell'>".$text['label-extension']."</td>"; //source number
 	echo "		<td class='vtable'>";
-	echo "			<select class='formfld' name='caller_extension_uuid' id='caller_extension_uuid'>\n";
+	echo "			<select class='formfld' name='extension_uuid' id='extension_uuid'>\n";
 	echo "				<option value=''></option>";
 	$sql = "select extension_uuid, extension, number_alias from v_extensions ";
-	$sql .= "where domain_uuid = '".$_SESSION['domain_uuid']."' ";
-	$sql .= "order by ";
-	$sql .= "extension asc ";
-	$sql .= ", number_alias asc ";
-	$prep_statement = $db->prepare(check_sql($sql));
-	$prep_statement -> execute();
-	$result_e = $prep_statement -> fetchAll(PDO::FETCH_NAMED);
-	foreach ($result_e as &$row) {
-		$selected = ($row['extension_uuid'] == $caller_extension_uuid) ? "selected" : null;
-		echo "			<option value='".escape($row['extension_uuid'])."' ".escape($selected).">".((is_numeric($row['extension'])) ? escape($row['extension']) : escape($row['number_alias'])." (".escape($row['extension']).")")."</option>";
+	$sql .= "where domain_uuid = :domain_uuid ";
+	$sql .= "order by extension asc, number_alias asc ";
+	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
+	$database = new database;
+	$result_e = $database->select($sql, $parameters, 'all');
+	if (is_array($result_e) && @sizeof($result_e) != 0) {
+		foreach ($result_e as &$row) {
+			$selected = ($row['extension_uuid'] == $caller_extension_uuid) ? "selected" : null;
+			echo "			<option value='".escape($row['extension_uuid'])."' ".escape($selected).">".((is_numeric($row['extension'])) ? escape($row['extension']) : escape($row['number_alias'])." (".escape($row['extension']).")")."</option>";
+		}
 	}
-	unset ($prep_statement);
+	unset($sql, $parameters, $result_e, $row, $selected);
 	echo "			</select>\n";
 	echo "			<input type='text' class='formfld' style='display: none;' name='caller_id_number' id='caller_id_number' value='".escape($caller_id_number)."'>\n";
 	echo "			<input type='button' id='btn_toggle_source' class='btn' name='' alt='".$text['button-back']."' value='&#9665;' onclick=\"toggle('source');\">\n";
@@ -188,8 +190,11 @@
 	echo "		</td>";
 	echo "	</tr>";
 	echo "	<tr>";
-	echo "		<td class='vncell'>".$text['label-duration']."</td>";
-	echo "		<td class='vtable'><input type='text' class='formfld' name='duration' value='".escape($duration)."'></td>";
+	echo "		<td class='vncell'>".$text['label-duration']." (".$text['label-seconds'].")</td>";
+	echo "		<td class='vtable'>\n";
+	echo "			<input type='text' class='formfld' style='min-width: 75px; width: 75px;' name='duration_min' value='".escape($duration_min)."' placeholder=\"".$text['label-minimum']."\">\n";
+	echo "			<input type='text' class='formfld' style='min-width: 75px; width: 75px;' name='duration_max' value='".escape($duration_max)."' placeholder=\"".$text['label-maximum']."\">\n";
+	echo "		</td>";
 	echo "	</tr>";
 	if (permission_exists('xml_cdr_all')) {
 		echo "	<tr>";

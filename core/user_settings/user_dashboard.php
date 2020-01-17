@@ -17,7 +17,7 @@
 
 	The Initial Developer of the Original Code is
 	Mark J Crane <markjcrane@fusionpbx.com>
-	Portions created by the Initial Developer are Copyright (C) 2008-2018
+	Portions created by the Initial Developer are Copyright (C) 2008-2019
 	the Initial Developer. All Rights Reserved.
 
 	Contributor(s):
@@ -64,6 +64,7 @@
 	$text = $language->get();
 
 //load the header
+	$document['title'] = $text['title-user_dashboard'];
 	require_once "resources/header.php";
 
 //start the content
@@ -397,9 +398,9 @@
 
 					foreach ($messages as $voicemail_uuid => $row) {
 						if (is_uuid($voicemail_uuid)) {
-							$tr_link = "href='".PROJECT_PATH."/app/voicemails/voicemail_messages.php?voicemail_uuid=".$voicemail_uuid."'";
+							$tr_link = "href='".PROJECT_PATH."/app/voicemails/voicemail_messages.php?id=".(permission_exists('voicemail_view') ? $voicemail_uuid : $row['ext'])."'";
 							$hud[$n]['html'] .= "<tr ".$tr_link." style='cursor: pointer;'>";
-							$hud[$n]['html'] .= "	<td class='".$row_style[$c]." hud_text'><a href='".PROJECT_PATH."/app/voicemails/voicemail_messages.php?voicemail_uuid=".$voicemail_uuid."'>".$row['ext']."</a></td>";
+							$hud[$n]['html'] .= "	<td class='".$row_style[$c]." hud_text'><a href='".PROJECT_PATH."/app/voicemails/voicemail_messages.php?id=".(permission_exists('voicemail_view') ? $voicemail_uuid : $row['ext'])."'>".$row['ext']."</a></td>";
 							$hud[$n]['html'] .= "	<td class='".$row_style[$c]." hud_text' style='text-align: center;'>".$row['new']."</td>";
 							$hud[$n]['html'] .= "	<td class='".$row_style[$c]." hud_text' style='text-align: center;'>".$row['total']."</td>";
 							$hud[$n]['html'] .= "</tr>";
@@ -564,10 +565,10 @@
 					if (is_array($assigned_extensions) && sizeof($assigned_extensions) != 0) {
 						$x = 0;
 						foreach ($assigned_extensions as $assigned_extension_uuid => $assigned_extension) {
-							$sql_where_array[] = "extension_uuid = extension_uuid_".$x;
-							$sql_where_array[] = "caller_id_number = caller_id_number_".$x;
-							$sql_where_array[] = "destination_number = destination_number_1_".$x;
-							$sql_where_array[] = "destination_number = destination_number_2_".$x;
+							$sql_where_array[] = "extension_uuid = :extension_uuid_".$x;
+							$sql_where_array[] = "caller_id_number = :caller_id_number_".$x;
+							$sql_where_array[] = "destination_number = :destination_number_1_".$x;
+							$sql_where_array[] = "destination_number = :destination_number_2_".$x;
 							$parameters['extension_uuid_'.$x] = $assigned_extension_uuid;
 							$parameters['caller_id_number_'.$x] = $assigned_extension;
 							$parameters['destination_number_1_'.$x] = $assigned_extension;
@@ -988,7 +989,7 @@
 			//pbx version
 				$hud[$n]['html'] .= "<tr class='tr_link_void'>\n";
 				$hud[$n]['html'] .= "<td valign='top' class='".$row_style[$c]." hud_text'>".(isset($_SESSION['theme']['title']['text'])?$_SESSION['theme']['title']['text']:'FusionPBX')."</td>\n";
-				$hud[$n]['html'] .= "<td valign='top' class='".$row_style[$c]." hud_text' style='text-align: right;'>".software_version()."</td>\n";
+				$hud[$n]['html'] .= "<td valign='top' class='".$row_style[$c]." hud_text' style='text-align: right;'>".software::version()."</td>\n";
 				$hud[$n]['html'] .= "</tr>\n";
 				$c = ($c) ? 0 : 1;
 
@@ -1066,7 +1067,7 @@
 
 			//memory available
 				if (stristr(PHP_OS, 'Linux')) {
-					$result = trim(shell_exec('free -hw | grep \'Mem:\' | cut -d\' \' -f 58-64'));
+					$result = trim(shell_exec('free -hw | grep \'Mem:\' | cut -d\' \' -f 55-64'));
 					if ($result != '') {
 						$hud[$n]['html'] .= "<tr class='tr_link_void'>\n";
 						$hud[$n]['html'] .= "<td valign='top' class='".$row_style[$c]." hud_text'>".$text['label-memory_available']."</td>\n";
@@ -1232,12 +1233,12 @@
 		if (!is_array($selected_blocks) || in_array('caller_id', $selected_blocks)) {
 			//caller id management
 				if (file_exists($_SERVER["DOCUMENT_ROOT"].PROJECT_PATH."/app/extensions/extension_dashboard.php")) {
-						if (permission_exists('extension_caller_id')) {
-							$is_included = true;
-							echo "<div class='col-xs-12 col-sm-12 col-md-6 col-lg-6' style='margin: 0 0 30px 0;'>\n";
-							require_once "app/extensions/extension_dashboard.php";
-							echo "</div>";
-						}
+					if (permission_exists('extension_caller_id')) {
+						$is_included = true;
+						echo "<div class='col-xs-12 col-sm-12 col-md-6 col-lg-6' style='margin: 0 0 30px 0;'>\n";
+						require_once "app/extensions/extension_dashboard.php";
+						echo "</div>";
+					}
 				}
 		}
 
@@ -1290,13 +1291,6 @@
 		}
 		echo "</div>\n";
 	}
-
-//add multi-lingual support
-	$language = new text;
-	$text = $language->get();
-
-//set the title
-	$document['title'] = $text['title-user_dashboard'];
 
 //show the footer
 	require_once "resources/footer.php";

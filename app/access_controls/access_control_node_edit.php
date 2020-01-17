@@ -62,6 +62,14 @@ if (count($_POST) > 0 && strlen($_POST["persistformvar"]) == 0) {
 			$access_control_node_uuid = $_POST["access_control_node_uuid"];
 		}
 
+	//validate the token
+		$token = new token;
+		if (!$token->validate($_SERVER['PHP_SELF'])) {
+			message::add($text['message-invalid_token'],'negative');
+			header('Location: access_controls.php');
+			exit;
+		}
+
 	//check for all required data
 		$msg = '';
 		if (strlen($node_type) == 0) { $msg .= $text['message-required']." ".$text['label-node_type']."<br>\n"; }
@@ -175,12 +183,17 @@ if (count($_POST) > 0 && strlen($_POST["persistformvar"]) == 0) {
 		unset($sql, $parameters, $row);
 	}
 
+//create token
+	$object = new token;
+	$token = $object->create($_SERVER['PHP_SELF']);
+
 //show the header
+	$document['title'] = $text['title-access_control_node'];
 	require_once "resources/header.php";
 
 //show the content
 	echo "<form method='post' name='frm' action=''>\n";
-	echo "<table width='100%'  border='0' cellpadding='6' cellspacing='0'>\n";
+	echo "<table width='100%'  border='0' cellpadding='0' cellspacing='0'>\n";
 	echo "<tr>\n";
 	echo "<td align='left' width='30%' nowrap='nowrap' valign='top'><b>".$text['title-access_control_node']."</b><br><br></td>\n";
 	echo "<td width='70%' align='right' valign='top'>\n";
@@ -190,12 +203,11 @@ if (count($_POST) > 0 && strlen($_POST["persistformvar"]) == 0) {
 	echo "</tr>\n";
 
 	echo "<tr>\n";
-	echo "<td class='vncellreq' valign='top' align='left' nowrap='nowrap'>\n";
+	echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 	echo "	".$text['label-node_type']."\n";
 	echo "</td>\n";
 	echo "<td class='vtable' align='left'>\n";
 	echo "	<select class='formfld' name='node_type'>\n";
-	echo "	<option value=''></option>\n";
 	if ($node_type == "allow") {
 		echo "	<option value='allow' selected='selected'>".$text['label-allow']."</option>\n";
 	}
@@ -248,11 +260,12 @@ if (count($_POST) > 0 && strlen($_POST["persistformvar"]) == 0) {
 	echo "</tr>\n";
 	echo "	<tr>\n";
 	echo "		<td colspan='2' align='right'>\n";
-	echo "				<input type='hidden' name='access_control_uuid' value='".escape($access_control_uuid)."'>\n";
+	echo "			<input type='hidden' name='access_control_uuid' value='".escape($access_control_uuid)."'>\n";
 	if ($action == "update") {
-		echo "				<input type='hidden' name='access_control_node_uuid' value='".escape($access_control_node_uuid)."'>\n";
+		echo "			<input type='hidden' name='access_control_node_uuid' value='".escape($access_control_node_uuid)."'>\n";
 	}
-	echo "				<br><input type='submit' name='submit' class='btn' value='".$text['button-save']."'>\n";
+	echo "			<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
+	echo "			<br><input type='submit' name='submit' class='btn' value='".$text['button-save']."'>\n";
 	echo "		</td>\n";
 	echo "	</tr>";
 	echo "</table>";

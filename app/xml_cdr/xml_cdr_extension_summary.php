@@ -28,9 +28,9 @@
 //includes
 	require_once "root.php";
 	require_once "resources/require.php";
+	require_once "resources/check_auth.php";
 
 //permisisions
-	require_once "resources/check_auth.php";
 	if (permission_exists('xml_cdr_view')) {
 		//access granted
 	}
@@ -44,14 +44,15 @@
 	$text = $language->get();
 
 //additional includes
+	$document['title'] = $text['title-extension_summary'];
 	require_once "resources/header.php";
 
 //retrieve submitted data
-	$quick_select = check_str($_REQUEST['quick_select']);
-	$start_stamp_begin = check_str($_REQUEST['start_stamp_begin']);
-	$start_stamp_end = check_str($_REQUEST['start_stamp_end']);
-	$include_internal = check_str($_REQUEST['include_internal']);
-	$quick_select = (sizeof($_REQUEST) == 0) ? 3 : $quick_select; //set default
+	$quick_select = $_REQUEST['quick_select'];
+	$start_stamp_begin = $_REQUEST['start_stamp_begin'];
+	$start_stamp_end = $_REQUEST['start_stamp_end'];
+	$include_internal = $_REQUEST['include_internal'];
+	$quick_select = sizeof($_REQUEST) == 0 ? 3 : $quick_select; //set default
 
 //get the summary
 	$cdr = new xml_cdr;
@@ -112,7 +113,8 @@
 	echo "onclick=\"window.location='xml_cdr_extension_summary.php?";
 	if (strlen($_SERVER["QUERY_STRING"]) > 0) { 
 		echo $_SERVER["QUERY_STRING"]."&type=csv';\">\n";
-	} else { 
+	}
+	else {
 		echo "type=csv';\">\n";
 	}
 

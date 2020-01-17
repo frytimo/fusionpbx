@@ -228,245 +228,6 @@ include "root.php";
 
 		public function set() {
 
-			//determine whether to update the dial string
-				$sql = "select * from v_extensions ";
-				$sql .= "where domain_uuid = :domain_uuid ";
-				$sql .= "and extension_uuid = :extension_uuid ";
-				$parameters['domain_uuid'] = $this->domain_uuid;
-				$parameters['extension_uuid'] = $this->extension_uuid;
-				$database = new database;
-				$row = $database->select($sql, $parameters, 'row');
-				if (is_array($row) && @sizeof($row) != 0) {
-					$this->extension = $row["extension"];
-					$this->accountcode = $row["accountcode"];
-					$this->toll_allow = $row["toll_allow"];
-					$this->number_alias = $row["number_alias"];
-					$this->outbound_caller_id_name = $row["outbound_caller_id_name"];
-					$this->outbound_caller_id_number = $row["outbound_caller_id_number"];
-				}
-				unset($sql, $parameters, $row);
-
-			//determine whether to update the dial string
-				$sql = "select d.domain_name, f.* ";
-				$sql .= "from v_follow_me as f, v_domains as d ";
-				$sql .= "where f.domain_uuid = :domain_uuid ";
-				$sql .= "and f.follow_me_uuid = :follow_me_uuid ";
-				$sql .= "and d.domain_uuid = f.domain_uuid ";
-				$parameters['domain_uuid'] = $this->domain_uuid;
-				$parameters['follow_me_uuid'] = $this->follow_me_uuid;
-				$database = new database;
-				$row = $database->select($sql, $parameters, 'row');
-				if (is_array($row) && @sizeof($row) != 0) {
-					$follow_me_uuid = $row["follow_me_uuid"];
-					$this->domain_name = $row["domain_name"];
-					$this->follow_me_enabled = $row["follow_me_enabled"];
-					$this->cid_name_prefix = $row["cid_name_prefix"];
-					$this->cid_number_prefix = $row["cid_number_prefix"];
-				}
-				unset($sql, $parameters, $row);
-
-			//set the extension dial string
-				$sql = "select * from v_follow_me_destinations ";
-				$sql .= "where follow_me_uuid = :follow_me_uuid ";
-				$sql .= "order by follow_me_order asc ";
-				$parameters['follow_me_uuid'] = $this->follow_me_uuid;
-				$database = new database;
-				$result = $database->select($sql, $parameters, 'all');
-
-				/*
-				$dial_string_caller_id_name = "\${effective_caller_id_name}";
-				$dial_string_caller_id_number = "\${effective_caller_id_number}";
-				if (strlen($this->follow_me_caller_id_uuid) > 0) {
-					$sql_caller = "select destination_number, destination_description, destination_caller_id_number, destination_caller_id_name ";
-					$sql_caller .= "from v_destinations ";
-					$sql_caller .= "where domain_uuid = :domain_uuid ";
-					$sql_caller .= "and destination_type = 'inbound' ";
-					$sql_caller .= "and destination_uuid = :destination_uuid ";
-					$parameters['domain_uuid'] = $this->domain_uuid;
-					$parameters['destination_uuid'] = $this->follow_me_caller_id_uuid;
-					$database = new database;
-					$row_caller = $database->select($sql_caller, $parameters, 'row');
-					if (is_array($row_caller) && @sizeof($row_caller) != 0) {
-						$caller_id_number = $row_caller['destination_caller_id_number'];
-						if (strlen($caller_id_number) == 0){
-							$caller_id_number = $row_caller['destination_number'];
-						}
-						$caller_id_name = $row_caller['destination_caller_id_name'];
-						if (strlen($caller_id_name) == 0){
-							$caller_id_name = $row_caller['destination_description'];
-						}
-					}
-					unset($sql_caller, $parameters, $row_caller);
-				}
-				*/
-
-				$x = 0;
-				if (is_array($result) && @sizeof($result) != 0) {
-					foreach ($result as &$row) {
-						if ($x > 0) {
-							$dial_string .= ",";
-						}
-
-						//determine if the destination is a local sip user
-						$sql = "select extension, number_alias from v_extensions ";
-						$sql .= "where domain_uuid = :domain_uuid ";
-						$sql .= "and ( ";
-						$sql .= "extension = :extension ";
-						$sql .= "or number_alias = :number_alias ";
-						$sql .= ") ";
-						$parameters['domain_uuid'] = $this->domain_uuid;
-						$parameters['extension'] = $row["follow_me_destination"];
-						$parameters['number_alias'] = $row["follow_me_destination"];
-						$database = new database;
-						$field = $database->select($sql, $parameters, 'row');
-						if (isset($field['extension'])) {
-							if (is_numeric($field['extension'])) {
-								$presence_id = $field['extension'];
-							}
-							else {
-								$presence_id = $field['number_alias'];
-							}
-							$variables[] = "presence_id=".$presence_id."@".$this->domain_name;
-							if ($row["follow_me_prompt"] == "1") {
-								$variables[] = "group_confirm_key=exec";
-								$variables[] = "group_confirm_file=lua confirm.lua";
-								$variables[] = "confirm=true";
-							}
-							if ($this->follow_me_ignore_busy != 'true') {
-								$variables[] = "fail_on_single_reject=USER_BUSY";
-							}
-							//accountcode
-							if (strlen($this->accountcode) == 0) {
-								$variables[] = "sip_h_X-accountcode=\${accountcode}";
-							}
-							else {
-								$variables[] = "sip_h_X-accountcode=".$this->accountcode;
-								$variables[] = "accountcode=".$this->accountcode;
-							}
-							//toll allow
-							if ($this->toll_allow != '') {
-								$variables[] = "toll_allow=''".str_replace(",", "\,", $this->toll_allow)."''";
-							}
-
-							$variables[] = "instant_ringback=true";
-							$variables[] = "ignore_early_media=true";
-							$variables[] = "domain_uuid=".$this->domain_uuid;
-							$variables[] = "sip_invite_domain=".$this->domain_name;
-							$variables[] = "domain_name=".$this->domain_name;
-							$variables[] = "domain=".$this->domain_name;
-							$variables[] = "extension_uuid=".$this->extension_uuid;
-							$variables[] = "leg_delay_start=".$row["follow_me_delay"];
-							$variables[] = "originate_delay_start=".$row["follow_me_delay"];
-							$variables[] = "leg_timeout=".$row["follow_me_timeout"];
-
-							$dial_string .= "[".implode(",", $variables)."]\${sofia_contact(*/".$row["follow_me_destination"]."@".$this->domain_name.")}";
-							//$dial_string .= "[".implode(",", $variables)."]user/".$row["follow_me_destination"]."@".$this->domain_name;
-							//$dial_string .= "loopback/export:".implode("\,export:", $variables)."\,transfer:".$row["follow_me_destination"]."/".$this->domain_name."/inline";
-							unset($variables);
-						}
-						else {
-							if (is_numeric($this->extension)) {
-								$presence_id = $this->extension;
-							}
-							else {
-								$presence_id = $this->number_alias;
-							}
-							$variables[] = "presence_id=".$presence_id."@".$this->domain_name;
-
-							//set the caller id
-							if ($_SESSION['follow_me']['outbound_caller_id']['boolean'] == "true") {
-								if (strlen($this->outbound_caller_id_name) > 0) {
-									$variables[] = "origination_caller_id_name=".$this->cid_name_prefix.$this->outbound_caller_id_name;
-									$variables[] = "effective_caller_id_name=".$this->cid_name_prefix.$this->outbound_caller_id_name;
-								}
-								if (strlen($this->outbound_caller_id_number) > 0) {
-									$variables[] = "origination_caller_id_number=".$this->cid_number_prefix.$this->outbound_caller_id_number;
-									$variables[] = "effective_caller_id_number=".$this->cid_number_prefix.$this->outbound_caller_id_number;
-								}
-							}
-							else {
-								if ($_SESSION['domain']['bridge']['text'] == "loopback") {
-									//set the outbound caller id number if the caller id number is a user
-									//$variables[] = "origination_caller_id_number=\${cond(\${from_user_exists} == true ? ".$this->outbound_caller_id_number." : \${origination_caller_id_number})}";
-									$variables[] = "effective_caller_id_number=\${cond(\${from_user_exists} == true ? ".$this->outbound_caller_id_number." : \${effective_caller_id_number})}";
-									//$variables[] = "origination_caller_id_name=\${cond(\${from_user_exists} == true ? ".$this->outbound_caller_id_name." : \${origination_caller_id_name})}";
-									$variables[] = "effective_caller_id_name=\${cond(\${from_user_exists} == true ? ".$this->outbound_caller_id_name." : \${effective_caller_id_name})}";
-								}
-								else {
-									//$variables[] .="origination_caller_id_number=\${cond(\${from_user_exists} == true ? \${outbound_caller_id_number} : )}";
-									$variables[] .="effective_caller_id_number=\${cond(\${from_user_exists} == true ? \${outbound_caller_id_number} : )}";
-									//$variables[] .="origination_caller_id_name=\${cond(\${from_user_exists} == true ? \${outbound_caller_id_name} : )}";
-									$variables[] .="effective_caller_id_name=\${cond(\${from_user_exists} == true ? \${outbound_caller_id_name} : )}";
-								}
-							}
-
-							//accountcode
-							if (strlen($this->accountcode) == 0) {
-								$variables[] = "sip_h_X-accountcode=\${accountcode}";
-							}
-							else {
-								$variables[] = "sip_h_X-accountcode=".$this->accountcode;
-								$variables[] = "accountcode=".$this->accountcode;
-							}
-
-							//toll allow
-							if ($this->toll_allow != '') {
-								$variables[] = "toll_allow=''".str_replace(",", "\,", $this->toll_allow)."''";
-							}
-
-							if ($this->follow_me_ignore_busy != 'true') {
-								$variables[] = "fail_on_single_reject=USER_BUSY";
-							}
-
-							if ($row["follow_me_prompt"] == "1") {
-								$variables[] = "group_confirm_key=exec";
-								$variables[] = "group_confirm_file=lua confirm.lua";
-								$variables[] = "confirm=true";
-							}
-
-							$variables[] = "instant_ringback=true";
-							$variables[] = "ignore_early_media=true";
-							$variables[] = "domain_uuid=".$this->domain_uuid;
-							$variables[] = "sip_invite_domain=".$this->domain_name;
-							$variables[] = "domain_name=".$this->domain_name;
-							//$variables[] = "domain=".$this->domain_name;
-							$variables[] = "extension_uuid=".$this->extension_uuid;
-							$variables[] = "leg_delay_start=".$row["follow_me_delay"];
-							$variables[] = "originate_delay_start=".$row["follow_me_delay"];
-							$variables[] = "sleep=".($row["follow_me_delay"] * 1000);
-							$variables[] = "leg_timeout=".$row["follow_me_timeout"];
-							if (is_numeric($row["follow_me_destination"])) {
-								if ($_SESSION['domain']['bridge']['text'] == "outbound" || $_SESSION['domain']['bridge']['text'] == "bridge") {
-									$bridge = outbound_route_to_bridge ($this->domain_uuid, $row["follow_me_destination"]);
-									$dial_string .= "[".implode(",", $variables)."]".$bridge[0];
-								}
-								else if ($_SESSION['domain']['bridge']['text'] == "loopback") {
-									$variables[] = "is_follow_me_loopback=true";
-									$sleep_time = "sleep:".($row["follow_me_delay"] * 1000);
-									//$dial_string .= "loopback/".$row["follow_me_destination"]."/".$this->domain_name;
-									$dial_string .= "loopback/".$sleep_time."\,export:".implode("\,export:", $variables)."\,transfer:".$row["follow_me_destination"]."/".$this->domain_name."/inline";
-								}
-								else if ($_SESSION['domain']['bridge']['text'] == "lcr") {
-									$dial_string .= "[".implode(",", $variables)."]lcr/".$_SESSION['lcr']['profile']['text']."/".$this->domain_name."/".$row["follow_me_destination"];
-								}
-								else {
-									//$dial_string .= "loopback/".$row["follow_me_destination"]."/".$this->domain_name;
-									$sleep_time = "sleep:".($row["follow_me_delay"] * 1000);
-									$dial_string .= "loopback/".$sleep_time."\,export:".implode("\,export:", $variables)."\,transfer:".$row["follow_me_destination"]."/".$this->domain_name."/inline";
-								}
-							}
-							else {
-								$dial_string .= $row["follow_me_destination"];
-							}
-						}
-						unset($sql, $parameters, $field);
-						$x++;
-					}
-				}
-				//$dial_string = str_replace(",]", "]", $dial_string);
-				$this->dial_string = "{ignore_early_media=true}".$dial_string;
-				unset($variables);
-
 			//get the extension_uuid
 				$parameters['follow_me_uuid'] = $this->follow_me_uuid;
 				$sql = "select extension_uuid from v_extensions ";
@@ -483,19 +244,13 @@ include "root.php";
 			//add follow me to the array
 				$array['follow_me'][0]["follow_me_uuid"] = $this->follow_me_uuid;
 				$array['follow_me'][0]["domain_uuid"] = $this->domain_uuid;
-				$array['follow_me'][0]["dial_string"] = $this->dial_string;
-
-			//is follow me enabled
-				$dial_string = '';
-				if ($this->follow_me_enabled == "true") {
-					$dial_string = $this->dial_string;
-				}
+				$array['follow_me'][0]["dial_string"] = '';
 
 			//add extensions to the array
 				$array['extensions'][0]["extension_uuid"] = $extension_uuid;
 				$array['extensions'][0]["dial_domain"] = $this->domain_name;
-				$array['extensions'][0]["dial_string"] = $dial_string;
-				$array['extensions'][0]["follow_me_destinations"] = $dial_string;
+				$array['extensions'][0]["dial_string"] = '';
+				$array['extensions'][0]["follow_me_destinations"] = '';
 				$array['extensions'][0]["follow_me_enabled"] = $this->follow_me_enabled;
 
 			//save the destination
@@ -507,7 +262,201 @@ include "root.php";
 			//remove the temporary permission
 				$p->delete("follow_me_edit", 'temp');
 				$p->delete("extension_edit", 'temp');
+
 		} //function
+
+
+		/**
+		 * declare private variables
+		 */
+		private $app_name;
+		private $app_uuid;
+		private $permission;
+		private $list_page;
+		private $table;
+		private $uuid_prefix;
+		private $toggle_field;
+		private $toggle_values;
+
+		/**
+		 * toggle records
+		 */
+		public function toggle($records) {
+
+			//assign private variables
+				$this->app_name = 'calls';
+				$this->app_uuid = '19806921-e8ed-dcff-b325-dd3e5da4959d';
+				$this->permission = 'follow_me';
+				$this->list_page = 'calls.php';
+				$this->table = 'extensions';
+				$this->uuid_prefix = 'extension_';
+				$this->toggle_field = 'follow_me_enabled';
+				$this->toggle_values = ['true','false'];
+
+			if (permission_exists($this->permission)) {
+
+				//add multi-lingual support
+					$language = new text;
+					$text = $language->get();
+
+				//validate the token
+					$token = new token;
+					if (!$token->validate($_SERVER['PHP_SELF'])) {
+						message::add($text['message-invalid_token'],'negative');
+						header('Location: '.$this->list_page);
+						exit;
+					}
+
+				//toggle the checked records
+					if (is_array($records) && @sizeof($records) != 0) {
+
+						//get current toggle state
+							foreach($records as $x => $record) {
+								if ($record['checked'] == 'true' && is_uuid($record['uuid'])) {
+									$uuids[] = "'".$record['uuid']."'";
+								}
+							}
+							if (is_array($uuids) && @sizeof($uuids) != 0) {
+								$sql = "select ".$this->uuid_prefix."uuid as uuid, extension, number_alias, ";
+								$sql .= "call_timeout, do_not_disturb, ";
+								$sql .= "forward_all_enabled, forward_all_destination, ";
+								$sql .= "forward_busy_enabled, forward_busy_destination, ";
+								$sql .= "forward_no_answer_enabled, forward_no_answer_destination, ";
+								$sql .= $this->toggle_field." as toggle, follow_me_uuid ";
+								$sql .= "from v_".$this->table." ";
+								$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
+								$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
+								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
+								$database = new database;
+								$rows = $database->select($sql, $parameters, 'all');
+								if (is_array($rows) && @sizeof($rows) != 0) {
+									foreach ($rows as $row) {
+										$extensions[$row['uuid']]['extension'] = $row['extension'];
+										$extensions[$row['uuid']]['number_alias'] = $row['number_alias'];
+										$extensions[$row['uuid']]['call_timeout'] = $row['call_timeout'];
+										$extensions[$row['uuid']]['do_not_disturb'] = $row['do_not_disturb'];
+										$extensions[$row['uuid']]['forward_all_enabled'] = $row['forward_all_enabled'];
+										$extensions[$row['uuid']]['forward_all_destination'] = $row['forward_all_destination'];
+										$extensions[$row['uuid']]['forward_busy_enabled'] = $row['forward_busy_enabled'];
+										$extensions[$row['uuid']]['forward_busy_destination'] = $row['forward_busy_destination'];
+										$extensions[$row['uuid']]['forward_no_answer_enabled'] = $row['forward_no_answer_enabled'];
+										$extensions[$row['uuid']]['forward_no_answer_destination'] = $row['forward_no_answer_destination'];
+										$extensions[$row['uuid']]['state'] = $row['toggle'];
+										$extensions[$row['uuid']]['follow_me_uuid'] = $row['follow_me_uuid'];
+									}
+								}
+								unset($sql, $parameters, $rows, $row);
+							}
+
+						//build update array
+							$x = 0;
+							foreach ($extensions as $uuid => $extension) {
+
+								//count destinations
+									$destinations_exist = false;
+									if (
+										$extension['state']	== $this->toggle_values[1] //false becoming true
+										&& is_uuid($extension['follow_me_uuid'])
+										) {
+										$sql .= "select count(*) from v_follow_me_destinations where follow_me_uuid = :follow_me_uuid";
+										$parameters['follow_me_uuid'] = $extension['follow_me_uuid'];
+										$database = new database;
+										$num_rows = $database->select($sql, $parameters, 'column');
+										$destinations_exist = $num_rows ? true : false;
+										unset($sql, $parameters, $num_rows);
+									}
+
+								//determine new state
+									$new_state = $extension['state'] == $this->toggle_values[1] && $destinations_exist ? $this->toggle_values[0] : $this->toggle_values[1];
+
+								//toggle feature
+									if ($new_state != $extension['state']) {
+										$array[$this->table][$x][$this->uuid_prefix.'uuid'] = $uuid;
+										$array[$this->table][$x][$this->toggle_field] = $new_state;
+										if (is_uuid($extension['follow_me_uuid'])) {
+											$array['follow_me'][$x]['follow_me_uuid'] = $extension['follow_me_uuid'];
+											$array['follow_me'][$x]['follow_me_enabled'] = $new_state;
+										}
+									}
+
+								//disable other features
+									if ($new_state == $this->toggle_values[0]) { //true
+										$array[$this->table][$x]['forward_all_enabled'] = $this->toggle_values[1]; //false
+										$array[$this->table][$x]['do_not_disturb'] = $this->toggle_values[1]; //false
+									}
+
+								//increment counter
+									$x++;
+
+							}
+
+						//save the changes
+							if (is_array($array) && @sizeof($array) != 0) {
+
+								//grant temporary permissions
+									$p = new permissions;
+									$p->add('extension_edit', 'temp');
+									$p->add('follow_me_edit', 'temp');
+
+								//save the array
+									$database = new database;
+									$database->app_name = $this->app_name;
+									$database->app_uuid = $this->app_uuid;
+									$database->save($array);
+									unset($array);
+
+								//revoke temporary permissions
+									$p->delete('extension_edit', 'temp');
+									$p->delete('follow_me_edit', 'temp');
+
+								//send feature event notify to the phone
+									if ($_SESSION['device']['feature_sync']['boolean'] == "true") {
+										foreach ($extensions as $uuid => $extension) {
+											$feature_event_notify = new feature_event_notify;
+											$feature_event_notify->domain_name = $_SESSION['domain_name'];
+											$feature_event_notify->extension = $extension['extension'];
+											$feature_event_notify->do_not_disturb = $extension['do_not_disturb'];
+											$feature_event_notify->ring_count = ceil($extension['call_timeout'] / 6);
+											$feature_event_notify->forward_all_enabled = $extension['forward_all_enabled'];
+											$feature_event_notify->forward_busy_enabled = $extension['forward_busy_enabled'];
+											$feature_event_notify->forward_no_answer_enabled = $extension['forward_no_answer_enabled'];
+											//workarounds: send 0 as freeswitch doesn't send NOTIFY when destination values are nil
+											$feature_event_notify->forward_all_destination = $extension['forward_all_destination'] != '' ? $extension['forward_all_destination'] : '0';
+											$feature_event_notify->forward_busy_destination = $extension['forward_busy_destination'] != '' ? $extension['forward_busy_destination'] : '0';
+											$feature_event_notify->forward_no_answer_destination = $extension['forward_no_answer_destination'] != '' ? $extension['forward_no_answer_destination'] : '0';
+											$feature_event_notify->send_notify();
+											unset($feature_event_notify);
+										}
+									}
+
+								//synchronize configuration
+									if (is_readable($_SESSION['switch']['extensions']['dir'])) {
+										require_once "app/extensions/resources/classes/extension.php";
+										$ext = new extension;
+										$ext->xml();
+										unset($ext);
+									}
+
+								//clear the cache
+									$cache = new cache;
+									foreach ($extensions as $uuid => $extension) {
+										$cache->delete("directory:".$extension['extension']."@".$_SESSION['domain_name']);
+										if ($extension['number_alias'] != '') {
+											$cache->delete("directory:".$extension['number_alias']."@".$_SESSION['domain_name']);
+										}
+									}
+
+								//set message
+									message::add($text['message-toggle']);
+
+							}
+							unset($records, $extensions, $extension);
+					}
+
+			}
+
+		} //function
+
 	} //class
 
 ?>

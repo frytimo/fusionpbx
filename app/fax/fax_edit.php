@@ -17,7 +17,7 @@
 
 	The Initial Developer of the Original Code is
 	Mark J Crane <markjcrane@fusionpbx.com>
-	Portions created by the Initial Developer are Copyright (C) 2008-2018
+	Portions created by the Initial Developer are Copyright (C) 2008-2019
 	the Initial Developer. All Rights Reserved.
 
 	Contributor(s):
@@ -43,7 +43,7 @@
 	$text = $language->get();
 
 //get the fax_extension and save it as a variable
-	if (strlen($_REQUEST["fax_extension"]) > 0) {
+	if (isset($_REQUEST["fax_extension"])) {
 		$fax_extension = $_REQUEST["fax_extension"];
 	}
 
@@ -107,6 +107,7 @@
 		$fax_email_outbound_authorized_senders = $_POST["fax_email_outbound_authorized_senders"];
 		$fax_caller_id_name = $_POST["fax_caller_id_name"];
 		$fax_caller_id_number = $_POST["fax_caller_id_number"];
+		$fax_toll_allow = $_POST["fax_toll_allow"];
 		$fax_forward_number = $_POST["fax_forward_number"];
 		if (strlen($fax_destination_number) == 0) {
 			$fax_destination_number = $fax_extension;
@@ -138,7 +139,7 @@
 	}
 
 //delete the user from the fax users
-	if ($_GET["a"] == "delete" && permission_exists("fax_extension_delete")) {
+	if (is_uuid($_REQUEST["user_uuid"]) && is_uuid($_REQUEST["id"]) && $_GET["a"] == "delete" && permission_exists("fax_extension_delete")) {
 		//set the variables
 			$user_uuid = $_REQUEST["user_uuid"];
 			$fax_uuid = $_REQUEST["id"];
@@ -197,12 +198,20 @@
 	clearstatcache();
 
 //process the data
-	if (count($_POST)>0 && strlen($_POST["persistformvar"]) == 0) {
+	if (count($_POST) > 0 && strlen($_POST["persistformvar"]) == 0) {
 
 		$msg = '';
-		if ($action == "update" && permission_exists('fax_extension_edit')) {
+		if ($action == "update" && is_uuid($_POST["fax_uuid"]) && permission_exists('fax_extension_edit')) {
 			$fax_uuid = $_POST["fax_uuid"];
 		}
+
+		//validate the token
+			$token = new token;
+			if (!$token->validate($_SERVER['PHP_SELF'])) {
+				message::add($text['message-invalid_token'],'negative');
+				header('Location: fax.php');
+				exit;
+			}
 
 		//check for all required data
 			if (strlen($fax_extension) == 0) { $msg .= "".$text['confirm-ext']."<br>\n"; }
@@ -246,7 +255,7 @@
 						foreach ($fax_email_outbound_authorized_senders as $sender_num => $sender) {
 							if ($sender == '' || !valid_email($sender)) { unset($fax_email_outbound_authorized_senders[$sender_num]); }
 						}
-						$fax_email_outbound_authorized_senders = implode(',', $fax_email_outbound_authorized_senders);
+						$fax_email_outbound_authorized_senders = strtolower(implode(',', $fax_email_outbound_authorized_senders));
 					}
 
 				if ($action == "add" && permission_exists('fax_extension_add')) {
@@ -299,6 +308,7 @@
 						}
 						$array['fax'][0]['fax_caller_id_name'] = $fax_caller_id_name;
 						$array['fax'][0]['fax_caller_id_number'] = $fax_caller_id_number;
+						$array['fax'][0]['fax_toll_allow'] = $fax_toll_allow;
 						if ($action == "add" && strlen($fax_forward_number) > 0) {
 							$array['fax'][0]['fax_forward_number'] = $fax_forward_number;
 						}
@@ -390,6 +400,7 @@
 			$fax_email_outbound_authorized_senders = $row["fax_email_outbound_authorized_senders"];
 			$fax_caller_id_name = $row["fax_caller_id_name"];
 			$fax_caller_id_number = $row["fax_caller_id_number"];
+			$fax_toll_allow = $row["fax_toll_allow"];
 			$fax_forward_number = $row["fax_forward_number"];
 			$fax_description = $row["fax_description"];
 			$fax_send_greeting = $row["fax_send_greeting"];
@@ -438,7 +449,12 @@
 		$dialplan_uuid = uuid();
 	}
 
+//create token
+	$object = new token;
+	$token = $object->create($_SERVER['PHP_SELF']);
+
 //show the header
+	$document['title'] = $text['title-fax_server_settings'];
 	require_once "resources/header.php";
 
 //advanced button js
@@ -465,7 +481,7 @@
 	echo "	<td width='70%' valign='top' align='right'>\n";
 	echo "		<input type='button' class='btn' name='' alt=\"".$text['button-back']."\" onclick=\"window.location='fax.php'\" value=\"".$text['button-back']."\">\n";
 	if (permission_exists('fax_extension_copy') && $action == "update") {
-		echo "	<input type='button' class='btn' alt=\"".$text['button-copy']."\" onclick=\"if (confirm('".$text['confirm-copy-info']."')){window.location='fax_copy.php?id=".urlencode($fax_uuid)."';}\" value=\"".$text['button-copy']."\">\n";
+		echo "	<input type='button' class='btn' alt=\"".$text['button-copy']."\" onclick=\"if (confirm('".$text['confirm-copy']."')){window.location='fax_copy.php?id=".urlencode($fax_uuid)."';}\" value=\"".$text['button-copy']."\">\n";
 	}
 	echo "		<input type='submit' class='btn' name='submit' value='".$text['button-save']."'>\n";
 	echo "	</td>\n";
@@ -601,6 +617,17 @@
 		echo "	<input class='formfld' type='text' name='fax_forward_number' maxlength='20' value=\"".((is_numeric($fax_forward_number)) ? format_phone($fax_forward_number) : escape($fax_forward_number))."\">\n";
 		echo "<br />\n";
 		echo "".$text['description-forward-number']."\n";
+		echo "</td>\n";
+		echo "</tr>\n";
+		
+		echo "<tr>\n";
+		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
+		echo "	".$text['label-toll_allow']."\n";
+		echo "</td>\n";
+		echo "<td class='vtable' align='left'>\n";
+		echo "	<input class='formfld' type='text' name='fax_toll_allow' maxlength='20' min='0' step='1' value=\"".escape($fax_toll_allow)."\">\n";
+		echo "<br />\n";
+		echo "".$text['description-toll_allow']."\n";
 		echo "</td>\n";
 		echo "</tr>\n";
 
@@ -796,6 +823,7 @@
 		echo "		<input type='hidden' name='fax_uuid' value='".escape($fax_uuid)."'>\n";
 		echo "		<input type='hidden' name='dialplan_uuid' value='".escape($dialplan_uuid)."'>\n";
 	}
+	echo "			<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
 	echo "			<input type='submit' name='submit' class='btn' value='".$text['button-save']."'>\n";
 	echo "		</td>\n";
 	echo "	</tr>";
@@ -964,6 +992,7 @@
 				echo "	<table cellpadding='0' cellspacing='0' border='0'>";
 				echo "		<tr>";
 				echo "			<td id='authorized_senders'>";
+
 				if (substr_count($fax_email_outbound_authorized_senders, ',') > 0) {
 					$senders = explode(',', $fax_email_outbound_authorized_senders);
 				}
