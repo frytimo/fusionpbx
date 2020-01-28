@@ -26,9 +26,15 @@
 
 //check the permission
 	if(defined('STDIN')) {
-		$document_root = str_replace("\\", "/", $_SERVER["PHP_SELF"]);
-		preg_match("/^(.*)\/core\/.*$/", $document_root, $matches);
-		$document_root = $matches[1];
+		$document_root = realpath($_SERVER["PHP_SELF"]);
+		$document_root = str_replace("\\", "/", $document_root);
+		if(preg_match("/^(.*)\/core\/.*$/", $document_root, $matches)) {
+			$document_root = $matches[1];
+		} else {
+			// Can't find document_root
+			echo "ERR: Can't find FusionPBX core directory!\n\n";
+			exit;
+		}
 		set_include_path($document_root);
 		require_once "resources/require.php";
 		$_SERVER["DOCUMENT_ROOT"] = $document_root;
