@@ -73,11 +73,21 @@
 	$obj = new schema;
 	echo $obj->schema("text");
 
+//show the app defaults exec ran
+	if ($display_type == 'text') {
+        echo "\t".$text['label-upgrade_apps'].":\t\t";
+	}
+
 //run all app_defaults.php files
 	require_once "resources/classes/domains.php";
 	$domain = new domains;
 	$domain->display_type = $display_type;
 	$domain->upgrade();
+
+//show the app defaults exec ran
+	if ($display_type == 'text') {
+        echo $text['label-upgrade_apps_success']."\n";
+	}
 
 //show the content
 	if ($display_type == 'html') {
