@@ -221,6 +221,26 @@ $text['message-upgrade_apps']['ru-ru'] = "Выполнение настроек 
 $text['message-upgrade_apps']['sv-se'] = "App Standardinställningar Utförd";
 $text['message-upgrade_apps']['uk-ua'] = "Встановлено типові налаштування додатків";
 
+$text['label-upgrade_apps_success']['en-us'] = "Success";
+$text['label-upgrade_apps_success']['ar-eg'] = "";
+$text['label-upgrade_apps_success']['de-at'] = "";
+$text['label-upgrade_apps_success']['de-ch'] = "";
+$text['label-upgrade_apps_success']['de-de'] = "";
+$text['label-upgrade_apps_success']['es-cl'] = "";
+$text['label-upgrade_apps_success']['es-mx'] = "";
+$text['label-upgrade_apps_success']['fr-ca'] = "";
+$text['label-upgrade_apps_success']['fr-fr'] = "";
+$text['label-upgrade_apps_success']['he-il'] = "";
+$text['label-upgrade_apps_success']['it-it'] = "";
+$text['label-upgrade_apps_success']['nl-nl'] = "";
+$text['label-upgrade_apps_success']['pl-pl'] = "";
+$text['label-upgrade_apps_success']['pt-br'] = "";
+$text['label-upgrade_apps_success']['pt-pt'] = "";
+$text['label-upgrade_apps_success']['ro-ro'] = "";
+$text['label-upgrade_apps_success']['ru-ru'] = "";
+$text['label-upgrade_apps_success']['sv-se'] = "";
+$text['label-upgrade_apps_success']['uk-ua'] = "";
+
 $text['message-upgrade']['en-us'] = "Upgrade Completed";
 $text['message-upgrade']['ar-eg'] = "";
 $text['message-upgrade']['de-at'] = "Aktualisierung durchgeführt."; //copied from de-de
