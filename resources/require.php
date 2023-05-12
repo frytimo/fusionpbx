@@ -23,10 +23,16 @@
 	Contributor(s):
 	Mark J Crane <markjcrane@fusionpbx.com>
 */
+//set the include path
+	$config_file = array_merge(glob("/usr/local/etc/fusionpbx/config.conf"), glob("/etc/fusionpbx/config.conf"));
 
-//add the document root to the include path
-	$config_glob = glob("{/usr/local/etc,/etc}/fusionpbx/config.conf", GLOB_BRACE);
-	$conf = parse_ini_file($config_glob[0]);
+//if config.conf file does not exist then redirect to the install page
+	if (empty($config_file)) {
+		header("Location: /core/install/install.php");
+		exit;
+	}
+	//parse config
+	$conf = parse_ini_file($config_file[0]);
 	set_include_path($conf['document.root']);
 
 //set the server variables and define project path constant
@@ -107,5 +113,3 @@
 	if (isset($_REQUEST['view_lang_code']) && ($_REQUEST['view_lang_code']) != '') {
 		$_SESSION['domain']['language']['code'] = $_REQUEST['view_lang_code'];
 	}
-
-?>
