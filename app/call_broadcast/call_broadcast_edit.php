@@ -138,7 +138,7 @@
 		}
 	}
 
-if (count($_POST) > 0 && empty($_POST["persistformvar"])) {
+    if (count($_POST) > 0 && empty($_POST["persistformvar"])) {
 
 	//delete the call broadcast
 		if (permission_exists('call_broadcast_delete')) {
