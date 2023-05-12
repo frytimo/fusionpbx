@@ -47,12 +47,11 @@
 	$text = $language->get();
 
 //set the action with add or update
-	if (is_uuid($_REQUEST["id"])) {
+	$action = 'add';
+	$call_broadcast_uuid = '';
+	if (isset($_REQUEST["id"]) && is_uuid($_REQUEST["id"])) {
 		$action = "update";
 		$call_broadcast_uuid = $_REQUEST["id"];
-	}
-	else {
-		$action = "add";
 	}
 
 //function to Upload CSV/TXT file
@@ -93,22 +92,36 @@
 		return array('code'=>true,'sql'=> $sql);
 	}
 
+//set default variable values
+	$broadcast_name = '';
+	$broadcast_start_time = '';
+	$broadcast_accountcode = '';
+	$broadcast_timeout = '';
+	$broadcast_concurrent_limit = '';
+	$broadcast_caller_id_name = '';
+	$broadcast_caller_id_number = '';
+	$broadcast_destination_data = '';
+	$broadcast_avmd = '';
+	$broadcast_toll_allow = '';
+	$broadcast_description = '';
+	$broadcast_accountcode = $_SESSION['domain_name'];
+
 //get the http post variables and set them to php variables
 	if (count($_POST)>0) {
-		$broadcast_name = $_POST["broadcast_name"];
-		$broadcast_start_time = $_POST["broadcast_start_time"];
-		$broadcast_timeout = $_POST["broadcast_timeout"];
-		$broadcast_concurrent_limit = $_POST["broadcast_concurrent_limit"];
-		$broadcast_caller_id_name = $_POST["broadcast_caller_id_name"];
-		$broadcast_caller_id_number = $_POST["broadcast_caller_id_number"];
-		//$broadcast_destination_type = $_POST["broadcast_destination_type"];
-		$broadcast_phone_numbers = $_POST["broadcast_phone_numbers"];
-		$broadcast_avmd = $_POST["broadcast_avmd"];
-		$broadcast_destination_data = $_POST["broadcast_destination_data"];
-		$broadcast_description = $_POST["broadcast_description"];
-		$broadcast_toll_allow = $_POST["broadcast_toll_allow"];
-
-		if (if_group("superadmin")) {
+		$broadcast_name = $_POST["broadcast_name"] ?? '';
+		$broadcast_start_time = $_POST["broadcast_start_time"] ?? '';
+		$broadcast_timeout = $_POST["broadcast_timeout"] ?? '';
+		$broadcast_concurrent_limit = $_POST["broadcast_concurrent_limit"] ?? '';
+		$broadcast_caller_id_name = $_POST["broadcast_caller_id_name"] ?? '';
+		$broadcast_caller_id_number = $_POST["broadcast_caller_id_number"] ?? '';
+		//$broadcast_destination_type = $_POST["broadcast_destination_type"] ?? '';
+		$broadcast_phone_numbers = $_POST["broadcast_phone_numbers"] ?? '';
+		$broadcast_avmd = $_POST["broadcast_avmd"] ?? '';
+		$broadcast_destination_data = $_POST["broadcast_destination_data"] ?? '';
+		$broadcast_description = $_POST["broadcast_description"] ?? '';
+		$broadcast_toll_allow = $_POST["broadcast_toll_allow"] ?? '';
+		
+		if (if_group("superadmin") && isset($_POST["broadcast_accountcode"])) {
 			$broadcast_accountcode = $_POST["broadcast_accountcode"];
 		}
 		else if (if_group("admin") && file_exists($_SERVER["PROJECT_ROOT"]."/app/billing/app_config.php")){
@@ -122,9 +135,6 @@
 			$num_rows = $database->select($sql, $parameters, 'column');
 			$broadcast_accountcode = $num_rows > 0 ? $_POST["broadcast_accountcode"] : $_SESSION['domain_name'];
 			unset($sql, $parameters, $num_rows);
-		}
-		else{
-			$broadcast_accountcode = $_SESSION['domain_name'];
 		}
 	}
 
