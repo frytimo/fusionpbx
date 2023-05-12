@@ -44,7 +44,7 @@
 
 //set any session variables for this page
 	if(!empty($_SESSION['theme']['list_row_edit_button']['boolean'])) {
-		$list_row_edit_button = $_SESSION['theme']['list_row_edit_button']['boolean'];
+		$list_row_edit_button = strtolower($_SESSION['theme']['list_row_edit_button']['boolean']) === 'true';
 	} else {
 		$list_row_edit_button = false;
 	}
