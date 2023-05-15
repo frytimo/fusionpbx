@@ -96,8 +96,12 @@
 			require $resource_dir . '/require.php';
 			require $core_dir . '/dashboard/index.php';
 			break;
+		case 'logout':
+			session_unset();
+			session_destroy();
+			header('Location: /core/dashboard/index.php');
+			exit();
 	}
-
 
 	if(str_starts_with($request, '/themes') ) {
 		if(file_exists($request)) {
@@ -134,8 +138,4 @@
 	}
 
 //ensure all output buffering is flushed
-	while(ob_get_length() > 0) {
-		echo ob_get_clean();
-	}
-
-
+	ob_end_flush();
