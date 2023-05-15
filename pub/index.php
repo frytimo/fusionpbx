@@ -22,6 +22,7 @@
 
 	Contributor(s):
 	Mark J. Crane <markjcrane@fusionpbx.com>
+    Tim Fry <tim.fry@hotmail.com>
 */
 
 //start capturing the output buffer
@@ -31,13 +32,81 @@
 	ini_set("session.cookie_httponly", True);
 	if (!isset($_SESSION)) { session_start(); }
 
-//adds multiple includes
-	require dirname(__DIR__) . '/resources/require.php';
-
 //sanitize the $_REQUEST['q'] param
 	$request = $_REQUEST['q'];
-	if($request === '/core/dashboard/') {
-		$request = '/core/dashboard/index.php';
+//	if($request === '/core/dashboard/') {
+//		$request = '/core/dashboard/index.php';
+//	}
+
+
+	$base_dir = dirname(__DIR__);
+	$core_dir = $base_dir . '/core';
+	$app_dir = $base_dir . '/app';
+	$theme_dir = $base_dir . '/themes';
+	$resource_dir = $base_dir . '/resources';
+	$pub_dir = $base_dir . '/pub';
+
+//get the path parts
+	$request_path = explode(separator:'/', string:$request);
+//set the default route to be login
+	$route = "core";
+	$app = "dashboard";
+	$resource = "index.php";
+//assume it is a php
+	$include = true;
+	if(count($request_path) > 0) {
+		//remove first one as all paths start with /
+		array_shift($request_path);
+		$route = basename(array_shift($request_path), '.php');
+		if(count($request_path)>0) {
+			$app = array_shift($request_path);
+		}
+		if(count($request_path)>0) {
+			if(!empty($request_path[0])) {
+				$resource = array_shift($request_path);
+			}
+		}
+	}
+	if(!str_ends_with($resource, '.php')) {
+		$include = false;
+	}
+	$uri = $base_dir .'/'. $route . '/'. $app . '/' . $resource;
+	switch($route) {
+		case 'app':
+		case 'core':
+		case 'resources':
+		case 'themes':
+			//adds multiple includes
+			require $resource_dir . '/require.php';
+			if($include) {
+				require $uri;
+			} else {
+				if(str_ends_with($request, '.png')) {
+				$im = imagecreatefrompng($base_dir . '/'.$request);
+				header('Content-Type: image/png');
+				imagepng($im);
+				imagedestroy($im);
+				} else {
+					echo $uri;
+				}
+			}
+			break;
+		case 'login':
+		case 'index':
+			require $resource_dir . '/require.php';
+			require $core_dir . '/dashboard/index.php';
+			break;
+	}
+
+
+	if(str_starts_with($request, '/themes') ) {
+		if(file_exists($request)) {
+			if (str_ends_with(basename($request), '.php')) {
+				include $request;
+			} else {
+				echo $request;
+			}
+		}
 	}
 
 //if logged in, redirect to login destination
