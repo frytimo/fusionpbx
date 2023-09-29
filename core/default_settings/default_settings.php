@@ -148,7 +148,6 @@
 	}
 	$sql .= order_by($order_by, $order, 'default_setting_category, default_setting_subcategory, default_setting_order', 'asc');
 	//$sql .= limit_offset($rows_per_page, $offset ?? '');  //$offset is always null
-	$database = new database;
 	$default_settings = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters);
 
@@ -173,7 +172,6 @@
 	$sql .= ") as quantity ";
 	$sql .= "from v_default_settings as d1 ";
 	$sql .= "order by d1.default_setting_category asc ";
-	$database = new database;
 	$rows = $database->select($sql, $parameters ?? null, 'all');
 	if (!empty($rows) && @sizeof($rows) != 0) {
 		foreach ($rows as $row) {
@@ -457,79 +455,78 @@
 
 			$category = $row['default_setting_category'] ?? '';
 			$subcategory = $row['default_setting_subcategory'] ?? '';
-			$name = $row['default_setting_name'] ?? '';
-			if ($category == "domain" && $subcategory == "menu" && $name == "uuid" ) {
+			$type = $row['default_setting_name'] ?? '';
+			if ($category == "domain" && $subcategory == "menu" && $type == "uuid" ) {
 				$sql = "select * from v_menus ";
 				$sql .= "where menu_uuid = :menu_uuid ";
 				$parameters['menu_uuid'] = $row['default_setting_value'];
-				$database = new database;
 				$sub_result = $database->select($sql, $parameters ?? null, 'all');
 				foreach ($sub_result as &$sub_row) {
 					echo $sub_row["menu_language"]." - ".$sub_row["menu_name"]."\n";
 				}
 				unset($sql, $sub_result, $sub_row);
 			}
-			else if ($category == "domain" && $subcategory == "template" && $name == "name" ) {
+			else if ($category == "domain" && $subcategory == "template" && $type == "name" ) {
 				echo "		".ucwords($row['default_setting_value']);
 			}
-			else if ($category == "domain" && $subcategory == "time_format" && $name == "text" ) {
+			else if ($category == "domain" && $subcategory == "time_format" && $type == "text" ) {
 				switch ($row['default_setting_value']) {
 					case '12h': echo $text['label-12-hour']; break;
 					case '24h': echo $text['label-24-hour']; break;
 				}
 			}
 			else if (
-				( $category == "theme" && $subcategory == "menu_main_icons" && $name == "boolean" ) ||
-				( $category == "theme" && $subcategory == "menu_sub_icons" && $name == "boolean" ) ||
-				( $category == "theme" && $subcategory == "menu_brand_type" && $name == "text" ) ||
-				( $category == "theme" && $subcategory == "menu_style" && $name == "text" ) ||
-				( $category == "theme" && $subcategory == "menu_position" && $name == "text" ) ||
-				( $category == "theme" && $subcategory == "body_header_brand_type" && $name == "text" ) ||
-				( $category == "theme" && $subcategory == "logo_align" && $name == "text" )
+				( $category == "theme" && $subcategory == "menu_main_icons" && $type == "boolean" ) ||
+				( $category == "theme" && $subcategory == "menu_sub_icons" && $type == "boolean" ) ||
+				( $category == "theme" && $subcategory == "menu_brand_type" && $type == "text" ) ||
+				( $category == "theme" && $subcategory == "menu_style" && $type == "text" ) ||
+				( $category == "theme" && $subcategory == "menu_position" && $type == "text" ) ||
+				( $category == "theme" && $subcategory == "body_header_brand_type" && $type == "text" ) ||
+				( $category == "theme" && $subcategory == "logo_align" && $type == "text" )
 				) {
 				echo "		".$text['label-'.$row['default_setting_value']];
 			}
-			else if ($category == 'theme' && $subcategory == 'custom_css_code' && $name == 'text') {
+			else if ($category == 'theme' && $subcategory == 'custom_css_code' && $type == 'text') {
 				echo "		[...]\n";
 			}
-			else if ($subcategory == 'password' || substr_count($subcategory, '_password') > 0 || $category == "login" && $subcategory == "password_reset_key" && $name == "text" || substr_count($subcategory, '_secret') > 0) {
+			else if ($subcategory == 'password' || substr_count($subcategory, '_password') > 0 || $category == "login" && $subcategory == "password_reset_key" && $type == "text" || substr_count($subcategory, '_secret') > 0) {
 				echo "		".str_repeat('*', strlen($row['default_setting_value'] ?? ''));
 			}
-			else if ($category == 'theme' && $subcategory == 'button_icons' && $name == 'text') {
+			else if ($category == 'theme' && $subcategory == 'button_icons' && $type == 'text') {
 				echo "		".$text['option-button_icons_'.$row['default_setting_value']]."\n";
 			}
-			else if ($category == 'theme' && $subcategory == 'menu_side_state' && $name == 'text') {
+			else if ($category == 'theme' && $subcategory == 'menu_side_state' && $type == 'text') {
 				echo "		".$text['option-'.$row['default_setting_value']]."\n";
 			}
-			else if ($category == 'theme' && $subcategory == 'menu_side_toggle' && $name == 'text') {
+			else if ($category == 'theme' && $subcategory == 'menu_side_toggle' && $type == 'text') {
 				echo "		".$text['option-'.$row['default_setting_value']]."\n";
 			}
-			else if ($category == 'theme' && $subcategory == 'menu_side_toggle_body_width' && $name == 'text') {
+			else if ($category == 'theme' && $subcategory == 'menu_side_toggle_body_width' && $type == 'text') {
 				echo "		".$text['option-'.$row['default_setting_value']]."\n";
 			}
-			else if ($category == 'theme' && $subcategory == 'menu_side_item_main_sub_close' && $name == 'text') {
+			else if ($category == 'theme' && $subcategory == 'menu_side_item_main_sub_close' && $type == 'text') {
 				echo "		".$text['option-'.$row['default_setting_value']]."\n";
 			}
-			else if ($category == 'theme' && $subcategory == 'input_toggle_style' && $name == 'text') {
+			else if ($category == 'theme' && $subcategory == 'input_toggle_style' && $type == 'text') {
 				echo "		".$text['option-'.$row['default_setting_value']]."\n";
 			}
-			else if (substr_count($subcategory, "_color") > 0 && ($name == "text" || $name == 'array')) {
+			else if (substr_count($subcategory, "_color") > 0 && ($type == "text" || $type == 'array')) {
 				echo "		".(img_spacer('15px', '15px', 'background: '.escape($row['default_setting_value']).'; margin-right: 4px; vertical-align: middle; border: 1px solid '.(color_adjust($row['default_setting_value'], -0.18)).'; padding: -1px;'));
 				echo "<span style=\"font-family: 'Courier New'; line-height: 6pt;\">".escape($row['default_setting_value'])."</span>\n";
 			}
-			else if ($category == 'users' && $subcategory == 'username_format' && $name == 'text') {
+			else if ($category == 'users' && $subcategory == 'username_format' && $type == 'text') {
 				echo "		".$text['option-username_format_'.$row['default_setting_value']]."\n";
 			}
-			else if ($category == 'recordings' && $subcategory == 'storage_type' && $name == 'text') {
+			else if ($category == 'recordings' && $subcategory == 'storage_type' && $type == 'text') {
 				echo "		".$text['label-'.$row['default_setting_value']]."\n";
 			}
-			else if ($category == 'destinations' && $subcategory == 'dialplan_mode' && $name == 'text') {
+			else if ($category == 'destinations' && $subcategory == 'dialplan_mode' && $type == 'text') {
 				echo "		".$text['label-'.$row['default_setting_value']]."\n";
 			}
-			else if ($category == 'destinations' && $subcategory == 'select_mode' && $name == 'text') {
+			else if ($category == 'destinations' && $subcategory == 'select_mode' && $type == 'text') {
 				echo "		".$text['label-'.$row['default_setting_value']]."\n";
 			}
-			else if ($category == 'voicemail' && ($subcategory == 'message_caller_id_number' || $subcategory == 'message_date_time') && $name == 'text') {
+			else if ($category == 'voicemail' && ($subcategory == 'message_caller_id_number' || $subcategory == 'message_date_time') && $type == 'text') {
 				echo "		".$text['label-'.$row['default_setting_value']]."\n";
 			}
 			else if ($row['default_setting_value'] == 'true' || $row['default_setting_value'] == 'false') {
