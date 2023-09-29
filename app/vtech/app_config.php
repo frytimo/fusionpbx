@@ -1,0 +1,56 @@
+<?php
+	//application details
+		$apps[$x]['name'] = "VTech";
+		$apps[$x]['uuid'] = "6f857605-338f-4a17-af4d-1d4916c8230d";
+		$apps[$x]['category'] = "Vendor";
+		$apps[$x]['subcategory'] = "";
+		$apps[$x]['version'] = "1.0";
+		$apps[$x]['license'] = "Mozilla Public License 1.1";
+		$apps[$x]['url'] = "http://www.fusionpbx.com";
+		$apps[$x]['description']['en-us'] = "";
+		$apps[$x]['description']['en-gb'] = "";
+		$apps[$x]['description']['ar-eg'] = "";
+		$apps[$x]['description']['de-at'] = "";
+		$apps[$x]['description']['de-ch'] = "";
+		$apps[$x]['description']['de-de'] = "";
+		$apps[$x]['description']['es-cl'] = "";
+		$apps[$x]['description']['es-mx'] = "";
+		$apps[$x]['description']['fr-ca'] = "";
+		$apps[$x]['description']['fr-fr'] = "";
+		$apps[$x]['description']['he-il'] = "";
+		$apps[$x]['description']['it-it'] = "";
+		$apps[$x]['description']['nl-nl'] = "";
+		$apps[$x]['description']['pl-pl'] = "";
+		$apps[$x]['description']['pt-br'] = "";
+		$apps[$x]['description']['pt-pt'] = "";
+		$apps[$x]['description']['ro-ro'] = "";
+		$apps[$x]['description']['ru-ru'] = "";
+		$apps[$x]['description']['sv-se'] = "";
+		$apps[$x]['description']['uk-ua'] = "";
+		$y=0;
+		$apps[$x]['default_settings'][$y]['default_setting_uuid'] = "b20b6547-14a8-416b-a5b1-990524a1afac";
+		$apps[$x]['default_settings'][$y]['default_setting_category'] = "vtech";
+		$apps[$x]['default_settings'][$y]['default_setting_subcategory'] = "vlan_wan_enable";
+		$apps[$x]['default_settings'][$y]['default_setting_name'] = "text";
+		$apps[$x]['default_settings'][$y]['default_setting_value'] = "0";
+		$apps[$x]['default_settings'][$y]['default_setting_enabled'] = "false";
+		$apps[$x]['default_settings'][$y]['default_setting_description'] = "Enable vlan=1";
+		$y++;
+		$apps[$x]['default_settings'][$y]['default_setting_uuid'] = "cfa6d612-906d-414e-9e1f-639e2eaa493e";
+		$apps[$x]['default_settings'][$y]['default_setting_category'] = "vtech";
+		$apps[$x]['default_settings'][$y]['default_setting_subcategory'] = "vlan_wan_id";
+		$apps[$x]['default_settings'][$y]['default_setting_name'] = "text";
+		$apps[$x]['default_settings'][$y]['default_setting_value'] = "1";
+		$apps[$x]['default_settings'][$y]['default_setting_enabled'] = "false";
+		$apps[$x]['default_settings'][$y]['default_setting_description'] = "VLAN ID";
+		$y++;
+		$apps[$x]['default_settings'][$y]['default_setting_uuid'] = "ee208229-d66c-46b6-9286-3cd4edda7628";
+		$apps[$x]['default_settings'][$y]['default_setting_category'] = "vtech";
+		$apps[$x]['default_settings'][$y]['default_setting_subcategory'] = "vlan_wan_priority";
+		$apps[$x]['default_settings'][$y]['default_setting_name'] = "text";
+		$apps[$x]['default_settings'][$y]['default_setting_value'] = "0";
+		$apps[$x]['default_settings'][$y]['default_setting_enabled'] = "false";
+		$apps[$x]['default_settings'][$y]['default_setting_description'] = "VLAN Priority";
+		$y++;
+
+
