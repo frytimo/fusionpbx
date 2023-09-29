@@ -254,6 +254,7 @@
 		//run all app_defaults.php files
 			$domain = new domains;
 			$domain->upgrade();
+			$domain->settings();
 
 		//show the content
 			if ($display_type == 'html') {
