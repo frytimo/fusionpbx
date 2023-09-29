@@ -51,8 +51,8 @@ class text {
 
 	/**
 	 * Get a specific item from the cache
-	 * @var string $language_code	examples: en-us, es-cl, fr-fr, pt-pt
-	 * @var string $app_path		examples: app/exec or core/domains
+	 * @param string $language_code	examples: en-us, es-cl, fr-fr, pt-pt
+	 * @param string $app_path		examples: app/exec or core/domains
 	 */
 	public function get($language_code = null, $app_path = null, $exclude_global = false) {
 
@@ -69,7 +69,8 @@ class text {
 				$lang_path = $_SERVER["PROJECT_ROOT"]."/".$app_path;
 			}
 			else {
-				$lang_path = getcwd();
+				$backtrace = debug_backtrace();
+				$lang_path = dirname($backtrace[0]['file']);
 			}
 			if (file_exists($lang_path."/app_languages.php")) {
 				if ($lang_path != 'resources' or $exclude_global) {
