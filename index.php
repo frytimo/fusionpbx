@@ -28,20 +28,85 @@
 	ini_set("session.cookie_httponly", True);
 	if (!isset($_SESSION)) { session_start(); }
 
+if(!function_exists('get_resource')) {
+	function get_resource() {
+		//set the actual address requested
+		$aa = $_REQUEST['q'] ?? '';
+
+		//remove trailing slash
+		if (substr($aa, -1, 1) === '/') {
+			$uri = substr($aa, 0, strlen($aa) - 1);
+		} else {
+			$uri = $aa;
+		}
+
+		//get routes
+		$routes = array_filter(explode('/', $uri),
+				function ($value) { return !is_null($value) && $value !== ''; }
+			);
+
+		//get the application
+		if (count($routes) > 0) {
+			$resource = __DIR__;
+			while(count($routes) > 0) {
+				$app = array_shift($routes);
+				$resource .= '/' . $app;
+			}
+			//ensure we don't infinitely loop for /index.php
+			if ($resource === __FILE__) {
+				return __DIR__ . '/core/dashboard/index.php';
+			}
+			//most landing pages will return here
+			//TODO: need to implement security
+			if (file_exists($resource) && is_file($resource)) {
+				return $resource;
+			}
+			//allow for /core/dashboard and others to be routed like that
+			$redirect = $resource . '/index.php';
+			if (file_exists($redirect) && is_file($redirect)) {
+				return $redirect;
+			}
+			//allow for /app/bridges/bridges.php and others to be routed like that
+			$redirect = $resource . '/' . $app . '.php';
+			if (file_exists($redirect) && is_file($redirect)) {
+				return $redirect;
+			}
+		} else {
+			$resource = __DIR__ . '/' . $uri;
+		}
+
+		if (substr($resource, -4, 4) === '.php' && __FILE__ !== $resource) {
+			return $resource;
+		}
+
+		return $resource . 'core/dashboard/index.php';
+	}
+}
+
 //includes files
 	require_once __DIR__ . "/resources/require.php";
+
+//fix the project root
+	$_SERVER["PROJECT_ROOT"] = __DIR__;
 
 //if logged in, redirect to login destination
 	if (isset($_SESSION["username"])) {
 		if (isset($_SESSION['login']['destination']['text'])) {
-			header("Location: ".$_SESSION['login']['destination']['text']);
+			include $_SESSION['login']['destination']['text'];
 		}
 		elseif (file_exists($_SERVER["PROJECT_ROOT"]."/core/dashboard/app_config.php")) {
-			header("Location: ".PROJECT_PATH."/core/dashboard/");
+			$resource = get_resource();
+			if (file_exists($resource) && is_file($resource)) {
+				include $resource;
+			} else {
+				http_response_code(404);
+				echo "<!DOCTYPE html>404 - Not Found";
+				exit();
+			}
 		}
 		else {
-			require_once "resources/header.php";
-			require_once "resources/footer.php";
+			require_once __DIR__ . "/resources/header.php";
+			require_once __DIR__ . "/resources/footer.php";
 		}
 	}
 	else {
@@ -51,7 +116,7 @@
 		}
 		else {
 			//login prompt
-			header("Location: ".PROJECT_PATH."/login.php");
+			include __DIR__ . '/login.php';
 		}
 	}
 
