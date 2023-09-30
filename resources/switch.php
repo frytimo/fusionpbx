@@ -245,16 +245,18 @@ function save_gateway_xml() {
 }
 
 function save_var_xml() {
-	if (is_array($_SESSION['switch']['conf'])) {
-		global $config, $domain_uuid;
-
-		//skip this function if the conf directory is empty
-		if (empty($_SESSION['switch']['conf']['dir'])) {
-			return false;
-		}
+	//get the default settings
+	$defaults = new settings();
+	if (!empty($defaults->get('switch','conf'))) {
+		//global $config, $domain_uuid;
 
 		//open the vars.xml file
-		$fout = fopen($_SESSION['switch']['conf']['dir']."/vars.xml","w");
+		$fout = fopen($defaults->get('switch','conf')."/vars.xml","w");
+
+		//ensure the file is writable
+		if($fout === false) {
+			return false;
+		}
 
 		//get the hostname
 		$hostname = trim(event_socket_request_cmd('api switchname'));
