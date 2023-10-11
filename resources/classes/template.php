@@ -34,7 +34,17 @@
 			private $object;
 			private $var_array;
 
-			public function __construct(){
+			/**
+			 * Create a template object
+			 * @param string $engine Type of engine used: smarty, raintpl, twig
+			 * @param string $template_dir Template directory
+			 * @param string $cache_dir Cache and compile directory
+			 */
+			public function __construct(string $engine = '', string $template_dir = '', string $cache_dir = '') {
+				$this->engine = $engine;
+				$this->template_dir = $template_dir;
+				$this->cache_dir = $cache_dir;
+				$this->init();
 			}
 
 			public function init() {
