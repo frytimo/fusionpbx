@@ -39,8 +39,10 @@
 			 * @param string $engine Type of engine used: smarty, raintpl, twig
 			 * @param string $template_dir Template directory
 			 * @param string $cache_dir Cache and compile directory
+			 * @throws InvalidArgumentException
 			 */
 			public function __construct(string $engine = '', string $template_dir = '', string $cache_dir = '') {
+				//validate engine type
 				switch($engine) {
 					case 'smarty':
 					case 'raintpl':
@@ -51,6 +53,11 @@
 						throw new InvalidArgumentException("Unknown engine type {$engine}. Supported values are smarty, raintpl, twig.");
 				}
 				$this->template_dir = $template_dir;
+
+				//ensure we can use dir
+				if (!is_dir($cache_dir) || !is_writable($cache_dir)) {
+					throw new \InvalidArgumentException("Cache directory $cache_dir is not writable or does not exist.");
+				}
 				$this->cache_dir = $cache_dir;
 				$this->init();
 			}
