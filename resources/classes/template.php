@@ -50,13 +50,18 @@
 						$this->engine = $engine;
 						break;
 					default:
-						throw new InvalidArgumentException("Unknown engine type {$engine}. Supported values are smarty, raintpl, twig.");
+						throw new \InvalidArgumentException("Unknown engine type {$engine}. Supported values are smarty, raintpl, twig.");
+				}
+
+				//ensure template directory exists
+				if (!is_dir($template_dir)) {
+					throw new \InvalidArgumentException("Template directory {$template_dir} is not a directory");
 				}
 				$this->template_dir = $template_dir;
 
 				//ensure we can use dir
 				if (!is_dir($cache_dir) || !is_writable($cache_dir)) {
-					throw new \InvalidArgumentException("Cache directory $cache_dir is not writable or does not exist.");
+					throw new \InvalidArgumentException("Cache directory {$cache_dir} is not writable or does not exist.");
 				}
 				$this->cache_dir = $cache_dir;
 				$this->init();
