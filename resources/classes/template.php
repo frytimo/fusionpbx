@@ -41,7 +41,15 @@
 			 * @param string $cache_dir Cache and compile directory
 			 */
 			public function __construct(string $engine = '', string $template_dir = '', string $cache_dir = '') {
-				$this->engine = $engine;
+				switch($engine) {
+					case 'smarty':
+					case 'raintpl':
+					case 'twig':
+						$this->engine = $engine;
+						break;
+					default:
+						throw new InvalidArgumentException("Unknown engine type {$engine}. Supported values are smarty, raintpl, twig.");
+				}
 				$this->template_dir = $template_dir;
 				$this->cache_dir = $cache_dir;
 				$this->init();
