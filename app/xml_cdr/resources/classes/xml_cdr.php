@@ -479,36 +479,37 @@ if (!class_exists('xml_cdr')) {
 							//marked as missed
 							$missed_call = $xml->variables->missed_call;
 						}
-						elseif (isset($xml->variables->fax_success)) {
-							//fax server
-							$missed_call = 'false';
-						}
-						elseif ($xml->variables->hangup_cause == 'LOSE_RACE') {
-							//ring group or multi destination bridge statement
-							$missed_call = 'false';
-						}
-						elseif ($xml->variables->hangup_cause == 'NO_ANSWER' && isset($xml->variables->originating_leg_uuid)) {
-							//ring group or multi destination bridge statement
-							$missed_call = 'false';
-						}
-						elseif (substr($xml->variables->destination_number, 0, 3) == '*99') {
-							//voicemail
-							$missed_call = 'true';
-						}
-						elseif (isset($xml->variables->voicemail_message) && $xml->variables->voicemail_message == true) {
-							//voicemail
-							$missed_call = 'true';
-						}
-						elseif (isset($xml->variables->billsec) && $xml->variables->billsec > 0) {
+						if (isset($xml->variables->billsec) && $xml->variables->billsec > 0) {
 							//answered call
 							$missed_call = 'false';
 						}
-						elseif (isset($xml->variables->cc_side) && $xml->variables->cc_side == 'agent') {
+						if (isset($xml->variables->cc_side) && $xml->variables->cc_side == 'agent') {
 							//call center
 							$missed_call = 'false';
 						}
-						else {
-							//missed call
+						if (isset($xml->variables->fax_success)) {
+							//fax server
+							$missed_call = 'false';
+						}
+						if (isset($xml->variables->hangup_cause) && $xml->variables->hangup_cause == 'LOSE_RACE') {
+							//ring group or multi destination bridge statement
+							$missed_call = 'false';
+						}
+						if (isset($xml->variables->hangup_cause) && $xml->variables->hangup_cause == 'NO_ANSWER' && isset($xml->variables->originating_leg_uuid)) {
+							//ring group or multi destination bridge statement
+							$missed_call = 'false';
+						}
+						if (isset($xml->variables->destination_number) && substr($xml->variables->destination_number, 0, 3) == '*99') {
+							//voicemail
+							$missed_call = 'true';
+						}
+						if (isset($xml->variables->voicemail_answer_stamp) && !empty($xml->variables->voicemail_answer_stamp)) {
+							//voicemail
+							$missed_call = 'true';
+						}
+						if (isset($xml->variables->cc_side) && $xml->variables->cc_side == 'member'
+							&& isset($xml->variables->cc_cause) && $xml->variables->cc_cause == 'cancel') {
+							//call center
 							$missed_call = 'true';
 						}
 
@@ -570,6 +571,12 @@ if (!class_exists('xml_cdr')) {
 						if (substr($destination_number, 0, 3) == '*99') {
 							$status = 'voicemail';
 						}
+						if (isset($xml->variables->voicemail_answer_stamp)) {
+							$status = 'voicemail';
+						}
+						if (isset($xml->variables->voicemail_id)) {
+							$status = 'voicemail';
+						}
 						if ($xml->variables->hangup_cause == 'ORIGINATOR_CANCEL') {
 							$status = 'cancelled';
 						}
@@ -578,6 +585,15 @@ if (!class_exists('xml_cdr')) {
 						}
 						if (in_array($xml->variables->hangup_cause, $failed_array)) {
 							$status = 'failed';
+						}
+						if (!isset($status) && in_array($xml->variables->last_bridge_hangup_cause, $failed_array)) {
+							$status = 'failed';
+						}
+						if ($xml->variables->cc_side == 'agent' && $xml->variables->billsec == 0) {
+							$status = 'no_answer';
+						}
+						if (!isset($status)  && $xml->variables->billsec == 0) {
+							$status = 'no_answer';
 						}
 
 					//set the provider id
@@ -665,7 +681,7 @@ if (!class_exists('xml_cdr')) {
 						$this->array[$key]['last_arg'] = urldecode($xml->variables->last_arg);
 
 					//voicemail message success
-						if ($xml->variables->voicemail_action == "save" && $xml->variables->voicemail_message_seconds > 0){
+						if (!empty($xml->variables->voicemail_answer_stamp) && $xml->variables->voicemail_message_seconds > 0){
 							$this->array[$key]['voicemail_message'] = "true";
 						}
 						else { //if ($xml->variables->voicemail_action == "save") {
@@ -1211,7 +1227,7 @@ if (!class_exists('xml_cdr')) {
 
 					//voicemails
 					if ($app['application'] == 'voicemails') {
-						$app['status'] = 'answered';
+						$app['status'] = 'voicemail';
 					}
 
 					//debug - add the callee_id_number to the end of the status
@@ -1991,3 +2007,4 @@ if (!class_exists('xml_cdr')) {
 }
 
 ?>
+

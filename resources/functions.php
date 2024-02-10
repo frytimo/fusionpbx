@@ -1135,25 +1135,55 @@
 //function to convert hexidecimal color value to rgb string/array value
 	if (!function_exists('hex_to_rgb')) {
 
-		function hex_to_rgb($hex, $delim = '') {
+		function hex_to_rgb($hex, $delim = null, $include_alpha = false, $alpha = 1) {
 			$hex = str_replace("#", "", $hex);
 
 			if (strlen($hex) == 3) {
 				$r = hexdec(substr($hex, 0, 1) . substr($hex, 0, 1));
 				$g = hexdec(substr($hex, 1, 1) . substr($hex, 1, 1));
 				$b = hexdec(substr($hex, 2, 1) . substr($hex, 2, 1));
-			} else {
+			}
+			else {
 				$r = hexdec(substr($hex, 0, 2));
 				$g = hexdec(substr($hex, 2, 2));
 				$b = hexdec(substr($hex, 4, 2));
 			}
 			$rgb = array($r, $g, $b);
+			if ($include_alpha) { $rgb[] = $alpha; }
 
 			if (!empty($delim)) {
 				return implode($delim, $rgb); // return rgb delimited string
-			} else {
+			}
+			else {
 				return $rgb; // return array of rgb values
 			}
+		}
+
+	}
+
+//function to convert a hex or rgb/a color to an rgba array
+	if (!function_exists('color_to_rgba_array')) {
+
+		function color_to_rgba_array($string, $alpha = null) {
+			if (!empty($string)) {
+				if (strpos($string, '#') === 0) { //is hex
+					return hex_to_rgb($string, null, true, $alpha);
+				}
+				else if (strpos($string, 'rgb') === 0) { //is rgb/a
+					$string = str_replace(['rgba(','rgb(',')'], '', $string); //values to csv
+					$array = explode(',', $string); //create array
+					if (!empty($array)) {
+						if (@sizeof($array) == 3) { //add alpha
+							$array[] = $alpha ?? 1;
+						}
+						else if (@sizeof($array) == 4 && !empty($alpha)) { //replace alpha
+							$array[3] = $alpha;
+						}
+					}
+					return !empty($array) && is_array($array) ? $array : false;
+				}
+			}
+			return false;
 		}
 
 	}
@@ -2099,7 +2129,7 @@
 			$dir = !empty($dir) && strtolower($dir) == 'desc' ? 'desc' : 'asc';
 			if (!empty($col)) {
 				if ($sort == 'natural' && $db_type == "pgsql") {
-					return $order_by . 'natural_sort(' . $col . ') ' . $dir . ' ';
+					return $order_by . 'natural_sort(' . $col . '::text) ' . $dir . ' ';
 				} else {
 					return $order_by . $col . ' ' . $dir . ' ';
 				}
@@ -2114,7 +2144,7 @@
 					}
 				} else {
 					if ($sort == 'natural' && $db_type == "pgsql") {
-						return $order_by . 'natural_sort(' . $col_default . ') ' . $dir_default . ' ';
+						return $order_by . 'natural_sort(' . $col_default . '::text) ' . $dir_default . ' ';
 					} else {
 						return $order_by . $col_default . ' ' . $dir_default . ' ';
 					}
@@ -2273,7 +2303,7 @@
 
 	}
 
-// User exists
+//user exists
 	if (!function_exists('user_exists')) {
 
 		function user_exists($login, $domain_name = null) {
@@ -2292,4 +2322,107 @@
 		}
 
 	}
+
+//git pull
+if (!function_exists('git_pull')) {
+	function git_pull($path) {
+
+		$cwd = getcwd();
+		chdir($path);
+		exec("GIT_SSH_COMMAND='ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no' git pull 2>&1", $response_source_update);
+
+		$update_status = false;
+
+		if (sizeof($response_source_update) == 0) {
+			return array('result' => false, 'message' => null);
+		}
+
+		foreach ($response_source_update as $response_line) {
+			if (substr_count($response_line, "Updating ") > 0 || substr_count($response_line, "Already up to date.") > 0) {
+				$update_status = true;
+			}
+
+			if (substr_count($response_line, "error") > 0) {
+				$update_status = false;
+				break;
+			}
+		}
+		chdir($cwd);
+
+		return array('result' => $update_status,
+				'message' => $response_source_update);
+
+	}
+}
+
+//git is repository
+if (!function_exists('is_git_repo')) {
+	function is_git_repo($path) {
+		if(!is_dir($path)) {return false;}
+		$cwd = $_SERVER["PROJECT_ROOT"];
+		chdir($path);
+		exec("git rev-parse --show-toplevel", $git_repo, $git_repo_response);
+		chdir($cwd);
+		if ((is_array($git_repo) && count($git_repo) > 0) && ($git_repo[0] != $cwd) && $git_repo_response == 0) {
+			return $git_repo[0];
+		}
+		return false;
+	}
+}
+
+//git repo version information
+if (!function_exists('git_repo_info')) {
+	function git_repo_info($path) {
+
+		if(!is_dir($path)) {
+			return false;
+		}
+
+		$cwd = getcwd();
+		chdir($path);
+
+		//get current branch
+		exec("git rev-parse --abbrev-ref HEAD 2>&1", $git_branch, $git_branch_return);
+		$repo['branch'] = $git_branch[0];
+
+		//get current commit id
+		exec("git log --pretty=format:'%H' -n 1 2>&1", $git_commit, $git_commit_return);
+		$repo['commit'] = $git_commit[0];
+
+		//get remote origin url for updates
+		exec("git config --get remote.origin.url", $git_url);
+		$repo['url'] = preg_replace('/\.git$/', '', $git_url[0] );
+
+		$repo['path'] = $path;
+
+		//to-do detect remote over ssh and reformat to equivalent https url
+
+		chdir($cwd);
+
+		if (!$git_branch_return && !$git_commit_return && $git_url) {
+			return $repo;
+		}
+		else {
+			return false;
+		}
+
+	}
+}
+
+//git locate app repositories
+if (!function_exists('git_find_repos')) {
+	function git_find_repos($path) {
+		$apps = scandir($path);
+		$git_repos = array();
+		foreach ($apps as $app) {
+			$git_repo_name = is_git_repo($path."/".$app);
+			if ($git_repo_name != false && !empty($git_repo_name)) {
+				$git_repos[$git_repo_name][] = $app;
+			}
+			unset($git_repo_name);
+		}
+		return $git_repos;
+	}
+}
+
 ?>
