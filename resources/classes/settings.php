@@ -15,7 +15,7 @@ class settings {
 	private $database;
 
 	/**
-	 * Connects to the database and pulls all setting values from the v_settings table.
+	 * Connects to the database and pulls all enabled setting values from the v_settings table.
 	 * <p>
 	 * The $settings array can have the following keys:<br>
 	 *   <ul>
@@ -65,11 +65,11 @@ class settings {
 		//print_r($this->settings);
 
 		//add settings to the session array
-		//if (!defined('STDIN') && !empty($this->settings)) {
-		//	foreach($this->settings as $key => $row) {
-		//		$_SESSION[$key] = $row;
-		//	}
-		//}
+		if (!defined('STDIN') && !empty($this->settings)) {
+			foreach($this->settings as $key => $row) {
+				$_SESSION[$key] = $row;
+			}
+		}
 
 	}
 
@@ -81,10 +81,6 @@ class settings {
 	 * is returned provided the category/subcategory exists. If both <i>$category</i> and <i>$subcategory</i>
 	 * are supplied but <i>$category</i> and <i>$subcategory</i> are not set in the array, the default value
 	 * will be returned.</p>
-	 * <p>NOTES:<br>
-	 * An empty string or a null value is still considered a valid value so the <i>$default_value</i>
-	 * would not be returned.
-	 * </p>
 	 * <p>Examples:<br>
 	 * <code>
 	 * //get all values in a category
