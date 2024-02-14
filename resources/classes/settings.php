@@ -111,7 +111,7 @@ class settings {
 	 * @param mixed $default_value
 	 * @return mixed setting as string, category/subcategory as array, mixed from the default_value or null
 	 */
-	public function get(?string  $category = null, ?string $subcategory = null, mixed $default_value = null): mixed {
+	public function get(?string $category = null, ?string $subcategory = null, mixed $default_value = null): mixed {
 		//all settings requested
 		if (empty($category)) {
 			return $this->settings;
