@@ -390,5 +390,22 @@
 		$apps[$x]['default_settings'][$y]['default_setting_value'] = "";
 		$apps[$x]['default_settings'][$y]['default_setting_enabled'] = "false";
 		$apps[$x]['default_settings'][$y]['default_setting_description'] = "User level password for endpoint embedded web server.";
-
+		$y++;
+		$apps[$x]['default_settings'][$y]['default_setting_uuid'] = "f6af2621-ba84-43c8-9308-3a25053320c8";
+		$apps[$x]['default_settings'][$y]['default_setting_category'] = "provision";
+		$apps[$x]['default_settings'][$y]['default_setting_subcategory'] = "qr_code_vendor_enabled";
+		$apps[$x]['default_settings'][$y]['default_setting_name'] = "array";
+		$apps[$x]['default_settings'][$y]['default_setting_order'] = "000";
+		$apps[$x]['default_settings'][$y]['default_setting_value'] = "linphone";
+		$apps[$x]['default_settings'][$y]['default_setting_enabled'] = "true";
+		$apps[$x]['default_settings'][$y]['default_setting_description'] = "Show QR Code button in Device Edit";
+		$y++;
+		$apps[$x]['default_settings'][$y]['default_setting_uuid'] = "d6a6ff98-7865-48a5-85e3-c6fdf014adbb";
+		$apps[$x]['default_settings'][$y]['default_setting_category'] = "provision";
+		$apps[$x]['default_settings'][$y]['default_setting_subcategory'] = "qr_code_vendor_enabled";
+		$apps[$x]['default_settings'][$y]['default_setting_name'] = "array";
+		$apps[$x]['default_settings'][$y]['default_setting_order'] = "001";
+		$apps[$x]['default_settings'][$y]['default_setting_value'] = "sipnetic";
+		$apps[$x]['default_settings'][$y]['default_setting_enabled'] = "true";
+		$apps[$x]['default_settings'][$y]['default_setting_description'] = "Show QR Code button in Device Edit";
 ?>
