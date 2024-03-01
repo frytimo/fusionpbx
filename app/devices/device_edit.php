@@ -42,7 +42,7 @@
 //set the defaults
 	$device_model = '';
 	$device_firmware_version = '';
-	$device_template ='';
+	$device_template = '';
 
 //include the device class
 	require_once "app/devices/resources/classes/device.php";
@@ -777,10 +777,10 @@
 	if ($device_template == "grandstream/wave") {
 		$qr_code_enabled = true;
 	}
-	else if ($device_template == "linphone/default") {
+	else if ($device_vendor === 'linphone') {
 		$qr_code_enabled = true;
 	}
-	else if ($device_template == "sipnetic/default") {
+	else if ($device_vendor === 'sipnetic') {
 		$qr_code_enabled = true;
 	}
 	else {
