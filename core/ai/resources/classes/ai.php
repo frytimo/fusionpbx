@@ -27,6 +27,7 @@ if (!class_exists('ai')) {
 		public $audio_path;
 		public $audio_filename;
 		public $audio_format;
+		public $audio_model;
 		public $audio_voice;
 		public $audio_language;
 		public $audio_message;
@@ -48,6 +49,23 @@ if (!class_exists('ai')) {
 			$this->transcribe_engine = $settings->get('ai', 'transcribe_engine');
 			$this->speech_key = $settings->get('ai', 'speech_key');
 			$this->speech_engine = $settings->get('ai', 'speech_engine');
+		}
+
+		/**
+		 * Get the list voices from the interface
+		 * Key/value pairs of models where the Key is the ID and the value is a friendly name to use
+		 * @return array Array of key/value pairs
+		 */
+		public function get_models() : array {
+
+			//set the class interface to use the _template suffix
+			$classname = 'ai_'.$this->speech_engine;
+
+			//create the object
+			$object = new $classname($this->settings);
+
+			//return the voices array
+			return $object->get_models();
 		}
 
 		/**
@@ -127,6 +145,7 @@ if (!class_exists('ai')) {
 					$object->set_filename($this->audio_filename);
 					$object->set_format($this->audio_format);
 					$object->set_voice($this->audio_voice);
+					$object->set_model($this->audio_model);
 					//$object->set_language($this->audio_language);
 					//$object->set_translate($this->audio_translate);
 					$object->set_message($this->audio_message);
