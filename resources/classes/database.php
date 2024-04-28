@@ -267,8 +267,10 @@
 			 * @var string prefer or verify-ca. Default is 'prefer'
 			 */
 			public $ssl_mode;
+		
+			private static $database = null;
 
-			/**
+		/**
 			 * Called when the object is created
 			 * @param array $params Optional
 			 */
@@ -3075,9 +3077,11 @@
 		 * @see database::connect()
 		 */
 		public static function new() {
-			$db = new database();
-			$db->connect();
-			return $db;
+			if (self::$database === null) {
+				self::$database = new database();
+				self::$database->connect();
+			}
+			return self::$database;
 		}
 
 		} //class database
