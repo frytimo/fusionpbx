@@ -94,7 +94,7 @@
 				$p = new permissions;
 				$p->add('follow_me_add', 'temp');
 			//execute insert
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = 'calls';
 				$database->app_uuid = '19806921-e8ed-dcff-b325-dd3e5da4959d';
 				$database->save($array);
@@ -118,7 +118,7 @@
 				$p = new permissions;
 				$p->add('follow_me_add', 'temp');
 			//execute update
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = 'calls';
 				$database->app_uuid = '19806921-e8ed-dcff-b325-dd3e5da4959d';
 				$database->save($array);
@@ -138,7 +138,7 @@
 					$p = new permissions;
 					$p->add('follow_me_destination_delete', 'temp');
 				//execute delete
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'calls';
 					$database->app_uuid = '19806921-e8ed-dcff-b325-dd3e5da4959d';
 					$database->delete($array);
@@ -213,7 +213,7 @@
 						$p = new permissions;
 						$p->add('follow_me_destination_add', 'temp');
 					//execute insert
-						$database = new database;
+						$database = framework::database();
 						$database->app_name = 'calls';
 						$database->app_uuid = '19806921-e8ed-dcff-b325-dd3e5da4959d';
 						$database->save($array);
@@ -229,7 +229,7 @@
 				$parameters['follow_me_uuid'] = $this->follow_me_uuid;
 				$sql = "select extension_uuid from v_extensions ";
 				$sql .= "where follow_me_uuid = :follow_me_uuid ";
-				$database = new database;
+				$database = framework::database();
 				$result = $database->select($sql, $parameters);
 				$extension_uuid = $result[0]['extension_uuid'];
 
@@ -249,7 +249,7 @@
 				$array['extensions'][0]["follow_me_enabled"] = $this->follow_me_enabled;
 
 			//save the destination
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = 'follow_me';
 				$database->app_uuid = '19806921-e8ed-dcff-b325-dd3e5da4959d';
 				$database->save($array);
@@ -322,7 +322,7 @@
 								$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
 								$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -355,7 +355,7 @@
 										) {
 										$sql = "select count(*) from v_follow_me_destinations where follow_me_uuid = :follow_me_uuid";
 										$parameters['follow_me_uuid'] = $extension['follow_me_uuid'];
-										$database = new database;
+										$database = framework::database();
 										$num_rows = $database->select($sql, $parameters, 'column');
 										$destinations_exist = $num_rows ? true : false;
 										unset($sql, $parameters, $num_rows);
@@ -394,7 +394,7 @@
 									$p->add('follow_me_edit', 'temp');
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);

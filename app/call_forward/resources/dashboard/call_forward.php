@@ -15,7 +15,7 @@
 
 //connect to the database
 	if (!isset($database)) {
-		$database = new database;
+		$database = framework::database();
 	}
 
 //add multi-lingual support
@@ -70,7 +70,7 @@
 		}
 	}
 	$sql .= order_by($order_by ?? null, $order ?? null, 'extension', 'asc');
-	$database = new database;
+	$database = framework::database();
 	$extensions = $database->select($sql, $parameters, 'all');
 	unset($parameters);
 
@@ -229,7 +229,7 @@
 						$sql .= "and domain_uuid = :domain_uuid ";
 						$parameters['follow_me_uuid'] = $row['follow_me_uuid'];
 						$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-						$database = new database;
+						$database = framework::database();
 						$follow_me_destination_count = $database->select($sql, $parameters, 'column');
 						unset($sql, $parameters);
 					}

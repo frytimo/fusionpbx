@@ -72,7 +72,7 @@
 			$parameters['search'] = '%'.$search.'%';
 		}
 		$sql .= "order by domain_name asc ";
-		$database = new database;
+		$database = framework::database();
 		$domains = $database->select($sql, $parameters ?? null, 'all');
 		unset($sql, $parameters);
 	}

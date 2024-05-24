@@ -116,7 +116,7 @@ if (count($_POST)>0 && empty($_POST["persistformvar"])) {
 					$array['pin_numbers'][0]['enabled'] = $enabled;
 					$array['pin_numbers'][0]['description'] = $description;
 				//save data
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'pin_numbers';
 					$database->app_uuid = '4b88ccfb-cb98-40e1-a5e5-33389e14a388';
 					$database->save($array);
@@ -137,7 +137,7 @@ if (count($_POST)>0 && empty($_POST["persistformvar"])) {
 		$sql .= "and pin_number_uuid = :pin_number_uuid ";
 		$parameters['domain_uuid'] = $domain_uuid;
 		$parameters['pin_number_uuid'] = $pin_number_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (is_array($row) && @sizeof($row) != 0) {
 			$pin_number = $row["pin_number"];

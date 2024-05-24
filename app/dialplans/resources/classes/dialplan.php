@@ -115,7 +115,7 @@
 					$p->add('dialplan_add', 'temp');
 
 				//execute insert
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'dialplans';
 					$database->app_uuid = '742714e5-8cdf-32fd-462c-cbe7e3d655db';
 					$database->save($array);
@@ -148,7 +148,7 @@
 					$p->add('dialplan_edit', 'temp');
 
 				//execute update
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'dialplans';
 					$database->app_uuid = '742714e5-8cdf-32fd-462c-cbe7e3d655db';
 					$database->save($array);
@@ -164,7 +164,7 @@
 				$sql .= "and app_uuid = :app_uuid ";
 				$parameters['domain_uuid'] = $this->domain_uuid;
 				$parameters['app_uuid'] = $this->app_uuid;
-				$database = new database;
+				$database = framework::database();
 				return $database->select($sql, $parameters ?? null, 'column') != 0 ? true : false;
 				unset($sql, $parameters);
 			}
@@ -175,7 +175,7 @@
 				$sql .= "and dialplan_uuid = :dialplan_uuid ";
 				$parameters['domain_uuid'] = $this->domain_uuid;
 				$parameters['dialplan_uuid'] = $this->dialplan_uuid;
-				$database = new database;
+				$database = framework::database();
 				return $database->select($sql, $parameters ?? null, 'column') != 0 ? true : false;
 				unset($sql, $parameters);
 			}
@@ -217,7 +217,7 @@
 					*/
 
 				//create the database object
-					$database = new database;
+					$database = framework::database();
 
 				//loop through each domain
 					if (!empty($domains) && is_array($domains) && @sizeof($domains) != 0) {
@@ -230,7 +230,7 @@
 								$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
 								$sql .= "and app_uuid is not null ";
 								$parameters['domain_uuid'] = $domain['domain_uuid'];
-								//$database = new database;
+								//$database = framework::database();
 								$app_uuids = $database->select($sql, $parameters, 'all');
 								unset($parameters);
 
@@ -455,7 +455,7 @@
 
 							//save the data
 								if (!empty($array)) {
-									//$database = new database;
+									//$database = framework::database();
 									$database->app_name = 'dialplans';
 									$database->app_uuid = '742714e5-8cdf-32fd-462c-cbe7e3d655db';
 									$database->save($array);
@@ -510,7 +510,7 @@
 							$sql .= "else 100 end, ";
 							$sql .= "s.dialplan_detail_order asc ";
 							$parameters['domain_uuid'] = $this->domain_uuid;
-							$database = new database;
+							$database = framework::database();
 							$dialplans = $database->select($sql, $parameters ?? null, 'all');
 							unset($sql, $parameters);
 							$x = 0; $y = 0;
@@ -671,7 +671,7 @@
 							$sql .= "order by ";
 							$sql .= "dialplan_context asc, ";
 							$sql .= "dialplan_order asc ";
-							$database = new database;
+							$database = framework::database();
 							$results = $database->select($sql, $parameters ?? null, 'all');
 							if (!empty($results)) {
 								foreach ($results as $row) {
@@ -688,7 +688,7 @@
 						//get the domains
 							if (!isset($domains)) {
 								$sql = "select * from v_domains ";
-								$database = new database;
+								$database = framework::database();
 								$result = $database->select($sql, null, 'all');
 								if (!empty($result)) {
 									foreach($result as $row) {
@@ -736,7 +736,7 @@
 								$sql .= "when 'anti-action' then 3 \n";
 								$sql .= "else 100 end, \n";
 								$sql .= "s.dialplan_detail_order asc \n";
-								$database = new database;
+								$database = framework::database();
 								$this->dialplan_details = $database->select($sql, $parameters ?? null, 'all');
 								unset($sql, $parameters);
 
@@ -1064,7 +1064,7 @@
 									$p->add('dialplan_edit', 'temp');
 
 									//execute update
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = 'dialplans';
 									$database->app_uuid = '742714e5-8cdf-32fd-462c-cbe7e3d655db';
 									$database->save($array);
@@ -1104,7 +1104,7 @@
 					$sql[] = "update v_dialplans set dialplan_order = '870' where dialplan_order = '980' and dialplan_name = 'cidlookup' ";
 					$sql[] = "update v_dialplans set dialplan_order = '880' where dialplan_order = '990' and dialplan_name = 'call_screen' ";
 					$sql[] = "update v_dialplans set dialplan_order = '890' where dialplan_order = '999' and dialplan_name = 'local_extension' ";
-					$database = new database;
+					$database = framework::database();
 					foreach ($sql as $query) {
 						$database->execute($query);
 					}
@@ -1175,7 +1175,7 @@
 											$sql = "select dialplan_context from v_dialplans ";
 											$sql .= "where dialplan_uuid = :dialplan_uuid ";
 											$parameters['dialplan_uuid'] = $record['uuid'];
-											$database = new database;
+											$database = framework::database();
 											$dialplan_contexts[] = $database->select($sql, $parameters ?? null, 'column');
 											unset($sql, $parameters);
 
@@ -1191,7 +1191,7 @@
 										$p->add('dialplan_detail_delete', 'temp');
 
 									//execute delete
-										$database = new database;
+										$database = framework::database();
 										$database->app_name = $this->app_name;
 										$database->app_uuid = $this->app_uuid;
 										$database->delete($array);
@@ -1279,7 +1279,7 @@
 											$sql = "select dialplan_context from v_dialplans ";
 											$sql .= "where dialplan_uuid = :dialplan_uuid ";
 											$parameters['dialplan_uuid'] = $this->dialplan_uuid;
-											$database = new database;
+											$database = framework::database();
 											$dialplan_contexts[] = $database->select($sql, $parameters ?? null, 'column');
 											unset($sql, $parameters);
 
@@ -1294,7 +1294,7 @@
 										$p->add('dialplan_detail_delete', 'temp');
 
 									//execute delete
-										$database = new database;
+										$database = framework::database();
 										$database->app_name = $this->app_name;
 										$database->app_uuid = $this->app_uuid;
 										$database->delete($array);
@@ -1374,7 +1374,7 @@
 										$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 										$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 									}
-									$database = new database;
+									$database = framework::database();
 									$rows = $database->select($sql, $parameters ?? null, 'all');
 									if (!empty($rows)) {
 										foreach ($rows as $row) {
@@ -1401,7 +1401,7 @@
 										$p->add('dialplan_edit', 'temp');
 
 									//save the array
-										$database = new database;
+										$database = framework::database();
 										$database->app_name = $this->app_name;
 										$database->app_uuid = $this->app_uuid;
 										$database->save($array);
@@ -1489,7 +1489,7 @@
 									//primary table
 										$sql = "select * from v_".$this->table." ";
 										$sql .= "where ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
-										$database = new database;
+										$database = framework::database();
 										$rows = $database->select($sql, $parameters ?? null, 'all');
 										if (!empty($rows)) {
 											$y = 0;
@@ -1521,7 +1521,7 @@
 												//details sub table
 													$sql_2 = "select * from v_dialplan_details where dialplan_uuid = :dialplan_uuid";
 													$parameters_2['dialplan_uuid'] = $row['dialplan_uuid'];
-													$database = new database;
+													$database = framework::database();
 													$rows_2 = $database->select($sql_2, $parameters_2 ?? null, 'all');
 													if (!empty($rows_2)) {
 														foreach ($rows_2 as $row_2) {
@@ -1555,7 +1555,7 @@
 										$p->add('dialplan_detail_add', 'temp');
 
 									//save the array
-										$database = new database;
+										$database = framework::database();
 										$database->app_name = $this->app_name;
 										$database->app_uuid = $this->app_uuid;
 										$database->save($array);

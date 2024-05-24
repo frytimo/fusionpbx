@@ -253,7 +253,7 @@
 
 		//get the groups
 			$sql = "select * from v_groups where domain_uuid is null ";
-			$database = new database;
+			$database = framework::database();
 			$groups = $database->select($sql, null, 'all');
 			unset($sql);
 
@@ -349,7 +349,7 @@
 								if ($row_id === 1000) {
 
 									//save to the data
-										$database = new database;
+										$database = framework::database();
 										$database->app_name = 'users';
 										$database->app_uuid = '4efa1a1a-32e7-bf83-534b-6c8299958a8e';
 										$database->save($array);
@@ -376,7 +376,7 @@
 
 				//save to the data
 					if (!empty($array)) {
-						$database = new database;
+						$database = framework::database();
 						$database->app_name = 'users';
 						$database->app_uuid = '4efa1a1a-32e7-bf83-534b-6c8299958a8e';
 						$database->save($array);

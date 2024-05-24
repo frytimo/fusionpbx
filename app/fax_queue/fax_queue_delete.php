@@ -28,7 +28,7 @@
 
 		//delete the data
 			$array['fax_queue'][]['fax_queue_uuid'] = $id;
-			$database = new database;
+			$database = framework::database();
 			$database->delete($array);
 			unset($array);
 

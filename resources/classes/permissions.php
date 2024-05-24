@@ -170,7 +170,7 @@ if (!class_exists('permissions')) {
 			}
 			$sql .= "and permission_assigned = 'true' ";
 			$parameters['domain_uuid'] = $this->domain_uuid;
-			$database = new database;
+			$database = framework::database();
 			$permissions = $database->select($sql, $parameters, 'all');
 			unset($sql, $parameters, $result);
 			return $permissions;

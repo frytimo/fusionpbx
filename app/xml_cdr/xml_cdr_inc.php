@@ -213,7 +213,7 @@
 		$sql .= "where domain_uuid = :domain_uuid ";
 		$sql .= ".$sql_where;
 		$parameters['domain_uuid'] = $domain_uuid;
-		$database = new database;
+		$database = framework::database();
 		$num_rows = $database->select($sql, $parameters, 'column');
 		unset($sql, $parameters);
 	}
@@ -570,7 +570,7 @@
 		}
 	}
 	$sql = str_replace("  ", " ", $sql);
-	$database = new database;
+	$database = framework::database();
 	if ($archive_request && $_SESSION['cdr']['archive_database']['boolean'] == 'true') {
 		$database->driver = $_SESSION['cdr']['archive_database_driver']['text'];
 		$database->host = $_SESSION['cdr']['archive_database_host']['text'];

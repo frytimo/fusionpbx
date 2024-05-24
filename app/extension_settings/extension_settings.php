@@ -126,7 +126,7 @@
 		$parameters['domain_uuid'] = $domain_uuid;
 	}
 	$parameters['extension_uuid'] = $extension_uuid;
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters, 'column');
 	unset($sql, $parameters);
 
@@ -157,7 +157,7 @@
 	$sql .= limit_offset($rows_per_page ?? null, $offset ?? null);
 	$parameters['extension_uuid'] = $extension_uuid;
 	$parameters['domain_uuid'] = $domain_uuid;
-	$database = new database;
+	$database = framework::database();
 	$extension_settings = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 

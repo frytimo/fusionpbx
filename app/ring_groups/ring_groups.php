@@ -91,7 +91,7 @@
 	$sql = "select count(*) from v_ring_groups ";
 	$sql .= "where domain_uuid = :domain_uuid ";
 	$parameters['domain_uuid'] = $domain_uuid;
-	$database = new database;
+	$database = framework::database();
 	$total_ring_groups = $database->select($sql, $parameters, 'column');
 
 //get filtered ring group count
@@ -123,7 +123,7 @@
 		$sql .= ") ";
 		$parameters['search'] = '%'.$search.'%';
 	}
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters, 'column');
 	unset($sql, $parameters);
 

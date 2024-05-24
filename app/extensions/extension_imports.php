@@ -253,7 +253,7 @@
 		//get the users
 			$sql = "select * from v_users where domain_uuid = :domain_uuid ";
 			$parameters['domain_uuid'] = $domain_uuid;
-			$database = new database;
+			$database = framework::database();
 			$users = $database->select($sql, $parameters, 'all');
 			unset($sql, $parameters);
 
@@ -322,7 +322,7 @@
 								if ($row_id === 1000) {
 
 									//save to the data
-										$database = new database;
+										$database = framework::database();
 										$database->app_name = 'extensions';
 										$database->app_uuid = 'e68d9689-2769-e013-28fa-6214bf47fca3';
 										$database->save($array);
@@ -342,7 +342,7 @@
 
 				//save to the data
 					if (!empty($array) && is_array($array)) {
-						$database = new database;
+						$database = framework::database();
 						$database->app_name = 'extensions';
 						$database->app_uuid = 'e68d9689-2769-e013-28fa-6214bf47fca3';
 						$database->save($array);

@@ -136,7 +136,7 @@
 			$array['sofia_global_settings'][0]['global_setting_description'] = $global_setting_description;
 
 		//save the data
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'sofia_global_settings';
 			$database->app_uuid = '240c25a3-a2cf-44ea-a300-0626eca5b945';
 			$database->save($array);
@@ -166,7 +166,7 @@
 		$sql .= "from v_sofia_global_settings ";
 		$sql .= "where sofia_global_setting_uuid = :sofia_global_setting_uuid ";
 		$parameters['sofia_global_setting_uuid'] = $sofia_global_setting_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (is_array($row) && @sizeof($row) != 0) {
 			$global_setting_name = $row["global_setting_name"];

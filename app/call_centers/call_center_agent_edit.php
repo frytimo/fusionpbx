@@ -61,7 +61,7 @@
 				}
 				$parameters['agent_id'] = $_GET["agent_id"];
 				$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-				$database = new database;
+				$database = framework::database();
 				$row = $database->select($sql, $parameters, 'row');
 				if (!empty($row) && !empty($row['agent_name'])) {
 					echo $text['message-duplicate_agent_id'].(if_group("superadmin") ? ": ".$row["agent_name"] : null);
@@ -156,7 +156,7 @@
 			$sql .= "where domain_uuid = :domain_uuid ";
 			$sql .= "order by username asc ";
 			$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-			$database = new database;
+			$database = framework::database();
 			$users = $database->select($sql, $parameters, 'all');
 			unset($sql, $parameters);
 
@@ -193,7 +193,7 @@
 			}
 
 		//save to the data
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'call_center';
 			$database->app_uuid = '95788e50-9500-079e-2807-fd530b0ea370';
 			$database->save($array);
@@ -295,7 +295,7 @@
 		$sql .= "and call_center_agent_uuid = :call_center_agent_uuid ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['call_center_agent_uuid'] = $call_center_agent_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (!empty($row)) {
 			$call_center_agent_uuid = $row["call_center_agent_uuid"];
@@ -346,7 +346,7 @@
 	$sql .= "and user_enabled = 'true' ";
 	$sql .= "order by username asc ";
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-	$database = new database;
+	$database = framework::database();
 	$users = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 

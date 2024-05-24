@@ -98,7 +98,7 @@
 					$array['menus'][0]['menu_name'] = $menu_name;
 					$array['menus'][0]['menu_language'] = $menu_language;
 					$array['menus'][0]['menu_description'] = $menu_description;
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'menu';
 					$database->app_uuid = 'f4b3b3d2-6287-489c-2a00-64529e46f2d7';
 					$database->save($array);
@@ -116,7 +116,7 @@
 					$array['menus'][0]['menu_name'] = $menu_name;
 					$array['menus'][0]['menu_language'] = $menu_language;
 					$array['menus'][0]['menu_description'] = $menu_description;
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'menu';
 					$database->app_uuid = 'f4b3b3d2-6287-489c-2a00-64529e46f2d7';
 					$database->save($array);
@@ -136,7 +136,7 @@
 		$sql = "select * from v_menus ";
 		$sql .= "where menu_uuid = :menu_uuid ";
 		$parameters['menu_uuid'] = $menu_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (!empty($row)) {
 			$menu_uuid = $row["menu_uuid"];

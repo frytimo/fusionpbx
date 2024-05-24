@@ -67,7 +67,7 @@
 					$sql .= "	and group_name in (".$group_names.") ";
 					$sql .= ")";
 					$sql .= "and (permission_protected <> 'true' or permission_protected is null)";
-					$database = new database;
+					$database = framework::database();
 					$result = $database->select($sql);
 
 				//get the group_permissons
@@ -79,7 +79,7 @@
 					$sql .= "	where group_protected <> 'true' ";
 					$sql .= "	and group_name in (".$group_names.") ";
 					$sql .= ");";
-					$database = new database;
+					$database = framework::database();
 					$group_permissions = $database->select($sql, null, 'all');
 					*/
 
@@ -98,7 +98,7 @@
 								$p = new permissions;
 								$p->add('group_permission_delete', 'temp');
 							//execute delete
-								$database = new database;
+								$database = framework::database();
 								$database->app_name = 'groups';
 								$database->app_uuid = '2caf27b0-540a-43d5-bb9b-c9871a1e4f84';
 								$database->delete($array);
@@ -116,7 +116,7 @@
 				//if the are no groups add the default groups
 					$sql = "select * from v_groups ";
 					$sql .= "where domain_uuid is null ";
-					$database = new database;
+					$database = framework::database();
 					$groups = $database->select($sql, null, 'all');
 
 				//delete the group permissions
@@ -124,7 +124,7 @@
 					
 				//get the remaining group permissions
 					$sql = "select permission_name, group_name from v_group_permissions ";
-					$database = new database;
+					$database = framework::database();
 					$database_group_permissions = $database->select($sql, null, 'all');
 
 				//get the $apps array from the installed apps from the core and mod directories
@@ -189,7 +189,7 @@
 							$p->add('group_permission_add', 'temp');
 
 						//execute insert
-							$database = new database;
+							$database = framework::database();
 							$database->app_name = 'groups';
 							$database->app_uuid = '2caf27b0-540a-43d5-bb9b-c9871a1e4f84';
 							$database->save($array);

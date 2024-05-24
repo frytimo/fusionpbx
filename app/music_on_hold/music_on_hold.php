@@ -57,7 +57,7 @@
 		$sql .= "or domain_uuid is null ";
 	}
 	$sql .= "order by domain_uuid desc, music_on_hold_name asc, music_on_hold_rate asc";
-	$database = new database;
+	$database = framework::database();
 	$streams = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters);
 
@@ -275,7 +275,7 @@
 						$p = new permissions;
 						$p->add('music_on_hold_add', 'temp');
 
-						$database = new database;
+						$database = framework::database();
 						$database->app_name = 'music_on_hold';
 						$database->app_uuid = '1dafe0f8-c08a-289b-0312-15baf4f20f81';
 						$database->save($array);

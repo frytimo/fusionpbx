@@ -77,7 +77,7 @@
 	$sql .= "and call_broadcast_uuid = :call_broadcast_uuid ";
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	$parameters['call_broadcast_uuid'] = $call_broadcast_uuid;
-	$database = new database;
+	$database = framework::database();
 	$row = $database->select($sql, $parameters, 'row');
 	if (!empty($row)) {
 		$broadcast_name = $row["broadcast_name"];

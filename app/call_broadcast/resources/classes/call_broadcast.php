@@ -91,7 +91,7 @@ if (!class_exists('call_broadcast')) {
 							if (is_array($array) && @sizeof($array) != 0) {
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -139,7 +139,7 @@ if (!class_exists('call_broadcast')) {
 								$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
 								$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $x => $row) {
@@ -160,7 +160,7 @@ if (!class_exists('call_broadcast')) {
 							if (is_array($array) && @sizeof($array) != 0) {
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);

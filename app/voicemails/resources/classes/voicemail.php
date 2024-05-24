@@ -27,6 +27,21 @@
 //define the voicemail class
 	class voicemail {
 
+		use database_maintenance;
+		use filesystem_maintenance;
+
+		public static function database_maintenance_sql(string $domain_uuid, string $retention_days): string {
+			return "delete from v_voicemail_messages WHERE to_timestamp(created_epoch) < NOW() - INTERVAL '$retention_days days'"
+					. " and domain_uuid = $domain_uuid";
+		}
+
+		public static function filesystem_maintenance_files(\settings $settings, string $domain_uuid, string $domain_name, string $retention_days): array {
+			$voicemail_location = $settings->get('switch', 'voicemail', '/var/lib/freeswitch/storage/voicemail') . '/' . $domain_name;
+			$wav_files = glob($voicemail_location . '/msg*.wav');
+			$mp3_files = glob($voicemail_location . '/msg*.mp3');
+			return array_merge($wav_files, $mp3_files);
+		}
+
 		/**
 		 * declare public variables
 		 */
@@ -98,7 +113,7 @@
 					$sql .= "and voicemail_uuid = :voicemail_uuid ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
 					$parameters['voicemail_uuid'] = $this->voicemail_uuid;
-					$database = new database;
+					$database = framework::database();
 					$voicemail_id = $database->select($sql, $parameters, 'column');
 					if (is_numeric($voicemail_id)) {
 						$this->voicemail_id = $voicemail_id;
@@ -183,7 +198,7 @@
 				}
 				$sql .= "order by voicemail_id asc ";
 				$parameters['domain_uuid'] = $this->domain_uuid;
-				$database = new database;
+				$database = framework::database();
 				$result = $database->select($sql, $parameters, 'all');
 				unset($sql, $parameters);
 				return $result;
@@ -255,7 +270,7 @@
 				}
 				$parameters['domain_uuid'] = $this->domain_uuid;
 				$parameters['time_zone'] = $time_zone;
-				$database = new database;
+				$database = framework::database();
 				$result = $database->select($sql, $parameters, 'all');
 				unset($sql, $parameters);
 
@@ -313,7 +328,7 @@
 							if (is_array($uuids) && @sizeof($uuids) != 0) {
 								$sql = "select ".$this->uuid_prefix."uuid as uuid, voicemail_id from v_".$this->table." ";
 								$sql .= "where ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters ?? null, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -372,7 +387,7 @@
 									$p->add('voicemail_greeting_delete', 'temp');
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -435,7 +450,7 @@
 						//delete the checked rows
 							if (is_array($array) && @sizeof($array) != 0) {
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -486,7 +501,7 @@
 									$p->add('voicemail_destination_delete', 'temp');
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -531,7 +546,7 @@
 								$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
 								$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -564,7 +579,7 @@
 							if (is_array($array) && @sizeof($array) != 0) {
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);
@@ -597,7 +612,7 @@
 				$sql .= "and voicemail_uuid = :voicemail_uuid ";
 				$parameters['domain_uuid'] = $this->domain_uuid;
 				$parameters['voicemail_uuid'] = $this->voicemail_uuid;
-				$database = new database;
+				$database = framework::database();
 				return $database->select($sql, $parameters, 'column');
 				unset($sql, $parameters);
 
@@ -658,7 +673,7 @@
 				$p->add('voicemail_message_delete', 'temp');
 
 			//execute delete
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = $this->app_name;
 				$database->app_name = $this->app_uuid;
 				$database->delete($array);
@@ -685,7 +700,7 @@
 				$sql = "select message_status from v_voicemail_messages ";
 				$sql .= "where voicemail_message_uuid = :voicemail_message_uuid ";
 				$parameters['voicemail_message_uuid'] = $this->voicemail_message_uuid;
-				$database = new database;
+				$database = framework::database();
 				$new_status = $database->select($sql, $parameters, 'column') != 'saved' ? 'saved' : null;
 				unset($sql, $parameters);
 
@@ -698,7 +713,7 @@
 				$p->add('voicemail_message_edit', 'temp');
 
 			//execute update
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = $this->app_name;
 				$database->app_name = $this->app_uuid;
 				$database->save($array);
@@ -730,7 +745,7 @@
 				$p->add('voicemail_message_edit', 'temp');
 
 			//execute update
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = $this->app_name;
 				$database->app_name = $this->app_uuid;
 				$database->save($array);
@@ -785,7 +800,7 @@
 				$parameters['voicemail_uuid'] = $this->voicemail_uuid;
 				$parameters['domain_uuid'] = $this->domain_uuid;
 				$parameters['voicemail_message_uuid'] = $this->voicemail_message_uuid;
-				$database = new database;
+				$database = framework::database();
 				$message_base64 = $database->select($sql, $parameters, 'column');
 				if ($message_base64 != '') {
 					$message_decoded = base64_decode($message_base64);
@@ -957,8 +972,7 @@
 
 		}
 
-
-	}
+}
 
 //example voicemail messages
 	//require_once "app/voicemails/resources/classes/voicemail.php";

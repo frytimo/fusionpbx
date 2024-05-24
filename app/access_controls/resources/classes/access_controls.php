@@ -73,7 +73,7 @@ if (!class_exists('access_controls')) {
 									$p->add('access_control_node_delete', 'temp');
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -132,7 +132,7 @@ if (!class_exists('access_controls')) {
 							if (is_array($array) && @sizeof($array) != 0) {
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -193,7 +193,7 @@ if (!class_exists('access_controls')) {
 								//primary table
 									$sql = "select * from v_".$this->table." ";
 									$sql .= "where ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
-									$database = new database;
+									$database = framework::database();
 									$rows = $database->select($sql, $parameters, 'all');
 									if (is_array($rows) && @sizeof($rows) != 0) {
 										$y = 0;
@@ -210,7 +210,7 @@ if (!class_exists('access_controls')) {
 											//nodes sub table
 												$sql_2 = "select * from v_access_control_nodes where access_control_uuid = :access_control_uuid";
 												$parameters_2['access_control_uuid'] = $row['access_control_uuid'];
-												$database = new database;
+												$database = framework::database();
 												$rows_2 = $database->select($sql_2, $parameters_2, 'all');
 												if (is_array($rows_2) && @sizeof($rows_2) != 0) {
 													foreach ($rows_2 as $row_2) {
@@ -241,7 +241,7 @@ if (!class_exists('access_controls')) {
 									$p->add('access_control_node_add', 'temp');
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);

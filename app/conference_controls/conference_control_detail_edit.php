@@ -123,7 +123,7 @@
 				}
 
 				if (is_uuid($array['conference_control_details'][0]['conference_control_detail_uuid'])) {
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'conference_controls';
 					$database->app_uuid = 'e1ad84a2-79e1-450c-a5b1-7507a043e048';
 					$database->save($array);
@@ -144,7 +144,7 @@
 		//$sql .= "and domain_uuid = :domain_uuid ";
 		$parameters['conference_control_detail_uuid'] = $conference_control_detail_uuid;
 		//$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters ?? null, 'row');
 		if (!empty($row)) {
 			$control_digits = $row["control_digits"];

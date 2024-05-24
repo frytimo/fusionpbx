@@ -128,7 +128,7 @@
 			$array['email_templates'][0]['template_description'] = $template_description;
 
 		//save to the data
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'email_templates';
 			$database->app_uuid = '8173e738-2523-46d5-8943-13883befd2fd';
 			if (!empty($email_template_uuid)) {
@@ -158,7 +158,7 @@
 		//$sql .= "and domain_uuid = :domain_uuid ";
 		$parameters['email_template_uuid'] = $email_template_uuid;
 		//$parameters['domain_uuid'] = $domain_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (!empty($row)) {
 			$domain_uuid = $row["domain_uuid"];

@@ -311,7 +311,7 @@
 							//process a chunk of the array
 								if ($row_id === 1000) {
 									//save to the data
-										$database = new database;
+										$database = framework::database();
 										$database->app_name = 'access_controls';
 										$database->app_uuid = '1416a250-f6e1-4edc-91a6-5c9b883638fd';
 										$database->save($array);
@@ -334,7 +334,7 @@
 
 				//save to the data
 					if (!empty($array)) {
-						$database = new database;
+						$database = framework::database();
 						$database->app_name = 'access_controls';
 						$database->app_uuid = '1416a250-f6e1-4edc-91a6-5c9b883638fd';
 						$database->save($array);

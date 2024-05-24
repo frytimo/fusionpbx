@@ -50,7 +50,7 @@
 			$sql .= "and username = :username ";
 			$parameters['domain_uuid'] = $domain_uuid;
 			$parameters['username'] = $username;
-			$database = new database;
+			$database = framework::database();
 			$password_current = $database->select($sql, $parameters, 'column');
 			unset($sql, $parameters);
 
@@ -81,7 +81,7 @@
 				$sql .= "v_users ";
 				$sql .= "where user_email = :email ";
 				$parameters['email'] = $email;
-				$database = new database;
+				$database = framework::database();
 				$results = $database->select($sql, $parameters, 'all');
 				unset($sql, $parameters);
 
@@ -122,7 +122,7 @@
 								$sql .= "and user_setting_name = 'code' ";
 								$parameters['user_uuid'] = $result['user_uuid'];
 								$parameters['domain_uuid'] = $domain_uuid;
-								$database = new database;
+								$database = framework::database();
 								$row = $database->select($sql, $parameters, 'row');
 								if (is_array($row) && @sizeof($row) != 0) {
 									$user_language_code = $row['user_setting_value'];
@@ -139,7 +139,7 @@
 								$sql .= "and template_enabled = 'true' ";
 								$parameters['template_language'] = $user_language_code ? $user_language_code : $_SESSION['domain']['language']['code'];
 								$parameters['domain_uuid'] = $domain_uuid;
-								$database = new database;
+								$database = framework::database();
 								$row = $database->select($sql, $parameters, 'row');
 								if (is_array($row)) {
 									$email_subject = $row['template_subject'];
@@ -220,7 +220,7 @@
 				$parameters['password'] = md5($salt.$password_new);
 				$parameters['salt'] = $salt;
 				$parameters['username'] = $username;
-				$database = new database;
+				$database = framework::database();
 				$database->execute($sql, $parameters);
 				unset($sql, $parameters);
 

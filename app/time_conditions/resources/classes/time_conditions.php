@@ -89,7 +89,7 @@
 											$sql = "select dialplan_context from v_dialplans ";
 											$sql .= "where dialplan_uuid = :dialplan_uuid ";
 											$parameters['dialplan_uuid'] = $record['uuid'];
-											$database = new database;
+											$database = framework::database();
 											$dialplan_contexts[] = $database->select($sql, $parameters, 'column');
 											unset($sql, $parameters);
 
@@ -105,7 +105,7 @@
 										$p->add('dialplan_detail_delete', 'temp');
 
 									//execute delete
-										$database = new database;
+										$database = framework::database();
 										$database->app_name = $this->app_name;
 										$database->app_uuid = $this->app_uuid;
 										$database->delete($array);
@@ -170,7 +170,7 @@
 									$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
 									$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 									$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-									$database = new database;
+									$database = framework::database();
 									$rows = $database->select($sql, $parameters, 'all');
 									if (is_array($rows) && @sizeof($rows) != 0) {
 										foreach ($rows as $row) {
@@ -197,7 +197,7 @@
 										$p->add('dialplan_edit', 'temp');
 
 									//save the array
-										$database = new database;
+										$database = framework::database();
 										$database->app_name = $this->app_name;
 										$database->app_uuid = $this->app_uuid;
 										$database->save($array);
@@ -263,7 +263,7 @@
 									//primary table
 										$sql = "select * from v_".$this->table." ";
 										$sql .= "where ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
-										$database = new database;
+										$database = framework::database();
 										$rows = $database->select($sql, $parameters ?? null, 'all');
 										if (is_array($rows) && @sizeof($rows) != 0) {
 											$y = 0;
@@ -280,7 +280,7 @@
 												//details sub table
 													$sql_2 = "select * from v_dialplan_details where dialplan_uuid = :dialplan_uuid";
 													$parameters_2['dialplan_uuid'] = $row['dialplan_uuid'];
-													$database = new database;
+													$database = framework::database();
 													$rows_2 = $database->select($sql_2, $parameters_2, 'all');
 													if (is_array($rows_2) && @sizeof($rows_2) != 0) {
 														foreach ($rows_2 as $row_2) {
@@ -315,7 +315,7 @@
 										$p->add('dialplan_detail_add', 'temp');
 
 									//save the array
-										$database = new database;
+										$database = framework::database();
 										$database->app_name = $this->app_name;
 										$database->app_uuid = $this->app_uuid;
 										$database->save($array);

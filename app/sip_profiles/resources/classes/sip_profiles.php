@@ -93,7 +93,7 @@ if (!class_exists('sip_profiles')) {
 						//get necessary sip profile details
 							$sql = "select ".$this->uuid_prefix."uuid as uuid, sip_profile_name, sip_profile_hostname from v_".$this->table." ";
 							$sql .= "where ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
-							$database = new database;
+							$database = framework::database();
 							$rows = $database->select($sql, $parameters ?? null, 'all');
 							if (is_array($rows) && @sizeof($rows) != 0) {
 								foreach ($rows as $row) {
@@ -121,7 +121,7 @@ if (!class_exists('sip_profiles')) {
 									$p->add('sip_profile_setting_delete', 'temp');
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -214,7 +214,7 @@ if (!class_exists('sip_profiles')) {
 								$sql = "select sip_profile_hostname from v_sip_profiles ";
 								$sql .= "where sip_profile_uuid = :sip_profile_uuid ";
 								$parameters['sip_profile_uuid'] = $this->sip_profile_uuid;
-								$database = new database;
+								$database = framework::database();
 								$sip_profile_hostname = $database->select($sql, $parameters, 'column');
 								unset($sql, $parameters);
 							}
@@ -223,7 +223,7 @@ if (!class_exists('sip_profiles')) {
 							if (!empty($array) && @sizeof($array) != 0) {
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -292,7 +292,7 @@ if (!class_exists('sip_profiles')) {
 								$sql = "select sip_profile_hostname from v_sip_profiles ";
 								$sql .= "where sip_profile_uuid = :sip_profile_uuid ";
 								$parameters['sip_profile_uuid'] = $this->sip_profile_uuid;
-								$database = new database;
+								$database = framework::database();
 								$sip_profile_hostname = $database->select($sql, $parameters, 'column');
 								unset($sql, $parameters);
 							}
@@ -301,7 +301,7 @@ if (!class_exists('sip_profiles')) {
 							if (!empty($array) && @sizeof($array) != 0) {
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -363,7 +363,7 @@ if (!class_exists('sip_profiles')) {
 							if (!empty($uuids) && @sizeof($uuids) != 0) {
 								$sql = "select ".$this->uuid_prefix."uuid as uuid, ".$this->toggle_field." as toggle, sip_profile_hostname from v_".$this->table." ";
 								$sql .= "where ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters ?? null, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -386,7 +386,7 @@ if (!class_exists('sip_profiles')) {
 							if (!empty($array) && @sizeof($array) != 0) {
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);

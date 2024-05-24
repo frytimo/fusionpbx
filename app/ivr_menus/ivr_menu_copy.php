@@ -53,7 +53,7 @@
 			$sql .= "and domain_uuid = :domain_uuid ";
 			$parameters['ivr_menu_uuid'] = $ivr_menu_uuid;
 			$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-			$database = new database;
+			$database = framework::database();
 			$ivr_menus = $database->select($sql, $parameters, 'all');
 			if (!is_array($ivr_menus)) {
 				echo "access denied";
@@ -68,7 +68,7 @@
 			$sql .= "order by ivr_menu_uuid asc ";
 			$parameters['ivr_menu_uuid'] = $ivr_menu_uuid;
 			$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-			$database = new database;
+			$database = framework::database();
 			$ivr_menu_options = $database->select($sql, $parameters, 'all');
 			unset($sql, $parameters);
 
@@ -156,7 +156,7 @@
 			$p->add("dialplan_edit", "temp");
 
 		//save the array to the database
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'ivr_menus';
 			$database->app_uuid = 'a5788e9b-58bc-bd1b-df59-fff5d51253ab';
 			if (is_uuid($ivr_menu_uuid)) {

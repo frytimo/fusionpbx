@@ -101,7 +101,7 @@ if (!class_exists('voicemail_greetings')) {
 							if (is_array($uuids) && @sizeof($uuids) != 0) {
 								$sql = "select ".$this->uuid_prefix."uuid as uuid, greeting_filename, greeting_id from v_".$this->table." ";
 								$sql .= "where ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters ?? null, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -139,7 +139,7 @@ if (!class_exists('voicemail_greetings')) {
 										$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 										$parameters['voicemail_id'] = $voicemail_id;
 										$parameters['greeting_id'] = $greeting_id;
-										$database = new database;
+										$database = framework::database();
 										$database->app_name = $this->app_name;
 										$database->app_uuid = $this->app_uuid;
 										$database->execute($sql, $parameters);
@@ -151,7 +151,7 @@ if (!class_exists('voicemail_greetings')) {
 						//delete the checked rows
 							if (is_array($array) && @sizeof($array) != 0) {
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);

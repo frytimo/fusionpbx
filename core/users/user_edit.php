@@ -34,7 +34,7 @@
 	$text = $language->get();
 
 //create a single database object
-	$database = new database;
+	$database = framework::database();
 	$database->app_name = 'users';
 	$database->app_uuid = '112124b3-95c2-5352-7e9d-d14c0b88f207';
 

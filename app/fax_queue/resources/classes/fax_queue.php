@@ -34,6 +34,14 @@
 if (!class_exists('fax_queue')) {
 	class fax_queue {
 
+		use database_maintenance;
+		public static function database_maintenance_sql(string $domain_uuid, string $retention_days): string {
+			$sql = "delete from v_fax_queue where fax_status = 'sent'"
+				. " and fax_date < NOW() - INTERVAL '$retention_days days'"
+				. " and domain_uuid = '$domain_uuid'";
+			return $sql;
+		}
+
 		/**
 		* declare the variables
 		*/
@@ -95,7 +103,7 @@ if (!class_exists('fax_queue')) {
 						//delete the checked rows
 							if (is_array($array) && @sizeof($array) != 0) {
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -140,7 +148,7 @@ if (!class_exists('fax_queue')) {
 								$sql .= "where ".$this->name."_uuid in (".implode(', ', $uuids).") ";
 								$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -164,7 +172,7 @@ if (!class_exists('fax_queue')) {
 						//save the changes
 							if (is_array($array) && @sizeof($array) != 0) {
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);
@@ -212,7 +220,7 @@ if (!class_exists('fax_queue')) {
 								$sql .= "where fax_queue_uuid in (".implode(', ', $uuids).") ";
 								$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									$x = 0;
@@ -233,7 +241,7 @@ if (!class_exists('fax_queue')) {
 						//save the changes and set the message
 							if (is_array($array) && @sizeof($array) != 0) {
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);

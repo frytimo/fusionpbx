@@ -82,7 +82,7 @@
 		$sql .= "and conference_extension = :conference_extension ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['conference_extension'] = $name;
-		$database = new database;
+		$database = framework::database();
 		$name = $database->select($sql, $parameters, 'column');
 		unset ($parameters, $sql);
 	}

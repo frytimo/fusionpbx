@@ -76,7 +76,7 @@
 		}
 
 		//prepare the database object
-		$database = new database;
+		$database = framework::database();
 		$database->app_name = 'number_translations';
 		$database->app_uuid = '6ad54de6-4909-11e7-a919-92ebcb67fe33';
 
@@ -123,7 +123,7 @@
 		$sql .= "	or lower(number_translation_description) like :search ";
 		$sql .= ") ";
 	}
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters ?? null, 'column');
 
 //prepare to page the results
@@ -149,7 +149,7 @@
 	}
 	$sql .= order_by($order_by, $order, 'number_translation_name', 'asc');
 	$sql .= limit_offset($rows_per_page, $offset);
-	$database = new database;
+	$database = framework::database();
 	$number_translations = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters);
 

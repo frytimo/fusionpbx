@@ -140,7 +140,7 @@
 			$array['event_guard_logs'][0]['log_status'] = $log_status;
 
 		//save the data
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'event guard';
 			$database->app_uuid = 'c5b86612-1514-40cb-8e2c-3f01a8f6f637';
 			$database->save($array);
@@ -173,7 +173,7 @@
 		$sql .= "from v_event_guard_logs ";
 		$sql .= "where event_guard_log_uuid = :event_guard_log_uuid ";
 		$parameters['event_guard_log_uuid'] = $event_guard_log_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (is_array($row) && @sizeof($row) != 0) {
 			$hostname = $row["hostname"];

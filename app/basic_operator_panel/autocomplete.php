@@ -62,7 +62,7 @@
 	$user_group_uuids[] = $_SESSION["user_uuid"];
 
 //create the database object
-	$database = new database;
+	$database = framework::database();
 
 //get extensions list
 	$sql = "select \n";
@@ -93,7 +93,7 @@
 	if (isset($_GET['debug'])) { echo $sql."<br><br>"; }
 	$parameters['term'] = '%'.$term.'%';
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-	$database = new database;
+	$database = framework::database();
 	$result = $database->select($sql, $parameters, 'all');
 	unset ($parameters, $sql);
 
@@ -159,7 +159,7 @@
 	if (isset($_GET['debug'])) { echo $sql."<br><br>"; }
 	$parameters['term'] = '%'.$term.'%';
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-	$database = new database;
+	$database = framework::database();
 	$result = $database->select($sql, $parameters, 'all');
 	unset ($parameters, $sql);
 

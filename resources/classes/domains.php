@@ -91,7 +91,7 @@ if (!class_exists('domains')) {
 											$sql = "select domain_name from v_domains ";
 											$sql .= "where domain_uuid = :domain_uuid ";
 											$parameters['domain_uuid'] = $id;
-											$database = new database;
+											$database = framework::database();
 											$domain_name = $database->select($sql, $parameters, 'column');
 											unset($sql, $parameters);
 
@@ -100,7 +100,7 @@ if (!class_exists('domains')) {
 											$sql .= "where domain_uuid = :domain_uuid ";
 											$sql .= "and domain_setting_enabled = 'true' ";
 											$parameters['domain_uuid'] = $id;
-											$database = new database;
+											$database = framework::database();
 											$result = $database->select($sql, $parameters, 'all');
 											unset($sql, $parameters);
 
@@ -155,7 +155,7 @@ if (!class_exists('domains')) {
 															if ($field['name'] == 'domain_uuid' && $table_name != 'v_domains') {
 																$sql = "delete from ".$table_name." where domain_uuid = :domain_uuid ";
 																$parameters['domain_uuid'] = $id;
-																$database = new database;
+																$database = framework::database();
 																$database->app_name = 'domain_settings';
 																$database->app_uuid = 'b31e723a-bf70-670c-a49b-470d2a232f71';
 																$database->execute($sql, $parameters);
@@ -265,7 +265,7 @@ if (!class_exists('domains')) {
 						//delete the checked rows
 							if (is_array($domain_array) && @sizeof($domain_array) != 0) {
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($domain_array);
@@ -310,7 +310,7 @@ if (!class_exists('domains')) {
 							if (is_array($uuids) && @sizeof($uuids) != 0) {
 								$sql = "select ".$this->name."_uuid as uuid, ".$this->toggle_field." as toggle from v_".$this->table." ";
 								$sql .= "where ".$this->name."_uuid in (".implode(', ', $uuids).") ";
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters ?? null, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -334,7 +334,7 @@ if (!class_exists('domains')) {
 						//save the changes
 							if (is_array($array) && @sizeof($array) != 0) {
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);
@@ -380,7 +380,7 @@ if (!class_exists('domains')) {
 							if (is_array($uuids) && @sizeof($uuids) != 0) {
 								$sql = "select * from v_".$this->table." ";
 								$sql .= "where ".$this->name."_uuid in (".implode(', ', $uuids).") ";
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									$x = 0;
@@ -402,7 +402,7 @@ if (!class_exists('domains')) {
 						//save the changes and set the message
 							if (is_array($array) && @sizeof($array) != 0) {
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);
@@ -428,7 +428,7 @@ if (!class_exists('domains')) {
 					$sql .= "and domain_setting_enabled = 'true' ";
 					$sql .= " order by domain_setting_order asc ";
 					$parameters['previous_domain_uuid'] = $_SESSION["previous_domain_uuid"];
-					$database = new database;
+					$database = framework::database();
 					$result = $database->select($sql, $parameters, 'all');
 					unset($sql, $parameters);
 
@@ -444,7 +444,7 @@ if (!class_exists('domains')) {
 			//get the default settings
 				$sql = "select * from v_default_settings ";
 				$sql .= "order by default_setting_order asc ";
-				$database = new database;
+				$database = framework::database();
 				$result = $database->select($sql, null, 'all');
 				unset($sql, $parameters);
 
@@ -495,7 +495,7 @@ if (!class_exists('domains')) {
 					$sql .= "and domain_setting_enabled = 'true' ";
 					$sql .= " order by domain_setting_order asc ";
 					$parameters['domain_uuid'] = $_SESSION["domain_uuid"];
-					$database = new database;
+					$database = framework::database();
 					$result = $database->select($sql, $parameters, 'all');
 					unset($sql, $parameters);
 
@@ -545,7 +545,7 @@ if (!class_exists('domains')) {
 					$sql .= " order by user_setting_order asc ";
 					$parameters['domain_uuid'] = $_SESSION["domain_uuid"];
 					$parameters['user_uuid'] = $_SESSION["user_uuid"];
-					$database = new database;
+					$database = framework::database();
 					$result = $database->select($sql, $parameters, 'all');
 					if (is_array($result)) {
 						foreach ($result as $row) {
@@ -628,7 +628,7 @@ if (!class_exists('domains')) {
 
 			//get the domains
 				$sql = "select * from v_domains ";
-				$database = new database;
+				$database = framework::database();
 				$domains = $database->select($sql, null, 'all');
 				unset($sql);
 
@@ -676,7 +676,7 @@ if (!class_exists('domains')) {
 
 			//get an array of the default settings UUIDs
 				$sql = "select * from v_default_settings ";
-				$database = new database;
+				$database = framework::database();
 				$result = $database->select($sql, null, 'all');
 				foreach($result as $row) {
 					$setting[$row['default_setting_uuid']] = 1;
@@ -710,7 +710,7 @@ if (!class_exists('domains')) {
 						$p->add('default_setting_add', 'temp');
 
 					//execute insert
-						$database = new database;
+						$database = framework::database();
 						$database->app_name = 'default_settings';
 						$database->app_uuid = '2c2453c0-1bea-4475-9f44-4d969650de09';
 						$database->save($array, false);
@@ -727,10 +727,10 @@ if (!class_exists('domains')) {
 		 */
 		public function all() {
 			//get the domains from the database
-				$database = new database;
+				$database = framework::database();
 				if ($database->table_exists('v_domains')) {
 					$sql = "select * from v_domains order by domain_name asc;";
-					$database = new database;
+					$database = framework::database();
 					$result = $database->select($sql, null, 'all');
 					foreach($result as $row) {
 						$domain_names[] = $row['domain_name'];

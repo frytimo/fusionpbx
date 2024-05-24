@@ -60,7 +60,7 @@
 	$sql .= "and conference_session_uuid = :conference_session_uuid ";
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	$parameters['conference_session_uuid'] = $_SESSION['meeting']['session_uuid'] ?? '';
-	$database = new database;
+	$database = framework::database();
 	$row = $database->select($sql, $parameters ?? null, 'row');
 	if (!empty($row)) {
 		$meeting_uuid = $row["meeting_uuid"];

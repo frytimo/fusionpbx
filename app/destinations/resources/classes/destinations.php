@@ -180,7 +180,7 @@ if (!class_exists('destinations')) {
 			$sql = "select domain_name from v_domains ";
 			$sql .= "where domain_uuid = :domain_uuid ";
 			$parameters['domain_uuid'] = $this->domain_uuid;
-			$database = new database;
+			$database = framework::database();
 			$this->domain_name = $database->select($sql, $parameters, 'column');
 
 			//initialize variable
@@ -252,7 +252,7 @@ if (!class_exists('destinations')) {
 								}
 								$sql .= "order by ".trim($row['order_by']);
 								$sql = str_replace("\${domain_uuid}", $this->domain_uuid, $sql);
-								$database = new database;
+								$database = framework::database();
 								$result = $database->select($sql, null, 'all');
 
 								$this->destinations[$x]['result']['sql'] = $sql;
@@ -551,7 +551,7 @@ if (!class_exists('destinations')) {
 			global $db_type;
 
 			//connect to the database
-			$database = new database;
+			$database = framework::database();
 
 			//set default values
 			$destination_name = '';
@@ -765,7 +765,7 @@ if (!class_exists('destinations')) {
 			global $db_type;
 
 			//connect to the database
-			$database = new database;
+			$database = framework::database();
 
 			//get the domain_name
 			$sql = "select domain_name from v_domains ";
@@ -1063,7 +1063,7 @@ if (!class_exists('destinations')) {
 										$sql = "select dialplan_uuid, destination_context from v_destinations ";
 										$sql .= "where destination_uuid = :destination_uuid ";
 										$parameters['destination_uuid'] = $record['uuid'];
-										$database = new database;
+										$database = framework::database();
 										$row = $database->select($sql, $parameters, 'row');
 										unset($sql, $parameters);
 
@@ -1086,7 +1086,7 @@ if (!class_exists('destinations')) {
 									$p->add('dialplan_detail_delete', 'temp');
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -1251,7 +1251,7 @@ if (!class_exists('destinations')) {
 				if (!(!empty($_GET['show']) && $_GET['show'] === 'all' && permission_exists('destination_summary_all'))) {
 					$parameters['domain_uuid'] = $this->domain_uuid;
 				}
-				$database = new database;
+				$database = framework::database();
 				$summary = $database->select($sql, $parameters, 'all');
 				unset($parameters);
 

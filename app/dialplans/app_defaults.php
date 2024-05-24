@@ -38,7 +38,7 @@
 
 		//get the list of domains
 		$sql = "select * from v_domains ";
-		$database = new database;
+		$database = framework::database();
 		$domains = $database->select($sql, null, 'all');
 		unset($sql);
 
@@ -47,7 +47,7 @@
 		$dialplan->import($domains);
 
 		//update the dialplan order
-		$database = new database;
+		$database = framework::database();
 		$sql = "update v_dialplans set dialplan_order = '870' where dialplan_order = '980' and dialplan_name = 'cidlookup';\n";
 		$database->execute($sql);
 		$sql = "update v_dialplans set dialplan_order = '880' where dialplan_order = '990' and dialplan_name = 'call_screen';\n";
@@ -57,7 +57,7 @@
 		unset($sql);
 
 		//set empty strings to null
-		$database = new database;
+		$database = framework::database();
 		$sql = "update v_device_lines set outbound_proxy_primary = null where outbound_proxy_primary = '';\n";
 		$database->execute($sql);
 		$sql = "update v_device_lines set outbound_proxy_secondary = null where outbound_proxy_secondary = '';\n";
@@ -65,7 +65,7 @@
 		unset($sql);
 
 		//change recording_slots to recording_id
-		$database = new database;
+		$database = framework::database();
 		$sql = "update v_dialplan_details set dialplan_detail_data = 'recording_id=true' ";
 		$sql .= "where dialplan_uuid in (select dialplan_uuid from v_dialplans where app_uuid = '430737df-5385-42d1-b933-22600d3fb79e') ";
 		$sql .= "and dialplan_detail_data = 'recording_slots=true'; \n";
@@ -82,7 +82,7 @@
 		//add xml for each dialplan where the dialplan xml is empty
 		$sql = "select domain_name ";
 		$sql .= "from v_domains \n";
-		$database = new database;
+		$database = framework::database();
 		$results = $database->select($sql, null, 'all');
 		if (is_array($results) && @sizeof($results) != 0) {
 			foreach ($results as $row) {
@@ -102,7 +102,7 @@
 		$array = $dialplans->xml();
 
 		//delete the follow me bridge dialplan
-		$database = new database;
+		$database = framework::database();
 		$sql = "delete from v_dialplan_details where dialplan_uuid = '8ed73d1f-698f-466c-8a7a-1cf4cd229f7f' ";
 		$database->execute($sql);
 		$sql = "delete from v_dialplans where dialplan_uuid = '8ed73d1f-698f-466c-8a7a-1cf4cd229f7f' ";
@@ -128,7 +128,7 @@
 		$sql = "select count(*) from v_dialplans ";
 		$sql .= "where dialplan_name = 'domain-variables' ";
 		$sql .= "and dialplan_xml like '%origination_callee_id_name%' ";
-		$database = new database;
+		$database = framework::database();
 		$num_rows = $database->select($sql, null, 'column');
 		if ($num_rows > 0) {
 			$sql = "update v_dialplan_details set dialplan_detail_data = 'origination_callee_id_name=\${caller_destination}', update_date = now() \n";
@@ -153,7 +153,7 @@
 		if (is_readable($setting->get('switch','dialplan'))) {
 			$sql = "select count(*) from v_dialplans ";
 			$sql .= "where dialplan_uuid = 'ea5339de-1982-46ca-9695-c35176165314' ";
-			$database = new database;
+			$database = framework::database();
 			$num_rows = $database->select($sql, null, 'column');
 			if ($num_rows == 0) {
 				$array['dialplans'][0]['dialplan_uuid'] = 'ea5339de-1982-46ca-9695-c35176165314';
@@ -182,7 +182,7 @@
 				$p->add('dialplan_add', 'temp');
 				$p->add('dialplan_detail_add', 'temp');
 
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = 'dialplans';
 				$database->app_uuid = '742714e5-8cdf-32fd-462c-cbe7e3d655db';
 				$database->save($array, false);

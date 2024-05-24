@@ -153,7 +153,7 @@
 			}
 
 		//save the data
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'number translations';
 			$database->app_uuid = '6ad54de6-4909-11e7-a919-92ebcb67fe33';
 			$database->save($array);
@@ -177,7 +177,7 @@
 		$sql = "select * from v_number_translations ";
 		$sql .= "where number_translation_uuid = :number_translation_uuid ";
 		$parameters['number_translation_uuid'] = $number_translation_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (is_array($row) && @sizeof($row) != 0) {
 			$number_translation_name = $row["number_translation_name"];
@@ -193,7 +193,7 @@
 		$sql .= "where number_translation_uuid = :number_translation_uuid ";
 		$sql .= "order by number_translation_detail_order asc";
 		$parameters['number_translation_uuid'] = $number_translation_uuid;
-		$database = new database;
+		$database = framework::database();
 		$number_translation_details = $database->select($sql, $parameters ?? null, 'all');
 		unset ($sql, $parameters);
 	}

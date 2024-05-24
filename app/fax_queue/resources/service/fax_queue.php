@@ -168,7 +168,7 @@
 				echo $sql."\n";
 				print_r($parameters);
 			}
-			$database = new database;
+			$database = framework::database();
 			$fax_queue = $database->select($sql, $parameters, 'all');
 			unset($parameters);
 

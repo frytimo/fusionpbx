@@ -183,7 +183,7 @@
 						$p->add('extension_add', 'temp');
 
 					//execute insert
-						$database = new database;
+						$database = framework::database();
 						$database->app_name = 'switch_directory';
 						$database->app_uuid = 'efc9cdbf-8616-435d-9d21-ae8d4e6b5225';
 						$database->save($array);
@@ -286,7 +286,7 @@
 				$p->add('extension_edit', 'temp');
 
 			//execute insert
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = 'switch_directory';
 				$database->app_uuid = 'efc9cdbf-8616-435d-9d21-ae8d4e6b5225';
 				$database->save($array);
@@ -307,7 +307,7 @@
 					$p = new permissions;
 					$p->add('extension_delete', 'temp');
 				//execute delete
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'switch_directory';
 					$database->app_uuid = 'efc9cdbf-8616-435d-9d21-ae8d4e6b5225';
 					$database->delete($array);
@@ -488,7 +488,7 @@
 			$sql .= "where domain_uuid = :domain_uuid ";
 			$sql .= "order by call_group asc ";
 			$parameters['domain_uuid'] = $domain_uuid;
-			$database = new database;
+			$database = framework::database();
 			$rows = $database->select($sql, $parameters, 'all');
 			$i = 0;
 			$extension_xml_condensed = false;

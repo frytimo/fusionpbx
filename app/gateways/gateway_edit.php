@@ -62,7 +62,7 @@
 			$sql = "select count(gateway_uuid) from v_gateways ";
 			$sql .= "where (domain_uuid = :domain_uuid ".(permission_exists('gateway_domain') ? " or domain_uuid is null " : null).") ";
 			$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-			$database = new database;
+			$database = framework::database();
 			$total_gateways = $database->select($sql, $parameters, 'column');
 			unset($sql, $parameters);
 			if ($total_gateways >= $_SESSION['limit']['gateways']['numeric']) {
@@ -206,7 +206,7 @@
 					}
 
 				//save to the data
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'gateways';
 					$database->app_uuid = '297ab33e-2c2f-8196-552c-f3567d2caaf8';
 					if (is_uuid($gateway_uuid)) {
@@ -261,7 +261,7 @@
 		$sql = "select * from v_gateways ";
 		$sql .= "where gateway_uuid = :gateway_uuid ";
 		$parameters['gateway_uuid'] = $gateway_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (!empty($row)) {
 			$domain_uuid = $row["domain_uuid"];
@@ -305,7 +305,7 @@
 	$sql = "select sip_profile_name from v_sip_profiles ";
 	$sql .= "where sip_profile_enabled = 'true' ";
 	$sql .= "order by sip_profile_name asc ";
-	$database = new database;
+	$database = framework::database();
 	$sip_profiles = $database->select($sql, null, 'all');
 	unset($sql);
 

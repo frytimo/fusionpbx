@@ -51,7 +51,7 @@
 		$sql .= "where domain_uuid = :domain_uuid ";
 		$sql .= "order by queue_name asc ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-		$database = new database;
+		$database = framework::database();
 		$_SESSION['queues'] = $database->select($sql, $parameters, 'all');
 	}
 
@@ -148,7 +148,7 @@
 					$sql .= "where domain_uuid = :domain_uuid ";
 					$sql .= "order by agent_name asc ";
 					$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-					$database = new database;
+					$database = framework::database();
 					$_SESSION['agents'] = $database->select($sql, $parameters, 'all');
 				}
 

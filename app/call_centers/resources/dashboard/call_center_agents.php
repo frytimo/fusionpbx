@@ -47,7 +47,7 @@
 
 //connect to the database
 	if (!isset($database)) {
-		$database = new database;
+		$database = framework::database();
 	}
 
 //setup the event socket connection

@@ -285,13 +285,12 @@
 					$config = $params['config'];
 				}
 				else {
-					$config = new config();
+					$config = config::load();
 				}
 
 				//driver and type point to the same value
 				$this->driver = $config->get('database.0.type', 'pgsql');
-				$this->driver = $config->get('database.0.type', 'pgsql');
-				$this->type = $config->get('database.0.type', 'pgsql');
+				$this->type = $this->driver;
 				$this->host = $config->get('database.0.host', '127.0.0.1');
 				$this->port = $config->get('database.0.port', '5432');
 				$this->username = $config->get('database.0.username', 'fusionpbx');
@@ -3130,7 +3129,7 @@
 //example usage
 	//find
 		require_once "resources/classes/database.php";
-		$database = new database;
+		$database = framework::database();
 		$database->domain_uuid = $_SESSION["domain_uuid"];
 		$database->type = $db_type;
 		$database->table = "v_extensions";
@@ -3147,7 +3146,7 @@
 		print_r($database->result);
 	//insert
 		require_once "resources/classes/database.php";
-		$database = new database;
+		$database = framework::database();
 		$database->domain_uuid = $_SESSION["domain_uuid"];
 		$database->table = "v_ivr_menus";
 		$fields[0]['name'] = 'domain_uuid';

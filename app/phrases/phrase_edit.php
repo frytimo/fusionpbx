@@ -163,7 +163,7 @@
 						$p = new permissions;
 						$p->add('phrase_detail_add', 'temp');
 
-						$database = new database;
+						$database = framework::database();
 						$database->app_name = 'phrases';
 						$database->app_uuid = '5c6f597c-9b78-11e4-89d3-123b93f75cba';
 						$database->save($array);
@@ -227,7 +227,7 @@
 						$p = new permissions;
 						$p->add('phrase_detail_add', 'temp');
 
-						$database = new database;
+						$database = framework::database();
 						$database->app_name = 'phrases';
 						$database->app_uuid = '5c6f597c-9b78-11e4-89d3-123b93f75cba';
 						$database->save($array);
@@ -276,7 +276,7 @@
 		$sql .= "and phrase_uuid = :phrase_uuid ";
 		$parameters['domain_uuid'] = $domain_uuid;
 		$parameters['phrase_uuid'] = $phrase_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (is_array($row) && @sizeof($row) != 0) {
 			$phrase_name = $row["phrase_name"];
@@ -298,7 +298,7 @@
 		$sql .= "order by phrase_detail_order asc ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['phrase_uuid'] = $phrase_uuid;
-		$database = new database;
+		$database = framework::database();
 		$phrase_details = $database->select($sql, $parameters, 'all');
 		unset($sql, $parameters);
 	}
@@ -308,7 +308,7 @@
 	$sql .= "where domain_uuid = :domain_uuid ";
 	$sql .= "order by recording_name asc ";
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-	$database = new database;
+	$database = framework::database();
 	$recordings = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 

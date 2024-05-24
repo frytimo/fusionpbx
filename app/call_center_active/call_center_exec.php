@@ -125,7 +125,7 @@
 			$sql .= "where domain_uuid = '$domain_uuid' ";
 			$sql .= "and username = '".$username."' ";
 			$parameters['user_status'] = trim($user_status, "'");
-			$database = new database;
+			$database = framework::database();
 			$database->execute($sql, $parameters);
 			unset($sql, $parameters);
 		}

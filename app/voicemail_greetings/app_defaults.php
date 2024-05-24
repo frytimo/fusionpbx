@@ -30,7 +30,7 @@ if ($domains_processed == 1) {
 		$sql .= "set greeting_filename = greeting_name ";
 		$sql .= "where greeting_filename is null ";
 		$sql .= "or greeting_filename = '' ";
-		$database = new database;
+		$database = framework::database();
 		$database->execute($sql);
 		unset($sql);
 
@@ -38,7 +38,7 @@ if ($domains_processed == 1) {
 		$sql = "select voicemail_greeting_uuid, greeting_filename ";
 		$sql .= "from v_voicemail_greetings ";
 		$sql .= "where greeting_id is null ";
-		$database = new database;
+		$database = framework::database();
 		$result = $database->select($sql, null, 'all');
 		if (!empty($result)) {
 			foreach ($result as $x => &$row) {
@@ -54,7 +54,7 @@ if ($domains_processed == 1) {
 					$p = new permissions;
 					$p->add('voicemail_greeting_edit', 'temp');
 				//execute update
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'voicemail_greetings';
 					$database->app_uuid = 'e4b4fbee-9e4d-8e46-3810-91ba663db0c2';
 					$database->save($array, false);
@@ -72,7 +72,7 @@ if ($domains_processed == 1) {
 				$sql .= "from v_voicemail_greetings ";
 				$sql .= "where greeting_base64 is null ";
 				$sql .= "or greeting_base64 = '' ";
-				$database = new database;
+				$database = framework::database();
 				$result = $database->select($sql, null, 'all');
 				if (!empty($result)) {
 					foreach ($result as $x => &$row) {
@@ -96,7 +96,7 @@ if ($domains_processed == 1) {
 							$p = new permissions;
 							$p->add('voicemail_greeting_edit', 'temp');
 						//execute update
-							$database = new database;
+							$database = framework::database();
 							$database->app_name = 'voicemail_greetings';
 							$database->app_uuid = 'e4b4fbee-9e4d-8e46-3810-91ba663db0c2';
 							$database->save($array, false);
@@ -114,7 +114,7 @@ if ($domains_processed == 1) {
 				$sql = "select voicemail_greeting_uuid, domain_uuid, voicemail_id, greeting_filename, greeting_base64 ";
 				$sql .= "from v_voicemail_greetings ";
 				$sql .= "where greeting_base64 is not null ";
-				$database = new database;
+				$database = framework::database();
 				$result = $database->select($sql, null, 'all');
 				if (is_array($result) && @sizeof($result) != 0) {
 					foreach ($result as $x => &$row) {
@@ -144,7 +144,7 @@ if ($domains_processed == 1) {
 							$p->add('voicemail_greeting_edit', 'temp');
 
 						//execute update
-							$database = new database;
+							$database = framework::database();
 							$database->app_name = 'voicemail_greetings';
 							$database->app_uuid = 'e4b4fbee-9e4d-8e46-3810-91ba663db0c2';
 							$database->save($array, false);

@@ -52,7 +52,7 @@
 
 		//delete the data
 			$array['email_queue'][]['email_queue_uuid'] = $id;
-			$database = new database;
+			$database = framework::database();
 			$database->delete($array);
 			unset($array);
 

@@ -69,7 +69,7 @@
 			$parameters['fax_uuid'] = $fax_uuid;
 			$parameters['user_uuid'] = $_SESSION['user_uuid'];
 		}
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (is_array($row) && @sizeof($row) != 0) {
 			$fax_name = $row["fax_name"];

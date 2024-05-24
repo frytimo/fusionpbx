@@ -39,7 +39,7 @@
 	}
 
 //create the database object
-	$database = new database;
+	$database = framework::database();
 
 //add multi-lingual support
 	$language = new text;

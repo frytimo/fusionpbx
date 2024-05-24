@@ -489,7 +489,7 @@
 								if ($row_id === 1000) {
 
 									//save to the data
-										$database = new database;
+										$database = framework::database();
 										$database->app_name = 'destinations';
 										$database->app_uuid = '5ec89622-b19c-3559-64f0-afde802ab139';
 										$database->save($array);
@@ -510,7 +510,7 @@
 
 				//save to the data
 					if (!empty($array) && is_array($array)) {
-						$database = new database;
+						$database = framework::database();
 						$database->app_name = 'destinations';
 						$database->app_uuid = '5ec89622-b19c-3559-64f0-afde802ab139';
 						$database->save($array);
@@ -608,7 +608,7 @@
 											$sql .= "and destination_number = :destination_number; ";
 											$parameters['domain_uuid'] = $domain_uuid;
 											$parameters['destination_number'] = $destination_number;
-											$database = new database;
+											$database = framework::database();
 											$destinations = $database->select($sql, $parameters, 'all');
 											$row = $destinations[0];
 											unset($sql, $parameters);
@@ -636,14 +636,14 @@
 									$sql = "delete from v_dialplan_details ";
 									$sql .= "where dialplan_uuid = :dialplan_uuid ";
 									$parameters['dialplan_uuid'] = $row['dialplan_uuid'];
-									$database = new database;
+									$database = framework::database();
 									$database->execute($sql, $parameters);
 									unset($sql, $parameters);
 
 									$sql = "delete from v_dialplans ";
 									$sql .= "where dialplan_uuid = :dialplan_uuid ";
 									$parameters['dialplan_uuid'] = $row['dialplan_uuid'];
-									$database = new database;
+									$database = framework::database();
 									$database->execute($sql, $parameters);
 									unset($sql, $parameters);
 								}
@@ -653,7 +653,7 @@
 									$sql = "delete from v_destinations ";
 									$sql .= "where destination_uuid = :destination_uuid ";
 									$parameters['destination_uuid'] = $row['destination_uuid'];
-									$database = new database;
+									$database = framework::database();
 									$database->execute($sql, $parameters);
 									unset($sql, $parameters);
 								}
@@ -679,14 +679,14 @@
 								$sql = "delete from v_dialplan_details ";
 								$sql .= "where dialplan_uuid = :dialplan_uuid ";
 								$parameters['dialplan_uuid'] = $row['dialplan_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$database->execute($sql, $parameters);
 								unset($sql, $parameters);
 
 								$sql = "delete from v_dialplans ";
 								$sql .= "where dialplan_uuid = :dialplan_uuid ";
 								$parameters['dialplan_uuid'] = $row['dialplan_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$database->execute($sql, $parameters);
 								unset($sql, $parameters);
 							}
@@ -696,7 +696,7 @@
 								$sql = "delete from v_destinations ";
 								$sql .= "where destination_uuid = :destination_uuid ";
 								$parameters['destination_uuid'] = $row['destination_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$database->execute($sql, $parameters);
 								unset($sql, $parameters);
 							}

@@ -121,7 +121,7 @@
 		$parameters['domain_uuid'] = $domain_uuid;
 	}
 	$sql .= $sql_category ?? '';
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters ?? '', 'column');
 
 //prepare to page the results
@@ -144,14 +144,14 @@
 		$sql .= "order by domain_uuid, template_language asc, template_category asc, template_subcategory asc, template_type asc, template_description asc ";
 	}
 	$sql .= limit_offset($rows_per_page, $offset);
-	$database = new database;
+	$database = framework::database();
 	$result = $database->select($sql, $parameters ?? '', 'all');
 	unset($sql, $parameters);
 
 //get email template categories
 	$sql = "select distinct template_category from v_email_templates ";
 	$sql .= "order by template_category asc ";
-	$database = new database;
+	$database = framework::database();
 	$rows = $database->select($sql, $parameters ?? '', 'all');
 	if (!empty($rows)) {
 		foreach ($rows as $row) {

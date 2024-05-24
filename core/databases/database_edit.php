@@ -145,7 +145,7 @@ if (count($_POST)>0 && empty($_POST["persistformvar"])) {
 			//add new uuid
 				$array['databases'][0]['database_uuid'] = uuid();
 
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = 'databases';
 				$database->app_uuid = '8d229b6d-1383-fcec-74c6-4ce1682479e2';
 				$database->save($array);
@@ -164,7 +164,7 @@ if (count($_POST)>0 && empty($_POST["persistformvar"])) {
 			//add uuid to update
 				$array['databases'][0]['database_uuid'] = $database_uuid;
 
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = 'databases';
 				$database->app_uuid = '8d229b6d-1383-fcec-74c6-4ce1682479e2';
 				$database->save($array);
@@ -188,7 +188,7 @@ if (count($_POST)>0 && empty($_POST["persistformvar"])) {
 		$sql = "select * from v_databases ";
 		$sql .= "where database_uuid = :database_uuid ";
 		$parameters['database_uuid'] = $database_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (is_array($row) && sizeof($row) != 0) {
 			$database_driver = $row["database_driver"];

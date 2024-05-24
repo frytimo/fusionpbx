@@ -72,7 +72,7 @@
 	$sql .= "where domain_uuid = :domain_uuid ";
 	$sql .= "order by extension asc, number_alias asc ";
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-	$database = new database;
+	$database = framework::database();
 	$extensions = $database->select($sql, $parameters, 'all');
 
 //get the list of call center queues
@@ -81,7 +81,7 @@
 		$sql .= "where domain_uuid = :domain_uuid ";
 		$sql .= "order by queue_extension asc ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-		$database = new database;
+		$database = framework::database();
 		$call_center_queues = $database->select($sql, $parameters, 'all');
 	}
 

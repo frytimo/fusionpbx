@@ -136,7 +136,7 @@
 			if ($action == 'update') {
 				$parameters['sip_profile_name'] = $sip_profile_name;
 			}
-			$database = new database;
+			$database = framework::database();
 			$rows = $database->select($sql, $parameters, 'all');
 			if (!empty($rows) && @sizeof($rows) != 0) {
 				foreach ($rows as $array) {
@@ -211,7 +211,7 @@
 			$p->add('sip_profile_setting_add', 'temp');
 
 		//save to the data
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'sip_profiles';
 			$database->app_uuid = '159a8da8-0e8c-a26b-6d5b-19c532b6d470';
 			$database->save($array);
@@ -280,7 +280,7 @@
 		$sql = "select * from v_sip_profiles ";
 		$sql .= "where sip_profile_uuid = :sip_profile_uuid ";
 		$parameters['sip_profile_uuid'] = $sip_profile_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (is_array($row) && @sizeof($row) != 0) {
 			$sip_profile_name = $row["sip_profile_name"];
@@ -299,7 +299,7 @@
 	$sql .= "where sip_profile_uuid = :sip_profile_uuid ";
 	$sql .= "order by sip_profile_setting_name ";
 	$parameters['sip_profile_uuid'] = $sip_profile_uuid;
-	$database = new database;
+	$database = framework::database();
 	$sip_profile_settings = $database->select($sql, $parameters, 'all');
 	if (empty($sip_profile_settings)) { $sip_profile_settings = []; }
 	unset($sql, $parameters);
@@ -319,7 +319,7 @@
 	$sql = "select * from v_sip_profile_domains ";
 	$sql .= "where sip_profile_uuid = :sip_profile_uuid ";
 	$parameters['sip_profile_uuid'] = $sip_profile_uuid;
-	$database = new database;
+	$database = framework::database();
 	$sip_profile_domains = $database->select($sql, $parameters, 'all');
 	if (empty($sip_profile_domains)) { $sip_profile_domains = []; }
 	unset($sql, $parameters);
@@ -336,7 +336,7 @@
 
 //create js array of existing sip profile names to prevent duplicates
 	$sql = "select sip_profile_name from v_sip_profiles";
-	$database = new database;
+	$database = framework::database();
 	$rows = $database->select($sql, null, 'all');
 	if (is_array($rows) && @sizeof($rows) != 0) {
 		foreach ($rows as $array) {

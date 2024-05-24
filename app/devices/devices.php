@@ -93,7 +93,7 @@
 		$parameters['user_uuid'] = $_SESSION['user_uuid'];
 	}
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-	$database = new database;
+	$database = framework::database();
 	$total_devices = $database->select($sql, $parameters, 'column');
 	unset($sql, $parameters);
 
@@ -101,7 +101,7 @@
 	$sql = "select * from v_device_profiles ";
 	$sql .= "where domain_uuid = :domain_uuid ";
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-	$database = new database;
+	$database = framework::database();
 	$device_profiles = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 
@@ -160,7 +160,7 @@
 		$sql .= ") ";
 		$parameters['search'] = '%'.strtolower($search).'%';
 	}
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters ?? null, 'column');
 	unset($sql, $parameters);
 
@@ -254,7 +254,7 @@
 	}
 	$sql .= limit_offset($rows_per_page, $offset);
 	$parameters['time_zone'] = $time_zone;
-	$database = new database;
+	$database = framework::database();
 	$devices = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 

@@ -29,7 +29,7 @@ if ($domains_processed == 1) {
 
 	//select ivr menus with an empty context
 	$sql = "select * from v_ivr_menus where ivr_menu_context is null ";
-	$database = new database;
+	$database = framework::database();
 	$ivr_menus = $database->select($sql, null, 'all');
 	unset($sql);
 
@@ -58,7 +58,7 @@ if ($domains_processed == 1) {
 			$p = new permissions;
 			$p->add('ivr_menu_edit', 'temp');
 
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'ivr_menus';
 			$database->app_uuid = 'a5788e9b-58bc-bd1b-df59-fff5d51253ab';
 			$database->save($array, false);
@@ -81,7 +81,7 @@ if ($domains_processed == 1) {
 		$sql .= "ivr_menu_voice = SUBSTRING_INDEX(SUBSTRING_INDEX(ivr_menu_language, '/', 3), '/', -1) ";
 	}
 	$sql .= "where ivr_menu_language like '%/%/%'; ";
-	$database = new database;
+	$database = framework::database();
 	$ivr_menus = $database->select($sql, null, 'all');
 	unset($sql);
 
@@ -89,7 +89,7 @@ if ($domains_processed == 1) {
 	$sql = "update v_ivr_menu_options ";
 	$sql .= "set ivr_menu_option_enabled = true ";
 	$sql .= "where ivr_menu_option_enabled is null; ";
-	$database = new database;
+	$database = framework::database();
 	$database->execute($sql, null);
 	unset($sql);
 

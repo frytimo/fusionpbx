@@ -119,7 +119,7 @@
 			$array['streams'][0]['stream_description'] = $stream_description;
 
 		//save to the data
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'streams';
 			$database->app_uuid = 'ffde6287-aa18-41fc-9a38-076d292e0a38';
 			$database->save($array);
@@ -144,7 +144,7 @@
 		$sql = "select * from v_streams ";
 		$sql .= "where stream_uuid = :stream_uuid ";
 		$parameters['stream_uuid'] = $stream_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (is_array($row) && @sizeof($row) != 0) {
 			$domain_uuid = $row["domain_uuid"];

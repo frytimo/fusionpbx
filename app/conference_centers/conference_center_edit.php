@@ -166,7 +166,7 @@
 			$p->add("dialplan_edit", "temp");
 
 		//save to the data
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = "conference_centers";
 			$database->app_uuid = "b81412e8-7253-91f4-e48e-42fc2c9a38d9";
 			$database->save($array);
@@ -216,7 +216,7 @@
 		$sql .= "and conference_center_uuid = :conference_center_uuid ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['conference_center_uuid'] = $conference_center_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters ?? null, 'row');
 		if (!empty($row)) {
 			$conference_center_uuid = $row["conference_center_uuid"];

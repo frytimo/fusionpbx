@@ -47,7 +47,7 @@
 			$p = new permissions;
 			$p->add('device_vendor_function_group_delete', 'temp');
 
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'devices';
 			$database->app_uuid = '4efa1a1a-32e7-bf83-534b-6c8299958a8e';
 			$database->delete($array);
@@ -159,7 +159,7 @@
 						$array['device_vendor_functions'][0]['enabled'] = $enabled;
 						$array['device_vendor_functions'][0]['description'] = $description;
 
-						$database = new database;
+						$database = framework::database();
 						$database->app_name = 'devices';
 						$database->app_uuid = '4efa1a1a-32e7-bf83-534b-6c8299958a8e';
 						$database->save($array);
@@ -186,7 +186,7 @@
 								$p = new permissions;
 								$p->add('device_vendor_function_group_add', 'temp');
 
-								$database = new database;
+								$database = framework::database();
 								$database->app_name = 'devices';
 								$database->app_uuid = '4efa1a1a-32e7-bf83-534b-6c8299958a8e';
 								$database->save($array);
@@ -209,7 +209,7 @@
 		$sql = "select * from v_device_vendor_functions ";
 		$sql .= "where device_vendor_function_uuid = :device_vendor_function_uuid ";
 		$parameters['device_vendor_function_uuid'] = $device_vendor_function_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (is_array($row) && @sizeof($row) != 0) {
 			//$label = $row["label"];
@@ -237,7 +237,7 @@
 	$sql .= "g.group_name asc ";
 	$parameters['device_vendor_uuid'] = $device_vendor_uuid;
 	$parameters['device_vendor_function_uuid'] = $device_vendor_function_uuid;
-	$database = new database;
+	$database = framework::database();
 	$function_groups = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 
@@ -263,7 +263,7 @@
 		}
 	}
 	$sql .= "order by domain_uuid desc, group_name asc ";
-	$database = new database;
+	$database = framework::database();
 	$groups = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters, $sql_where, $index);
 

@@ -69,7 +69,7 @@ if (!class_exists('ivr_menu')) {
 				$sql .= $this->order_by;
 			}
 			$parameters['domain_uuid'] = $this->domain_uuid;
-			$database = new database;
+			$database = framework::database();
 			return $database->select($sql, $parameters, 'all');
 		}
 
@@ -115,7 +115,7 @@ if (!class_exists('ivr_menu')) {
 							$sql .= "where (domain_uuid = :domain_uuid) ";
 							$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 							$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-							$database = new database;
+							$database = framework::database();
 							$rows = $database->select($sql, $parameters, 'all');
 							if (is_array($rows) && @sizeof($rows) != 0) {
 								foreach ($rows as $row) {
@@ -144,7 +144,7 @@ if (!class_exists('ivr_menu')) {
 								$p->add('dialplan_delete', 'temp');
 
 							//execute delete
-								$database = new database;
+								$database = framework::database();
 								$database->app_name = $this->app_name;
 								$database->app_uuid = $this->app_uuid;
 								$database->delete($array);
@@ -219,7 +219,7 @@ if (!class_exists('ivr_menu')) {
 							$sql .= "and ivr_menu_uuid = :ivr_menu_uuid ";
 							$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 							$parameters['ivr_menu_uuid'] = $this->ivr_menu_uuid;
-							$database = new database;
+							$database = framework::database();
 							$ivr_menu_context = $database->select($sql, $parameters, 'column');
 							unset($sql, $parameters);
 						}
@@ -228,7 +228,7 @@ if (!class_exists('ivr_menu')) {
 						if (!empty($array)) {
 
 							//execute delete
-								$database = new database;
+								$database = framework::database();
 								$database->app_name = $this->app_name;
 								$database->app_uuid = $this->app_uuid;
 								$database->delete($array);
@@ -287,7 +287,7 @@ if (!class_exists('ivr_menu')) {
 							$sql .= "where domain_uuid = :domain_uuid ";
 							$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 							$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-							$database = new database;
+							$database = framework::database();
 							$rows = $database->select($sql, $parameters, 'all');
 							if (is_array($rows) && @sizeof($rows) != 0) {
 								foreach ($rows as $row) {
@@ -316,7 +316,7 @@ if (!class_exists('ivr_menu')) {
 								$p->add('dialplan_edit', 'temp');
 
 							//save the array
-								$database = new database;
+								$database = framework::database();
 								$database->app_name = $this->app_name;
 								$database->app_uuid = $this->app_uuid;
 								$database->save($array);
@@ -389,7 +389,7 @@ if (!class_exists('ivr_menu')) {
 								$sql .= "where domain_uuid = :domain_uuid ";
 								$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (!empty($rows)) {
 									$y = $z = 0;
@@ -408,7 +408,7 @@ if (!class_exists('ivr_menu')) {
 										//ivr menu options sub table
 											$sql_2 = "select * from v_ivr_menu_options where ivr_menu_uuid = :ivr_menu_uuid";
 											$parameters_2['ivr_menu_uuid'] = $row['ivr_menu_uuid'];
-											$database = new database;
+											$database = framework::database();
 											$rows_2 = $database->select($sql_2, $parameters_2, 'all');
 											if (!empty($rows_2)) {
 												foreach ($rows_2 as $row_2) {
@@ -430,7 +430,7 @@ if (!class_exists('ivr_menu')) {
 										//ivr menu dialplan record
 											$sql_3 = "select * from v_dialplans where dialplan_uuid = :dialplan_uuid";
 											$parameters_3['dialplan_uuid'] = $row['dialplan_uuid'];
-											$database = new database;
+											$database = framework::database();
 											$dialplan = $database->select($sql_3, $parameters_3, 'row');
 											if (!empty($dialplan)) {
 
@@ -464,7 +464,7 @@ if (!class_exists('ivr_menu')) {
 								$p->add('dialplan_add', 'temp');
 
 							//save the array
-								$database = new database;
+								$database = framework::database();
 								$database->app_name = $this->app_name;
 								$database->app_uuid = $this->app_uuid;
 								$database->save($array);

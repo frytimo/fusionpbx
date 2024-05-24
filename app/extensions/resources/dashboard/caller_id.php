@@ -37,7 +37,7 @@
 
 		//connect to the database
 			if (!isset($database)) {
-				$database = new database;
+				$database = framework::database();
 			}
 
 		//add or update the database

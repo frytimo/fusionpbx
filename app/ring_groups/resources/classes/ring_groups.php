@@ -96,7 +96,7 @@ if (!class_exists('ring_groups')) {
 								$sql .= "where domain_uuid = :domain_uuid ";
 								$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -132,7 +132,7 @@ if (!class_exists('ring_groups')) {
 									$p->add('dialplan_detail_delete', 'temp');
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -207,7 +207,7 @@ if (!class_exists('ring_groups')) {
 								$sql .= "and ring_group_uuid = :ring_group_uuid ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 								$parameters['ring_group_uuid'] = $this->ring_group_uuid;
-								$database = new database;
+								$database = framework::database();
 								$ring_group_context = $database->select($sql, $parameters, 'column');
 								unset($sql, $parameters);
 							}
@@ -226,7 +226,7 @@ if (!class_exists('ring_groups')) {
 							if (!empty($array) && is_array($array) && @sizeof($array) != 0) {
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -279,7 +279,7 @@ if (!class_exists('ring_groups')) {
 								$sql .= "where domain_uuid = :domain_uuid ";
 								$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -309,7 +309,7 @@ if (!class_exists('ring_groups')) {
 									$p->add('dialplan_edit', 'temp');
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);
@@ -380,7 +380,7 @@ if (!class_exists('ring_groups')) {
 									$sql .= "where domain_uuid = :domain_uuid ";
 									$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 									$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-									$database = new database;
+									$database = framework::database();
 									$rows = $database->select($sql, $parameters, 'all');
 									if (is_array($rows) && @sizeof($rows) != 0) {
 										$y = $z = 0;
@@ -399,7 +399,7 @@ if (!class_exists('ring_groups')) {
 											//users sub table
 												$sql_2 = "select * from v_ring_group_users where ring_group_uuid = :ring_group_uuid";
 												$parameters_2['ring_group_uuid'] = $row['ring_group_uuid'];
-												$database = new database;
+												$database = framework::database();
 												$rows_2 = $database->select($sql_2, $parameters_2, 'all');
 												if (is_array($rows_2) && @sizeof($rows_2) != 0) {
 													foreach ($rows_2 as $row_2) {
@@ -421,7 +421,7 @@ if (!class_exists('ring_groups')) {
 											//destinations sub table
 												$sql_3 = "select * from v_ring_group_destinations where ring_group_uuid = :ring_group_uuid";
 												$parameters_3['ring_group_uuid'] = $row['ring_group_uuid'];
-												$database = new database;
+												$database = framework::database();
 												$rows_3 = $database->select($sql_3, $parameters_3, 'all');
 												if (is_array($rows_3) && @sizeof($rows_3) != 0) {
 													foreach ($rows_3 as $row_3) {
@@ -443,7 +443,7 @@ if (!class_exists('ring_groups')) {
 											//ring group dialplan record
 												$sql_4 = "select * from v_dialplans where dialplan_uuid = :dialplan_uuid";
 												$parameters_4['dialplan_uuid'] = $row['dialplan_uuid'];
-												$database = new database;
+												$database = framework::database();
 												$dialplan = $database->select($sql_4, $parameters_4, 'row');
 												if (is_array($dialplan) && @sizeof($dialplan) != 0) {
 
@@ -478,7 +478,7 @@ if (!class_exists('ring_groups')) {
 									$p->add("dialplan_add", "temp");
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);

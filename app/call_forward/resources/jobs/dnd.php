@@ -51,7 +51,7 @@
 		$sql .= "where do_not_disturb = 'true' ";
 		$sql .= "and e.domain_uuid = d.domain_uuid ";
 		$sql .= "and enabled = 'true' ";
-		$database = new database;
+		$database = framework::database();
 		$results = $database->select($sql, $parameters, 'all');
 		unset($parameters);
 		foreach ($results as $row) {

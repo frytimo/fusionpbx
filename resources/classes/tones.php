@@ -44,7 +44,7 @@ if (!class_exists('tones')) {
 				$sql = "select * from v_vars ";
 				$sql .= "where var_category = 'Tones' ";
 				$sql .= "order by var_name asc ";
-				$database = new database;
+				$database = framework::database();
 				$tones = $database->select($sql, null, 'all');
 				if (!empty($tones)) {
 					foreach ($tones as $tone) {

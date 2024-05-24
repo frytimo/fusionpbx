@@ -139,7 +139,7 @@ function save_gateway_xml() {
 		$sql = "select * from v_gateways ";
 		$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
 		$parameters['domain_uuid'] = $domain_uuid;
-		$database = new database;
+		$database = framework::database();
 		$result = $database->select($sql, $parameters, 'all');
 		if (!empty($result)) {
 			foreach ($result as &$row) {
@@ -279,7 +279,7 @@ function save_var_xml() {
 		$sql = "select * from v_vars ";
 		$sql .= "where var_enabled = 'true' ";
 		$sql .= "order by var_category, var_order asc ";
-		$database = new database;
+		$database = framework::database();
 		$variables = $database->select($sql, null, 'all');
 		$prev_var_category = '';
 		$xml = '';
@@ -355,7 +355,7 @@ function outbound_route_to_bridge($domain_uuid, $destination_number, array $chan
 	$sql .= "and (dd.dialplan_detail_enabled = 'true' or dd.dialplan_detail_enabled is null) ";
 	$sql .= "order by d.domain_uuid,  d.dialplan_order, dd.dialplan_detail_order ";
 	$parameters['hostname'] = $hostname;
-	$database = new database;
+	$database = framework::database();
 	$result = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 	if (!empty($result)) {
@@ -449,7 +449,7 @@ function extension_exists($extension) {
 	$sql .= "and enabled = 'true' ";
 	$parameters['domain_uuid'] = $domain_uuid;
 	$parameters['extension'] = $extension;
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters, 'column');
 	unset($sql, $parameters);
 	return $num_rows > 0 ? true : false;
@@ -467,7 +467,7 @@ function extension_presence_id($extension, $number_alias = false) {
 		$sql .= ") ";
 		$parameters['domain_uuid'] = $domain_uuid;
 		$parameters['extension'] = $extension;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (!empty($row)) {
 			$extension = $row['extension'];
@@ -495,7 +495,7 @@ function get_recording_filename($id) {
 	$sql .= "and domain_uuid = :domain_uuid ";
 	$parameters['recording_uuid'] = $id;
 	$parameters['domain_uuid'] = $domain_uuid;
-	$database = new database;
+	$database = framework::database();
 	$row = $database->select($sql, $parameters, 'row');
 	if (!empty($row)) {
 		//$filename = $row["filename"];
@@ -522,7 +522,7 @@ function dialplan_add($domain_uuid, $dialplan_uuid, $dialplan_name, $dialplan_or
 		$p = new permissions;
 		$p->add('dialplan_add', 'temp');
 	//execute insert
-		$database = new database;
+		$database = framework::database();
 		$database->app_name = 'switch-function-dialplan_add';
 		$database->app_uuid = '2fa2243c-47a1-41a0-b144-eb2b609219e0';
 		$database->save($array);
@@ -553,7 +553,7 @@ if (!function_exists('save_call_center_xml')) {
 
 			//get the call center queue array
 			$sql = "select * from v_call_center_queues ";
-			$database = new database;
+			$database = framework::database();
 			$call_center_queues = $database->select($sql, null, 'all');
 			unset($sql);
 
@@ -625,7 +625,7 @@ if (!function_exists('save_call_center_xml')) {
 				//prepare Agent XML string
 					$v_agents = '';
 					$sql = "select * from v_call_center_agents ";
-					$database = new database;
+					$database = framework::database();
 					$result = $database->select($sql, null, 'all');
 					unset($sql);
 
@@ -715,7 +715,7 @@ if (!function_exists('save_call_center_xml')) {
 				//prepare Tier XML string
 					$v_tiers = '';
 					$sql = "select * from v_call_center_tiers ";
-					$database = new database;
+					$database = framework::database();
 					$result = $database->select($sql, null, 'all');
 					unset($sql);
 
@@ -878,7 +878,7 @@ if (!function_exists('save_sip_profile_xml')) {
 
 		//get the sip profiles from the database
 			$sql = "select * from v_sip_profiles";
-			$database = new database;
+			$database = framework::database();
 			$result = $database->select($sql, null, 'all');
 			unset($sql);
 
@@ -909,7 +909,7 @@ if (!function_exists('save_sip_profile_xml')) {
 						$sql .= "where sip_profile_uuid = :sip_profile_uuid ";
 						$sql .= "and sip_profile_setting_enabled = 'true' ";
 						$parameters['sip_profile_uuid'] = $sip_profile_uuid;
-						$database = new database;
+						$database = framework::database();
 						$result_2 = $database->select($sql, $parameters, 'all');
 						if (!empty($result_2)) {
 							$sip_profile_settings = '';

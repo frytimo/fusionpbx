@@ -50,7 +50,7 @@ if (!class_exists('ringbacks')) {
 				$sql = "select * from v_vars ";
 				$sql .= "where var_category = 'Ringtones' ";
 				$sql .= "order by var_name asc ";
-				$database = new database;
+				$database = framework::database();
 				$ringtones = $database->select($sql, null, 'all');
 				if (!empty($ringtones)) {
 					foreach ($ringtones as $ringtone) {
@@ -70,7 +70,7 @@ if (!class_exists('ringbacks')) {
 			//get the default_ringback label
 				/*
 				$sql = "select * from v_vars where var_name = 'ringback' ";
-				$database = new database;
+				$database = framework::database();
 				$row = $database->select($sql, null, 'row');
 				unset($sql);
 				$default_ringback = (string) $row['var_value'];
@@ -107,7 +107,7 @@ if (!class_exists('ringbacks')) {
 					$sql .= "and stream_enabled = 'true' ";
 					$sql .= "order by stream_name asc ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
-					$database = new database;
+					$database = framework::database();
 					$streams = $database->select($sql, $parameters, 'all');
 					$this->streams = $streams;
 					unset($sql, $parameters, $streams, $row);

@@ -101,7 +101,7 @@
 				$sql = "select count(*) from v_devices ";
 				$sql .= "where device_address = :device_address ";
 				$parameters['device_address'] = $device_address;
-				$database = new database;
+				$database = framework::database();
 				$num_rows = $database->select($sql, $parameters, 'column');
 				if ($num_rows > 0) {
 					return true;
@@ -206,7 +206,7 @@
 				$parameters['device_user_uuid'] = $device_user_uuid;
 			}
 			$parameters['domain_uuid'] = $domain_uuid;
-			$database = new database;
+			$database = framework::database();
 			$database_contacts = $database->select($sql, $parameters, 'all');
 			if (is_array($database_contacts)) {
 				$x = 0;
@@ -281,7 +281,7 @@
 					$sql = "select domain_name from v_domains ";
 					$sql .= "where domain_uuid = :domain_uuid ";
 					$parameters['domain_uuid'] = $domain_uuid;
-					$database = new database;
+					$database = framework::database();
 					$domain_name = $database->select($sql, $parameters, 'column');
 					unset($parameters);
 				}
@@ -322,7 +322,7 @@
 								$parameters['domain_uuid'] = $domain_uuid;
 							}
 							$parameters['device_address'] = $device_address;
-							$database = new database;
+							$database = framework::database();
 							$row = $database->select($sql, $parameters, 'row');
 							unset($parameters);
 
@@ -349,7 +349,7 @@
 									$parameters['device_provisioned_method'] = (isset($_SERVER["HTTPS"]) ? 'https' : 'http');
 									$parameters['device_provisioned_ip'] = $_SERVER['REMOTE_ADDR'];
 									$parameters['device_provisioned_agent'] = $_SERVER['HTTP_USER_AGENT'];
-									$database = new database;
+									$database = framework::database();
 									$database->execute($sql, $parameters);
 									unset($parameters);
 
@@ -377,7 +377,7 @@
 								$sql .= "and device_enabled = 'true' ";
 								$sql .= "limit 1 ";
 								$parameters['domain_uuid'] = $domain_uuid;
-								$database = new database;
+								$database = framework::database();
 								$row = $database->select($sql, $parameters, 'row');
 								if (!empty($row) && is_array($row) && sizeof($row) != 0) {
 									$device_label = $row["device_label"];
@@ -545,7 +545,7 @@
 								$p->add("device_edit", "temp");
 
 								//save to the data
-								$database = new database;
+								$database = framework::database();
 								$database->app_name = 'devices';
 								$database->app_uuid = '4efa1a1a-32e7-bf83-534b-6c8299958a8e';
 								if (!empty($device_uuid)) {
@@ -571,7 +571,7 @@
 						$parameters['domain_uuid'] = $domain_uuid;
 					}
 					$parameters['device_uuid'] = $device_uuid;
-					$database = new database;
+					$database = framework::database();
 					$row = $database->select($sql, $parameters, 'row');
 					if (is_array($row) && sizeof($row) != 0) {
 						$device_uuid_alternate = $row["device_uuid_alternate"];
@@ -587,7 +587,7 @@
 									$parameters['domain_uuid'] = $domain_uuid;
 								}
 								$parameters['device_uuid'] = $device_uuid;
-								$database = new database;
+								$database = framework::database();
 								$row = $database->select($sql, $parameters, 'row');
 								if (is_array($row) && sizeof($row) != 0) {
 									if ($row["device_enabled"] == "true") {
@@ -613,7 +613,7 @@
 					$sql .= "where device_profile_uuid = :device_profile_uuid ";
 					$sql .= "and profile_setting_enabled = 'true' ";
 					$parameters['device_profile_uuid'] = $device_profile_uuid;
-					$database = new database;
+					$database = framework::database();
 					$device_profile_settings = $database->select($sql, $parameters, 'all');
 					if (is_array($device_profile_settings) && sizeof($device_profile_settings) != 0) {
 						foreach($device_profile_settings as $row) {
@@ -631,7 +631,7 @@
 					$sql .= "where device_uuid = :device_uuid ";
 					$sql .= "and device_setting_enabled = 'true' ";
 					$parameters['device_uuid'] = $device_uuid;
-					$database = new database;
+					$database = framework::database();
 					$device_settings = $database->select($sql, $parameters, 'all');
 					if (is_array($device_settings) && sizeof($device_settings) != 0) {
 						foreach($device_settings as $row) {
@@ -677,7 +677,7 @@
 							$sql .= "where device_uuid = :device_uuid ";
 							$sql .= "and (enabled = 'true' or enabled is null or enabled = '') ";
 							$parameters['device_uuid'] = $device_uuid;
-							$database = new database;
+							$database = framework::database();
 							//$database_device_lines = $database->select($sql, $parameters, 'all');
 							foreach ($database->select($sql, $parameters, 'all') as $row) {
 								$id = $row['line_number'];
@@ -723,7 +723,7 @@
 									$sql .= "cast(profile_key_id as numeric) asc ";
 								}
 								$parameters['device_profile_uuid'] = $device_profile_uuid;
-								$database = new database;
+								$database = framework::database();
 								$keys = $database->select($sql, $parameters, 'all');
 
 								//add the profile keys to the device keys array
@@ -777,7 +777,7 @@
 								$sql .= "cast(device_key_id as numeric) asc ";
 							}
 							$parameters['device_uuid'] = $device_uuid;
-							$database = new database;
+							$database = framework::database();
 							$keys = $database->select($sql, $parameters, 'all');
 
 						//override profile keys with the device keys
@@ -916,7 +916,7 @@
 							$sql .= "and directory_visible = 'true' ";
 							$sql .= "order by number_alias, extension asc ";
 							$parameters['domain_uuid'] = $domain_uuid;
-							$database = new database;
+							$database = framework::database();
 							$extensions = $database->select($sql, $parameters, 'all');
 							if (is_array($extensions) && sizeof($extensions) != 0) {
 								foreach ($extensions as $row) {
@@ -1151,7 +1151,7 @@
 					if (is_uuid($device_user_uuid)) {
 						$sql = "select contact_uuid from v_users where user_uuid = :device_user_uuid ";
 						$parameters['device_user_uuid'] = $device_user_uuid;
-						$database = new database;
+						$database = framework::database();
 						$contact_uuid = $database->select($sql, $parameters, 'column');
 						$view->assign("ldap_username","uid=".$contact_uuid.",".$_SESSION['provision']['grandstream_ldap_user_base']['text']);
 						$view->assign("ldap_password",md5($laddr_salt.$device_user_uuid));
@@ -1272,7 +1272,7 @@
 				$sql = "select * from v_devices ";
 				//$sql .= "where domain_uuid = :domain_uuid ";
 				//$parameters['domain_uuid'] = $this->domain_uuid;
-				$database = new database;
+				$database = framework::database();
 				$result = $database->select($sql, null, 'all');
 
 			//process each device

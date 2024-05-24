@@ -75,7 +75,7 @@
 		$sql .= "and t.domain_uuid = d.domain_uuid ";
 		$parameters['domain_uuid'] = $domain_uuid;
 		$parameters['database_transaction_uuid'] = $database_transaction_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (!empty($row)) {
 			$user_uuid = $row["user_uuid"];
@@ -100,7 +100,7 @@
 			$array = json_decode($transaction_old, true);
 
 		//save to the data
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = $app_name;
 			$database->app_uuid = $app_uuid;
 			$database->save($array);

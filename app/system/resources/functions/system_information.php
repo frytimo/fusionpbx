@@ -153,6 +153,10 @@
 			}
 
 			$system_information['php']['version'] = phpversion();
+			$php_extensions = array_map('htmlspecialchars',get_loaded_extensions());
+			array_multisort($php_extensions);
+			$system_information['php']['loaded_extensions'] = $php_extensions;
+			unset($php_extensions);
 
 			if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
 				$data = explode("\n", shell_exec('systeminfo /FO CSV 2> nul'));
@@ -277,7 +281,7 @@
 
 				//database version
 				$sql = "select version(); ";
-				$database = new database;
+				$database = framework::database();
 				$database_version = $database->select($sql, null, 'column');
 
 				//database connections

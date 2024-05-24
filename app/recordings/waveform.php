@@ -54,7 +54,7 @@
 			$sql .= "and recording_uuid = :recording_uuid ";
 			$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 			$parameters['recording_uuid'] = $_GET['id'];
-			$database = new database;
+			$database = framework::database();
 			$row = $database->select($sql, $parameters, 'row');
 			if (is_array($row) && @sizeof($row) != 0) {
 				$recording_filename = $row['recording_filename'];

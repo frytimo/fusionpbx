@@ -192,7 +192,7 @@ class plugin_database {
 				$parameters['domain_uuid'] = $this->domain_uuid;
 			}
 			$sql .= "and (user_enabled = 'true' or user_enabled is null) ";
-			$database = new database;
+			$database = framework::database();
 			$row = $database->select($sql, $parameters, 'row');
 			if (!empty($row) && is_array($row) && @sizeof($row) != 0) {
 
@@ -276,7 +276,7 @@ class plugin_database {
 								$p->add('user_edit', 'temp');
 
 							//execute insert
-								$database = new database;
+								$database = framework::database();
 								$database->app_name = 'authentication';
 								$database->app_uuid = 'a8a12918-69a4-4ece-a1ae-3932be0e41f1';
 								$database->save($array);

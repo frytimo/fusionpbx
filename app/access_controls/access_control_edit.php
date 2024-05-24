@@ -190,7 +190,7 @@
 
 		//save the data
 			if (is_array($array)) {
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = 'access controls';
 				$database->app_uuid = '1416a250-f6e1-4edc-91a6-5c9b883638fd';
 				$database->save($array);
@@ -227,7 +227,7 @@
 		$sql = "select * from v_access_controls ";
 		$sql .= "where access_control_uuid = :access_control_uuid ";
 		$parameters['access_control_uuid'] = $access_control_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (!empty($row) && count($row) > 0) {
 			$access_control_name = $row["access_control_name"];
@@ -243,7 +243,7 @@
 		$sql .= "where access_control_uuid = :access_control_uuid ";
 		$sql .= "order by node_cidr asc";
 		$parameters['access_control_uuid'] = $access_control_uuid;
-		$database = new database;
+		$database = framework::database();
 		$access_control_nodes = $database->select($sql, $parameters, 'all');
 		unset ($sql, $parameters);
 	}

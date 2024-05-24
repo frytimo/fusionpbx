@@ -24,30 +24,22 @@
 	Mark J Crane <markjcrane@fusionpbx.com>
 */
 
-//find the config.conf file
-	if (file_exists('/usr/local/etc/fusionpbx/config.conf')) {
-		$config_file = '/usr/local/etc/fusionpbx/config.conf';
-	}
-	elseif (file_exists('/etc/fusionpbx/config.conf')) {
-		$config_file = '/etc/fusionpbx/config.conf';
-	}
-	elseif (file_exists(__DIR__ . '/config.php')) {
-		//set a custom config_file variable after the config.php has been validated
-		$file_content = trim(file_get_contents(__DIR__ . '/config.php'));
-		$pattern = '/^<\?php\s+\$config_file\s+=\s+[\'"](.+?)[\'"];\s+\?>$/';
-		if (preg_match($pattern, $file_content, $matches) && file_exists($matches[1])) {
-			$config_file = $matches[1];
-		}
-	}
+//class auto loader
+	require_once __DIR__ . "/classes/auto_loader.php";
+
+	framework::initialize();
+
+	//objects are now available from the framework
+	$config = framework::config();
 
 //config.conf file not found re-direct the request to the install
-	if (empty($config_file)) {
+	if ($config->is_empty()) {
 		header("Location: /core/install/install.php");
 		exit;
 	}
 
 //parse the config.conf file
-	$conf = parse_ini_file($config_file);
+	$conf = $config->configuration();
 
 //set the include path
 	set_include_path($conf['document.root']);
@@ -73,27 +65,6 @@
 	if (!defined('PROJECT_ROOT')) { define("PROJECT_ROOT", $conf['document.root'] . PROJECT_PATH); }
 	$_SERVER["PROJECT_ROOT"] = PROJECT_ROOT;
 
-//set the error reporting
-	ini_set('display_errors', '1');
-	if (isset($conf['error.reporting'])) {
-		$error_reporting_scope = $conf['error.reporting'];
-	}
-	else {
-		$error_reporting_scope = 'user';
-	}
-	switch ($error_reporting_scope) {
-	case 'user':
-		error_reporting(E_ALL ^ E_NOTICE ^ E_WARNING ^ E_DEPRECATED);
-		break;
-	case 'dev':
-		error_reporting(E_ALL ^ E_NOTICE);
-		break;
-	case 'all':
-		error_reporting(E_ALL);
-		break;
-	default:
-		error_reporting(E_ALL ^ E_NOTICE ^ E_WARNING ^ E_DEPRECATED);
-	}
 
 //get the database connection settings
 	//$db_type = $settings['database']['type'];
@@ -115,12 +86,6 @@
 	//echo "Include Path: ".get_include_path()."\n";
 	//echo "Document Root: ".$_SERVER["DOCUMENT_ROOT"]."\n";
 	//echo "Project Root: ".$_SERVER["PROJECT_ROOT"]."\n";
-
-//class auto loader
-	if (!class_exists('auto_loader')) {
-		include "resources/classes/auto_loader.php";
-		$autoload = new auto_loader();
-	}
 
 //additional includes
 	if (!defined('STDIN')) {

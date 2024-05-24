@@ -170,7 +170,7 @@
 		$parameters['search'] = '%'.$search.'%';
 	}
 	$parameters['destination_type'] = $destination_type;
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters, 'column');
 
 //prepare to page the results
@@ -235,7 +235,7 @@
 	}
 	$sql .= order_by($order_by, $order, 'destination_number, destination_order ', 'asc');
 	$sql .= limit_offset($rows_per_page, $offset);
-	$database = new database;
+	$database = framework::database();
 	$destinations = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 

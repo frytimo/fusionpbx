@@ -87,7 +87,7 @@
 		$sql .= "order by menu_item_title, menu_item_order asc ";
 		$parameters['menu_uuid'] = $menu_uuid;
 		$parameters['menu_item_parent_uuid'] = $menu_item_uuid;
-		$database = new database;
+		$database = framework::database();
 		$result2 = $database->select($sql, $parameters, 'all');
 		unset($sql, $parameters);
 		if (!empty($result2) && sizeof($result2) != 0) {
@@ -117,7 +117,7 @@
 				$sql .= "	g.group_name asc ";
 				$parameters['menu_uuid'] = $menu_uuid;
 				$parameters['menu_item_uuid'] = $menu_item_uuid;
-				$database = new database;
+				$database = framework::database();
 				$sub_result = $database->select($sql, $parameters, 'all');
 				unset($sql, $parameters, $group_array);
 
@@ -200,7 +200,7 @@
 					$array['menu_items'][0]['menu_uuid'] = $menu_uuid;
 					$array['menu_items'][0]['menu_item_title'] = $row2['menu_item_title'];
 					$array['menu_items'][0]['menu_item_order'] = $tmp_menu_item_order;
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'menu';
 					$database->app_uuid = 'f4b3b3d2-6287-489c-2a00-64529e46f2d7';
 					$database->save($array);
@@ -223,7 +223,7 @@
 	$sql .= "and menu_item_parent_uuid is null ";
 	$sql .= order_by($order_by, $order, 'menu_item_order', 'asc');
 	$parameters['menu_uuid'] = $menu_uuid;
-	$database = new database;
+	$database = framework::database();
 	$result = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 
@@ -303,7 +303,7 @@
 				$sql .= "	g.group_name asc ";
 				$parameters['menu_uuid'] = $menu_uuid;
 				$parameters['menu_item_uuid'] = $menu_item_uuid;
-				$database = new database;
+				$database = framework::database();
 				$sub_result = $database->select($sql, $parameters, 'all');
 				unset($sql, $group_list);
 
@@ -385,7 +385,7 @@
 					$array['menu_items'][0]['menu_uuid'] = $menu_uuid;
 					$array['menu_items'][0]['menu_item_title'] = $row['menu_item_title'];
 					$array['menu_items'][0]['menu_item_order'] = $tmp_menu_item_order;
-					//$database = new database;
+					//$database = framework::database();
 					//$database->app_name = 'menu';
 					//$database->app_uuid = 'f4b3b3d2-6287-489c-2a00-64529e46f2d7';
 					//$database->save($array);

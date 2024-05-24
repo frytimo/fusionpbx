@@ -52,7 +52,7 @@
 	$sql = "select g.domain_uuid, g.gateway, g.gateway_uuid, d.domain_name ";
 	$sql .= "from v_gateways as g left ";
 	$sql .= "outer join v_domains as d on d.domain_uuid = g.domain_uuid";
-	$database = new database;
+	$database = framework::database();
 	$gateways = $database->select($sql, null, 'all');
 	unset($sql);
 
@@ -69,7 +69,7 @@
 		$parameters['sip_profile_hostname'] = $hostname;
 	}
 	$sql .= "order by sip_profile_name asc ";
-	$database = new database;
+	$database = framework::database();
 	$rows = $database->select($sql, $parameters ?? null, 'all');
 	if (!empty($rows)) {
 		foreach ($rows as $row) {

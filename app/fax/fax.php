@@ -114,7 +114,7 @@
 		$sql .= "or lower(fax_description) like :search ";
 		$parameters['search'] = '%'.strtolower($search).'%';
 	}
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters ?? null, 'column');
 
 //prepare paging
@@ -164,7 +164,7 @@
 	}
 	$sql .= order_by($order_by, $order, 'fax_name', 'asc', $sort);
 	$sql .= limit_offset($rows_per_page, $offset);
-	$database = new database;
+	$database = framework::database();
 	$result = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters);
 

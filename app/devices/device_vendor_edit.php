@@ -108,7 +108,7 @@
 					$array['device_vendors'][0]['enabled'] = $enabled;
 					$array['device_vendors'][0]['description'] = $description;
 
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'devices';
 					$database->app_uuid = '4efa1a1a-32e7-bf83-534b-6c8299958a8e';
 					$database->save($array);
@@ -126,7 +126,7 @@
 		$sql = "select * from v_device_vendors ";
 		$sql .= "where device_vendor_uuid = :device_vendor_uuid ";
 		$parameters['device_vendor_uuid'] = $device_vendor_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (is_array($row) && @sizeof($row) != 0) {
 			$name = $row["name"];

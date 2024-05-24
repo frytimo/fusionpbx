@@ -97,7 +97,7 @@ if (!class_exists('extension_settings')) {
 						//delete the checked rows
 							if (is_array($array) && @sizeof($array) != 0) {
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -107,7 +107,7 @@ if (!class_exists('extension_settings')) {
 									$sql = "select extension, number_alias, user_context from v_extensions ";
 									$sql .= "where extension_uuid = :extension_uuid ";
 									$parameters['extension_uuid'] = $this->extension_uuid;
-									$database = new database;
+									$database = framework::database();
 									$extension = $database->select($sql, $parameters, 'row');
 									$cache = new cache;
 									$cache->delete("directory:".$extension["extension"]."@".$extension["user_context"]);
@@ -152,7 +152,7 @@ if (!class_exists('extension_settings')) {
 								$sql .= "where ".$this->name."_uuid in (".implode(', ', $uuids).") ";
 								$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									$extension_uuid = $rows[0]['extension_uuid'];
@@ -177,7 +177,7 @@ if (!class_exists('extension_settings')) {
 						//save the changes
 							if (is_array($array) && @sizeof($array) != 0) {
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);
@@ -187,7 +187,7 @@ if (!class_exists('extension_settings')) {
 									$sql = "select extension, number_alias, user_context from v_extensions ";
 									$sql .= "where extension_uuid = :extension_uuid ";
 									$parameters['extension_uuid'] = $extension_uuid;
-									$database = new database;
+									$database = framework::database();
 									$extension = $database->select($sql, $parameters, 'row');
 									$cache = new cache;
 									$cache->delete("directory:".$extension["extension"]."@".$extension["user_context"]);
@@ -235,7 +235,7 @@ if (!class_exists('extension_settings')) {
 								$sql .= "where ".$this->name."_uuid in (".implode(', ', $uuids).") ";
 								$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $x => $row) {
@@ -257,7 +257,7 @@ if (!class_exists('extension_settings')) {
 						//save the changes and set the message
 							if (is_array($array) && @sizeof($array) != 0) {
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);

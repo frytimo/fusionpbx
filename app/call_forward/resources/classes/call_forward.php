@@ -60,7 +60,7 @@
 
 		public function set() {
 			//create the database connection
-			$database = new database;
+			$database = framework::database();
 
 			//determine whether to update the dial string
 			$sql = "select * from v_extensions ";
@@ -130,7 +130,7 @@
 			if (permission_exists(self::PERMISSION)) {
 
 				//create the database connection
-				$database = new database;
+				$database = framework::database();
 
 				//add multi-lingual support
 				$language = new text;

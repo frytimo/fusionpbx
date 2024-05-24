@@ -62,7 +62,7 @@
 		$parameters['domain_uuid'] = $domain_uuid;
 	}
 	$parameters['xml_cdr_uuid'] = $uuid;
-	$database = new database;
+	$database = framework::database();
 	$row = $database->select($sql, $parameters, 'row');
 	if (!empty($row) && is_array($row) && @sizeof($row) != 0) {
 		$caller_id_name = trim($row["caller_id_name"] ?? '');
@@ -114,7 +114,7 @@
 					$p->add('xml_cdr_edit', 'temp');
 
 				//remove record_path, record_name and record_length
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'xml_cdr';
 					$database->app_uuid = '4a085c51-7635-ff03-f67b-86e834422848';
 					$database->save($array, false);
@@ -145,7 +145,7 @@
 			$parameters['domain_uuid'] = $domain_uuid;
 		}
 		$parameters['xml_cdr_uuid'] = $uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (!empty($row) && is_array($row) && @sizeof($row) != 0) {
 			$json_string = trim($row["json"] ?? '');
@@ -165,7 +165,7 @@
 			$parameters['domain_uuid'] = $domain_uuid;
 		}
 		$parameters['xml_cdr_uuid'] = $uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (!empty($row) && is_array($row) && @sizeof($row) != 0) {
 			$call_flow = trim($row["call_flow"] ?? '');
@@ -185,7 +185,7 @@
 			$parameters['domain_uuid'] = $domain_uuid;
 		}
 		$parameters['xml_cdr_uuid'] = $uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (!empty($row) && is_array($row) && @sizeof($row) != 0) {
 			$log_content = $row["log_content"];

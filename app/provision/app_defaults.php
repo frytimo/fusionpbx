@@ -31,7 +31,7 @@ if ($domains_processed == 1) {
 	$sql = "select device_uuid, device_address ";
 	$sql .= "from v_devices ";
 	$sql .= "where (device_address like '%-%' or device_address like '%:%') ";
-	$database = new database;
+	$database = framework::database();
 	$result = $database->select($sql, null, 'all');
 	if (is_array($result) && @sizeof($result) != 0) {
 		foreach ($result as $row) {
@@ -47,7 +47,7 @@ if ($domains_processed == 1) {
 				$p = new permissions;
 				$p->add('device_add', 'temp');
 			//execute update
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = 'provision';
 				$database->app_uuid = 'abf28ead-92ef-3de6-ebbb-023fbc2b6dd3';
 				$database->save($array, false);
@@ -73,7 +73,7 @@ if ($domains_processed == 1) {
 			$p->add('default_setting_edit', 'temp');
 
 		//execute update
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'provision';
 			$database->app_uuid = 'abf28ead-92ef-3de6-ebbb-023fbc2b6dd3';
 			$database->save($array, false);
@@ -95,7 +95,7 @@ if ($domains_processed == 1) {
 	$sql .= "and default_setting_name = 'text' ";
 	$sql .= "and default_setting_value = 'false' ";
 	$sql .= "and default_setting_enabled = 'false' ";
-	$database = new database;
+	$database = framework::database();
 	$database->execute($sql);
 
 	//update default settings
@@ -104,7 +104,7 @@ if ($domains_processed == 1) {
 	$sql .= "where default_setting_category = 'provision' ";
 	$sql .= "and default_setting_subcategory = 'http_auth_password' ";
 	$sql .= "and default_setting_name = 'text' ";
-	$database = new database;
+	$database = framework::database();
 	$database->execute($sql);
 
 	//update domain settings
@@ -113,7 +113,7 @@ if ($domains_processed == 1) {
 	$sql .= "where domain_setting_category = 'provision' ";
 	$sql .= "and domain_setting_subcategory = 'http_auth_password' ";
 	$sql .= "and domain_setting_name = 'text' ";
-	$database = new database;
+	$database = framework::database();
 	$database->execute($sql);
 
 }

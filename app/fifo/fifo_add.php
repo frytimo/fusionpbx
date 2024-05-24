@@ -396,7 +396,7 @@
 		$p->add("dialplan_edit", "temp");
 
 		//save to the data
-		$database = new database;
+		$database = framework::database();
 		$database->app_name = 'fifo';
 		$database->app_uuid = '16589224-c876-aeb3-f59f-523a1c0801f7';
 		$database->save($array);

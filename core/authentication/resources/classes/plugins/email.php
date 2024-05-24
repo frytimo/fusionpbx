@@ -134,7 +134,7 @@ class plugin_email {
 				}
 				$sql .= "and (user_type = 'default' or user_type is null) ";
 				$parameters['username'] = $_REQUEST['username'];
-				$database = new database;
+				$database = framework::database();
 				$row = $database->select($sql, $parameters, 'row');
 				unset($parameters);
 
@@ -236,7 +236,7 @@ class plugin_email {
 				$parameters['template_category'] = 'authentication';
 				$parameters['template_subcategory'] = 'email';
 				$parameters['template_type'] = 'html';
-				$database = new database;
+				$database = framework::database();
 				$row = $database->select($sql, $parameters, 'row');
 				$email_subject = $row['template_subject'];
 				$email_body = $row['template_body'];
@@ -281,7 +281,7 @@ class plugin_email {
 					$array['email_queue'][0]["email_uuid"] = $email_uuid;
 					$array['email_queue'][0]["email_action_before"] = null;
 					$array['email_queue'][0]["email_action_after"] = null;
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'email queue';
 					$database->app_uuid = '5befdf60-a242-445f-91b3-2e9ee3e0ddf7';
 					$database->save($array);
@@ -394,7 +394,7 @@ class plugin_email {
 					$parameters['domain_uuid'] = $_SESSION["domain_uuid"];
 				}
 				$parameters['username'] = $_SESSION["username"];
-				$database = new database;
+				$database = framework::database();
 				$row = $database->select($sql, $parameters, 'row');
 				$this->user_uuid = $row['user_uuid'];
 				$this->user_email = $row['user_email'];
@@ -428,7 +428,7 @@ class plugin_email {
 						$parameters['domain_uuid'] = $_SESSION["domain_uuid"];
 					}
 					$parameters['user_uuid'] = $_SESSION["user_uuid"];
-					$database = new database;
+					$database = framework::database();
 					$row = $database->select($sql, $parameters, 'row');
 					unset($parameters);
 
@@ -474,7 +474,7 @@ class plugin_email {
 					$parameters['domain_uuid'] = $this->domain_uuid;
 					$parameters['user_uuid'] = $this->user_uuid;
 					$parameters['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
-					$database = new database;
+					$database = framework::database();
 					$user_log_count = $database->select($sql, $parameters, 'all');
 					//view_array($user_log_count);
 					unset($sql, $parameters);

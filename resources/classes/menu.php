@@ -113,7 +113,7 @@ if (!class_exists('menu')) {
 									$p->add('menu_language_delete', 'temp');
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -174,7 +174,7 @@ if (!class_exists('menu')) {
 							if (!empty($uuids) && @sizeof($uuids) != 0) {
 								$sql = "select menu_item_uuid as uuid from v_".$this->table." ";
 								$sql .= "where menu_item_parent_uuid in (".implode(', ', $uuids).") ";
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, null, 'all');
 								if (!empty($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -199,7 +199,7 @@ if (!class_exists('menu')) {
 									$p->add('menu_item_group_delete', 'temp');
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -252,7 +252,7 @@ if (!class_exists('menu')) {
 							if (!empty($uuids) && is_array($uuids) && @sizeof($uuids) != 0) {
 								$sql = "select ".$this->name."_uuid as uuid, ".$this->toggle_field." as toggle from v_".$this->table." ";
 								$sql .= "where ".$this->name."_uuid in (".implode(', ', $uuids).") ";
-								$database = new database;
+								$database = framework::database();
 								$parameters = null;
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
@@ -279,7 +279,7 @@ if (!class_exists('menu')) {
 						//save the changes
 							if (!empty($array) && is_array($array) && @sizeof($array) != 0) {
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);
@@ -310,7 +310,7 @@ if (!class_exists('menu')) {
 				$sql .= "	) ";
 				$sql .= ") ";
 				$parameters['menu_uuid'] = $this->menu_uuid;
-				$database = new database;
+				$database = framework::database();
 				$database->execute($sql, $parameters);
 				unset($sql, $parameters);
 
@@ -327,7 +327,7 @@ if (!class_exists('menu')) {
 				$sql .= "	) ";
 				$sql .= ") ";
 				$parameters['menu_uuid'] = $this->menu_uuid;
-				$database = new database;
+				$database = framework::database();
 				$database->execute($sql, $parameters);
 				unset($sql, $parameters);
 
@@ -339,7 +339,7 @@ if (!class_exists('menu')) {
 				$sql .= "	or menu_item_protected is null ";
 				$sql .= ") ";
 				$parameters['menu_uuid'] = $this->menu_uuid;
-				$database = new database;
+				$database = framework::database();
 				$database->execute($sql, $parameters);
 				unset($sql, $parameters);
 		}
@@ -388,7 +388,7 @@ if (!class_exists('menu')) {
 				$sql = "select * from v_menu_items ";
 				$sql .= "where menu_uuid = :menu_uuid ";
 				$parameters['menu_uuid'] = $this->menu_uuid;
-				$database = new database;
+				$database = framework::database();
 				$menu_items = $database->select($sql, $parameters, 'all');
 
 			//use the app array to restore the default menu
@@ -493,7 +493,7 @@ if (!class_exists('menu')) {
 							$p->add('menu_item_add', 'temp');
 							$p->add('menu_language_add', 'temp');
 						//execute insert
-							$database = new database;
+							$database = framework::database();
 							$database->app_name = 'menu';
 							$database->app_uuid = 'f4b3b3d2-6287-489c-2a00-64529e46f2d7';
 							$database->save($array);
@@ -511,7 +511,7 @@ if (!class_exists('menu')) {
 			//get default global group_uuids
 				$sql = "select group_uuid, group_name from v_groups ";
 				$sql .= "where domain_uuid is null ";
-				$database = new database;
+				$database = framework::database();
 				$result = $database->select($sql, null, 'all');
 				if (is_array($result) && @sizeof($result) != 0) {
 					foreach ($result as $row) {
@@ -537,7 +537,7 @@ if (!class_exists('menu')) {
 										$parameters['menu_uuid'] = $this->menu_uuid;
 										$parameters['group_name'] = $group;
 										$parameters['group_uuid'] = $group_uuids[$group] ?? null;
-										$database = new database;
+										$database = framework::database();
 										$num_rows = $database->select($sql, $parameters, 'column');
 										if ($num_rows == 0) {
 											//no menu item groups found, build insert array for defaults
@@ -560,7 +560,7 @@ if (!class_exists('menu')) {
 							$p = new permissions;
 							$p->add('menu_item_group_add', 'temp');
 						//execute insert
-							$database = new database;
+							$database = framework::database();
 							$database->app_name = 'menu';
 							$database->app_uuid = 'f4b3b3d2-6287-489c-2a00-64529e46f2d7';
 							$database->save($array);
@@ -758,7 +758,7 @@ if (!class_exists('menu')) {
 				$sql .= "order by i.menu_item_order asc ";
 				$parameters['menu_language'] = $_SESSION['domain']['language']['code'] ?? null;
 				$parameters['menu_uuid'] = $this->menu_uuid;
-				$database = new database;
+				$database = framework::database();
 				$result = $database->select($sql, $parameters, 'all');
 				unset($sql, $parameters);
 
@@ -828,7 +828,7 @@ if (!class_exists('menu')) {
 				$parameters['menu_language'] = $_SESSION['domain']['language']['code'];
 				$parameters['menu_uuid'] = $this->menu_uuid;
 				$parameters['menu_item_parent_uuid'] = $menu_item_uuid;
-				$database = new database;
+				$database = framework::database();
 				$sub_result = $database->select($sql, $parameters, 'all');
 				unset($sql, $parameters);
 
@@ -880,7 +880,7 @@ if (!class_exists('menu')) {
 				$sql = "select count(*) as count from v_menus ";
 				$sql .= "where menu_uuid = :menu_uuid ";
 				$parameters['menu_uuid'] = $this->menu_uuid;
-				$database = new database;
+				$database = framework::database();
 				$num_rows = $database->select($sql, $parameters, 'column');
 				if ($num_rows == 0) {
 					//built insert array
@@ -894,7 +894,7 @@ if (!class_exists('menu')) {
 						$p->add('menu_add', 'temp');
 
 					//execute insert
-						$database = new database;
+						$database = framework::database();
 						$database->app_name = 'menu';
 						$database->app_uuid = 'f4b3b3d2-6287-489c-2a00-64529e46f2d7';
 						$database->save($array);

@@ -80,7 +80,7 @@
 	}
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	$parameters['extension_uuid'] = $extension_uuid;
-	$database = new database;
+	$database = framework::database();
 	$row = $database->select($sql, $parameters, 'row');
 	if (!empty($row)) {
 		$extension = $row["extension"];
@@ -257,7 +257,7 @@
 			$p->add("extension_edit", "temp");
 
 		//save the data
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'call_forward';
 			$database->app_uuid = '19806921-e8ed-dcff-b325-dd3e5da4959d';
 			$database->save($array);
@@ -271,7 +271,7 @@
 				foreach ($follow_me_delete_uuids as $follow_me_delete_uuid) {
 					$array['follow_me_destinations'][]['follow_me_destination_uuid'] = $follow_me_delete_uuid;
 				}
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = 'call_forward';
 				$database->app_uuid = '19806921-e8ed-dcff-b325-dd3e5da4959d';
 				$database->delete($array);
@@ -454,7 +454,7 @@
 		$sql .= "and follow_me_uuid = :follow_me_uuid ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['follow_me_uuid'] = $follow_me_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		unset($sql, $parameters);
 
@@ -469,7 +469,7 @@
 			$sql .= "where follow_me_uuid = :follow_me_uuid ";
 			$sql .= "order by follow_me_order asc ";
 			$parameters['follow_me_uuid'] = $follow_me_uuid;
-			$database = new database;
+			$database = framework::database();
 			$result = $database->select($sql, $parameters, 'all');
 
 			unset($destinations);
@@ -498,7 +498,7 @@
 	$sql .= "where domain_uuid = :domain_uuid ";
 	$sql .= "order by extension, number_alias asc ";
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-	$database = new database;
+	$database = framework::database();
 	$extensions = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters, $row);
 

@@ -105,7 +105,7 @@
 		$sql .= "and filter = :filter ";
 		$parameters['filter'] = $_GET["filter"];
 	}
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters ?? null, 'column');
 	unset($sql, $parameters);
 
@@ -157,7 +157,7 @@
 	}
 	$sql .= order_by($order_by, $order, 'log_date', 'desc');
 	$sql .= limit_offset($rows_per_page, $offset);
-	$database = new database;
+	$database = framework::database();
 	$event_guard_logs = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters);
 

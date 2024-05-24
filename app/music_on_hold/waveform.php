@@ -54,7 +54,7 @@
 			$sql .= "or domain_uuid is null ";
 		}
 		$parameters['id'] = $_GET['id'];
-		$database = new database;
+		$database = framework::database();
 		$stream_path = $database->select($sql, $parameters ?? null, 'column');
 		unset($sql, $parameters);
 

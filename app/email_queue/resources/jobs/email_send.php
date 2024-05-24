@@ -125,7 +125,7 @@
 	$sql = "select * from v_email_queue ";
 	$sql .= "where email_queue_uuid = :email_queue_uuid ";
 	$parameters['email_queue_uuid'] = $email_queue_uuid;
-	$database = new database;
+	$database = framework::database();
 	$row = $database->select($sql, $parameters, 'row');
 	if (is_array($row)) {
 		$domain_uuid = $row["domain_uuid"];
@@ -162,7 +162,7 @@
 	$sql .= "	where voicemail_message_uuid = :voicemail_message_uuid ";
 	$sql .= ") ";
 	$parameters['voicemail_message_uuid'] = $email_uuid;
-	$database = new database;
+	$database = framework::database();
 	$row = $database->select($sql, $parameters, 'row');
 	if (is_array($row)) {
 		//$domain_uuid = $row["domain_uuid"];
@@ -188,7 +188,7 @@
 	$sql = "select * from v_email_queue_attachments ";
 	$sql .= "where email_queue_uuid = :email_queue_uuid ";
 	$parameters['email_queue_uuid'] = $email_queue_uuid;
-	$database = new database;
+	$database = framework::database();
 	$email_queue_attachments = $database->select($sql, $parameters, 'all');
 	if (is_array($email_queue_attachments) && @sizeof($email_queue_attachments) != 0) {
 		foreach($email_queue_attachments as $i => $field) {
@@ -289,7 +289,7 @@
 		$parameters['message_transcription'] = $transcribe_message;
 		//echo $sql."\n";
 		//print_r($parameters);
-		$database = new database;
+		$database = framework::database();
 		$database->execute($sql, $parameters);
 		unset($parameters);
 	}
@@ -358,7 +358,7 @@
 		$sql .= "update_date = now() ";
 		$sql .= "where email_queue_uuid = :email_queue_uuid; ";
 		$parameters['email_queue_uuid'] = $email_queue_uuid;
-		$database = new database;
+		$database = framework::database();
 		$database->execute($sql, $parameters);
 		unset($parameters);
 
@@ -384,7 +384,7 @@
 			$parameters['voicemail_message_uuid'] = $email_uuid;
 			//echo $sql."\n";
 			//print_r($parameters);
-			$database = new database;
+			$database = framework::database();
 			$database->execute($sql, $parameters);
 			unset($parameters);
 
@@ -392,7 +392,7 @@
 			$sql = "select domain_name from v_domains ";
 			$sql .= "where domain_uuid = :domain_uuid ";
 			$parameters['domain_uuid'] = $domain_uuid;
-			$database = new database;
+			$database = framework::database();
 			$domain_name = $database->select($sql, $parameters, 'column');
 
 			//send the message waiting status
@@ -419,7 +419,7 @@
 			$p->add('email_queue_add', 'temp');
 			$p->add('email_queue_update', 'temp');
 		//execute insert
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'email_queue';
 			$database->app_uuid = '5befdf60-a242-445f-91b3-2e9ee3e0ddf7';
 			print_r($array);
@@ -451,7 +451,7 @@
 		$p->add('email_queue_add', 'temp');
 
 		//execute insert
-		$database = new database;
+		$database = framework::database();
 		$database->app_name = 'email_queue';
 		$database->app_uuid = 'ba41954e-9d21-4b10-bbc2-fa5ceabeb184';
 		$database->save($array);
@@ -479,7 +479,7 @@
 		$parameters['email_queue_uuid'] = $email_queue_uuid;
 		$parameters['email_response'] = $email_settings."\n".$email_response;
 		$parameters['email_retry_count'] = $email_retry_count;
-		$database = new database;
+		$database = framework::database();
 		$database->execute($sql, $parameters);
 		unset($parameters);
 
@@ -506,7 +506,7 @@
 					$p = new permissions;
 					$p->add('email_log_add', 'temp');
 				//execute insert
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'v_mailto';
 					$database->app_uuid = 'ba41954e-9d21-4b10-bbc2-fa5ceabeb184';
 					$database->save($array);

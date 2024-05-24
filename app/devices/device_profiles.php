@@ -118,7 +118,7 @@
 		$parameters['domain_uuid'] = $domain_uuid;
 	}
 	$sql .= $sql_search ?? '';
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters ?? null, 'column');
 
 //prepare to page the results
@@ -140,7 +140,7 @@
 	$sql = str_replace('count(*)', '*', $sql);
 	$sql .= order_by($order_by, $order, 'device_profile_name', 'asc');
 	$sql .= limit_offset($rows_per_page, $offset);
-	$database = new database;
+	$database = framework::database();
 	$device_profiles = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters);
 

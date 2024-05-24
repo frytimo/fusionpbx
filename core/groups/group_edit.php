@@ -136,7 +136,7 @@
 			$array['groups'][0]['group_description'] = $group_description;
 
 		//save the data
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'Group Manager';
 			$database->app_uuid = '2caf27b0-540a-43d5-bb9b-c9871a1e4f84';
 			$database->save($array);
@@ -150,7 +150,7 @@
 				$parameters['group_name'] = $group_name;
 				$parameters['group_name_previous'] = $group_name_previous;
 				$parameters['group_uuid'] = $group_uuid;
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = 'Group Manager';
 				$database->app_uuid = '2caf27b0-540a-43d5-bb9b-c9871a1e4f84';
 				$database->execute($sql, $parameters);
@@ -177,7 +177,7 @@
 		//$sql .= "and domain_uuid = :domain_uuid ";
 		//$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['group_uuid'] = $group_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (!empty($row)) {
 			$group_name = $row["group_name"];

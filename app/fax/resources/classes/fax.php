@@ -100,7 +100,7 @@ if (!class_exists('fax')) {
 						$p->add('dialplan_detail_delete', 'temp');
 
 					//execute delete
-						$database = new database;
+						$database = framework::database();
 						$database->app_name = 'fax';
 						$database->app_uuid = '24108154-4ac3-1db6-1551-4731703a4440';
 						$database->delete($array);
@@ -170,7 +170,7 @@ if (!class_exists('fax')) {
 				$p->add("dialplan_detail_edit", 'temp');
 
 			//save the dialplan
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = 'fax';
 				$database->app_uuid = '24108154-4ac3-1db6-1551-4731703a4440';
 				$database->save($array);
@@ -232,7 +232,7 @@ if (!class_exists('fax')) {
 								$sql .= "where domain_uuid = :domain_uuid ";
 								$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -248,7 +248,7 @@ if (!class_exists('fax')) {
 								$sql .= "where domain_uuid = :domain_uuid ";
 								$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -318,7 +318,7 @@ if (!class_exists('fax')) {
 									$p->add('dialplan_detail_delete', 'temp');
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -390,7 +390,7 @@ if (!class_exists('fax')) {
 								$sql .= "where domain_uuid = :domain_uuid ";
 								$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -439,7 +439,7 @@ if (!class_exists('fax')) {
 							if (is_array($array) && @sizeof($array) != 0) {
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -490,7 +490,7 @@ if (!class_exists('fax')) {
 							if (is_array($array) && @sizeof($array) != 0) {
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -547,7 +547,7 @@ if (!class_exists('fax')) {
 									$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
 									$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 									$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-									$database = new database;
+									$database = framework::database();
 									$rows = $database->select($sql, $parameters, 'all');
 									if (is_array($rows) && @sizeof($rows) != 0) {
 										$y = 0;
@@ -573,7 +573,7 @@ if (!class_exists('fax')) {
 												$sql_2 .= "and e.fax_uuid = :fax_uuid ";
 												$parameters_2['domain_uuid'] = $_SESSION['domain_uuid'];
 												$parameters_2['fax_uuid'] = $row['fax_uuid'];
-												$database = new database;
+												$database = framework::database();
 												$rows_2 = $database->select($sql_2, $parameters_2, 'all');
 												if (is_array($rows_2) && @sizeof($rows_2) != 0) {
 													foreach ($rows_2 as $row_2) {
@@ -595,7 +595,7 @@ if (!class_exists('fax')) {
 											//fax dialplan record
 												$sql_3 = "select * from v_dialplans where dialplan_uuid = :dialplan_uuid";
 												$parameters_3['dialplan_uuid'] = $row['dialplan_uuid'];
-												$database = new database;
+												$database = framework::database();
 												$dialplan = $database->select($sql_3, $parameters_3, 'row');
 												if (is_array($dialplan) && @sizeof($dialplan) != 0) {
 
@@ -627,7 +627,7 @@ if (!class_exists('fax')) {
 									$p->add('dialplan_add', 'temp');
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);

@@ -99,7 +99,7 @@
 						$sql .= "left join v_conference_centers as cc on cr.conference_center_uuid = cc.conference_center_uuid ";
 						$sql .= "where cr.conference_room_uuid = :conference_room_uuid ";
 						$parameters['conference_room_uuid'] = $conference_uuid;
-						$database = new database;
+						$database = framework::database();
 						$conference = $database->select($sql, $parameters, 'row');
 						$conference_name = $conference['conference_room_name'];
 						$conference_extension = $conference['conference_center_extension'];
@@ -119,7 +119,7 @@
 						$sql .= "and conference_extension = :conference_extension ";
 						$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 						$parameters['conference_extension'] = $name_array[0];
-						$database = new database;
+						$database = framework::database();
 						$conference = $database->select($sql, $parameters, 'row');
 						$conference_name = $conference['conference_name'];
 						$conference_extension = $conference['conference_extension'];

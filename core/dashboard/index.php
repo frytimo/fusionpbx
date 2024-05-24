@@ -52,7 +52,7 @@
 		$sql .= "default_setting_category = 'login' ";
 		$sql .= "and default_setting_subcategory = 'message' ";
 		$sql .= "and default_setting_name = 'text' ";
-		$database = new database;
+		$database = framework::database();
 		$database->execute($sql);
 		unset($sql);
 	}
@@ -93,7 +93,7 @@
 	$sql .= "	)\n";
 	$sql .= ")\n";
 	$sql .= "order by dashboard_order asc \n";
-	$database = new database;
+	$database = framework::database();
 	$dashboard = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters);
 
@@ -121,7 +121,7 @@
 			}
 
 			//save the data
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'dashboard';
 			$database->app_uuid = '55533bef-4f04-434a-92af-999c1e9927f7';
 			$database->save($array);

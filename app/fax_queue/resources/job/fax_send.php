@@ -69,7 +69,7 @@
 		$sql .= "set fax_status = 'trying' ";
 		$sql .= "where fax_queue_uuid = :fax_queue_uuid ";
 		$sql .= "and fax_status = 'sending' ";
-		$database = new database;
+		$database = framework::database();
 		$parameters['fax_queue_uuid'] = $fax_queue_uuid;
 		$database->execute($sql, $parameters);
 		unset($sql);
@@ -156,7 +156,7 @@
 	$sql .= "where fax_queue_uuid = :fax_queue_uuid ";
 	$sql .= "and q.domain_uuid = d.domain_uuid and f.fax_uuid = q.fax_uuid";
 	$parameters['fax_queue_uuid'] = $fax_queue_uuid;
-	$database = new database;
+	$database = framework::database();
 	$row = $database->select($sql, $parameters, 'row');
 	if (is_array($row)) {
 		$fax_queue_uuid = $row['fax_queue_uuid'];
@@ -282,7 +282,7 @@
 				$sql .= "and domain_uuid = :domain_uuid ";
 				$parameters['domain_uuid'] = $domain_uuid;
 				$parameters['fax_number'] = $fax_number;
-				$database = new database;
+				$database = framework::database();
 				$extension_count = $database->select($sql, $parameters, 'column');
 				if ($extension_count > 0) {
 					//send the internal call to the registered extension
@@ -355,7 +355,7 @@
 				$p->add('fax_queue_edit', 'temp');
 
 				//save the data
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = 'fax queue';
 				$database->app_uuid = '3656287f-4b22-4cf1-91f6-00386bf488f4';
 				$database->save($array, false);
@@ -398,7 +398,7 @@
 					$parameters['template_language'] = $language_code;
 					$parameters['template_category'] = 'fax';
 					$parameters['template_type'] = 'html';
-					$database = new database;
+					$database = framework::database();
 					$fax_templates = $database->select($sql, $parameters, 'all');
 					unset($sql, $parameters);
 				}
@@ -450,7 +450,7 @@
 					$sql .= "from v_fax_logs ";
 					$sql .= "where fax_log_uuid = :fax_log_uuid ";
 					$parameters['fax_log_uuid'] = $fax_log_uuid;
-					$database = new database;
+					$database = framework::database();
 					$row = $database->select($sql, $parameters, 'row');
 					if (is_array($row)) {
 						$fax_success = $row['fax_success'];
@@ -572,7 +572,7 @@
 			$p->add('fax_queue_edit', 'temp');
 
 		//save the data
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'fax queue';
 			$database->app_uuid = '3656287f-4b22-4cf1-91f6-00386bf488f4';
 			$database->save($array, false);

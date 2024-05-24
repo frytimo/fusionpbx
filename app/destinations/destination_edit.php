@@ -65,7 +65,7 @@
 			if (!empty($_SESSION['limit']['destinations']['numeric'])) {
 				$sql = "select count(*) from v_destinations where domain_uuid = :domain_uuid ";
 				$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-				$database = new database;
+				$database = framework::database();
 				$total_destinations = $database->select($sql, $parameters, 'column');
 				unset($sql, $parameters);
 
@@ -177,7 +177,7 @@
 				$sql = "select destination_number from v_destinations ";
 				$sql .= "where destination_uuid = :destination_uuid ";
 				$parameters['destination_uuid'] = $destination_uuid;
-				$database = new database;
+				$database = framework::database();
 				$destination_number = $database->select($sql, $parameters, 'column');
 				unset($sql, $parameters, $num_rows);
 			}
@@ -196,7 +196,7 @@
 				$sql .= "where (destination_number = :destination_number or destination_prefix || destination_number = :destination_number) ";
 				$sql .= "and destination_type = 'inbound' ";
 				$parameters['destination_number'] = $destination_number;
-				$database = new database;
+				$database = framework::database();
 				$num_rows = $database->select($sql, $parameters, 'column');
 				if ($num_rows > 0) {
 					$msg .= $text['message-duplicate']."<br>\n";
@@ -228,7 +228,7 @@
 				$sql = "select * from v_destinations ";
 				$sql .= "where destination_uuid = :destination_uuid ";
 				$parameters['destination_uuid'] = $destination_uuid;
-				$database = new database;
+				$database = framework::database();
 				$row = $database->select($sql, $parameters, 'row');
 				unset($sql, $parameters);
 			}
@@ -361,7 +361,7 @@
 						//}
 						$parameters['fax_uuid'] = $fax_uuid;
 						//$parameters['domain_uuid'] = $domain_uuid;
-						$database = new database;
+						$database = framework::database();
 						$row = $database->select($sql, $parameters, 'row');
 						if (!empty($row)) {
 							$fax_extension = $row["fax_extension"];
@@ -994,7 +994,7 @@
 											$parameters['domain_uuid'] = $domain_uuid;
 										}
 										$parameters['dialplan_uuid'] = $dialplan_uuid;
-										$database = new database;
+										$database = framework::database();
 										$database->execute($sql, $parameters);
 										unset($sql, $parameters);
 								}
@@ -1092,7 +1092,7 @@
 					$p->add("dialplan_detail_edit", 'temp');
 
 				//save the dialplan
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'destinations';
 					$database->app_uuid = '5ec89622-b19c-3559-64f0-afde802ab139';
 					$database->save($array);
@@ -1157,7 +1157,7 @@
 					}
 
 				//save the destination
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'destinations';
 					$database->app_uuid = '5ec89622-b19c-3559-64f0-afde802ab139';
 					$database->save($array);
@@ -1226,7 +1226,7 @@
 			$sql = "select * from v_destinations ";
 			$sql .= "where destination_uuid = :destination_uuid ";
 			$parameters['destination_uuid'] = $destination_uuid;
-			$database = new database;
+			$database = framework::database();
 			$row = $database->select($sql, $parameters, 'row');
 			if (!empty($row)) {
 				$domain_uuid = $row["domain_uuid"];
@@ -1294,7 +1294,7 @@
 	$sql .= "order by dialplan_detail_group asc, dialplan_detail_order asc";
 	$parameters['domain_uuid'] = $domain_uuid;
 	$parameters['dialplan_uuid'] = $dialplan_uuid;
-	$database = new database;
+	$database = framework::database();
 	$dialplan_details = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 
@@ -1370,7 +1370,7 @@
 		$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
 		$sql .= "and provider_enabled = true ";
 		$parameters['domain_uuid'] = $domain_uuid;
-		$database = new database;
+		$database = framework::database();
 		$providers = $database->select($sql, $parameters, 'all');
 		unset($sql, $parameters);
 	}
@@ -1382,7 +1382,7 @@
 		$sql .= "and user_enabled = 'true' ";
 		$sql .= "order by username asc ";
 		$parameters['domain_uuid'] = $domain_uuid;
-		$database = new database;
+		$database = framework::database();
 		$users = $database->select($sql, $parameters, 'all');
 		unset($sql, $parameters);
 	}
@@ -1393,7 +1393,7 @@
 		$sql .= "where (domain_uuid is null or domain_uuid = :domain_uuid) ";
 		$sql .= "order by group_name asc ";
 		$parameters['domain_uuid'] = $domain_uuid;
-		$database = new database;
+		$database = framework::database();
 		$groups = $database->select($sql, $parameters, 'all');
 		unset($sql, $parameters);
 	}
@@ -1704,7 +1704,7 @@
 		$sql .= "where domain_uuid = :domain_uuid ";
 		$sql .= "order by fax_name asc ";
 		$parameters['domain_uuid'] = $domain_uuid;
-		$database = new database;
+		$database = framework::database();
 		$result = $database->select($sql, $parameters, 'all');
 		if (!empty($result)) {
 			echo "<tr id='tr_fax_detection'>\n";

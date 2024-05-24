@@ -84,7 +84,7 @@ if (!class_exists('call_block')) {
 								$sql .= ") ";
 								$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -108,7 +108,7 @@ if (!class_exists('call_block')) {
 							if (is_array($array) && @sizeof($array) != 0) {
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -160,7 +160,7 @@ if (!class_exists('call_block')) {
 								$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
 								$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -183,7 +183,7 @@ if (!class_exists('call_block')) {
 							if (is_array($array) && @sizeof($array) != 0) {
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);
@@ -238,7 +238,7 @@ if (!class_exists('call_block')) {
 								$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
 								$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $x => $row) {
@@ -259,7 +259,7 @@ if (!class_exists('call_block')) {
 							if (is_array($array) && @sizeof($array) != 0) {
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);
@@ -307,7 +307,7 @@ if (!class_exists('call_block')) {
 							if (is_array($uuids) && @sizeof($uuids) != 0) {
 								$sql = "select caller_id_name, caller_id_number, caller_destination from v_xml_cdr ";
 								$sql .= "where xml_cdr_uuid in (".implode(', ', $uuids).") ";
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters ?? null, 'all');
 								unset($sql);
 							}
@@ -393,7 +393,7 @@ if (!class_exists('call_block')) {
 									$sql .= "and app_uuid = '".$this->app_uuid."' ";
 									$sql .= "and dialplan_enabled <> 'true' ";
 									$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-									$database = new database;
+									$database = framework::database();
 									$rows = $database->select($sql, $parameters);
 									if (is_array($rows) && @sizeof($rows) != 0) {
 										foreach ($rows as $x => $row) {
@@ -408,7 +408,7 @@ if (!class_exists('call_block')) {
 									$p->add('dialplan_edit', 'temp');
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);

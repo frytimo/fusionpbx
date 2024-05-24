@@ -36,7 +36,7 @@ $sql = "select * from v_fax ";
 $sql .= "where fax_email_connection_host <> '' ";
 $sql .= "and fax_email_connection_host is not null ";
 $sql .= "and fax_email_outbound_subject_tag is not null ";
-$database = new database;
+$database = framework::database();
 $result = $database->select($sql, null, 'all');
 unset($sql);
 
@@ -99,7 +99,7 @@ if (!empty($result) && @sizeof($result) != 0) {
 		//get domain name, set the domain_name variable
 		$sql = "select domain_name from v_domains where domain_uuid = :domain_uuid ";
 		$parameters['domain_uuid'] = $domain_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		$domain_name = $row['domain_name'];
 		unset($sql, $parameters, $row);

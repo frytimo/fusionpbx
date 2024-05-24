@@ -221,7 +221,7 @@
 				$array['recordings'][0]['recording_description'] = $recording_description;
 
 				//execute update
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = 'recordings';
 				$database->app_uuid = '83913217-c7a2-9e90-925d-a866eb40b60e';
 				$database->save($array);
@@ -246,7 +246,7 @@
 		$sql .= "and recording_uuid = :recording_uuid ";
 		$parameters['domain_uuid'] = $domain_uuid;
 		$parameters['recording_uuid'] = $recording_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (is_array($row) && @sizeof($row) != 0) {
 			$recording_filename = $row["recording_filename"];

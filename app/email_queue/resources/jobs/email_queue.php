@@ -132,7 +132,7 @@
         $parameters['hostname'] = gethostname();
     }
     $parameters['limit'] = $email_queue_limit;
-    $database = new database;
+    $database = framework::database();
     $email_queue = $database->select($sql, $parameters, 'all');
     unset($parameters);
 

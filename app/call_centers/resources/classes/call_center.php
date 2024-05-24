@@ -83,7 +83,7 @@
 							$p->add('dialplan_detail_delete', 'temp');
 
 						//execute delete
-							$database = new database;
+							$database = framework::database();
 							$database->app_name = 'call_centers';
 							$database->app_uuid = '95788e50-9500-079e-2807-fd530b0ea370';
 							$database->delete($array);
@@ -223,7 +223,7 @@
 					$p->add("dialplan_detail_edit", 'temp');
 
 				//save the dialplan
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'call_centers';
 					$database->app_uuid = '95788e50-9500-079e-2807-fd530b0ea370';
 					$database->save($array);
@@ -246,7 +246,7 @@
 					$p->add('call_center_queue_edit', 'temp');
 
 				//execute update
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'call_centers';
 					$database->app_uuid = '95788e50-9500-079e-2807-fd530b0ea370';
 					$database->save($array);
@@ -305,7 +305,7 @@
 									$sql .= "where domain_uuid = :domain_uuid ";
 									$sql .= "and ".$this->uuid_prefix."uuid in ('".implode("','", $uuids)."') ";
 									$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-									$database = new database;
+									$database = framework::database();
 									$rows = $database->select($sql, $parameters, 'all');
 									if (is_array($rows) && @sizeof($rows) != 0) {
 										foreach ($rows as $row) {
@@ -355,7 +355,7 @@
 										$p->add('dialplan_detail_delete', 'temp');
 
 									//execute delete
-										$database = new database;
+										$database = framework::database();
 										$database->app_name = $this->app_name;
 										$database->app_uuid = $this->app_uuid;
 										$database->delete($array);
@@ -450,7 +450,7 @@
 										$p->add('call_center_tier_delete', 'temp');
 
 									//execute delete
-										$database = new database;
+										$database = framework::database();
 										$database->app_name = $this->app_name;
 										$database->app_uuid = $this->app_uuid;
 										$database->delete($array);
@@ -513,7 +513,7 @@
 									//primary table
 										$sql = "select * from v_".$this->table." ";
 										$sql .= "where ".$this->uuid_prefix."uuid in ('".implode("','", $uuids)."') ";
-										$database = new database;
+										$database = framework::database();
 										$rows = $database->select($sql, $parameters, 'all');
 										if (is_array($rows) && @sizeof($rows) != 0) {
 											$y = 0;
@@ -532,7 +532,7 @@
 												//call center tiers sub table
 													$sql_2 = "select * from v_call_center_tiers where call_center_queue_uuid = :call_center_queue_uuid";
 													$parameters_2['call_center_queue_uuid'] = $row['call_center_queue_uuid'];
-													$database = new database;
+													$database = framework::database();
 													$rows_2 = $database->select($sql_2, $parameters_2, 'all');
 													if (is_array($rows_2) && @sizeof($rows_2) != 0) {
 														foreach ($rows_2 as $row_2) {
@@ -552,7 +552,7 @@
 												//call center queue dialplan record
 													$sql_3 = "select * from v_dialplans where dialplan_uuid = :dialplan_uuid";
 													$parameters_3['dialplan_uuid'] = $row['dialplan_uuid'];
-													$database = new database;
+													$database = framework::database();
 													$dialplan = $database->select($sql_3, $parameters_3, 'row');
 													if (is_array($dialplan) && @sizeof($dialplan) != 0) {
 
@@ -583,7 +583,7 @@
 										$p->add('dialplan_add', 'temp');
 
 									//save the array
-										$database = new database;
+										$database = framework::database();
 										$database->app_name = $this->app_name;
 										$database->app_uuid = $this->app_uuid;
 										$database->save($array);

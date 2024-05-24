@@ -123,7 +123,7 @@
 		$sql .= "app_uuid = 'c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4' ";
 		$sql .= "where dialplan_context = 'public' ";
 		$sql .= "and app_uuid is null; ";
-		$database = new database;
+		$database = framework::database();
 		$database->execute($sql);
 		unset($sql);
 	}
@@ -188,7 +188,7 @@
 		$sql .= ") ";
 		$parameters['search'] = '%'.$search.'%';
 	}
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters  ?? null, 'column');
 
 //prepare the paging
@@ -274,7 +274,7 @@
 		$sql .= "order by dialplan_order asc, lower(dialplan_name) asc ";
 	}
 	$sql .= limit_offset($rows_per_page, $offset);
-	$database = new database;
+	$database = framework::database();
 	$dialplans = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters);
 
@@ -298,7 +298,7 @@
 		$parameters['app_uuid'] = $app_uuid;
 	}
 	$sql .= ") as dc ";
-	$database = new database;
+	$database = framework::database();
 	$rows = $database->select($sql, $parameters ?? null, 'all');
 	if (is_array($rows) && @sizeof($rows) != 0) {
 		foreach ($rows as $row) {

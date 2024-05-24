@@ -97,7 +97,7 @@
 	$sql .= "where conference_control_uuid = :conference_control_uuid ";
 	$sql .= $sql_search ?? '';
 	$parameters['conference_control_uuid'] = $conference_control_uuid ?? '';
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters ?? null, 'column');
 
 //prepare to page the results
@@ -114,7 +114,7 @@
 	$sql .= $sql_search ?? '';
 	$sql .= order_by($order_by, $order, 'control_digits', 'asc');
 	$sql .= limit_offset($rows_per_page, !empty($offset));
-	$database = new database;
+	$database = framework::database();
 	$result = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters);
 

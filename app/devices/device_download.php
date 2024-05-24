@@ -143,7 +143,7 @@
 				$sql = "select ".$column_names." from v_devices ";
 				$sql .= " where domain_uuid = :domain_uuid ";
 				$parameters['domain_uuid'] = $domain_uuid;
-				$database = new database;
+				$database = framework::database();
 				$devices = $database->select($sql, $parameters, 'all');
 				unset($sql, $parameters, $column_names);
 
@@ -153,7 +153,7 @@
 						$sql = "select ".$column_names." from v_".$table_name." ";
 						$sql .= " where domain_uuid = :domain_uuid ";
 						$parameters['domain_uuid'] = $domain_uuid;
-						$database = new database;
+						$database = framework::database();
 						$$table_name = $database->select($sql, $parameters, 'all');
 						$x = 0;
 						foreach($devices as $device) {

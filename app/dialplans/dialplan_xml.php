@@ -63,7 +63,7 @@
 				$sql = "select * from v_dialplans ";
 				$sql .= "where dialplan_uuid = :dialplan_uuid ";
 				$parameters['dialplan_uuid'] = $dialplan_uuid;
-				$database = new database;
+				$database = framework::database();
 				$row = $database->select($sql, $parameters, 'row');
 				if (is_array($row) && @sizeof($row) != 0) {
 					$app_uuid = $row["app_uuid"];
@@ -126,7 +126,7 @@
 					$array['dialplans'][$x]["dialplan_xml"] =  $dialplan_xml;
 
 				//save to the data
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'dialplans';
 					$database->app_uuid = is_uuid($app_uuid) ? $app_uuid : '742714e5-8cdf-32fd-462c-cbe7e3d655db';
 					$database->save($array);
@@ -158,7 +158,7 @@
 		$sql = "select * from v_dialplans ";
 		$sql .= "where dialplan_uuid = :dialplan_uuid ";
 		$parameters['dialplan_uuid'] = $dialplan_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (is_array($row) && @sizeof($row) != 0) {
 			$domain_uuid = $row["domain_uuid"];

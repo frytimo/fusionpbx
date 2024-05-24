@@ -44,7 +44,7 @@
 	$sql .= "where a.domain_uuid = d.domain_uuid \n";
 	$sql .= "order by agent_name asc \n";
 	//echo $sql;
-	$database = new database;
+	$database = framework::database();
 	$agents = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 

@@ -185,7 +185,7 @@
 					}
 			}
 			if (!empty($sql)) {
-				if (!isset($database)) { $database = new database; }
+				if (!isset($database)) { $database = framework::database(); }
 				$connections = $database->select($sql, null, 'column');
 				unset($sql);
 			}

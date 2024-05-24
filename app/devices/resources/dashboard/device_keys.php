@@ -32,7 +32,7 @@
 
 //connect to the database
 	if (!isset($database)) {
-		$database = new database;
+		$database = framework::database();
 	}
 
 //get the vendor functions

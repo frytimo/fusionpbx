@@ -68,7 +68,7 @@
 		$p = new permissions;
 		$p->add('user_group_add', 'temp');
 
-		$database = new database;
+		$database = framework::database();
 		$database->app_name = 'groups';
 		$database->app_uuid = '2caf27b0-540a-43d5-bb9b-c9871a1e4f84';
 		$database->save($array);

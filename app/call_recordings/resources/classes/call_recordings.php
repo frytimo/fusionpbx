@@ -87,7 +87,7 @@ if (!class_exists('call_recordings')) {
 											$sql .= "from view_call_recordings ";
 											$sql .= "where call_recording_uuid = :call_recording_uuid ";
 											$parameters['call_recording_uuid'] = $record['uuid'];
-											$database = new database;
+											$database = framework::database();
 											$field = $database->select($sql, $parameters, 'row');
 											if (is_array($field) && @sizeof($field) != 0) {
 												//delete the file on the file system
@@ -114,7 +114,7 @@ if (!class_exists('call_recordings')) {
 									$p->add('xml_cdr_edit', 'temp');
 
 								//remove record_path, record_name and record_length
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = 'xml_cdr';
 									$database->app_uuid = '4a085c51-7635-ff03-f67b-86e834422848';
 									$database->save($array, false);
@@ -172,7 +172,7 @@ if (!class_exists('call_recordings')) {
 											$sql .= "where call_recording_uuid = :call_recording_uuid ";
 											$sql .= "and call_recording_transcription is null ";
 											$parameters['call_recording_uuid'] = $record['uuid'];
-											$database = new database;
+											$database = framework::database();
 											$field = $database->select($sql, $parameters, 'row');
 											if (
 												is_array($field) &&
@@ -204,7 +204,7 @@ if (!class_exists('call_recordings')) {
 									$p->add('xml_cdr_edit', 'temp');
 
 								//remove record_path, record_name and record_length
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = 'xml_cdr';
 									$database->app_uuid = '4a085c51-7635-ff03-f67b-86e834422848';
 									$database->save($array, false);
@@ -241,7 +241,7 @@ if (!class_exists('call_recordings')) {
 							$sql .= "from view_call_recordings ";
 							$sql .= "where call_recording_uuid = :call_recording_uuid ";
 							$parameters['call_recording_uuid'] = $this->recording_uuid;
-							$database = new database;
+							$database = framework::database();
 							$row = $database->select($sql, $parameters, 'row');
 							if (is_array($row) && @sizeof($row) != 0) {
 								$call_recording_name = $row['call_recording_name'];
@@ -328,7 +328,7 @@ if (!class_exists('call_recordings')) {
 							}
 							$sql .= "from view_call_recordings ";
 							$sql .= "where call_recording_uuid in ('".implode("','", $uuids)."') ";
-							$database = new database;
+							$database = framework::database();
 							$rows = $database->select($sql, null, 'all');
 							if (!empty($rows) && is_array($rows) && @sizeof($rows) != 0) {
 								foreach ($rows as $row) {

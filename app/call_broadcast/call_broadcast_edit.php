@@ -126,7 +126,7 @@
 			$sql .= "and type_value = :type_value ";
 			$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 			$parameters['type_value'] = $_POST['accountcode'];
-			$database = new database;
+			$database = framework::database();
 			$num_rows = $database->select($sql, $parameters, 'column');
 			$broadcast_accountcode = $num_rows > 0 ? $_POST["broadcast_accountcode"] : $_SESSION['domain_name'];
 			unset($sql, $parameters, $num_rows);
@@ -267,7 +267,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 					$array['call_broadcasts'][0]['broadcast_description'] = $broadcast_description;
 
 				//execute
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'call_broadcast';
 					$database->app_uuid = 'efc11f6b-ed73-9955-4d4d-3a1bed75a056';
 					$database->save($array);
@@ -290,7 +290,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 		$sql .= "and call_broadcast_uuid = :call_broadcast_uuid ";
 		$parameters['domain_uuid'] = $domain_uuid;
 		$parameters['call_broadcast_uuid'] = $call_broadcast_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (!empty($row)) {
 			$broadcast_name = $row["broadcast_name"];
@@ -427,7 +427,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 	//$sql .= "select * from v_recordings ";
 	//$sql .= "where domain_uuid = :domain_uuid ";
 	//$parameters['domain_uuid'] = $domain_uuid;
-	//$database = new database;
+	//$database = framework::database();
 	//$rows = $database->select($sql, $parameters, 'all');
 	//if (!empty($rows)) {
 	//	foreach ($rows as $row) {

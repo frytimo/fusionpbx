@@ -88,7 +88,7 @@
 //prepare to page the results
 	$sql = "select count(*) from v_device_vendors ";
 	$sql .= $sql_where ?? null;
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters ?? null, 'column');
 
 //prepare to page the results
@@ -104,7 +104,7 @@
 	$sql = str_replace('count(*)', '*', $sql);
 	$sql .= order_by($order_by, $order, 'name', 'asc');
 	$sql .= limit_offset($rows_per_page, $offset);
-	$database = new database;
+	$database = framework::database();
 	$result = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters);
 

@@ -70,7 +70,7 @@ if (!class_exists('number_translations')) {
 			$sql = "select count(*) from v_number_translations ";
 			$sql .= "where number_translation_name = :number_translation_name ";
 			$parameters['number_translation_name'] = $name;
-			$database = new database;
+			$database = framework::database();
 			return $database->select($sql, $parameters, 'column') != 0 ? true : false;
 			unset($sql, $parameters);
 		}
@@ -123,7 +123,7 @@ if (!class_exists('number_translations')) {
 						$p->add('number_translation_add', 'temp');
 						$p->add('number_translation_detail_add', 'temp');
 					//execute insert
-						$database = new database;
+						$database = framework::database();
 						$database->app_name = 'number_translations';
 						$database->app_uuid = '6ad54de6-4909-11e7-a919-92ebcb67fe33';
 						$database->save($array);
@@ -180,7 +180,7 @@ if (!class_exists('number_translations')) {
 									$p->add('number_translation_detail_delete', 'temp');
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -233,7 +233,7 @@ if (!class_exists('number_translations')) {
 							if (is_array($array) && @sizeof($array) != 0) {
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -275,7 +275,7 @@ if (!class_exists('number_translations')) {
 							if (is_array($uuids) && @sizeof($uuids) != 0) {
 								$sql = "select ".$this->uuid_prefix."uuid as uuid, ".$this->toggle_field." as toggle from v_".$this->table." ";
 								$sql .= "where ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -297,7 +297,7 @@ if (!class_exists('number_translations')) {
 							if (is_array($array) && @sizeof($array) != 0) {
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);
@@ -346,7 +346,7 @@ if (!class_exists('number_translations')) {
 								//primary table
 									$sql = "select * from v_".$this->table." ";
 									$sql .= "where ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
-									$database = new database;
+									$database = framework::database();
 									$rows = $database->select($sql, $parameters, 'all');
 									if (is_array($rows) && @sizeof($rows) != 0) {
 										$y = 0;
@@ -363,7 +363,7 @@ if (!class_exists('number_translations')) {
 											//nodes sub table
 												$sql_2 = "select * from v_number_translation_details where number_translation_uuid = :number_translation_uuid";
 												$parameters_2['number_translation_uuid'] = $row['number_translation_uuid'];
-												$database = new database;
+												$database = framework::database();
 												$rows_2 = $database->select($sql_2, $parameters_2, 'all');
 												if (is_array($rows_2) && @sizeof($rows_2) != 0) {
 													foreach ($rows_2 as $row_2) {
@@ -394,7 +394,7 @@ if (!class_exists('number_translations')) {
 									$p->add('number_translation_detail_add', 'temp');
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);

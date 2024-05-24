@@ -70,7 +70,7 @@ if (!class_exists('registrations')) {
 					$parameters['sip_profile_name'] = $profile;
 				}
 				$sql .= "and sip_profile_enabled = 'true' ";
-				$database = new database;
+				$database = framework::database();
 				$sip_profiles = $database->select($sql, $parameters ?? null, 'all');
 				if (!empty($sip_profiles) && @sizeof($sip_profiles) != 0) {
 					foreach ($sip_profiles as $field) {
@@ -269,7 +269,7 @@ if (!class_exists('registrations')) {
 
 						//retrieve sip profiles list
 							$sql = "select sip_profile_name as name from v_sip_profiles ";
-							$database = new database;
+							$database = framework::database();
 							$sip_profiles = $database->select($sql, null, 'all');
 							unset($sql);
 

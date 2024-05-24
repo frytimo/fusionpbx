@@ -50,7 +50,7 @@
 	$sql = "select * from view_users ";
 	$sql .= "where domain_uuid = :domain_uuid ";
 	$parameters = null;
-	$database = new database;
+	$database = framework::database();
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	$row = $database->select($sql, $parameters, 'row');
 	if (isset($row['contact_organization'])) {
@@ -93,7 +93,7 @@
 	$parameters['group_level'] = $_SESSION['user']['group_level'];
 	$sql .= order_by($order_by, $order, 'username', 'asc');
 	$sql .= "limit 300\n";
-	$database = new database;
+	$database = framework::database();
 	$users = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 

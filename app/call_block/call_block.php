@@ -137,7 +137,7 @@
 		$sql .= ") ";
 		$parameters['search'] = '%'.$search.'%';
 	}
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters ?? null, 'column');
 	unset($parameters);
 
@@ -205,7 +205,7 @@
 	}
 	$sql .= order_by($order_by, $order, ['domain_uuid','call_block_country_code','call_block_number']);
 	$sql .= limit_offset($rows_per_page, $offset);
-	$database = new database;
+	$database = framework::database();
 	$result = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters);
 

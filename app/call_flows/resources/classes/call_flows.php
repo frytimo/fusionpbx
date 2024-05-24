@@ -94,7 +94,7 @@ if (!class_exists('call_flows')) {
 								$sql .= "where domain_uuid = :domain_uuid ";
 								$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -126,7 +126,7 @@ if (!class_exists('call_flows')) {
 									$p->add('dialplan_detail_delete', 'temp');
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -194,7 +194,7 @@ if (!class_exists('call_flows')) {
 								$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
 								$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (!empty($rows)) {
 									foreach ($rows as $row) {
@@ -227,7 +227,7 @@ if (!class_exists('call_flows')) {
 									$p->add('dialplan_edit', 'temp');
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);
@@ -327,7 +327,7 @@ if (!class_exists('call_flows')) {
 									$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
 									$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 									$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-									$database = new database;
+									$database = framework::database();
 									$rows = $database->select($sql, $parameters, 'all');
 									if (is_array($rows) && @sizeof($rows) != 0) {
 										foreach ($rows as $x => $row) {
@@ -345,7 +345,7 @@ if (!class_exists('call_flows')) {
 											//call flow dialplan record
 												$sql_2 = "select * from v_dialplans where dialplan_uuid = :dialplan_uuid";
 												$parameters_2['dialplan_uuid'] = $row['dialplan_uuid'];
-												$database = new database;
+												$database = framework::database();
 												$dialplan = $database->select($sql_2, $parameters_2, 'row');
 												if (is_array($dialplan) && @sizeof($dialplan) != 0) {
 
@@ -378,7 +378,7 @@ if (!class_exists('call_flows')) {
 									$p->add('dialplan_add', 'temp');
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);

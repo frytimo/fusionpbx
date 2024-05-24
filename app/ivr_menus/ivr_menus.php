@@ -112,7 +112,7 @@
 		$sql .= ")";
 		$parameters['search'] = '%'.$search.'%';
 	}
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters ?? '', 'column');
 
 //prepare to page the results
@@ -147,7 +147,7 @@
 	}
 	$sql .= order_by($order_by, $order, 'ivr_menu_name', 'asc', $sort);
 	$sql .= limit_offset($rows_per_page, $offset);
-	$database = new database;
+	$database = framework::database();
 	$ivr_menus = $database->select($sql, $parameters ?? '', 'all');
 	unset($sql, $parameters);
 

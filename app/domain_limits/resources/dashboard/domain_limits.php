@@ -43,7 +43,7 @@
 
 //connect to the database
 	if (!isset($database)) {
-		$database = new database;
+		$database = framework::database();
 	}
 
 //clear initial stat

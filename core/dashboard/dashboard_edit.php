@@ -92,7 +92,7 @@
 			$dashboard_uuid = $_GET["dashboard_uuid"];
 		//delete the group from the users
 			$array['dashboard_groups'][0]['dashboard_group_uuid'] = $dashboard_group_uuid;
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'dashboard';
 			$database->app_uuid = '55533bef-4f04-434a-92af-999c1e9927f7';
 			$database->delete($array);
@@ -225,7 +225,7 @@
 			}
 //view_array($array);
 		//save the data
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'dashboard';
 			$database->app_uuid = '55533bef-4f04-434a-92af-999c1e9927f7';
 			$database->save($array);
@@ -269,7 +269,7 @@
 		$sql .= "from v_dashboard ";
 		$sql .= "where dashboard_uuid = :dashboard_uuid ";
 		$parameters['dashboard_uuid'] = $dashboard_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (is_array($row) && @sizeof($row) != 0) {
 			$dashboard_name = $row["dashboard_name"];
@@ -299,7 +299,7 @@
 		$sql .= "from v_dashboard_groups ";
 		$sql .= "where dashboard_uuid = :dashboard_uuid ";
 		$parameters['dashboard_uuid'] = $dashboard_uuid;
-		$database = new database;
+		$database = framework::database();
 		$dashboard_groups = $database->select($sql, $parameters, 'all');
 		unset ($sql, $parameters);
 	}
@@ -352,7 +352,7 @@
 	$sql .= "where x.dashboard_uuid = :dashboard_uuid ";
 	$sql .= "and x.group_uuid = g.group_uuid ";
 	$parameters['dashboard_uuid'] = $dashboard_uuid ?? '';
-	$database = new database;
+	$database = framework::database();
 	$dashboard_groups = $database->select($sql, $parameters, 'all');
 	unset ($sql, $parameters);
 
@@ -361,7 +361,7 @@
 	$sql .= "WHERE (domain_uuid = :domain_uuid or domain_uuid is null)";
 	$sql .= "ORDER by group_name asc ";
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-	$database = new database;
+	$database = framework::database();
 	$groups = $database->execute($sql, $parameters, 'all');
 	unset ($sql, $parameters);
 

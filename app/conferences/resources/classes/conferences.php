@@ -87,7 +87,7 @@ if (!class_exists('conferences')) {
 										$sql .= "and conference_uuid = :conference_uuid ";
 										$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 										$parameters['conference_uuid'] = $record['uuid'];
-										$database = new database;
+										$database = framework::database();
 										$dialplan_uuid = $database->select($sql, $parameters, 'column');
 										unset($sql, $parameters);
 
@@ -114,7 +114,7 @@ if (!class_exists('conferences')) {
 									$p->add('dialplan_delete', 'temp');
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -178,7 +178,7 @@ if (!class_exists('conferences')) {
 								$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
 								$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -207,7 +207,7 @@ if (!class_exists('conferences')) {
 									$p->add('dialplan_edit', 'temp');
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);
@@ -271,7 +271,7 @@ if (!class_exists('conferences')) {
 								$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
 								$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									$y = 0;
@@ -293,7 +293,7 @@ if (!class_exists('conferences')) {
 											$sql_2 .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 											$parameters_2['conference_uuid'] = $row['conference_uuid'];
 											$parameters_2['domain_uuid'] = $_SESSION['domain_uuid'];
-											$database = new database;
+											$database = framework::database();
 											$conference_users = $database->select($sql_2, $parameters_2, 'all');
 											if (is_array($conference_users) && @sizeof($conference_users) != 0) {
 												foreach ($conference_users as $conference_user) {
@@ -315,7 +315,7 @@ if (!class_exists('conferences')) {
 										//conference dialplan record
 											$sql_3 = "select * from v_dialplans where dialplan_uuid = :dialplan_uuid";
 											$parameters_3['dialplan_uuid'] = $row['dialplan_uuid'];
-											$database = new database;
+											$database = framework::database();
 											$dialplan = $database->select($sql_3, $parameters_3, 'row');
 											if (is_array($dialplan) && @sizeof($dialplan) != 0) {
 
@@ -346,7 +346,7 @@ if (!class_exists('conferences')) {
 									$p->add('dialplan_add', 'temp');
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);

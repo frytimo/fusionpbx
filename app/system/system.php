@@ -192,7 +192,14 @@
 		echo "	<td width='20%' class=\"vncell\" style='text-align: left;'>\n";
 		echo "	".$text['label-php']." ".$text['label-version']."\n";
 		echo "	</td>\n";
-		echo "	<td class=\"row_style1\">".$system_information['php']['version']."</td>\n";
+		echo "	<td class=\"row_style1\">".$system_information['php']['version'] . "\n";
+		echo " (" . implode(', ', $system_information['php']['loaded_extensions']) . ") ";
+//		echo "<ul>\n";
+//		foreach ($system_information['php']['loaded_extensions'] as $extension) {
+//			echo "<li>" . $extension;
+//		}
+//		echo "</ul>\n";
+		echo "  </td>\n";
 		echo "</tr>\n";
 
 		echo "<tr>\n";

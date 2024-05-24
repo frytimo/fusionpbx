@@ -14,7 +14,7 @@ if ($domains_processed == 1) {
 	//get the groups
 		$sql = "select * from v_groups ";
 		$sql .= "where domain_uuid is null ";
-		$database = new database;
+		$database = framework::database();
 		$groups = $database->select($sql, null, 'all');
 
 	//get the dashboard
@@ -26,7 +26,7 @@ if ($domains_processed == 1) {
 		$sql .= "cast(dashboard_enabled as text), ";
 		$sql .= "dashboard_description ";
 		$sql .= "from v_dashboard ";
-		$database = new database;
+		$database = framework::database();
 		$dashboard_widgets = $database->select($sql, null, 'all');
 		unset($sql, $parameters);
 
@@ -85,7 +85,7 @@ if ($domains_processed == 1) {
 
 	//save the data
 		if (!empty($array)) {
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'dashboard';
 			$database->app_uuid = '55533bef-4f04-434a-92af-999c1e9927f7';
 			$database->save($array, false);

@@ -820,7 +820,7 @@
 			$p->add("dialplan_detail_add", "temp");
 
 		//save to the data
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'outbound_routes';
 			$database->app_uuid = $app_uuid;
 			$database->save($array);
@@ -851,7 +851,7 @@
 //get the domains
 	$sql = "select * from v_domains ";
 	$sql .= "where domain_enabled = 'true' ";
-	$database = new database;
+	$database = framework::database();
 	$domains = $database->select($sql, null, 'all');
 	unset($sql);
 
@@ -866,7 +866,7 @@
 		
 	}
 	$parameters['domain_uuid'] = $domain_uuid;
-	$database = new database;
+	$database = framework::database();
 	$gateways = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 
@@ -876,7 +876,7 @@
 		$sql .= "where bridge_enabled = 'true' ";
 		$sql .= "and domain_uuid = :domain_uuid ";
 		$parameters['domain_uuid'] = $domain_uuid;
-		$database = new database;
+		$database = framework::database();
 		$bridges = $database->select($sql, $parameters, 'all');
 		unset($sql, $parameters);
 	}

@@ -70,7 +70,7 @@
 			$sql = "select count(*) from v_call_center_queues ";
 			$sql .= "where domain_uuid = :domain_uuid ";
 			$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-			$database = new database;
+			$database = framework::database();
 			$total_call_center_queues = $database->select($sql, $parameters, 'column');
 			unset($sql, $parameters);
 
@@ -146,7 +146,7 @@
 			$sql .= "and t.call_center_queue_uuid = q.call_center_queue_uuid; ";
 			$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 			$parameters['call_center_tier_uuid'] = $call_center_tier_uuid;
-			$database = new database;
+			$database = framework::database();
 			$tiers = $database->select($sql, $parameters, 'all');
 			unset($sql, $parameters);
 
@@ -178,7 +178,7 @@
 				$p = new permissions;
 				$p->add('call_center_tier_delete', 'temp');
 
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = 'call_centers';
 				$database->app_uuid = '95788e50-9500-079e-2807-fd530b0ea370';
 				$database->delete($array);
@@ -422,7 +422,7 @@
 			$p->add("dialplan_edit", "temp");
 
 		//save to the data
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'call_centers';
 			$database->app_uuid = '95788e50-9500-079e-2807-fd530b0ea370';
 			$database->save($array);
@@ -521,7 +521,7 @@
 		$sql .= "and call_center_queue_uuid = :call_center_queue_uuid ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['call_center_queue_uuid'] = $call_center_queue_uuid;
-		$database = new database;
+		$database = framework::database();
 		$call_center_queues = $database->select($sql, $parameters, 'all');
 		unset($sql, $parameters);
 
@@ -570,7 +570,7 @@
 	$sql .= "order by tier_level asc, tier_position asc, a.agent_name asc";
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	$parameters['call_center_queue_uuid'] = $call_center_queue_uuid ?? null;
-	$database = new database;
+	$database = framework::database();
 	$tiers = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 
@@ -598,7 +598,7 @@
 	$sql .= "where domain_uuid = :domain_uuid ";
 	$sql .= "order by agent_name asc";
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-	$database = new database;
+	$database = framework::database();
 	$agents = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 

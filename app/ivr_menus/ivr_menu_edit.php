@@ -70,7 +70,7 @@
 	if (!empty($_SESSION['limit']['ivr_menus']['numeric'])) {
 		$sql = "select count(*) as num_rows from v_ivr_menus where domain_uuid = :domain_uuid ";
 		$parameters['domain_uuid'] = $domain_uuid;
-		$database = new database;
+		$database = framework::database();
 		$total_ivr_menus = $database->select($sql, $parameters, 'column');
 		unset($sql, $parameters);
 
@@ -176,7 +176,7 @@
 				$sql = "select * from v_ivr_menus ";
 				$sql .= "where ivr_menu_uuid = :ivr_menu_uuid ";
 				$parameters['ivr_menu_uuid'] = $ivr_menu_uuid;
-				$database = new database;
+				$database = framework::database();
 				$row = $database->select($sql, $parameters, 'row');
 				if (!empty($row)) {
 					if (!permission_exists('ivr_menu_domain')) {
@@ -401,7 +401,7 @@
 					}
 
 				//save to the data
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'ivr_menus';
 					$database->app_uuid = 'a5788e9b-58bc-bd1b-df59-fff5d51253ab';
 					$database->save($array);
@@ -441,7 +441,7 @@
 					$sql .="	) ";
 					$sql .="	select * from ivr_menus ";
 					$parameters['ivr_menu_parent_uuid'] = $ivr_menu_parent_uuid;
-					$database = new database;
+					$database = framework::database();
 					$parent_uuids = $database->select($sql, $parameters, "all");
 					if (!empty($parent_uuids)) {
 						foreach ($parent_uuids as $x => $row) {
@@ -530,7 +530,7 @@
 	$sql .= "order by natural_sort(ivr_menu_option_digits::text) asc, ivr_menu_option_order asc; ";
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	$parameters['ivr_menu_uuid'] = $ivr_menu_uuid;
-	$database = new database;
+	$database = framework::database();
 	$ivr_menu_options = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 
@@ -539,7 +539,7 @@
 	$sql .= "where domain_uuid = :domain_uuid ";
 	$sql .= "order by v_ivr_menus asc ";
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-	$database = new database;
+	$database = framework::database();
 	$ivr_menus = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 

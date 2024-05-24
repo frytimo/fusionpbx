@@ -165,7 +165,7 @@
 	$sql .= "where device_address = :device_address ";
 	$sql .= "and d.domain_uuid = n.domain_uuid; ";
 	$parameters['device_address'] = $device_address;
-	$database = new database;
+	$database = framework::database();
 	$row = $database->select($sql, $parameters, 'row');
 	if (is_array($row)) {
 		$device_uuid = $row['device_uuid'];
@@ -186,7 +186,7 @@
 			$sql = "select domain_uuid from v_domains ";
 			$sql .= "where domain_name = :domain_name ";
 			$parameters['domain_name'] = $domain_name;
-			$database = new database;
+			$database = framework::database();
 			$domain_uuid = $database->select($sql, $parameters, 'column');
 			unset($sql, $parameters);
 	}
@@ -195,7 +195,7 @@
 	$sql = "select * from v_default_settings ";
 	$sql .= "where default_setting_enabled = 'true' ";
 	$sql .= "order by default_setting_order asc ";
-	$database = new database;
+	$database = framework::database();
 	$result = $database->select($sql, null, 'all');
 	//unset the previous settings
 	if (is_array($result) && @sizeof($result) != 0) {
@@ -235,7 +235,7 @@
 		$sql .= "and domain_setting_enabled = 'true' ";
 		$sql .= "order by domain_setting_order asc ";
 		$parameters['domain_uuid'] = $domain_uuid;
-		$database = new database;
+		$database = framework::database();
 		$result = $database->select($sql, $parameters, 'all');
 		//unset the arrays that domains are overriding
 		if (is_array($result) && @sizeof($result) != 0) {

@@ -31,6 +31,16 @@
 	$_SERVER["PROJECT_ROOT"] = $document_root;
 	define("PROJECT_PATH", '');
 
+//class auto loader
+if (file_exists($document_root .'/resources/libs/autoload.php')) {
+	require_once $document_root .'/resources/libs/autoload.php';
+}
+
+if (!class_exists('auto_loader')) {
+	include "resources/classes/auto_loader.php";
+	$autoload = new auto_loader();
+}
+
 //includes files
 	require_once "resources/functions.php";
 
@@ -181,7 +191,7 @@
 			$sql = "select domain_uuid from v_domains ";
 			$sql .= "where domain_name = :domain_name ";
 			$parameters['domain_name'] = $domain_name;
-			$database = new database;
+			$database = framework::database();
 			$domain_uuid = $database->select($sql, $parameters, 'column');
 			unset($parameters);
 
@@ -206,7 +216,7 @@
 				$array['domains'][0]['domain_enabled'] = 'true';
 
 				//save to the user data
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = 'domains';
 				$database->app_uuid = 'b31e723a-bf70-670c-a49b-470d2a232f71';
 				$database->uuid($domain_uuid);
@@ -238,7 +248,7 @@
 			$parameters['domain_uuid'] = $domain_uuid;
 			$parameters['username'] = $admin_username;
 
-			$database = new database;
+			$database = framework::database();
 			$user_uuid = $database->select($sql, $parameters, 'column');
 			unset($parameters);
 
@@ -258,7 +268,7 @@
 			$sql = "select group_uuid from v_groups ";
 			$sql .= "where group_name = :group_name ";
 			$parameters['group_name'] = 'superadmin';
-			$database = new database;
+			$database = framework::database();
 			$group_uuid = $database->select($sql, $parameters, 'column');
 			unset($parameters);
 
@@ -280,7 +290,7 @@
 			$array['user_groups'][0]['group_name'] = 'superadmin';
 			$array['user_groups'][0]['group_uuid'] = $group_uuid;
 			$array['user_groups'][0]['user_uuid'] = $user_uuid;
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'users';
 			$database->app_uuid = '112124b3-95c2-5352-7e9d-d14c0b88f207';
 			$database->uuid($user_uuid);

@@ -133,7 +133,7 @@ class plugin_ldap {
 				}
 				$sql .= "and (user_type = 'default' or user_type is null) ";
 				$parameters['username'] = $this->username;
-				$database = new database;
+				$database = framework::database();
 				$row = $database->select($sql, $parameters, 'row');
 				if (is_array($row) && @sizeof($row) != 0) {
 					if ($settings['users']['unique'] == "global" && $row["domain_uuid"] != $this->domain_uuid) {
@@ -184,7 +184,7 @@ class plugin_ldap {
 						$p->add('user_group_add', 'temp');
 
 					//execute insert
-						$database = new database;
+						$database = framework::database();
 						$database->app_name = 'authentication';
 						$database->app_uuid = 'a8a12918-69a4-4ece-a1ae-3932be0e41f1';
 						$database->save($array);

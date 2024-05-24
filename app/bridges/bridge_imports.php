@@ -297,7 +297,7 @@
 								if ($row_id === 1000) {
 
 									//save to the data
-										$database = new database;
+										$database = framework::database();
 										$database->app_name = 'bridges';
 										$database->app_uuid = 'b523c2d2-64cd-46f1-9520-ca4b4098e044';
 										$database->save($array);
@@ -317,7 +317,7 @@
 
 				//save to the data
 					if (!empty($array) && is_array($array)) {
-						$database = new database;
+						$database = framework::database();
 						$database->app_name = 'bridges';
 						$database->app_uuid = 'b523c2d2-64cd-46f1-9520-ca4b4098e044';
 						$database->save($array);

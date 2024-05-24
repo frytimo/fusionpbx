@@ -141,7 +141,7 @@
 					//get the dialplan_uuid
 						$sql = "select dialplan_uuid from v_dialplans ";
 						$sql .= "where app_uuid = 'd49ee3bd-5085-4619-a2f9-2b62c8c461c5' ";
-						$database = new database;
+						$database = framework::database();
 						$dialplan_uuid = $database->select($sql, null, 'column');
 						unset($sql);
 
@@ -152,7 +152,7 @@
 						$sql .= "and dialplan_detail_type = 'set' ";
 						$sql .= "and dialplan_detail_data like 'timezone=%' ";
 						$parameters['dialplan_uuid'] = $dialplan_uuid;
-						$database = new database;
+						$database = framework::database();
 						$dialplan_detail_uuid = $database->select($sql, $parameters, 'column');
 						$detail_action = is_uuid($dialplan_detail_uuid) ? 'update' : 'add';
 						unset($sql, $parameters);
@@ -176,7 +176,7 @@
 							$p->add('dialplan_detail_add', 'temp');
 						}
 						if (is_array($array) && sizeof($array) != 0) {
-							$database = new database;
+							$database = framework::database();
 							$database->app_name = 'default_settings';
 							$database->app_uuid = '2c2453c0-1bea-4475-9f44-4d969650de09';
 							$database->save($array);
@@ -215,7 +215,7 @@
 				$array['default_settings'][$x]['default_setting_description'] = $default_setting_description;
 
 				//save to the data
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = 'default_settings';
 				$database->app_uuid = '2c2453c0-1bea-4475-9f44-4d969650de09';
 				$database->save($array);
@@ -242,7 +242,7 @@
 		$sql .= "from v_default_settings ";
 		$sql .= "where default_setting_uuid = :default_setting_uuid ";
 		$parameters['default_setting_uuid'] = $default_setting_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (is_array($row) && sizeof($row) != 0) {
 			$default_setting_category = $row["default_setting_category"];
@@ -385,7 +385,7 @@
 		echo "		<select class='formfld' id='default_setting_value' name='default_setting_value' style=''>\n";
 		$sql = "select * from v_menus ";
 		$sql .= "order by menu_language, menu_name asc ";
-		$database = new database;
+		$database = framework::database();
 		$sub_result = $database->select($sql, null, 'all');
 		if (is_array($sub_result) && sizeof($sub_result) != 0) {
 			foreach ($sub_result as $sub_row) {

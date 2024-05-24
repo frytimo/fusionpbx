@@ -101,7 +101,7 @@
 // 			$sql .= "cast(dashboard_enabled as text), ";
 // 			$sql .= "dashboard_description ";
 // 			$sql .= "from v_dashboard ";
-// 			$database = new database;
+// 			$database = framework::database();
 // 			$dashboard_widgets = $database->select($sql, $parameters, 'all');
 // 			unset($sql, $parameters);
 //
@@ -127,7 +127,7 @@
 // 					$sql .= "from v_dashboard_groups ";
 // 					$sql .= "where dashboard_uuid = :dashboard_uuid ";
 // 					$parameters['dashboard_uuid'] = $row["dashboard_uuid"];
-// 					$database = new database;
+// 					$database = framework::database();
 // 					$dashboard_groups = $database->select($sql, $parameters, 'all');
 // 					unset($sql, $parameters);
 // 					if (is_array($dashboard_groups)) {
@@ -190,7 +190,7 @@
 		$sql .= ")\n";
 		$parameters['search'] = '%'.$search.'%';
 	}
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters ?? null, 'column');
 	unset($sql, $parameters);
 
@@ -221,7 +221,7 @@
 	}
 	$sql .= order_by($order_by, $order, 'dashboard_order', 'asc');
 	$sql .= limit_offset($rows_per_page ?? null, $offset ?? null);
-	$database = new database;
+	$database = framework::database();
 	$dashboard = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters);
 

@@ -25,22 +25,44 @@
 */
 
 /**
- * captcha class
+ * token class
  *
  * @method string get
  */
-class token {
+class token implements Stringable {
 
-	/**
-	* Called when the object is created
-	*/
-	//public $code;
+	private $name;
+	private $hash;
+	private $validated;
 
-	/**
-	* Class constructor
-	*/
-	public function __construct() {
+	public function __construct($key = null) {
 
+		if ($key === null) {
+			$key = $_SERVER['PHP_SELF'];
+		}
+
+		//allow only specific characters
+		$key = preg_replace('[^a-zA-Z0-9\-_@.\/]', '', $key);
+
+		//create a token for the key submitted
+		$this->name = hash_hmac('sha256', $key, bin2hex(random_bytes(32)));
+		$this->hash = hash_hmac('sha256', $key, bin2hex(random_bytes(32)));
+		$this->validated = false;
+
+		//save in the token session array
+		$_SESSION['tokens'][$key][] = $this->toArray();
+	}
+
+	public function toArray(): array {
+		return [
+			'name' => $this->name,
+			'hash' => $this->hash,
+			'validated' => $this->validated
+		];
+	}
+
+	public function __toString(): string {
+		return "<input type='hidden' name='$this->name' value='$this->hash'>";
 	}
 
 	/**
@@ -97,12 +119,12 @@ class token {
 			if (!empty($_SESSION['tokens']) && is_array($_SESSION['tokens'][$key]) && @sizeof($_SESSION['tokens'][$key]) != 0) {
 				foreach ($_SESSION['tokens'][$key] as $t => $token) {
 					if (hash_equals($token['hash'], $value)) {
-						$_SESSION['tokens'][$key][$t]['validated'] = true;
+						unset($_SESSION['tokens'][$key][$t]);
 						return true;
 					}
 				}
 			}
-			return false;
+		return false;
 
 	}
 

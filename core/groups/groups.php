@@ -104,7 +104,7 @@
 		$sql .= ") \n";
 		$parameters['search'] = '%'.$search.'%';
 	}
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters ?? '', 'column');
 
 //prepare to page the results
@@ -120,7 +120,7 @@
 	$sql = str_replace('count(*)', '*', $sql);
 	$sql .= order_by($order_by, $order, 'group_name', 'asc');
 	$sql .= limit_offset($rows_per_page, $offset);
-	$database = new database;
+	$database = framework::database();
 	$groups = $database->select($sql, $parameters ?? '', 'all');
 	unset($sql, $parameters);
 

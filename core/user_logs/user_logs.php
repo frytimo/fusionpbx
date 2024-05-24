@@ -67,7 +67,7 @@
 		}
 
 		//prepare the database object
-		$database = new database;
+		$database = framework::database();
 		$database->app_name = 'user_logs';
 		$database->app_uuid = '582a13cf-7d75-4ea3-b2d9-60914352d76e';
 
@@ -119,7 +119,7 @@
 		$sql .= ") ";
 		$parameters['search'] = '%'.$search.'%';
 	}
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters ?? null, 'column');
 	unset($sql, $parameters);
 
@@ -175,7 +175,7 @@
 	$sql .= "and u.domain_uuid = d.domain_uuid ";
 	$sql .= order_by($order_by, $order, 'timestamp', 'desc');
 	$sql .= limit_offset($rows_per_page, $offset);
-	$database = new database;
+	$database = framework::database();
 	$user_logs = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters);
 

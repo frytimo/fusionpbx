@@ -59,7 +59,7 @@
 		$sql = "select count(*) from v_devices ";
 		$sql .= "where device_address = :device_address ";
 		$parameters['device_address'] = $device_address;
-		$database = new database;
+		$database = framework::database();
 		$num_rows = $database->select($sql, $parameters, 'column');
 		if ($num_rows == 0) {
 			$save = true;
@@ -75,7 +75,7 @@
 	$sql = "select * from v_devices ";
 	$sql .= "where device_uuid = :device_uuid ";
 	$parameters['device_uuid'] = $device_uuid;
-	$database = new database;
+	$database = framework::database();
 	$devices = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 
@@ -84,7 +84,7 @@
 	$sql .= "where device_uuid = :device_uuid ";
 	$sql .= "order by line_number asc ";
 	$parameters['device_uuid'] = $device_uuid;
-	$database = new database;
+	$database = framework::database();
 	$device_lines = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 
@@ -100,7 +100,7 @@
 	$sql .= "else 100 END, ";
 	$sql .= "cast(device_key_id as int) asc ";
 	$parameters['device_uuid'] = $device_uuid;
-	$database = new database;
+	$database = framework::database();
 	$device_keys = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 
@@ -109,7 +109,7 @@
 	$sql .= "where device_uuid = :device_uuid ";
 	$sql .= "order by device_setting_subcategory asc ";
 	$parameters['device_uuid'] = $device_uuid;
-	$database = new database;
+	$database = framework::database();
 	$device_settings = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 
@@ -169,7 +169,7 @@
 
 //copy the device
 	if ($save) {
-		$database = new database;
+		$database = framework::database();
 		$database->app_name = 'devices';
 		$database->app_uuid = '4efa1a1a-32e7-bf83-534b-6c8299958a8e';
 		$database->save($array);

@@ -83,7 +83,7 @@ Mark J Crane <markjcrane@fusionpbx.com>
 			$parameters['user_setting_category'] = $user_setting_category;
 			$parameters['user_setting_subcategory'] = $user_setting_subcategory;
 			$parameters['user_setting_name'] = $user_setting_name;
-			$database = new database;
+			$database = framework::database();
 			$user_setting_uuid = $database->select($sql, $parameters, 'column');
 			unset($sql, $parameters);
 
@@ -98,7 +98,7 @@ Mark J Crane <markjcrane@fusionpbx.com>
 						$p = new permissions;
 						$p->add('user_setting_delete', 'temp');
 					//execute
-						$database = new database;
+						$database = framework::database();
 						$database->app_name = 'user_settings';
 						$database->app_uuid = '3a3337f7-78d1-23e3-0cfd-f14499b8ed97';
 						$database->delete($array);
@@ -136,7 +136,7 @@ Mark J Crane <markjcrane@fusionpbx.com>
 					$p->add('user_setting_edit', 'temp');
 
 				//execute
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'user_settings';
 					$database->app_uuid = '3a3337f7-78d1-23e3-0cfd-f14499b8ed97';
 					$database->save($array);

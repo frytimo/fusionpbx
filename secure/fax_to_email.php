@@ -287,7 +287,7 @@ if (!function_exists('fax_split_dtmf')) {
 	$sql = "select * from v_domains ";
 	$sql .= "where domain_name = :domain_name ";
 	$parameters['domain_name'] = $domain_name;
-	$database = new database;
+	$database = framework::database();
 	$result = $database->select($sql, $parameters, 'all');
 	if (is_array($result) && @sizeof($result) != 0) {
 		foreach ($result as &$row) {
@@ -318,7 +318,7 @@ if (!function_exists('fax_split_dtmf')) {
 	$sql .= "and fax_extension = :fax_extension ";
 	$parameters['domain_uuid'] = $domain_uuid;
 	$parameters['fax_extension'] = $fax_extension;
-	$database = new database;
+	$database = framework::database();
 	$row = $database->select($sql, $parameters, 'row');
 	if (is_array($row) && @sizeof($row) != 0) {
 		$fax_email = $row["fax_email"];
@@ -397,7 +397,7 @@ if (!function_exists('fax_split_dtmf')) {
 				$p->add('fax_queue_add', 'temp');
 
 				//save the data
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = 'fax queue';
 				$database->app_uuid = '3656287f-4b22-4cf1-91f6-00386bf488f4';
 				$database->save($array);
@@ -439,7 +439,7 @@ if (!function_exists('fax_split_dtmf')) {
 				$parameters['template_category'] = 'fax';
 				$parameters['template_subcategory'] = $template_subcategory;
 				$parameters['template_type'] = 'html';
-				$database = new database;
+				$database = framework::database();
 				$row = $database->select($sql, $parameters, 'row');
 				if (is_array($row)) {
 					$email_subject = $row['template_subject'];

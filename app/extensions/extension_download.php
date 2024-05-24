@@ -148,7 +148,7 @@
 			$sql = "select ".implode(', ', $selected_columns)." from v_extensions ";
 			$sql .= "where domain_uuid = :domain_uuid ";
 			$parameters['domain_uuid'] = $domain_uuid;
-			$database = new database;
+			$database = framework::database();
 			$extensions = $database->select($sql, $parameters, 'all');
 			unset($sql, $parameters, $selected_columns);
 

@@ -75,7 +75,7 @@
 	$sql .= "and menu_item_link = :menu_item_link ";
 	$parameters['menu_uuid'] = $_SESSION['domain']['menu']['uuid'];
 	$parameters['menu_item_link'] = $_SERVER["SCRIPT_NAME"];
-	$database = new database;
+	$database = framework::database();
 	$_SESSION["menu_item_parent_uuid"] = $database->select($sql, $parameters, 'column');
 	unset($sql, $parameters);
 
@@ -92,7 +92,7 @@
 		$sql .= "order by rss_order asc ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['content'] = empty($content) ? $_SERVER["PHP_SELF"] : $content;
-		$database = new database;
+		$database = framework::database();
 		$content_result = $database->select($sql, $parameters, 'all');
 		if (is_array($content_result) && @sizeof($content_result) != 0) {
 			foreach($content_result as $content_row) {

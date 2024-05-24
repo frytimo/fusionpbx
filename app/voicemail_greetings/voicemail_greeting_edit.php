@@ -107,7 +107,7 @@ if (count($_POST) > 0 && empty($_POST["persistformvar"])) {
 			$array['voicemail_greetings'][0]['greeting_name'] = $greeting_name;
 			$array['voicemail_greetings'][0]['greeting_description'] = $greeting_description;
 		//execute update
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'voicemail_greetings';
 			$database->app_uuid = 'e4b4fbee-9e4d-8e46-3810-91ba663db0c2';
 			$database->save($array);
@@ -127,7 +127,7 @@ if (count($_POST) > 0 && empty($_POST["persistformvar"])) {
 		$sql .= "and voicemail_greeting_uuid = :voicemail_greeting_uuid ";
 		$parameters['domain_uuid'] = $domain_uuid;
 		$parameters['voicemail_greeting_uuid'] = $voicemail_greeting_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (is_array($row) && @sizeof($row) != 0) {
 			$greeting_name = $row["greeting_name"];

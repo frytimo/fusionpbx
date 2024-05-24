@@ -168,7 +168,7 @@
 			$array['fax_queue'][0]['fax_response'] = $fax_response;
 
 		//save the data
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'fax queue';
 			$database->app_uuid = '3656287f-4b22-4cf1-91f6-00386bf488f4';
 			$database->save($array);
@@ -211,7 +211,7 @@
 		//$sql .= "and domain_uuid = :domain_uuid ";
 		//$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['fax_queue_uuid'] = $fax_queue_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (is_array($row) && @sizeof($row) != 0) {
 			$fax_uuid = $row["fax_uuid"];

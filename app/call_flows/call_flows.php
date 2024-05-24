@@ -115,7 +115,7 @@
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	}
 	$sql .= $sql_search ?? '';
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters ?? null, 'column');
 
 //prepare to page the results
@@ -134,7 +134,7 @@
 	$sql = str_replace('count(*)', '*', $sql ?? '');
 	$sql .= order_by($order_by, $order, 'call_flow_name', 'asc', $sort);
 	$sql .= limit_offset($rows_per_page, $offset);
-	$database = new database;
+	$database = framework::database();
 	$call_flows = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters);
 

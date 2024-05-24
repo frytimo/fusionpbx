@@ -91,7 +91,7 @@
 		$sql .= ") ";
 		$parameters['search'] = '%'.strtolower($search).'%';
 	}
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters ?? null, 'column');
 
 //prepare to page the results
@@ -124,7 +124,7 @@
 	}
 	$sql .= order_by($order_by, $order, 'agent_name', 'asc');
 	$sql .= limit_offset($rows_per_page, $offset);
-	$database = new database;
+	$database = framework::database();
 	$result = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters);
 
@@ -251,7 +251,7 @@
 				$sql = "select gateway from v_gateways ";
 				$sql .= "where gateway_uuid = :gateway_uuid ";
 				$parameters['gateway_uuid'] = $bridge_statement[2];
-				$database = new database;
+				$database = framework::database();
 				$result = $database->select($sql, $parameters ?? null, 'all');
 				if (count($result) > 0) {
 					$gateway_name = $result[0]['gateway'];

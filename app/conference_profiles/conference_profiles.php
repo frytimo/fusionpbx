@@ -100,14 +100,14 @@
 	if (isset($sql_search)) {
 		$sql .= "where ".$sql_search;
 	}
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters ?? null, 'column');
 
 //get the list
 	$sql = str_replace('count(conference_profile_uuid)', '*', $sql);
 	$sql .= order_by($order_by, $order, 'profile_name', 'asc');
 	$sql .= limit_offset($rows_per_page ?? '', $offset ?? '');
-	$database = new database;
+	$database = framework::database();
 	$conference_profiles = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters);
 

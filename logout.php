@@ -54,7 +54,7 @@
 					$sql .= "and user_setting_name = 'url' ";
 					$paramters['domain_uuid'] = $_SESSION['domain_uuid'];
 					$paramters['user_uuid'] = $_SESSION['user_uuid'];
-					$database = new database;
+					$database = framework::database();
 					$num_rows = $database->select($sql, $parameters, 'column');
 					$exists = ($num_rows > 0) ? true : false;
 					unset($sql, $parameters, $num_rows);
@@ -72,7 +72,7 @@
 						$parameters['user_setting_value'] = $referrer;
 						$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 						$parameters['user_uuid'] = $_SESSION["user_uuid"];
-						$database = new database;
+						$database = framework::database();
 						$database->execute($sql, $parameters);
 						unset($sql, $parameters);
 					}
@@ -92,7 +92,7 @@
 							$p = new permissions;
 							$p->add('user_setting_add', 'temp');
 						//execute insert
-							$database = new database;
+							$database = framework::database();
 							$database->app_name = 'logout';
 							$database->app_uuid = 'e9f24006-5da2-417f-94fb-7458348bae29';
 							$database->save($array);

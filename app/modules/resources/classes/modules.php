@@ -698,7 +698,7 @@ if (!class_exists('modules')) {
 			public function get_modules() {
 				$sql = "select * from v_modules ";
 				$sql .= "order by module_category,  module_label";
-				$database = new database;
+				$database = framework::database();
 				$this->modules = $database->select($sql, null, 'all');
 				unset($sql);
 			}
@@ -746,7 +746,7 @@ if (!class_exists('modules')) {
 							$p = new permissions;
 							$p->add('module_add', 'temp');
 						//execute insert
-							$database = new database;
+							$database = framework::database();
 							$database->app_name = 'modules';
 							$database->app_uuid = '5eb9cba1-8cb6-5d21-e36a-775475f16b5e';
 							$database->save($array);
@@ -777,7 +777,7 @@ if (!class_exists('modules')) {
 					$sql = "select * from v_modules ";
 					$sql .= "order by module_order asc, ";
 					$sql .= "module_category asc ";
-					$database = new database;
+					$database = framework::database();
 					$result = $database->select($sql, null, 'all');
 					unset($sql);
 
@@ -870,7 +870,7 @@ if (!class_exists('modules')) {
 							if (!empty($uuids) && is_array($uuids) && @sizeof($uuids) != 0) {
 								$sql = "select ".$this->uuid_prefix."uuid as uuid, module_name as module, module_enabled as enabled from v_".$this->table." ";
 								$sql .= "where ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters ?? null, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -945,7 +945,7 @@ if (!class_exists('modules')) {
 							if (is_array($uuids) && @sizeof($uuids) != 0) {
 								$sql = "select ".$this->uuid_prefix."uuid as uuid, module_name as module from v_".$this->table." ";
 								$sql .= "where ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters ?? null, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -981,7 +981,7 @@ if (!class_exists('modules')) {
 									}
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -1035,7 +1035,7 @@ if (!class_exists('modules')) {
 							if (is_array($uuids) && @sizeof($uuids) != 0) {
 								$sql = "select ".$this->uuid_prefix."uuid as uuid, ".$this->toggle_field." as state, module_name as name from v_".$this->table." ";
 								$sql .= "where ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters ?? null, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -1060,7 +1060,7 @@ if (!class_exists('modules')) {
 							if (is_array($array) && @sizeof($array) != 0) {
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);

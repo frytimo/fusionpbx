@@ -324,7 +324,7 @@ if (!class_exists('email')) {
 				$p->add("email_queue_attachment_add", 'temp');
 
 				//save the dialplan
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = 'email';
 				$database->app_uuid = 'e24b5dab-3bcc-42e8-99c1-19b0c558c2d7';
 				$database->save($array);
@@ -433,7 +433,7 @@ if (!class_exists('email')) {
 					$sql .= "and (domain_setting_category = 'email' or domain_setting_category = 'voicemail') ";
 					$sql .= "and domain_setting_enabled = 'true' ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
-					$database = new database;
+					$database = framework::database();
 					$result = $database->select($sql, $parameters, 'all');
 					if (is_array($result) && @sizeof($result) != 0) {
 						foreach ($result as $row) {

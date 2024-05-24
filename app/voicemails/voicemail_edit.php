@@ -235,7 +235,7 @@
 					}
 
 				//execute insert/update
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'voicemails';
 					$database->app_uuid = 'b523c2d2-64cd-46f1-9520-ca4b4098e044';
 					$database->save($array);
@@ -318,7 +318,7 @@
 		$sql .= "and voicemail_uuid = :voicemail_uuid ";
 		$parameters['domain_uuid'] = $domain_uuid;
 		$parameters['voicemail_uuid'] = $voicemail_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (!empty($row)) {
 			$voicemail_id = $row["voicemail_id"];
@@ -363,7 +363,7 @@
 	$sql .= "order by greeting_name asc ";
 	$parameters['domain_uuid'] = $domain_uuid;
 	$parameters['voicemail_id'] = $voicemail_id;
-	$database = new database;
+	$database = framework::database();
 	$rows = $database->select($sql, $parameters, 'all');
 	if (!empty($rows) && is_array($rows) && @sizeof($rows) != 0) {
 		foreach ($rows as $row) {
@@ -380,7 +380,7 @@
 		$sql .= "order by voicemail_option_digits, voicemail_option_order asc ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['voicemail_uuid'] = $voicemail_uuid;
-		$database = new database;
+		$database = framework::database();
 		$voicemail_options = $database->select($sql, $parameters, 'all');
 		unset($sql, $parameters);
 
@@ -417,7 +417,7 @@
 		$sql .= "order by v.voicemail_id asc";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['voicemail_uuid'] = $voicemail_uuid;
-		$database = new database;
+		$database = framework::database();
 		$voicemail_destinations_assigned = $database->select($sql, $parameters, 'all');
 		if (is_array($voicemail_destinations_assigned) && @sizeof($voicemail_destinations_assigned) != 0) {
 			foreach ($voicemail_destinations_assigned as $field) {
@@ -443,7 +443,7 @@
 	if (!empty($voicemail_uuid) && is_uuid($voicemail_uuid)) {
 		$parameters['voicemail_uuid'] = $voicemail_uuid;
 	}
-	$database = new database;
+	$database = framework::database();
 	$voicemail_destinations_available = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters, $voicemail_destinations);
 

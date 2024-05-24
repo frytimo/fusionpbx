@@ -123,7 +123,7 @@
 					$sql = "select count(*) from v_domains ";
 					$sql .= "where lower(domain_name) = :domain_name ";
 					$parameters['domain_name'] = $domain_name;
-					$database = new database;
+					$database = framework::database();
 					$num_rows = $database->select($sql, $parameters, 'column');
 					unset($sql, $parameters);
 
@@ -143,7 +143,7 @@
 							$domain_array = $array;
 
 						//add the new domain
-							$database = new database;
+							$database = framework::database();
 							$database->app_name = 'domains';
 							$database->app_uuid = '8b91605b-f6d2-42e6-a56d-5d1ded01bb44';
 							$database->save($array);
@@ -192,7 +192,7 @@
 						$sql = "select domain_name from v_domains ";
 						$sql .= "where domain_uuid = :domain_uuid ";
 						$parameters['domain_uuid'] = $domain_uuid;
-						$database = new database;
+						$database = framework::database();
 						$original_domain_name = $database->select($sql, $parameters, 'column');
 						unset($sql, $parameters);
 
@@ -201,7 +201,7 @@
 						$array['domains'][0]['domain_name'] = $domain_name;
 						$array['domains'][0]['domain_enabled'] = $domain_enabled;
 						$array['domains'][0]['domain_description'] = $domain_description;
-						$database = new database;
+						$database = framework::database();
 						$database->app_name = 'domains';
 						$database->app_uuid = '8b91605b-f6d2-42e6-a56d-5d1ded01bb44';
 						$database->save($array);
@@ -233,7 +233,7 @@
 								$parameters['domain_name_old'] = $original_domain_name;
 								$parameters['domain_name_new'] = $domain_name;
 								$parameters['domain_uuid'] = $domain_uuid;
-								$database = new database;
+								$database = framework::database();
 								$database->execute($sql, $parameters);
 								unset($sql, $parameters);
 
@@ -243,7 +243,7 @@
 								$parameters['domain_name_old'] = $original_domain_name;
 								$parameters['domain_name_new'] = $domain_name;
 								$parameters['domain_uuid'] = $domain_uuid;
-								$database = new database;
+								$database = framework::database();
 								$database->execute($sql, $parameters);
 								unset($sql, $parameters);
 							}
@@ -256,7 +256,7 @@
 								$parameters['destination_data_old'] = $original_domain_name;
 								$parameters['destination_data_new'] = $domain_name;
 								$parameters['domain_uuid'] = $domain_uuid;
-								$database = new database;
+								$database = framework::database();
 								$database->execute($sql, $parameters);
 								unset($sql, $parameters);
 							}
@@ -271,7 +271,7 @@
 								$parameters['domain_name_old'] = $original_domain_name;
 								$parameters['domain_name_new'] = $domain_name;
 								$parameters['domain_uuid'] = $domain_uuid;
-								$database = new database;
+								$database = framework::database();
 								$database->execute($sql, $parameters);
 								unset($sql, $parameters);
 							}
@@ -286,7 +286,7 @@
 								$parameters['domain_name_old'] = $original_domain_name;
 								$parameters['domain_name_new'] = $domain_name;
 								$parameters['domain_uuid'] = $domain_uuid;
-								$database = new database;
+								$database = framework::database();
 								$database->execute($sql, $parameters);
 								unset($sql, $parameters);
 
@@ -296,7 +296,7 @@
 								$parameters['domain_name_old'] = $original_domain_name;
 								$parameters['domain_name_new'] = $domain_name;
 								$parameters['domain_uuid'] = $domain_uuid;
-								$database = new database;
+								$database = framework::database();
 								$database->execute($sql, $parameters);
 								unset($sql, $parameters);
 							}
@@ -311,7 +311,7 @@
 								$parameters['domain_name_old'] = $original_domain_name;
 								$parameters['domain_name_new'] = $domain_name;
 								$parameters['domain_uuid'] = $domain_uuid;
-								$database = new database;
+								$database = framework::database();
 								$database->execute($sql, $parameters);
 								unset($sql, $parameters);
 							}
@@ -325,7 +325,7 @@
 								$parameters['domain_name_old'] = $original_domain_name;
 								$parameters['domain_name_new'] = $domain_name;
 								$parameters['domain_uuid'] = $domain_uuid;
-								$database = new database;
+								$database = framework::database();
 								$database->execute($sql, $parameters);
 								unset($sql, $parameters);
 
@@ -336,7 +336,7 @@
 								$parameters['context_old'] = $original_domain_name;
 								$parameters['context_new'] = $domain_name;
 								$parameters['domain_uuid'] = $domain_uuid;
-								$database = new database;
+								$database = framework::database();
 								$database->execute($sql, $parameters);
 								unset($sql, $parameters);
 							}
@@ -350,7 +350,7 @@
 								$parameters['type_value_old'] = $original_domain_name;
 								$parameters['type_value_new'] = $domain_name;
 								$parameters['domain_uuid'] = $domain_uuid;
-								$database = new database;
+								$database = framework::database();
 								$database->execute($sql, $parameters);
 								unset($sql, $parameters);
 							}
@@ -363,7 +363,7 @@
 								$parameters['domain_name_old'] = $original_domain_name;
 								$parameters['domain_name_new'] = $domain_name;
 								$parameters['domain_uuid'] = $domain_uuid;
-								$database = new database;
+								$database = framework::database();
 								$database->execute($sql, $parameters);
 								unset($sql, $parameters);
 							}
@@ -376,7 +376,7 @@
 								$parameters['domain_name_old'] = $original_domain_name;
 								$parameters['domain_name_new'] = $domain_name;
 								$parameters['domain_uuid'] = $domain_uuid;
-								$database = new database;
+								$database = framework::database();
 								$database->execute($sql, $parameters);
 								unset($sql, $parameters);
 							}
@@ -389,7 +389,7 @@
 								$parameters['domain_name_old'] = $original_domain_name;
 								$parameters['domain_name_new'] = $domain_name;
 								$parameters['domain_uuid'] = $domain_uuid;
-								$database = new database;
+								$database = framework::database();
 								$database->execute($sql, $parameters);
 								unset($sql, $parameters);
 							}
@@ -402,7 +402,7 @@
 								$parameters['domain_name_old'] = $original_domain_name;
 								$parameters['domain_name_new'] = $domain_name;
 								$parameters['domain_uuid'] = $domain_uuid;
-								$database = new database;
+								$database = framework::database();
 								$database->execute($sql, $parameters);
 								unset($sql, $parameters);
 							}
@@ -417,7 +417,7 @@
 								$parameters['domain_name_old'] = $original_domain_name;
 								$parameters['domain_name_new'] = $domain_name;
 								$parameters['domain_uuid'] = $domain_uuid;
-								$database = new database;
+								$database = framework::database();
 								$database->execute($sql, $parameters);
 								unset($sql, $parameters);
 							}
@@ -434,7 +434,7 @@
 								$parameters['domain_name_old'] = $original_domain_name;
 								$parameters['domain_name_new'] = $domain_name;
 								$parameters['domain_uuid'] = $domain_uuid;
-								$database = new database;
+								$database = framework::database();
 								$database->execute($sql, $parameters);
 								unset($sql, $parameters);
 							}
@@ -514,7 +514,7 @@
 								$sql .= "var_value = :var_value ";
 								$sql .= "where var_name = 'domain' ";
 								$parameters['var_value'] = $domain_name;
-								$database = new database;
+								$database = framework::database();
 								$database->app_name = 'domains';
 								$database->app_uuid = '8b91605b-f6d2-42e6-a56d-5d1ded01bb44';
 								$database->execute($sql, $parameters);
@@ -560,7 +560,7 @@
 		$sql .= "from v_domains ";
 		$sql .= "where domain_uuid = :domain_uuid ";
 		$parameters['domain_uuid'] = $domain_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (is_array($row) && sizeof($row) != 0) {
 			$domain_name = strtolower($row["domain_name"]);

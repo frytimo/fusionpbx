@@ -96,7 +96,7 @@ if (!class_exists('phrases')) {
 								$sql .= "where domain_uuid = :domain_uuid ";
 								$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -126,7 +126,7 @@ if (!class_exists('phrases')) {
 									$p->add('phrase_detail_delete', 'temp');
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -195,7 +195,7 @@ if (!class_exists('phrases')) {
 								$sql .= "and phrase_uuid = :phrase_uuid ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 								$parameters['phrase_uuid'] = $this->phrase_uuid;
-								$database = new database;
+								$database = framework::database();
 								$phrase_language = $database->select($sql, $parameters, 'column');
 								unset($sql, $parameters, $rows, $row);
 							}
@@ -208,7 +208,7 @@ if (!class_exists('phrases')) {
 									$p->add('phrase_detail_delete', 'temp');
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -261,7 +261,7 @@ if (!class_exists('phrases')) {
 								$sql .= "where domain_uuid = :domain_uuid ";
 								$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -284,7 +284,7 @@ if (!class_exists('phrases')) {
 							if (is_array($array) && @sizeof($array) != 0) {
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);
@@ -349,7 +349,7 @@ if (!class_exists('phrases')) {
 									$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
 									$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 									$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-									$database = new database;
+									$database = framework::database();
 									$rows = $database->select($sql, $parameters, 'all');
 									if (is_array($rows) && @sizeof($rows) != 0) {
 										$y = 0;
@@ -366,7 +366,7 @@ if (!class_exists('phrases')) {
 											//details sub table
 												$sql_2 = "select * from v_phrase_details where phrase_uuid = :phrase_uuid";
 												$parameters_2['phrase_uuid'] = $row['phrase_uuid'];
-												$database = new database;
+												$database = framework::database();
 												$rows_2 = $database->select($sql_2, $parameters_2, 'all');
 												if (is_array($rows_2) && @sizeof($rows_2) != 0) {
 													foreach ($rows_2 as $row_2) {
@@ -402,7 +402,7 @@ if (!class_exists('phrases')) {
 									$p->add('phrase_detail_add', 'temp');
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);

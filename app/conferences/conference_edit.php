@@ -98,7 +98,7 @@
 		$array['conference_users'][0]['conference_uuid'] = $conference_uuid;
 		$array['conference_users'][0]['user_uuid'] = $user_uuid;
 
-		$database = new database;
+		$database = framework::database();
 		$database->app_name = 'conferences';
 		$database->app_uuid = 'b81412e8-7253-91f4-e48e-42fc2c9a38d9';
 		$database->delete($array);
@@ -127,7 +127,7 @@
 			$p = new permissions;
 			$p->add('conference_user_add', 'temp');
 
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'conferences';
 			$database->app_uuid = 'b81412e8-7253-91f4-e48e-42fc2c9a38d9';
 			$database->save($array);
@@ -243,7 +243,7 @@
 					$p->add('dialplan_add', 'temp');
 					$p->add('dialplan_edit', 'temp');
 
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'conferences';
 					$database->app_uuid = 'b81412e8-7253-91f4-e48e-42fc2c9a38d9';
 					$database->save($array);
@@ -259,7 +259,7 @@
 					//$sql .= "and domain_uuid = :domain_uuid ";
 					//$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 					$parameters['dialplan_uuid'] = $dialplan_uuid;
-					$database = new database;
+					$database = framework::database();
 					$database->execute($sql, $parameters ?? null);
 					unset($sql, $parameters);
 
@@ -293,7 +293,7 @@
 		$sql .= "and conference_uuid = :conference_uuid ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['conference_uuid'] = $conference_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters ?? null, 'row');
 		if (!empty($row)) {
 			$dialplan_uuid = $row["dialplan_uuid"];
@@ -322,7 +322,7 @@
 	$sql .= "from v_conference_profiles ";
 	$sql .= "where profile_enabled = 'true' ";
 	$sql .= "and profile_name <> 'sla' ";
-	$database = new database;
+	$database = framework::database();
 	$conference_profiles = $database->select($sql, null, 'all');
 	unset($sql);
 
@@ -334,7 +334,7 @@
 	$sql .= "and e.conference_uuid = :conference_uuid ";
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	$parameters['conference_uuid'] = $conference_uuid ?? null;
-	$database = new database;
+	$database = framework::database();
 	$conference_users = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters);
 
@@ -343,7 +343,7 @@
 	$sql .= "where domain_uuid = :domain_uuid ";
 	$sql .= "and user_enabled = 'true' ";
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-	$database = new database;
+	$database = framework::database();
 	$users = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters);
 

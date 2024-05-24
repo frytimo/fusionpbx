@@ -190,7 +190,7 @@
 			$array['email_queue'][0]['email_response'] = $email_response;
 
 		//save the data
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'email queue';
 			$database->app_uuid = '5befdf60-a242-445f-91b3-2e9ee3e0ddf7';
 			$database->save($array);
@@ -216,7 +216,7 @@
 		//$sql .= "and domain_uuid = :domain_uuid ";
 		//$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['email_queue_uuid'] = $email_queue_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (is_array($row) && @sizeof($row) != 0) {
 			$email_date = $row["email_date"];

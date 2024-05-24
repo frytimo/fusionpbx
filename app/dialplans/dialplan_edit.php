@@ -312,7 +312,7 @@
 			$array['dialplans'][$x]['dialplan_xml'] = $dialplan_array[$dialplan_uuid];
 
 		//add or update the database
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'dialplans';
 			$database->app_uuid = $app_uuid ?? null;
 			$database->uuid($dialplan_uuid);
@@ -356,7 +356,7 @@
 		$sql = "select * from v_dialplans ";
 		$sql .= "where dialplan_uuid = :dialplan_uuid ";
 		$parameters['dialplan_uuid'] = $dialplan_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (is_array($row) && @sizeof($row) != 0) {
 			$domain_uuid = $row["domain_uuid"];
@@ -392,7 +392,7 @@
 	$sql .= "where dialplan_uuid = :dialplan_uuid ";
 	$sql .= "order by dialplan_detail_group asc, dialplan_detail_order asc";
 	$parameters['dialplan_uuid'] = $dialplan_uuid;
-	$database = new database;
+	$database = framework::database();
 	$result = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 
@@ -948,7 +948,7 @@
 												// retrieve gateway name from db
 												$sql = "select gateway from v_gateways where gateway_uuid = :gateway_uuid ";
 												$parameters['gateway_uuid'] = $bridge_statement[3];
-												$database = new database;
+												$database = framework::database();
 												$gateways = $database->select($sql, $parameters, 'all');
 												if (is_array($gateways) && @sizeof($gateways) != 0) {
 													$gateway_name = $gateways[0]['gateway'];

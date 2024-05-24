@@ -50,7 +50,7 @@
 			$sql .= "and vm.domain_uuid = d.domain_uuid ";
 			$parameters['voicemail_message_uuid'] = $_REQUEST["uuid"];
 			$parameters['voicemail_uuid'] = $_REQUEST["voicemail_uuid"];
-			$database = new database;
+			$database = framework::database();
 			$result = $database->select($sql, $parameters, 'row');
 			if ($result !== false) {
 				$domain_uuid = $result['domain_uuid'];

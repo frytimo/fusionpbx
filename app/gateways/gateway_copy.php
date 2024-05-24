@@ -50,7 +50,7 @@
 			$sql = "select * from v_gateways ";
 			$sql .= "where gateway_uuid = :gateway_uuid ";
 			$parameters['gateway_uuid'] = $gateway_uuid;
-			$database = new database;
+			$database = framework::database();
 			$row = $database->select($sql, $parameters, 'row');
 			if (is_array($row) && @sizeof($row) != 0) {
 				$domain_uuid = $row["domain_uuid"];
@@ -128,7 +128,7 @@
 			$array['gateways'][0]['enabled'] = $enabled;
 			$array['gateways'][0]['description'] = $description;
 
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'gateways';
 			$database->app_uuid = '297ab33e-2c2f-8196-552c-f3567d2caaf8';
 			$database->save($array);

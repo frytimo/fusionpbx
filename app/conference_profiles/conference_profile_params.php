@@ -84,7 +84,7 @@
 	$sql .= "from v_conference_profile_params ";
 	$sql .= "where conference_profile_uuid = :conference_profile_uuid ";
 	$parameters['conference_profile_uuid'] = $conference_profile_uuid;
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters, 'column');
 
 //prepare to page the results
@@ -100,7 +100,7 @@
 	$sql = str_replace('count(conference_profile_param_uuid)', '*', $sql);
 	$sql .= order_by($order_by, $order, 'profile_param_name', 'asc');
 	$sql .= limit_offset($rows_per_page ?? '', $offset ?? '');
-	$database = new database;
+	$database = framework::database();
 	$result = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters);
 

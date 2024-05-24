@@ -195,7 +195,7 @@
 			$sql .= "and hostname = :hostname ";
 			//if ($debug) { echo $sql." ".$hostname."\n"; }
 			$parameters['hostname'] = $hostname;
-			$database = new database;
+			$database = framework::database();
 			$event_guard_logs = $database->select($sql, $parameters, 'all');
 			unset($database);
 			if (is_array($event_guard_logs)) {
@@ -222,7 +222,7 @@
 				if (is_array($array)) {
 					$p = new permissions;
 					$p->add('event_guard_log_edit', 'temp');
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'event guard';
 					$database->app_uuid = 'c5b86612-1514-40cb-8e2c-3f01a8f6f637';
 					$database->save($array);
@@ -342,7 +342,7 @@
 		$array['event_guard_logs'][0]['log_status'] = 'blocked';
 		$p = new permissions;
 		$p->add('event_guard_log_add', 'temp');
-		$database = new database;
+		$database = framework::database();
 		$database->app_name = 'event guard';
 		$database->app_uuid = 'c5b86612-1514-40cb-8e2c-3f01a8f6f637';
 		$database->save($array);
@@ -547,7 +547,7 @@
 		$sql .= "where node_type = 'allow' ";
 		$sql .= "and length(node_cidr) > 0 ";
 		$parameters = null;
-		$database = new database;
+		$database = framework::database();
 		$allowed_nodes = $database->select($sql, $parameters, 'all');
 		unset($database);
 
@@ -592,7 +592,7 @@
 		$sql .= "and result = 'success' ";
 		$sql .= "and timestamp > NOW() - INTERVAL '8 days' ";
 		$parameters['remote_address'] = $ip_address;  
-		$database = new database;
+		$database = framework::database();
 		$user_log_count = $database->select($sql, $parameters, 'column');
 		unset($database);
 
@@ -627,7 +627,7 @@
 		$sql .= "where ip_address = :ip_address ";
 		$sql .= "and log_status = 'unblocked' ";
 		$parameters['ip_address'] = $ip_address;  
-		$database = new database;
+		$database = framework::database();
 		$user_log_count = $database->select($sql, $parameters, 'column');
 		unset($database);
 

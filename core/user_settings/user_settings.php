@@ -85,7 +85,7 @@
 		//update setting
 			$array['user_settings'][0]['user_setting_uuid'] = $user_setting_uuids[0];
 			$array['user_settings'][0]['user_setting_enabled'] = $enabled;
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'user_settings';
 			$database->app_uuid = '3a3337f7-78d1-23e3-0cfd-f14499b8ed97';
 			$database->save($array);
@@ -122,7 +122,7 @@
 	$sql .= "or (user_setting_category = 'domain' and user_setting_subcategory = 'time_zone') ";
 	$sql .= ") ";
 	$parameters['user_uuid'] = $user_uuid;
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters, 'column');
 	unset($sql);
 
@@ -156,7 +156,7 @@
 	}
 	$sql .= limit_offset($rows_per_page, $offset);
 	$parameters['user_uuid'] = $user_uuid;
-	$database = new database;
+	$database = framework::database();
 	$user_settings = $database->select($sql, $parameters, 'all');
 	unset($sql, $sql_where, $parameters);
 
@@ -268,7 +268,7 @@
 				$sql = "select * from v_menus ";
 				$sql .= "where menu_uuid = :menu_uuid ";
 				$parameters['menu_uuid'] = $row['user_setting_value'];
-				$database = new database;
+				$database = framework::database();
 				$sub_result = $database->select($sql, $parameters, 'all');
 				if (!empty($sub_result)) {
 					foreach ($sub_result as &$sub_row) {

@@ -103,7 +103,7 @@ if (!class_exists('switch_music_on_hold')) {
 					$sql .= "and stream_enabled = 'true' ";
 					$sql .= "order by stream_name asc ";
 					$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-					$database = new database;
+					$database = framework::database();
 					$streams = $database->select($sql, $parameters, 'all');
 					if (is_array($streams) && @sizeof($streams) != 0) {
 						$select .= "	<optgroup label='".$text['label-streams']."'>";
@@ -140,7 +140,7 @@ if (!class_exists('switch_music_on_hold')) {
 				$sql .= "where (m.domain_uuid = :domain_uuid or m.domain_uuid is null) ";
 				$sql .= "order by m.domain_uuid desc, music_on_hold_name asc, music_on_hold_rate asc ";
 				$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-				$database = new database;
+				$database = framework::database();
 				return $database->select($sql, $parameters, 'all');
 				unset($sql, $parameters);
 		}
@@ -234,14 +234,14 @@ if (!class_exists('switch_music_on_hold')) {
 		public function import() {
 			//get the domains
 				$sql = "select * from v_domains ";
-				$database = new database;
+				$database = framework::database();
 				$domains = $database->select($sql, null, 'all');
 				unset($sql);
 
 			//get the music_on_hold array
 				$sql = "select * from v_music_on_hold ";
 				$sql .= "order by domain_uuid desc, music_on_hold_name asc, music_on_hold_rate asc";
-				$database = new database;
+				$database = framework::database();
 				$music_on_hold = $database->select($sql, null, 'all');
 				unset($sql);
 
@@ -304,7 +304,7 @@ if (!class_exists('switch_music_on_hold')) {
 				$p = new permissions;
 				$p->add('music_on_hold_add', 'temp');
 
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = 'music_on_hold';
 				$database->app_uuid = '1dafe0f8-c08a-289b-0312-15baf4f20f81';
 				$database->save($array);
@@ -360,7 +360,7 @@ if (!class_exists('switch_music_on_hold')) {
 									$sql .= "where (domain_uuid = :domain_uuid ".(!permission_exists('music_on_hold_domain') ? "": "or domain_uuid is null ").") ";
 									$sql .= "and music_on_hold_uuid in ('".implode("','", array_keys($moh))."') ";
 									$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-									$database = new database;
+									$database = framework::database();
 									$rows = $database->select($sql, $parameters, 'all');
 									if (is_array($rows) && @sizeof($rows) != 0) {
 										foreach ($rows as $row) {
@@ -416,7 +416,7 @@ if (!class_exists('switch_music_on_hold')) {
 							if (!empty($array) && is_array($array) && @sizeof($array) != 0) {
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);

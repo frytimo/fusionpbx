@@ -70,7 +70,7 @@ if (!class_exists('switch_recordings')) {
 			$sql .= "from v_recordings ";
 			$sql .= "where domain_uuid = :domain_uuid ";
 			$parameters['domain_uuid'] = $this->domain_uuid;
-			$database = new database;
+			$database = framework::database();
 			$result = $database->select($sql, $parameters, 'all');
 			if (!empty($result)) {
 				foreach ($result as &$row) {
@@ -115,7 +115,7 @@ if (!class_exists('switch_recordings')) {
 										$sql .= "and recording_uuid = :recording_uuid ";
 										$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 										$parameters['recording_uuid'] = $record['uuid'];
-										$database = new database;
+										$database = framework::database();
 										$filenames[] = $database->select($sql, $parameters, 'column');
 										unset($sql, $parameters);
 
@@ -129,7 +129,7 @@ if (!class_exists('switch_recordings')) {
 							if (is_array($array) && @sizeof($array) != 0) {
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);

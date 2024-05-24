@@ -103,7 +103,7 @@
 			$sql = "select ".implode(', ', $selected_columns)." from v_pin_numbers ";
 			$sql .= "where domain_uuid = :domain_uuid ";
 			$parameters['domain_uuid'] = $domain_uuid;
-			$database = new database;
+			$database = framework::database();
 			$pin_numbers = $database->select($sql, $parameters, 'all');
 			unset($sql, $parameters, $selected_columns);
 

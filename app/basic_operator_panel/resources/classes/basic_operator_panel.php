@@ -72,7 +72,7 @@ if (!class_exists('basic_operator_panel')) {
 				$sql .= "order by ";
 				$sql .= "e.extension asc ";
 				$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-				$database = new database;
+				$database = framework::database();
 				$extensions = $database->select($sql, $parameters);
 
 			//store extension status by user uuid

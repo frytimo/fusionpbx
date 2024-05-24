@@ -141,7 +141,7 @@
 	}
 	$parameters['limit'] = $fax_queue_limit;
 	$parameters['retry_interval'] = $fax_retry_interval;
-	$database = new database;
+	$database = framework::database();
 	$fax_queue = $database->select($sql, $parameters, 'all');
 	unset($parameters);
 

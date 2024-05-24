@@ -119,7 +119,7 @@
 	//	$sql .= ") ";
 	//	$parameters['search'] = '%'.$search.'%';
 	//}
-	//$database = new database;
+	//$database = framework::database();
 	//$num_rows = $database->select($sql, $parameters, 'column');
 
 //prepare some of the paging values
@@ -156,7 +156,7 @@
 	}
 	$sql .= order_by($order_by, $order, 'r.call_recording_date', 'desc');
 	$sql .= limit_offset($rows_per_page, $offset);
-	$database = new database;
+	$database = framework::database();
 	$call_recordings = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters);
 

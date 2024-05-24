@@ -89,7 +89,7 @@ if (!class_exists('vars')) {
 							if (!empty($array) && @sizeof($array) != 0) {
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -139,7 +139,7 @@ if (!class_exists('vars')) {
 							if (!empty($uuids) && @sizeof($uuids) != 0) {
 								$sql = "select ".$this->uuid_prefix."uuid as uuid, ".$this->toggle_field." as toggle from v_".$this->table." ";
 								$sql .= "where ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, null, 'all');
 								if (!empty($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -161,7 +161,7 @@ if (!class_exists('vars')) {
 							if (!empty($array) && @sizeof($array) != 0) {
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);
@@ -214,7 +214,7 @@ if (!class_exists('vars')) {
 							if (!empty($uuids) && @sizeof($uuids) != 0) {
 								$sql = "select * from v_".$this->table." ";
 								$sql .= "where ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, null, 'all');
 								if (!empty($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $x => $row) {
@@ -235,7 +235,7 @@ if (!class_exists('vars')) {
 							if (!empty($array) && @sizeof($array) != 0) {
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);

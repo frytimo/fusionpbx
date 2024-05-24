@@ -88,4 +88,6 @@ class auto_loader {
 	}
 }
 
+new auto_loader();
+
 ?>

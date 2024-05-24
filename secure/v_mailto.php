@@ -136,7 +136,7 @@
 					$p->add('email_log_add', 'temp');
 
 				//execute insert
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'v_mailto';
 					$database->app_uuid = 'ba41954e-9d21-4b10-bbc2-fa5ceabeb184';
 					$database->save($array);
@@ -171,7 +171,7 @@
 
 	$sql = "select email from v_email_logs where email_log_uuid = :email_log_uuid ";
 	$parameters['email_log_uuid'] = $email_log_uuid;
-	$database = new database;
+	$database = framework::database();
 	$email = $database->select($sql, $parameters, 'column');
 	echo $email;
 	unset($sql, $parameters, $email);

@@ -135,7 +135,7 @@
 			$sql .= "AND q.fax_status = :fax_status ";
 			$parameters['fax_status'] = $_GET["fax_status"];
 	}
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters ?? null, 'column');
 	unset($sql, $parameters);
 

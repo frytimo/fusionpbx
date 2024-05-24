@@ -55,8 +55,6 @@ final class config {
 			$this->read();
 		}
 
-		//set the server variables
-		$this->define_project_paths();
 	}
 
 	/**
@@ -189,32 +187,6 @@ final class config {
 			$this->configuration = parse_ini_file($this->file);
 		}
 
-	}
-
-	// set project paths if not already defined
-	private function define_project_paths() {
-		// Load the document root
-		$doc_root = $this->get('document.root', '/var/www/fusionpbx');
-		$doc_path = $this->get('document.path', '');
-		//set the server variables and define project path constant
-		if (!empty($doc_path)) {
-			if (!defined('PROJECT_PATH')) { define("PROJECT_PATH", $doc_path); }
-			if (!defined('PROJECT_ROOT')) { define("PROJECT_ROOT", $doc_root.'/'.$doc_path); }
-		}
-		else {
-			if (!defined('PROJECT_PATH')) { define("PROJECT_PATH", ''); }
-			if (!defined('PROJECT_ROOT')) { define("PROJECT_ROOT", $doc_root); }
-		}
-
-		// internal definitions to the framework
-		$_SERVER["PROJECT_PATH"] = PROJECT_PATH;
-		$_SERVER["PROJECT_ROOT"] = PROJECT_ROOT;
-
-		// tell php where the framework is
-		$_SERVER["DOCUMENT_ROOT"] = PROJECT_ROOT;
-
-		// have php search for any libraries in the now defined root
-		set_include_path(PROJECT_ROOT);
 	}
 
 	/**

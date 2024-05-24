@@ -35,7 +35,7 @@ class events {
 
 			//includes files
 			require_once "resources/classes/database.php";
-			$database = new database;
+			$database = framework::database();
 			$database->connect();
 			$this->db = $database->db;
 			return $this->db = $database->db;

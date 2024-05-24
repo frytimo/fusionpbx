@@ -62,7 +62,7 @@
 		$sql .= "and ".$sql_search;
 	}
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters, 'column');
 
 //paging the records
@@ -77,7 +77,7 @@
 	$sql = str_replace('count(*)', '*', $sql);
 	$sql .= order_by($order_by, $order);
 	$sql .= limit_offset($rows_per_page, $offset);
-	$database = new database;
+	$database = framework::database();
 	$call_center_queues = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 

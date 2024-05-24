@@ -85,7 +85,7 @@ if (!class_exists('user_logs')) {
 				$p->add("user_log_add", 'temp');
 
 			//save to the data
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = 'authentication';
 				$database->app_uuid = 'a8a12918-69a4-4ece-a1ae-3932be0e41f1';
 				if (strlen($user_log_uuid ?? '')>0)
@@ -133,7 +133,7 @@ if (!class_exists('user_logs')) {
 						//delete the checked rows
 							if (is_array($array) && @sizeof($array) != 0) {
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);

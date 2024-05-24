@@ -96,7 +96,7 @@
 					$sql = "select domain_uuid from v_device_profiles ";
 					$sql .= "where device_profile_uuid = :device_profile_uuid ";
 					$parameters['device_profile_uuid'] = $device_profile_uuid;
-					$database = new database;
+					$database = framework::database();
 					$domain_uuid = $database->execute($sql, $parameters, 'column');
 				}
 			}
@@ -178,7 +178,7 @@
 			}
 
 		//save to the data
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'Device Profiles';
 			$database->app_uuid = 'bb2531c3-97e6-428f-9a19-cbac1b96f5b7';
 			$database->save($array);
@@ -228,7 +228,7 @@
 		//$sql .= "and domain_uuid = :domain_uuid ";
 		//$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['device_profile_uuid'] = $device_profile_uuid;
-		$database = new database;
+		$database = framework::database();
 		$result = $database->execute($sql, $parameters, 'all');
 		foreach ($result as &$row) {
 			$domain_uuid = $row["domain_uuid"];
@@ -265,7 +265,7 @@
 		$sql .= "profile_key_id asc ";
 		//$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['device_profile_uuid'] = $device_profile_uuid;
-		$database = new database;
+		$database = framework::database();
 		$device_profile_keys = $database->execute($sql, $parameters, 'all');
 		unset ($sql, $parameters);
 	}
@@ -297,7 +297,7 @@
 	$sql .= "from v_device_vendors as v ";
 	$sql .= "where enabled = 'true' ";
 	$sql .= "order by name asc ";
-	$database = new database;
+	$database = framework::database();
 	$vendors = $database->select($sql, null, 'all');
 	unset($sql);
 
@@ -308,7 +308,7 @@
 	$sql .= "and v.enabled = 'true' ";
 	$sql .= "and f.enabled = 'true' ";
 	$sql .= "order by v.name asc, f.type asc ";
-	$database = new database;
+	$database = framework::database();
 	$vendor_functions = $database->select($sql, null, 'all');
 	unset($sql);
 
@@ -352,7 +352,7 @@
 		$sql .= "order by profile_setting_name asc";
 		//$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['device_profile_uuid'] = $device_profile_uuid;
-		$database = new database;
+		$database = framework::database();
 		$device_profile_settings = $database->execute($sql, $parameters, 'all');
 		unset ($sql, $parameters);
 	}

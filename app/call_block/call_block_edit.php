@@ -155,7 +155,7 @@
 						if (!empty($domain_uuid) && is_uuid($domain_uuid)) {
 							$parameters['domain_uuid'] = $domain_uuid;
 						}
-						$database = new database;
+						$database = framework::database();
 						$rows = $database->select($sql, $parameters);
 
 						if (!empty($rows)) {
@@ -167,7 +167,7 @@
 							$p = new permissions;
 							$p->add('dialplan_edit', 'temp');
 
-							$database = new database;
+							$database = framework::database();
 							$database->save($array);
 							unset($array);
 
@@ -198,7 +198,7 @@
 						$array['call_block'][0]['date_added'] = time();
 						$array['call_block'][0]['call_block_description'] = $call_block_description;
 
-						$database = new database;
+						$database = framework::database();
 						$database->app_name = 'call_block';
 						$database->app_uuid = '9ed63276-e085-4897-839c-4f2e36d92d6c';
 						$database->save($array);
@@ -225,7 +225,7 @@
 							$sql .= "and c.call_block_uuid = :call_block_uuid ";
 						}
 						$parameters['call_block_uuid'] = $call_block_uuid;
-						$database = new database;
+						$database = framework::database();
 						$result = $database->select($sql, $parameters);
 						if (!empty($result)) {
 							//set the domain_name
@@ -252,7 +252,7 @@
 						$array['call_block'][0]['date_added'] = time();
 						$array['call_block'][0]['call_block_description'] = $call_block_description;
 
-						$database = new database;
+						$database = framework::database();
 						$database->app_name = 'call_block';
 						$database->app_uuid = '9ed63276-e085-4897-839c-4f2e36d92d6c';
 						$database->save($array);
@@ -279,7 +279,7 @@
 		$sql .= "and call_block_uuid = :call_block_uuid ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['call_block_uuid'] = $call_block_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (!empty($row)) {
 			$domain_uuid = $row["domain_uuid"];
@@ -311,7 +311,7 @@
 		$sql .= "and enabled = 'true' ";
 		$sql .= "order by extension asc ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-		$database = new database;
+		$database = framework::database();
 		$extensions = $database->select($sql, $parameters);
 	}
 
@@ -327,7 +327,7 @@ if (permission_exists('call_block_all') || permission_exists('call_block_ivr')) 
 	// $sql .= "and enabled = 'true' ";
 	$sql .= "order by ivr_menu_extension asc ";
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-	$database = new database;
+	$database = framework::database();
 	$ivrs = $database->select($sql, $parameters);
 }
 
@@ -343,7 +343,7 @@ if (permission_exists('call_block_all') || permission_exists('call_block_ring_gr
 	// $sql .= "and ring_group_enabled = 'true' ";
 	$sql .= "order by ring_group_extension asc ";
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-	$database = new database;
+	$database = framework::database();
 	$ring_groups = $database->select($sql, $parameters);
 }
 
@@ -359,7 +359,7 @@ if (permission_exists('call_block_all') || permission_exists('call_block_ring_gr
 	$sql .= "and voicemail_enabled = 'true' ";
 	$sql .= "order by voicemail_id asc ";
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-	$database = new database;
+	$database = framework::database();
 	$voicemails = $database->select($sql, $parameters);
 
 //create token
@@ -638,7 +638,7 @@ if (permission_exists('call_block_all') || permission_exists('call_block_ring_gr
 		$sql .= "order by start_stamp desc ";
 		$sql .= limit_offset($_SESSION['call_block']['recent_call_limit']['text']);
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-		$database = new database;
+		$database = framework::database();
 		$result = $database->select($sql, $parameters);
 		unset($sql, $parameters);
 

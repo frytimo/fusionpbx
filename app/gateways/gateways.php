@@ -141,7 +141,7 @@
 		$sql .= ") ";
 		$parameters['search'] = '%'.$search.'%';
 	}
-	$database = new database;
+	$database = framework::database();
 	$total_gateways = $database->select($sql, $parameters ?? '', 'column');
 	$num_rows = $total_gateways;
 
@@ -179,7 +179,7 @@
 	}
 	$sql .= order_by($order_by, $order, 'gateway', 'asc');
 	$sql .= limit_offset($rows_per_page, $offset);
-	$database = new database;
+	$database = framework::database();
 	$gateways = $database->select($sql, $parameters ?? '', 'all');
 	unset($sql, $parameters);
 

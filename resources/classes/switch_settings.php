@@ -210,7 +210,7 @@ if (!class_exists('switch_settings')) {
 			//get an array of the default settings
 				$sql = "select * from v_default_settings ";
 				$sql .= "where default_setting_category = 'switch' ";
-				$database = new database;
+				$database = framework::database();
 				$default_settings = $database->select($sql, null, 'all');
 				unset($sql);
 
@@ -252,7 +252,7 @@ if (!class_exists('switch_settings')) {
 							$p->add('default_setting_add', 'temp');
 
 						//execute insert
-							$database = new database;
+							$database = framework::database();
 							$database->app_name = 'switch_settings';
 							$database->app_uuid = '84e91084-a227-43cd-ae99-a0f8ed61eb8b';
 							$database->save($array);

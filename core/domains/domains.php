@@ -47,7 +47,7 @@
 			//get the domain details
 				$sql = "select * from v_domains ";
 				$sql .= "order by domain_name asc ";
-				$database = new database;
+				$database = framework::database();
 				$domains = $database->select($sql, null, 'all');
 				if (!empty($domains)) {
 					foreach($domains as $row) {
@@ -153,7 +153,7 @@
 	if (!empty($sql_search)) {
 		$sql .= "where ".$sql_search;
 	}
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters ?? null, 'column');
 
 //prepare to page the results
@@ -172,7 +172,7 @@
 	}
 	$sql .= order_by($order_by, $order, 'domain_name', 'asc');
 	$sql .= limit_offset($rows_per_page, $offset);
-	$database = new database;
+	$database = framework::database();
 	$domains = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters);
 

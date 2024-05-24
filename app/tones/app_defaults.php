@@ -30,7 +30,7 @@ if ($domains_processed == 1) {
 	$sql = "select * from v_vars ";
 	$sql .= "where var_category = 'Tones' ";
 	$sql .= "and var_name like '%-ring%'; ";
-	$database = new database;
+	$database = framework::database();
 	$ringtones = $database->select($sql, null, 'all');
 	unset($sql);
 
@@ -39,7 +39,7 @@ if ($domains_processed == 1) {
 		$sql .= "var_category = 'Ringtones' ";
 		$sql .= "where var_category = 'Tones' ";
 		$sql .= "and var_name like '%-ring%'; ";
-		$database = new database;
+		$database = framework::database();
 		$database->execute($sql);
 		unset($sql);
 	}

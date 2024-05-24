@@ -75,7 +75,7 @@
 		$sql .= "and fax_log_uuid = :fax_log_uuid ";
 		$parameters['domain_uuid'] = $domain_uuid;
 		$parameters['fax_log_uuid'] = $fax_log_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (is_array($row) && @sizeof($row) != 0) {
 			$fax_log_uuid = $row["fax_log_uuid"];

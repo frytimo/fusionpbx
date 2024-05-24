@@ -318,7 +318,7 @@
 								if (!empty($record['checked']) && $record['checked'] == 'true' && is_uuid($record['uuid'])) {
 									$sql = "update v_devices set device_uuid_alternate = null where device_uuid_alternate = :device_uuid_alternate; ";
 									$parameters['device_uuid_alternate'] = $record['uuid'];
-									$database = new database;
+									$database = framework::database();
 									$database->execute($sql, $parameters);
 									unset($sql, $parameters);
 
@@ -339,7 +339,7 @@
 									$p->add('device_key_delete', 'temp');
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -402,7 +402,7 @@
 						//delete the checked rows
 							if (!empty($array) && is_array($array) && @sizeof($array) != 0) {
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -449,7 +449,7 @@
 						//delete the checked rows
 							if (!empty($array) && is_array($array) && @sizeof($array) != 0) {
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -496,7 +496,7 @@
 						//delete the checked rows
 							if (!empty($array) && is_array($array) && @sizeof($array) != 0) {
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -552,7 +552,7 @@
 									$p->add('device_vendor_function_group_delete', 'temp');
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -614,7 +614,7 @@
 									$p->add('device_vendor_function_group_delete', 'temp');
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -677,7 +677,7 @@
 									$p->add('device_profile_setting_delete', 'temp');
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -730,7 +730,7 @@
 
 						//execute delete
 							if (!empty($array) && is_array($array) && @sizeof($array) != 0) {
-								$database = new database;
+								$database = framework::database();
 								$database->app_name = $this->app_name;
 								$database->app_uuid = $this->app_uuid;
 								$database->delete($array);
@@ -776,7 +776,7 @@
 
 						//execute delete
 							if (!empty($array) && is_array($array) && @sizeof($array) != 0) {
-								$database = new database;
+								$database = framework::database();
 								$database->app_name = $this->app_name;
 								$database->app_uuid = $this->app_uuid;
 								$database->delete($array);
@@ -829,7 +829,7 @@
 								$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
 								$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -851,7 +851,7 @@
 							if (!empty($array) && is_array($array) && @sizeof($array) != 0) {
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);
@@ -909,7 +909,7 @@
 							if (is_array($uuids) && @sizeof($uuids) != 0) {
 								$sql = "select ".$this->uuid_prefix."uuid as uuid, ".$this->toggle_field." as toggle from v_".$this->table." ";
 								$sql .= "where ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters ?? null, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -931,7 +931,7 @@
 							if (!empty($array) && is_array($array) && @sizeof($array) != 0) {
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);
@@ -982,7 +982,7 @@
 							if (is_array($uuids) && @sizeof($uuids) != 0) {
 								$sql = "select ".$this->uuid_prefix."uuid as uuid, ".$this->toggle_field." as toggle from v_".$this->table." ";
 								$sql .= "where ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters ?? null, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -1004,7 +1004,7 @@
 							if (!empty($array) && is_array($array) && @sizeof($array) != 0) {
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);
@@ -1055,7 +1055,7 @@
 							if (!empty($uuids) && is_array($uuids) && @sizeof($uuids) != 0) {
 								$sql = "select ".$this->uuid_prefix."uuid as uuid, ".$this->toggle_field." as toggle from v_".$this->table." ";
 								$sql .= "where ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters ?? null, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -1079,7 +1079,7 @@
 							if (!empty($array) && is_array($array) && @sizeof($array) != 0) {
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);
@@ -1135,7 +1135,7 @@
 								$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
 								$sql .= "and ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
 								$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-								$database = new database;
+								$database = framework::database();
 								$rows = $database->select($sql, $parameters, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									$y = $z = 0;
@@ -1161,7 +1161,7 @@
 											$sql_2 .= "else 100 end, ";
 											$sql_2 .= "profile_key_id asc ";
 											$parameters_2['device_profile_uuid'] = $row['device_profile_uuid'];
-											$database = new database;
+											$database = framework::database();
 											$rows_2 = $database->select($sql_2, $parameters_2, 'all');
 											if (is_array($rows_2) && @sizeof($rows_2) != 0) {
 												foreach ($rows_2 as $row_2) {
@@ -1183,7 +1183,7 @@
 										//settings sub table
 											$sql_3 = "select * from v_device_profile_settings where device_profile_uuid = :device_profile_uuid";
 											$parameters_3['device_profile_uuid'] = $row['device_profile_uuid'];
-											$database = new database;
+											$database = framework::database();
 											$rows_3 = $database->select($sql_3, $parameters_3, 'all');
 											if (is_array($rows_3) && @sizeof($rows_3) != 0) {
 												foreach ($rows_3 as $row_3) {
@@ -1216,7 +1216,7 @@
 									$p->add('device_profile_setting_add', 'temp');
 
 								//save the array
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->save($array);
