@@ -116,7 +116,7 @@
 	}
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	$parameters['group_uuid'] = $_SESSION['group_uuid'] ?? '';
-	$database = new database;
+	$database = framework::database();
 	$result = $database->select($sql, $parameters, 'all');
 	if (!empty($result)) {
 		foreach($result as $row) {
@@ -221,7 +221,7 @@
 		$parameters['user_uuid'] = $_SESSION['user_uuid'];
 	}
 	$sql .= $sql_search ?? '';
-	$database = new database;
+	$database = framework::database();
 	$num_rows = $database->select($sql, $parameters ?? null, 'column');
 
 //prepare to page the results
@@ -274,7 +274,7 @@
 		$parameters['user_uuid'] = $_SESSION['user_uuid'];
 	}
 	$sql .= $sql_search ?? '';
-	$database = new database;
+	$database = framework::database();
 	if (!empty($order_by)) {
 		$sql .= order_by($order_by, $order);
 		$sql .= ", contact_organization asc ";
@@ -289,7 +289,7 @@
 		}
 	}
 	$sql .= limit_offset($rows_per_page, $offset);
-	$database = new database;
+	$database = framework::database();
 	$contacts = $database->select($sql, $parameters ?? null, 'all');
 	unset($sql, $parameters);
 

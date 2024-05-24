@@ -105,7 +105,7 @@
 					$p = new permissions;
 					$p->add('contact_edit', 'temp');
 
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'contacts';
 					$database->app_uuid = '04481e0e-a478-c559-adad-52bd4174574c';
 					$database->save($array);
@@ -136,7 +136,7 @@
 						$array['contact_notes'][0]['last_mod_date'] = 'now()';
 						$array['contact_notes'][0]['last_mod_user'] = $_SESSION['username'];
 
-						$database = new database;
+						$database = framework::database();
 						$database->app_name = 'contacts';
 						$database->app_uuid = '04481e0e-a478-c559-adad-52bd4174574c';
 						$database->save($array);
@@ -158,7 +158,7 @@
 		$sql .= "and contact_note_uuid = :contact_note_uuid ";
 		$parameters['domain_uuid'] = $domain_uuid;
 		$parameters['contact_note_uuid'] = $contact_note_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (!empty($row)) {
 			$contact_note = $row["contact_note"];

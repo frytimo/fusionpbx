@@ -135,7 +135,7 @@
 					$p = new permissions;
 					$p->add('contact_edit', 'temp');
 
-					$database = new database;
+					$database = framework::database();
 					$database->app_name = 'contacts';
 					$database->app_uuid = '04481e0e-a478-c559-adad-52bd4174574c';
 					$database->save($array);
@@ -150,7 +150,7 @@
 						$sql .= "and contact_uuid = :contact_uuid ";
 						$parameters['domain_uuid'] = $domain_uuid;
 						$parameters['contact_uuid'] = $contact_uuid;
-						$database = new database;
+						$database = framework::database();
 						$database->execute($sql, $parameters);
 						unset($sql, $parameters);
 					}
@@ -186,7 +186,7 @@
 						$array['contact_phones'][0]['phone_primary'] = $phone_primary ? 1 : 0;
 						$array['contact_phones'][0]['phone_description'] = $phone_description;
 
-						$database = new database;
+						$database = framework::database();
 						$database->app_name = 'contacts';
 						$database->app_uuid = '04481e0e-a478-c559-adad-52bd4174574c';
 						$database->save($array);
@@ -208,7 +208,7 @@
 		$sql .= "and contact_phone_uuid = :contact_phone_uuid ";
 		$parameters['domain_uuid'] = $domain_uuid;
 		$parameters['contact_phone_uuid'] = $contact_phone_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters, 'row');
 		if (!empty($row)) {
 			$phone_label = $row["phone_label"];

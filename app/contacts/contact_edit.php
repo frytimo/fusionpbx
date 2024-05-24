@@ -341,7 +341,7 @@
 				$sql .= "and user_uuid = :user_uuid ";
 				$parameters['contact_uuid'] = $contact_uuid;
 				$parameters['user_uuid'] = $contact_user_uuid;
-				$database = new database;
+				$database = framework::database();
 				$users = $database->select($sql, $parameters, 'all');
 				unset($sql, $parameters);
 
@@ -555,7 +555,7 @@
 
 				//view_array($array);
 
-				$database = new database;
+				$database = framework::database();
 				$database->app_name = 'contacts';
 				$database->app_uuid = '04481e0e-a478-c559-adad-52bd4174574c';
 				$database->save($array);
@@ -592,7 +592,7 @@
 		//$sql .= "and domain_uuid = :domain_uuid ";
 		//$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['contact_uuid'] = $contact_uuid;
-		$database = new database;
+		$database = framework::database();
 		$row = $database->select($sql, $parameters ?? null, 'row');
 		if (!empty($row)) {
 			$contact_organization = $row["contact_organization"];
@@ -632,7 +632,7 @@
 	$sql .= "where domain_uuid = :domain_uuid ";
 	$sql .= "order by username asc ";
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-	$database = new database;
+	$database = framework::database();
 	$users = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 
@@ -657,7 +657,7 @@
 		$sql .= "order by u.username asc ";
 		$parameters['contact_uuid'] = $contact_uuid;
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-		$database = new database;
+		$database = framework::database();
 		$contact_users_assigned = $database->select($sql, $parameters, 'all');
 		unset($sql, $parameters);
 	}
@@ -674,7 +674,7 @@
 		$parameters['domain_uuid'] = $domain_uuid;
 		$parameters['contact_uuid'] = $contact_uuid;
 		$parameters['group_uuid'] = $_SESSION["user_uuid"];
-		$database = new database;
+		$database = framework::database();
 		$contact_groups_assigned = $database->select($sql, $parameters, 'all');
 		if (!empty($contact_groups_assigned)) {
 			foreach ($contact_groups_assigned as $field) {
@@ -692,7 +692,7 @@
 	}
 	$sql .= "order by group_name asc ";
 	$parameters['domain_uuid'] = $domain_uuid;
-	$database = new database;
+	$database = framework::database();
 	$contact_groups_available = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters, $contact_groups);
 
@@ -703,7 +703,7 @@
 		//$sql .= "and domain_uuid = '".$domain_uuid."' ";
 		//$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['contact_uuid'] = $contact_uuid;
-		$database = new database;
+		$database = framework::database();
 		$contact_phones = $database->select($sql, $parameters, 'all');
 		unset ($sql, $parameters);
 	}
@@ -740,7 +740,7 @@
 		$sql .= "order by address_street asc";
 		//$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['contact_uuid'] = $contact_uuid;
-		$database = new database;
+		$database = framework::database();
 		$contact_addresses = $database->select($sql, $parameters, 'all');
 		unset ($sql, $parameters);
 	}
@@ -778,7 +778,7 @@
 		//$sql .= "and domain_uuid = '".$domain_uuid."' ";
 		//$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['contact_uuid'] = $contact_uuid;
-		$database = new database;
+		$database = framework::database();
 		$contact_emails = $database->select($sql, $parameters, 'all');
 		unset ($sql, $parameters);
 	}
@@ -808,7 +808,7 @@
 		$sql .= "order by url_address asc";
 		//$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['contact_uuid'] = $contact_uuid;
-		$database = new database;
+		$database = framework::database();
 		$contact_urls = $database->select($sql, $parameters, 'all');
 		unset ($sql, $parameters);
 	}
@@ -838,7 +838,7 @@
 		//$sql .= "and domain_uuid = '".$domain_uuid."' ";
 		//$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['contact_uuid'] = $contact_uuid ?? null;
-		$database = new database;
+		$database = framework::database();
 		$contact_relations = $database->select($sql, $parameters, 'all');
 		unset ($sql, $parameters);
 	}
@@ -865,7 +865,7 @@
 		//$sql .= "and domain_uuid = '".$domain_uuid."' ";
 		//$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['contact_uuid'] = $contact_uuid;
-		$database = new database;
+		$database = framework::database();
 		$contact_settings = $database->select($sql, $parameters, 'all');
 		unset ($sql, $parameters);
 	}
@@ -898,7 +898,7 @@
 		$sql .= "order by attachment_primary desc, attachment_filename asc ";
 		$parameters['domain_uuid'] = $domain_uuid;
 		$parameters['contact_uuid'] = $contact_uuid;
-		$database = new database;
+		$database = framework::database();
 		$contact_attachments = $database->select($sql, $parameters, 'all');
 		unset($sql, $parameters);
 	}
@@ -910,7 +910,7 @@
 		//$sql .= "and domain_uuid = '".$domain_uuid."' ";
 		//$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$parameters['contact_uuid'] = $contact_uuid;
-		$database = new database;
+		$database = framework::database();
 		$contact_times = $database->select($sql, $parameters, 'all');
 		unset ($sql, $parameters);
 	}
@@ -935,7 +935,7 @@
 	$sql .= "order by last_mod_date desc ";
 	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	$parameters['contact_uuid'] = $contact_uuid ?? null;
-	$database = new database;
+	$database = framework::database();
 	$contact_notes = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);
 
@@ -1100,7 +1100,7 @@
 			$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 			$parameters['user_uuid'] = $_SESSION['user']['user_uuid'];
 			$parameters['contact_uuid'] = $contact_uuid;
-			$database = new database;
+			$database = framework::database();
 			$time_start = $database->select($sql, $parameters, 'column');
 			$btn_style = $time_start ? 'color: #fff; background-color: #3693df; background-image: none;' : null;
 			unset($sql, $parameters);
@@ -2301,7 +2301,7 @@ if (permission_exists('contact_relation_view')) {
 			$sql .= "order by contact_organization desc, contact_name_given asc, contact_name_family asc ";
 			$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 			$parameters['contact_uuid'] = $row['contact_uuid'];
-			$database = new database;
+			$database = framework::database();
 			$contacts = $database->select($sql, $parameters, 'all');
 			if (!empty($contacts) && is_uuid($row['relation_contact_uuid'])) {
 				foreach($contacts as $field) {

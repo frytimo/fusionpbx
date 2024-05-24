@@ -3,7 +3,7 @@
 	if ($domains_processed == 1) {
 
 		//create one instance of the database
-		$database = new database;
+		$database = framework::database();
 
 		//populate new phone_label values, phone_type_* values
 		$obj = new schema;

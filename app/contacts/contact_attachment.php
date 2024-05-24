@@ -43,7 +43,7 @@
 		$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 		$parameters['contact_attachment_uuid'] = $contact_attachment_uuid;
 		$parameters['domain_uuid'] = $domain_uuid;
-		$database = new database;
+		$database = framework::database();
 		$attachment = $database->select($sql, $parameters ?? null, 'row');
 		unset($sql, $parameters);
 

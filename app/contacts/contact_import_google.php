@@ -83,7 +83,7 @@ if ($_POST['a'] == 'import') {
 			$sql .= "and contact_setting_enabled = 'true' ";
 			$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 			$parameters['contact_setting_value'] = $contact_id;
-			$database = new database;
+			$database = framework::database();
 			$result = $database->select($sql, $parameters, 'row');
 			if (is_uuid($result['contact_uuid'])) {
 				$duplicate_exists = true;
@@ -241,7 +241,7 @@ if ($_POST['a'] == 'import') {
 			unset($contact_setting_columns, $contact_setting_array);
 
 			//insert records
-			$database = new database;
+			$database = framework::database();
 			$database->app_name = 'contacts';
 			$database->app_uuid = '04481e0e-a478-c559-adad-52bd4174574c';
 			$database->save($array);

@@ -109,20 +109,20 @@ if (!class_exists('contacts')) {
 
 								//grant temp permissions
 									$p = new permissions;
-									$database = new database;
+									$database = framework::database();
 									foreach ($this->tables as $table) {
 										$p->add(database::singular($table).'_delete', 'temp');
 									}
 
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
 									unset($array);
 
 								//revoke temp permissions
-									$database = new database;
+									$database = framework::database();
 									foreach ($this->tables as $table) {
 										$p->delete(database::singular($table).'_delete', 'temp');
 									}
@@ -154,7 +154,7 @@ if (!class_exists('contacts')) {
 					//check permissions and build the delete array
 						$x = 0;
 						foreach ($records as $property_name => $properties) {
-							$database = new database;
+							$database = framework::database();
 							if (permission_exists(database::singular($property_name).'_delete')) {
 								if (is_array($properties) && @sizeof($properties) != 0) {
 									foreach ($properties as $property) {
@@ -172,7 +172,7 @@ if (!class_exists('contacts')) {
 					//delete the checked rows
 						if (is_array($array) && @sizeof($array) != 0) {
 							//execute delete
-								$database = new database;
+								$database = framework::database();
 								$database->app_name = $this->app_name;
 								$database->app_uuid = $this->app_uuid;
 								$database->delete($array);
@@ -218,7 +218,7 @@ if (!class_exists('contacts')) {
 						//delete the checked rows
 							if (is_array($array) && @sizeof($array) != 0) {
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
@@ -265,7 +265,7 @@ if (!class_exists('contacts')) {
 						//delete the checked rows
 							if (is_array($array) && @sizeof($array) != 0) {
 								//execute delete
-									$database = new database;
+									$database = framework::database();
 									$database->app_name = $this->app_name;
 									$database->app_uuid = $this->app_uuid;
 									$database->delete($array);
