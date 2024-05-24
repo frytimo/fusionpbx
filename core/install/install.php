@@ -401,12 +401,12 @@ if (!class_exists('auto_loader')) {
 	//}
 
 	if ($_REQUEST["step"] == "1") {
-		$content = $view->render('configuration.htm');
+		$content = $view->render('configuration.tpl');
 	}
 	if ($_REQUEST["step"] == "2") {
-		$content = $view->render('database.htm');
+		$content = $view->render('database.tpl');
 	}
 	$view->assign("content", $content);
-	echo $view->render('template.htm');
+	echo $view->render('template.tpl');
 
 ?>
