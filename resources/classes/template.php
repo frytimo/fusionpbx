@@ -25,7 +25,6 @@
 */
 
 //define the template class
-	if (!class_exists('template')) {
 		class template {
 
 			public $engine;
@@ -39,7 +38,7 @@
 
 			public function init() {
 				if ($this->engine === 'smarty') {
-					require_once "resources/templates/engine/smarty/Smarty.class.php";
+//					require_once "resources/templates/engine/smarty/Smarty.class.php";
 					$this->object = new Smarty();
 					$this->object->setTemplateDir($this->template_dir);
 					$this->object->setCompileDir($this->cache_dir);
@@ -47,13 +46,13 @@
 					$this->object->registerPlugin("modifier","in_array", "in_array");
 				}
 				if ($this->engine === 'raintpl') {
-					require_once "resources/templates/engine/raintpl/rain.tpl.class.php";
+//					require_once "resources/templates/engine/raintpl/rain.tpl.class.php";
 					$this->object = new RainTPL();
 					RainTPL::configure('tpl_dir', realpath($this->template_dir)."/");
 					RainTPL::configure('cache_dir', realpath($this->cache_dir)."/");
 				}
 				if ($this->engine === 'twig') {
-					require_once "resources/templates/engine/Twig/Autoloader.php";
+//					require_once "resources/templates/engine/Twig/Autoloader.php";
 					Twig_Autoloader::register();
 					$loader = new Twig_Loader_Filesystem($this->template_dir);
 					$this->object = new Twig_Environment($loader);
@@ -90,6 +89,5 @@
 				}
 			}
 		}
-	}
 
 ?>

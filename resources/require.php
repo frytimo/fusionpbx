@@ -24,12 +24,20 @@
 	Mark J Crane <markjcrane@fusionpbx.com>
 */
 
-//class auto loader
-	require_once __DIR__ . "/classes/auto_loader.php";
+$document_root = dirname(__DIR__);
 
+//composer class auto loader
+if (file_exists($document_root . '/resources/libs/autoload.php')) {
+	require_once $document_root . '/resources/libs/autoload.php';
+}
+
+//fusionpbx class auto loader
+	require_once $document_root . '/resources/classes/auto_loader.php';
+
+//framework
 	framework::initialize();
 
-	//objects are now available from the framework
+//objects are now available from the framework
 	$config = framework::config();
 
 //config.conf file not found re-direct the request to the install

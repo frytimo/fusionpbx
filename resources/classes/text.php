@@ -21,6 +21,7 @@ class text {
 		'fr' => 'fr-fr',
 		'pt' => 'pt-pt',
 	);
+	private $project_root;
 
 	/**
 	 * Called when the object is created
@@ -28,10 +29,10 @@ class text {
 	public function __construct() {
 		//define the text array
 			$text = array();
-
+			$this->project_root = dirname(__DIR__, 2);
 		//get the global app_languages.php so we can get the list of languages
-			if (file_exists($_SERVER["PROJECT_ROOT"]."/resources/app_languages.php")) {
-				include $_SERVER["PROJECT_ROOT"]."/resources/app_languages.php";
+			if (file_exists($this->project_root."/resources/app_languages.php")) {
+				include $this->project_root."/resources/app_languages.php";
 			}
 
 		//get the list of languages, remove en-us, sort it then put en-us in front
@@ -60,13 +61,13 @@ class text {
 			$text = array();
 
 		//get the global app_languages.php
-			if (!$exclude_global && file_exists($_SERVER["PROJECT_ROOT"]."/resources/app_languages.php")) {
-				require $_SERVER["PROJECT_ROOT"]."/resources/app_languages.php";
+			if (!$exclude_global && file_exists($this->project_root."/resources/app_languages.php")) {
+				require $this->project_root."/resources/app_languages.php";
 			}
 
 		//get the app_languages.php
 			if ($app_path != null) {
-				$lang_path = $_SERVER["PROJECT_ROOT"]."/".$app_path;
+				$lang_path = $this->project_root."/".$app_path;
 			}
 			else {
 				$lang_path = getcwd();
@@ -81,11 +82,8 @@ class text {
 			//}
 
 		//check the session language
-			if (isset($_SESSION['domain']) and $language_code == null) {
-				$language_code = $_SESSION['domain']['language']['code'];
-			}
-			elseif ($language_code == null) {
-				$language_code = 'en-us';
+			if ($language_code == null) {
+				$language_code = $_SESSION['domain']['language']['code'] ?? 'en-us';
 			}
 
 		//check the language code
@@ -132,7 +130,7 @@ class text {
 			if ($app_path == null) {
 				throw new Exception("\$app_path must be specified");
 			}
-			$lang_path = $_SERVER["PROJECT_ROOT"]."/$app_path/app_languages.php";
+			$lang_path = $this->project_root."/$app_path/app_languages.php";
 			if (!file_exists($lang_path)) {
 				throw new Exception("could not find app_languages for '$app_path'");
 			}
@@ -267,11 +265,11 @@ class text {
 			$languages = array();
 
 		//retrieve all the languages
-			$files = glob($_SERVER["PROJECT_ROOT"] . "/*/*/app_languages.php");
+			$files = glob($this->project_root . "/*/*/app_languages.php");
 			foreach($files as $file) {
 				include $file;
 			}
-			include $_SERVER["PROJECT_ROOT"] . "/resources/app_languages.php";
+			include $this->project_root . "/resources/app_languages.php";
 
 		//check every tag
 			foreach($text as $lang_codes) {
@@ -312,11 +310,11 @@ class text {
 
 		//retrieve all the languages
 			$text = array();
-			$files = glob($_SERVER["PROJECT_ROOT"] . "/*/*/app_languages.php");
+			$files = glob($this->project_root . "/*/*/app_languages.php");
 			foreach($files as $file) {
 				include $file;
 			}
-			include $_SERVER["PROJECT_ROOT"] . "/resources/app_languages.php";
+			include $this->project_root . "/resources/app_languages.php";
 
 		//check every tag
 			foreach($text as $label_name => $values) {
@@ -330,7 +328,7 @@ class text {
 
 		//retrieve all the menus
 			$x = 0;
-			$files = glob($_SERVER["PROJECT_ROOT"] . "/*/*");
+			$files = glob($this->project_root . "/*/*");
 			foreach($files as $file) {
 				if (file_exists($file . "/app_menu.php"))
 					include $file . "/app_menu.php";

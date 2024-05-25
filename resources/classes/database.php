@@ -303,9 +303,6 @@
 				//save the reference to the single instance of the config to this object
 				$this->config = $config;
 
-				//connect to the database now
-				$this->connect();
-
 				//use the session domain_uuid
 				if (!isset($this->domain_uuid) && isset($_SESSION['domain_uuid'])) {
 					$this->domain_uuid = $_SESSION['domain_uuid'];

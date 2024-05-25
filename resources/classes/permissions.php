@@ -46,7 +46,7 @@ if (!class_exists('permissions')) {
 				$this->database = $database;
 			}
 			else {
-				$this->database = new database;
+				$this->database = database::new();
 			}
 
 			//set the domain_uuid

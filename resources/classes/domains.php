@@ -45,11 +45,13 @@ if (!class_exists('domains')) {
 		private $toggle_field;
 		private $toggle_values;
 		private $location;
+		private $database;
+		private $config;
 
 		/**
 		 * called when the object is created
 		 */
-		public function __construct() {
+		public function __construct(array $params) {
 			//assign the variables
 				$this->app_name = 'domains';
 				$this->app_uuid = '8b91605b-f6d2-42e6-a56d-5d1ded01bb44';
@@ -58,6 +60,17 @@ if (!class_exists('domains')) {
 				$this->toggle_field = 'domain_enabled';
 				$this->toggle_values = ['true','false'];
 				$this->location = 'domains.php';
+
+				if (isset($params['config'])) {
+					$this->config = $params['config'];
+				} else {
+					$this->config = config::load();
+				}
+				if (isset($params['database'])) {
+					$this->database = $params['database'];
+				} else {
+					$this->database = new database(['config'=>$this->database]);
+				}
 		}
 
 		/**
@@ -81,6 +94,7 @@ if (!class_exists('domains')) {
 				//delete multiple records
 					if (is_array($records) && @sizeof($records) != 0) {
 						//build the delete array
+							$domain_array = [];
 							foreach ($records as $record) {
 								//add to the array
 									if (!empty($record['checked']) && $record['checked'] == 'true' && is_uuid($record['uuid'])) {
@@ -91,8 +105,7 @@ if (!class_exists('domains')) {
 											$sql = "select domain_name from v_domains ";
 											$sql .= "where domain_uuid = :domain_uuid ";
 											$parameters['domain_uuid'] = $id;
-											$database = framework::database();
-											$domain_name = $database->select($sql, $parameters, 'column');
+											$domain_name = $this->database->select($sql, $parameters, 'column');
 											unset($sql, $parameters);
 
 										//get the domain settings
@@ -100,8 +113,7 @@ if (!class_exists('domains')) {
 											$sql .= "where domain_uuid = :domain_uuid ";
 											$sql .= "and domain_setting_enabled = 'true' ";
 											$parameters['domain_uuid'] = $id;
-											$database = framework::database();
-											$result = $database->select($sql, $parameters, 'all');
+											$result = $this->database->select($sql, $parameters, 'all');
 											unset($sql, $parameters);
 
 											if (is_array($result) && sizeof($result) != 0) {
@@ -155,10 +167,9 @@ if (!class_exists('domains')) {
 															if ($field['name'] == 'domain_uuid' && $table_name != 'v_domains') {
 																$sql = "delete from ".$table_name." where domain_uuid = :domain_uuid ";
 																$parameters['domain_uuid'] = $id;
-																$database = framework::database();
-																$database->app_name = 'domain_settings';
-																$database->app_uuid = 'b31e723a-bf70-670c-a49b-470d2a232f71';
-																$database->execute($sql, $parameters);
+																$this->database->app_name = 'domain_settings';
+																$this->database->app_uuid = 'b31e723a-bf70-670c-a49b-470d2a232f71';
+																$this->database->execute($sql, $parameters);
 																unset($sql, $parameters);
 															}
 														}
@@ -263,12 +274,11 @@ if (!class_exists('domains')) {
 							}
 
 						//delete the checked rows
-							if (is_array($domain_array) && @sizeof($domain_array) != 0) {
+							if (sizeof($domain_array) != 0) {
 								//execute delete
-									$database = framework::database();
-									$database->app_name = $this->app_name;
-									$database->app_uuid = $this->app_uuid;
-									$database->delete($domain_array);
+									$this->database->app_name = $this->app_name;
+									$this->database->app_uuid = $this->app_uuid;
+									$this->database->delete($domain_array);
 
 								//set message
 									message::add($text['message-delete']);
@@ -310,8 +320,7 @@ if (!class_exists('domains')) {
 							if (is_array($uuids) && @sizeof($uuids) != 0) {
 								$sql = "select ".$this->name."_uuid as uuid, ".$this->toggle_field." as toggle from v_".$this->table." ";
 								$sql .= "where ".$this->name."_uuid in (".implode(', ', $uuids).") ";
-								$database = framework::database();
-								$rows = $database->select($sql, $parameters ?? null, 'all');
+								$rows = $this->database->select($sql, null, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
 										$states[$row['uuid']] = $row['toggle'];
@@ -322,6 +331,7 @@ if (!class_exists('domains')) {
 
 						//build update array
 							$x = 0;
+							$array = [];
 							foreach($states as $uuid => $state) {
 								//create the array
 									$array[$this->table][$x][$this->name.'_uuid'] = $uuid;
@@ -332,12 +342,11 @@ if (!class_exists('domains')) {
 							}
 
 						//save the changes
-							if (is_array($array) && @sizeof($array) != 0) {
+							if (@sizeof($array) != 0) {
 								//save the array
-									$database = framework::database();
-									$database->app_name = $this->app_name;
-									$database->app_uuid = $this->app_uuid;
-									$database->save($array);
+									$this->database->app_name = $this->app_name;
+									$this->database->app_uuid = $this->app_uuid;
+									$this->database->save($array);
 									unset($array);
 
 								//set message
@@ -380,8 +389,7 @@ if (!class_exists('domains')) {
 							if (is_array($uuids) && @sizeof($uuids) != 0) {
 								$sql = "select * from v_".$this->table." ";
 								$sql .= "where ".$this->name."_uuid in (".implode(', ', $uuids).") ";
-								$database = framework::database();
-								$rows = $database->select($sql, $parameters, 'all');
+								$rows = $this->database->select($sql, null, 'all');
 								if (is_array($rows) && @sizeof($rows) != 0) {
 									$x = 0;
 									foreach ($rows as $row) {
@@ -402,10 +410,9 @@ if (!class_exists('domains')) {
 						//save the changes and set the message
 							if (is_array($array) && @sizeof($array) != 0) {
 								//save the array
-									$database = framework::database();
-									$database->app_name = $this->app_name;
-									$database->app_uuid = $this->app_uuid;
-									$database->save($array);
+									$this->database->app_name = $this->app_name;
+									$this->database->app_uuid = $this->app_uuid;
+									$this->database->save($array);
 									unset($array);
 
 								//set message
@@ -428,8 +435,7 @@ if (!class_exists('domains')) {
 					$sql .= "and domain_setting_enabled = 'true' ";
 					$sql .= " order by domain_setting_order asc ";
 					$parameters['previous_domain_uuid'] = $_SESSION["previous_domain_uuid"];
-					$database = framework::database();
-					$result = $database->select($sql, $parameters, 'all');
+					$result = $this->database->select($sql, $parameters, 'all');
 					unset($sql, $parameters);
 
 					//unset previous domain settings
@@ -444,8 +450,7 @@ if (!class_exists('domains')) {
 			//get the default settings
 				$sql = "select * from v_default_settings ";
 				$sql .= "order by default_setting_order asc ";
-				$database = framework::database();
-				$result = $database->select($sql, null, 'all');
+				$result = $this->database->select($sql, null, 'all');
 				unset($sql, $parameters);
 
 				//unset all settings
@@ -495,8 +500,7 @@ if (!class_exists('domains')) {
 					$sql .= "and domain_setting_enabled = 'true' ";
 					$sql .= " order by domain_setting_order asc ";
 					$parameters['domain_uuid'] = $_SESSION["domain_uuid"];
-					$database = framework::database();
-					$result = $database->select($sql, $parameters, 'all');
+					$result = $this->database->select($sql, $parameters, 'all');
 					unset($sql, $parameters);
 
 					//unset the arrays that domains are overriding
@@ -545,8 +549,7 @@ if (!class_exists('domains')) {
 					$sql .= " order by user_setting_order asc ";
 					$parameters['domain_uuid'] = $_SESSION["domain_uuid"];
 					$parameters['user_uuid'] = $_SESSION["user_uuid"];
-					$database = framework::database();
-					$result = $database->select($sql, $parameters, 'all');
+					$result = $this->database->select($sql, $parameters, 'all');
 					if (is_array($result)) {
 						foreach ($result as $row) {
 							if ($row['user_setting_enabled'] == 'true') {
@@ -603,19 +606,15 @@ if (!class_exists('domains')) {
 				$language = new text;
 				$text = $language->get(null, 'core/upgrade');
 
-			//includes files
-				require dirname(__DIR__, 2) . "/resources/require.php";
-
 			//add missing default settings
 				$this->settings();
 
 			//get the variables
-				$config = new config;
-				$config_path = $config->config_file;
+				$document_root = dirname(__DIR__, 2);
 
 			//get the list of installed apps from the core and app directories (note: GLOB_BRACE doesn't work on some systems)
-				$config_list_1 = glob($_SERVER["DOCUMENT_ROOT"].PROJECT_PATH."/*/*/app_config.php");
-				$config_list_2 = glob($_SERVER["DOCUMENT_ROOT"].PROJECT_PATH."/*/*/app_menu.php");
+				$config_list_1 = glob($document_root."/*/*/app_config.php");
+				$config_list_2 = glob($document_root."/*/*/app_menu.php");
 				$config_list = array_merge((array)$config_list_1, (array)$config_list_2);
 				unset($config_list_1,$config_list_2);
 				$x=0;
@@ -628,8 +627,7 @@ if (!class_exists('domains')) {
 
 			//get the domains
 				$sql = "select * from v_domains ";
-				$database = framework::database();
-				$domains = $database->select($sql, null, 'all');
+				$domains = $this->database->select($sql, null, 'all');
 				unset($sql);
 
 			//loop through all domains
@@ -643,10 +641,10 @@ if (!class_exists('domains')) {
 						$context = $domain_name;
 
 					//get the email queue settings
-						$setting = new settings(["domain_uuid" => $domain_uuid]);
+						$setting = new settings(['config' => $this->config, 'database' => $this->database,"domain_uuid" => $domain_uuid]);
 
 					//get the list of installed apps from the core and mod directories and execute the php code in app_defaults.php
-						$default_list = glob($_SERVER["DOCUMENT_ROOT"] . PROJECT_PATH . "/*/*/app_defaults.php");
+						$default_list = glob($document_root . "/*/*/app_defaults.php");
 						foreach ($default_list as &$default_path) {
 							//echo $default_path."<br />\n";
 							include($default_path);
@@ -671,20 +669,17 @@ if (!class_exists('domains')) {
 		 */
 		public function settings() {
 
-			//includes files
-				require dirname(__DIR__, 2) . "/resources/require.php";
-
 			//get an array of the default settings UUIDs
 				$sql = "select * from v_default_settings ";
-				$database = framework::database();
-				$result = $database->select($sql, null, 'all');
+				$result = $this->database->select($sql, null, 'all');
 				foreach($result as $row) {
 					$setting[$row['default_setting_uuid']] = 1;
 				}
 				unset($sql);
 
+				$document_root = dirname(__DIR__, 2);
 			//get the list of default settings
-				$config_list = glob($_SERVER["DOCUMENT_ROOT"] . PROJECT_PATH . "/*/*/app_config.php");
+				$config_list = glob($document_root . "/*/*/app_config.php");
 				$x=0;
 				foreach ($config_list as $config_path) {
 					include($config_path);
@@ -696,7 +691,7 @@ if (!class_exists('domains')) {
 						foreach ($app['default_settings'] as $row) {
 							if (!isset($setting[$row['default_setting_uuid']])) {
 								$array['default_settings'][$x] = $row;
-								$array['default_settings'][$x]['app_uuid'] = $app['uuid'];
+								$array['default_settings'][$x]['app_uuid'] = $app['uuid'] ?? uuid();
 								$x++;
 							}
 						}
@@ -706,14 +701,13 @@ if (!class_exists('domains')) {
 			//add the missing default settings
 				if (isset($array) && is_array($array) && count($array) > 0) {
 					//grant temporary permissions
-						$p = new permissions;
+						$p = new permissions(['database'=>$this->database]);
 						$p->add('default_setting_add', 'temp');
 
 					//execute insert
-						$database = framework::database();
-						$database->app_name = 'default_settings';
-						$database->app_uuid = '2c2453c0-1bea-4475-9f44-4d969650de09';
-						$database->save($array, false);
+						$this->database->app_name = 'default_settings';
+						$this->database->app_uuid = '2c2453c0-1bea-4475-9f44-4d969650de09';
+						$this->database->save($array, false);
 						unset($array);
 
 					//revoke temporary permissions
@@ -727,11 +721,9 @@ if (!class_exists('domains')) {
 		 */
 		public function all() {
 			//get the domains from the database
-				$database = framework::database();
-				if ($database->table_exists('v_domains')) {
+				if ($this->database->table_exists('v_domains')) {
 					$sql = "select * from v_domains order by domain_name asc;";
-					$database = framework::database();
-					$result = $database->select($sql, null, 'all');
+					$result = $this->database->select($sql, null, 'all');
 					foreach($result as $row) {
 						$domain_names[] = $row['domain_name'];
 					}

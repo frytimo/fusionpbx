@@ -324,7 +324,7 @@
 	if (!function_exists('permission_exists')) {
 
 		function permission_exists($permission_name, $operator = 'or') {
-			$database = database::new();
+			$database = framework::database();
 			$permission = new permissions($database);
 			return $permission->exists($permission_name);
 		}

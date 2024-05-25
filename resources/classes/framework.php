@@ -32,14 +32,32 @@
 final class framework {
 	private static $config = null;
 	private static $database = null;
+	private static $permissions = null;
 
-	public static function initialize(): void {
-		self::config();
-		if (self::$config->is_empty()) {
+	public static function initialize(?config $config = null): void {
+		//load common global functions
+		require_once dirname(__DIR__) . '/functions.php';
+
+		//locate and load the config
+		if ($config === null) {
+			self::config();
+			self::$database = new database(['config' => $config]);
+		} else {
+			//re-initialize framework objects
+			self::$config = $config;
+			self::database();
+		}
+
+		//redirect to installer if needed
+		if (self::$config->is_empty() && $_SERVER['DOCUMENT_URI'] !== '/core/install/install.php') {
 			header('Location: /core/install/install.php', true);
 			exit();
 		}
+
+		//set reporting level
 		self::set_error_reporting_level();
+
+		//define project paths
 		self::define_project_paths();
 	}
 
@@ -80,9 +98,17 @@ final class framework {
 	public static function database(): database {
 		global $database;
 		if (self::$database === null) {
-			self::$database = new database(['config' => self::$config]);
+			self::$database = new database(['config' => self::config()]);
 		}
 		return self::$database;
+	}
+
+	public static function permissions(): permissions {
+		global $permissions;
+		if (self::$permissions === null) {
+			self::$permissions = new permissions(self::database());
+		}
+		return self::$permissions;
 	}
 
 	public static function set_error_reporting_level() {

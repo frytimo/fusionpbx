@@ -116,11 +116,12 @@
 	if (empty($_SESSION['switch']['applications']) || !is_array($_SESSION['switch']['applications'])) {
 		$esl = event_socket::create();
 		if ($esl->is_connected()) {
-			$result = event_socket::api('show application');
-			
+			$result = $esl->command('api show application');
+
 			$show_applications = explode("\n\n", $result);
 			$raw_applications = explode("\n", $show_applications[0]);
 			unset($result);
+			$esl->close();
 			unset($esl);
 
 			$previous_application = null;
