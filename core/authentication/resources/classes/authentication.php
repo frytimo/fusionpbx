@@ -46,7 +46,8 @@ class authentication {
 	 * Called when the object is created
 	 */
 	public function __construct() {
-		$this->database = new database();
+		$this->database = framework::database();
+		$this->setting = new settings($this->database);
 	}
 
 	/**
@@ -76,6 +77,7 @@ class authentication {
 			}
 
 		//use the authentication plugins
+			$result['authorized'] = false;
 			foreach ($_SESSION['authentication']['methods'] as $name) {
 				//already processed the plugin move to the next plugin
 				if (!empty($_SESSION['authentication']['plugin']) && !empty($_SESSION['authentication']['plugin'][$name]) && $_SESSION['authentication']['plugin'][$name]['authorized']) {
@@ -150,7 +152,7 @@ class authentication {
 
 		//set authorized to false if any authentication method failed
 			$authorized = false;
-			if (is_array($_SESSION['authentication']['plugin'])) {
+			if (!empty($_SESSION['authentication']['plugin'])) {
 				foreach($_SESSION['authentication']['plugin'] as $row) {
 					if ($row["authorized"]) {
 						$authorized = true;

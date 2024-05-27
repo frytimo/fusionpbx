@@ -221,7 +221,7 @@ if ($domains_processed == 1) {
 		set_country_vars($x);
 
 	//save the vars.xml file
-		save_var_xml();
+		vars::save_var_xml();
 
 }
 

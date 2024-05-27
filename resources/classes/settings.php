@@ -19,10 +19,14 @@ class settings {
 	 * @param array setting_array
 	 * @depends database::new()
 	 */
-	public function __construct($setting_array = []) {
+	public function __construct(?database $database = null) {
 
 		//open a database connection
-		$this->database = database::new();
+		if ($database === null) {
+			$database = framework::database();
+		} else {
+			$this->database = $database;
+		}
 
 		//set the values from the array
 		$this->domain_uuid = $setting_array['domain_uuid'] ?? null;
@@ -59,6 +63,14 @@ class settings {
 		//	}
 		//}
 
+	}
+
+	/**
+	 * Returns the database used in the constructor
+	 * @return database
+	 */
+	public function get_database(): database {
+		return $this->database;
 	}
 
 	/**

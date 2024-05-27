@@ -276,18 +276,22 @@
 
 			/**
 			 * Called when the object is created
-			 * @param array $params Optional
+			 * @param config $config Config.conf file handling object
 			 */
-			public function __construct(array $params = []) {
+			public function __construct(?config $config = null) {
 
 				//handle the config object
-				if (isset($params['config'])) {
-					$config = $params['config'];
-				}
-				else {
-					$config = config::load();
+				if ($config === null) {
+					$this->config = framework::config();
+				} else {
+					$this->config = $config;
 				}
 
+				if ($config === null) {
+					if (function_exists('xdebug_break')) {
+						xdebug_break();
+					}
+				}
 				//driver and type point to the same value
 				$this->driver = $config->get('database.0.type', 'pgsql');
 				$this->type = $this->driver;
@@ -446,6 +450,14 @@
 					default:
 						trigger_error('Object property not available', E_USER_ERROR);
 				}
+			}
+
+			/**
+			 * Returns the config object used in the constructor
+			 * @return config
+			 */
+			public function get_config(): config {
+				return $this->config;
 			}
 
 			/**
@@ -3076,13 +3088,14 @@
 		 * {@link database::connect()}</p>
 		 * <p><b>Usage:</b><br>
 		 * <code>&nbsp; $database_object = database::new();</code></p>
+		 * @param config $config Config.conf file handling object
 		 * @return database new instance of database object already connected
 		 * @see database::__construct()
 		 * @see database::connect()
 		 */
-		public static function new(array $params = []) {
+		public static function new(config $config) {
 			if (self::$database === null) {
-				self::$database = new database($params);
+				self::$database = new database($config);
 				self::$database->connect();
 			}
 			return self::$database;

@@ -29,6 +29,10 @@ if (!class_exists('schema')) {
 	class schema {
 
 		//define variables
+			/**
+			 * Database object
+			 * @var database $database
+			 */
 			private $database;
 			public $apps;
 			public $db_type;
@@ -37,13 +41,12 @@ if (!class_exists('schema')) {
 			public $data_types;
 
 		//class constructor
-			public function __construct(array $params) {
+			public function __construct(?database $database = null) {
 
-				if (isset($params['database'])) {
-					$this->database = $params['database'];
+				if ($database === null) {
+					$database = framework::database();
 				} else {
-					//connect to the database
-					$this->database = database::new();
+					$this->database = $database;
 				}
 
 				//set the type
@@ -53,7 +56,7 @@ if (!class_exists('schema')) {
 				$this->db_name = $this->database->db_name;
 
 				//get the list of installed apps from the core and mod directories
-				$config_list = glob($_SERVER["DOCUMENT_ROOT"] . PROJECT_PATH . "/*/*/app_config.php");
+				$config_list = glob(dirname(__DIR__, 2) . "/*/*/app_config.php");
 				$x=0;
 				foreach ($config_list as &$config_path) {
 					try {
@@ -217,18 +220,6 @@ if (!class_exists('schema')) {
 				return $prep_statement->fetchAll(PDO::FETCH_ASSOC);
 			}
 
-		//database table exists alternate
-			private function db_table_exists_alternate ($table_name) {
-				$sql = "select count(*) from $table_name ";
-				$result = $this->database->query($sql);
-				if ($result > 0) {
-					return true; //table exists
-				}
-				else {
-					return false; //table doesn't exist
-				}
-			}
-
 		//database table exists
 			private function db_table_exists ($table_name) {
 				$sql = "";
@@ -241,7 +232,12 @@ if (!class_exists('schema')) {
 				if ($this->db_type == "mysql") {
 					$sql .= "SELECT TABLE_NAME FROM information_schema.tables WHERE table_schema = '$this->db_name' and TABLE_NAME = '$table_name' ";
 				}
-				$prep_statement = $this->database->db->prepare(check_sql($sql));
+				$db = $this->database->db;
+				if ($db === null) {
+					$this->database->connect();
+					$db = $this->database->db;
+				}
+				$prep_statement = $db->prepare(check_sql($sql));
 				$prep_statement->execute();
 				$result = $prep_statement->fetchAll(PDO::FETCH_NAMED);
 				if (count($result) > 0) {

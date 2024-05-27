@@ -324,6 +324,10 @@
 	if (!function_exists('permission_exists')) {
 
 		function permission_exists($permission_name, $operator = 'or') {
+			//allow installer to do what is needed
+			if (framework::is_install_active()) {
+				return true;
+			}
 			$database = framework::database();
 			$permission = new permissions($database);
 			return $permission->exists($permission_name);

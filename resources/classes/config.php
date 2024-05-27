@@ -232,10 +232,13 @@ final class config {
 				break;
 			case 'admin_username':
 				$this->configuration['init.admin.name'] = $value;
+				break;
 			case 'admin_password':
 				$this->configuration['init.admin.password'] = $value;
+				break;
 			case 'domain_name':
 				$this->configuration['init.domain.name'] = $value;
+				break;
 			default:
 				if (property_exists($this, $name)) {
 					$this->{$name} = $value;
@@ -243,6 +246,7 @@ final class config {
 				else {
 					$this->configuration[$name] = $value;
 				}
+				break;
 		}
 	}
 
@@ -265,7 +269,7 @@ final class config {
 
 	public function set(string $key, ?string $value = null) {
 		if (!empty($key)) {
-			$this->configuration[$key] = $value;
+			$this->__set($key, $value);
 		}
 	}
 

@@ -49,7 +49,7 @@ class install {
 	 */
 	public function __construct(config $config) {
 		$this->config = $config;
-		$this->database = new database(['config' => $config]);
+		$this->database = new database($config);
 		$this->admin_username = '';
 		$this->admin_password = '';
 		$this->domain_name = '';
@@ -91,20 +91,21 @@ class install {
 				return $this->{$name};
 		}
 	}
-	
+
 	private function set_domain_uuid($uuid) {
 		$this->domain_uuid = $uuid;
 	}
 
 	//uses the config object domain_name to retrieve the domain_uuid
-	private function get_domain_uuid(): string {
+	private function get_domain_uuid($domain_name = null): string {
+		$domain_uuid = '';
 		if ($this->database->table_exists('v_domains')) {
 			$sql = "select domain_uuid from v_domains where domain_name = :domain_name limit 1";
-			$parameters['domain_name'] = $this->config->domain_name;
+			$parameters['domain_name'] = $domain_name ?? $this->config->domain_name;
 			$domain_uuid = $this->database->select($sql, $parameters, 'column');
 		}
 		//domain name or table does not exist
-		if (empty($domain_uuid)) {
+		if ($domain_uuid === false) {
 			return '';
 		}
 		return $domain_uuid;
@@ -146,7 +147,7 @@ class install {
 		if (!isset($argv[2]) || $argv[2] == 'default') {
 			//restore the menu
 			$included = true;
-			require_once dirname(__DIR__, 2) . "/core/menu/menu_restore_default.php";
+			require_once dirname(__DIR__, 4) . "/core/menu/menu_restore_default.php";
 			unset($sel_menu);
 			$text = (new text)->get(null, 'core/upgrade');
 			//send message to the console
@@ -154,17 +155,17 @@ class install {
 		}
 	}
 
-	public function run_update_admin() {
+	public function run_update_superadmin() {
 		//ensure groups are not empty
 		$this->ensure_groups_exist();
 
+		//if the superadmin UUID does not exist then get a new uuid
 		$admin_uuid = $this->get_user_uuid($this->admin_username);
-
-		//if the user did not exist then get a new uuid
 		if (empty($admin_uuid)) {
-			$admin_uuid = $this->create_admin_user($admin_uuid);
+			$admin_uuid = $this->create_superadmin_user();
 		}
 
+		//find the superadmin group UUID
 		$group_uuid = $this->get_group_uuid('superadmin');
 		if (empty($group_uuid)) {
 			$group_uuid = $this->create_group('superadmin', 80);
@@ -201,7 +202,7 @@ class install {
 			. "where domain_uuid = :domain_uuid "
 			. "and username = :username "
 		;
-		$parameters['domain_uuid'] = $this->domain_uuid;
+		$parameters['domain_uuid'] = $this->domain_uuid();
 		$parameters['username'] = $user_name;
 
 		$database = $this->database;
@@ -393,7 +394,7 @@ class install {
 	function run_update_domains() {
 		require_once dirname(__DIR__, 4) . "/resources/classes/config.php";
 		require_once dirname(__DIR__, 4) . "/resources/classes/domains.php";
-		$domain = new domains(['config' => $this->config, 'database' => $this->database]);
+		$domain = new domains($this->database);
 		$domain->display_type = 'html';
 		$domain->upgrade();
 	}
@@ -415,7 +416,7 @@ class install {
 		//put tables in that the install.sh script inserts
 		//$this->ensure_tables_exist();
 		//get the database schema put it into an array then compare and update the database as needed.
-		$obj = new schema(['database' => $this->database]);
+		$obj = new schema($this->database);
 		$obj->data_types = $data_types;
 		//run with no output
 		//ob_start();
@@ -573,11 +574,10 @@ class install {
 		return $uuid;
 	}
 
-	public function create_admin_user(): string {
+	public function create_superadmin_user(): string {
 		$uuid = uuid();
 		//ensure the users table exists
 		if (!$this->database->table_exists('v_users')) {
-//			$this->database->execute('create table v_users(user_uuid uuid primary key,username text, password, text');
 			$this->write_schema($this->get_schema_from_app_config('core/users'));
 		}
 		$sql = "insert into v_users(user_uuid, username, password) values('$uuid','$this->admin_username','".$this->get_password()."')";

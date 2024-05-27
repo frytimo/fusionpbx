@@ -257,6 +257,70 @@ if (!class_exists('vars')) {
 			}
 		}
 
+		public static function save_var_xml() {
+			if (!empty($_SESSION['switch']['conf']) && is_array($_SESSION['switch']['conf'])) {
+
+				//skip this function if the conf directory is empty
+				if (empty($_SESSION['switch']['conf']['dir'])) {
+					return false;
+				}
+
+				//open the vars.xml file
+				$fout = fopen($_SESSION['switch']['conf']['dir'] . "/vars.xml", "w");
+
+				//get the hostname
+				$hostname = trim(event_socket_request_cmd('api switchname'));
+				if (empty($hostname)) {
+					$hostname = trim(gethostname());
+				}
+				if (empty($hostname)) {
+					return;
+				}
+
+				//build the xml
+				$sql = "select * from v_vars ";
+				$sql .= "where var_enabled = 'true' ";
+				$sql .= "order by var_category, var_order asc ";
+				$database = framework::database();
+				$variables = $database->select($sql, null, 'all');
+				$prev_var_category = '';
+				$xml = '';
+				if (!empty($variables)) {
+					foreach ($variables as &$row) {
+						if ($row['var_category'] != 'Provision') {
+							if ($prev_var_category != $row['var_category']) {
+								$xml .= "\n<!-- " . $row['var_category'] . " -->\n";
+							}
+							if (empty($row['var_command'])) {
+								$row['var_command'] = 'set';
+							}
+							if ($row['var_category'] == 'Exec-Set') {
+								$row['var_command'] = 'exec-set';
+							}
+							if (empty($row['var_hostname'])) {
+								$xml .= "<X-PRE-PROCESS cmd=\"" . $row['var_command'] . "\" data=\"" . $row['var_name'] . "=" . $row['var_value'] . "\" />\n";
+							} elseif ($row['var_hostname'] == $hostname) {
+								$xml .= "<X-PRE-PROCESS cmd=\"" . $row['var_command'] . "\" data=\"" . $row['var_name'] . "=" . $row['var_value'] . "\" />\n";
+							}
+						}
+						$prev_var_category = $row['var_category'];
+					}
+				}
+				$xml .= "\n";
+				fwrite($fout, $xml);
+				unset($sql, $variables, $xml);
+				fclose($fout);
+
+				//apply settings
+				$_SESSION["reload_xml"] = true;
+
+				//$cmd = "api reloadxml";
+				//event_socket_request_cmd($cmd);
+				//unset($cmd);
+			}
+		}
+
+
 	}
 }
 

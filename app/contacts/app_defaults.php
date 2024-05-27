@@ -6,9 +6,9 @@
 		$database = framework::database();
 
 		//populate new phone_label values, phone_type_* values
-		$obj = new schema;
-		$obj->db_type = $db_type;
-		$obj->schema();
+		$obj = new schema($database);
+		//$obj->db_type = $db_type;
+		//$obj->schema();
 		$field_exists = $obj->column_exists($db_name, 'v_contact_phones', 'phone_type'); //check if field exists
 		if ($field_exists) {
 			//add multi-lingual support

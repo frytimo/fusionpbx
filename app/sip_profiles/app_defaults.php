@@ -140,7 +140,7 @@
 					}
 
 				//save the sip profile xml
-					save_sip_profile_xml();
+					sip_profiles::save_sip_profile_xml();
 
 			}
 

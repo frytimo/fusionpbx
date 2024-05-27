@@ -51,7 +51,7 @@ if (!class_exists('domains')) {
 		/**
 		 * called when the object is created
 		 */
-		public function __construct(array $params) {
+		public function __construct(database $database = null) {
 			//assign the variables
 				$this->app_name = 'domains';
 				$this->app_uuid = '8b91605b-f6d2-42e6-a56d-5d1ded01bb44';
@@ -61,15 +61,10 @@ if (!class_exists('domains')) {
 				$this->toggle_values = ['true','false'];
 				$this->location = 'domains.php';
 
-				if (isset($params['config'])) {
-					$this->config = $params['config'];
+				if ($database === null) {
+					$this->database = framework::database();
 				} else {
-					$this->config = config::load();
-				}
-				if (isset($params['database'])) {
-					$this->database = $params['database'];
-				} else {
-					$this->database = new database(['config'=>$this->database]);
+					$this->database = $database;
 				}
 		}
 
@@ -641,7 +636,7 @@ if (!class_exists('domains')) {
 						$context = $domain_name;
 
 					//get the email queue settings
-						$setting = new settings(['config' => $this->config, 'database' => $this->database,"domain_uuid" => $domain_uuid]);
+						$setting = new settings($this->database);
 
 					//get the list of installed apps from the core and mod directories and execute the php code in app_defaults.php
 						$default_list = glob($document_root . "/*/*/app_defaults.php");
@@ -701,7 +696,7 @@ if (!class_exists('domains')) {
 			//add the missing default settings
 				if (isset($array) && is_array($array) && count($array) > 0) {
 					//grant temporary permissions
-						$p = new permissions(['database'=>$this->database]);
+						$p = new permissions($this->database);
 						$p->add('default_setting_add', 'temp');
 
 					//execute insert

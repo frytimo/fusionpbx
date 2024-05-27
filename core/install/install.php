@@ -39,6 +39,11 @@ require_once $document_root . '/resources/classes/auto_loader.php';
 //framework
 require_once $document_root . '/resources/classes/framework.php';
 framework::initialize();
+exit();
+
+
+
+
 
 $config = framework::config();
 

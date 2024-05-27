@@ -64,7 +64,7 @@ if (!class_exists('groups')) {
 				$this->database = $database;
 			}
 			else {
-				$this->database = new database;
+				$this->database = framework::database();
 			}
 
 			//set the application name and uuid

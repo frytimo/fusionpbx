@@ -33,7 +33,8 @@
 			private $object;
 			private $var_array;
 
-			public function __construct(){
+			public function __construct($engine = 'smarty') {
+				$this->engine = $engine;
 			}
 
 			public function init() {
@@ -63,6 +64,27 @@
 					));
 					$this->object->setLexer($lexer);
 				}
+			}
+
+			public function set_template_dir($template_dir) {
+				if (!file_exists($template_dir)) {
+					throw new \InvalidArgumentException("Template directory $template_dir must exist");
+				}
+				if (!is_readable($template_dir)) {
+					throw new \Exception("Template directory $template_dir is not readable");
+				}
+				$this->template_dir = $template_dir;
+			}
+
+			public function set_cache_dir($cache_dir) {
+				if (!file_exists($cache_dir)) {
+					throw new \InvalidArgumentException("Template directory $cache_dir must exist");
+				}
+				if (!is_writable($cache_dir)) {
+					throw new \Exception("Cache dir $cache_dir is not writeable");
+				}
+
+				$this->cache_dir = $cache_dir;
 			}
 
 			public function assign($key, $value) {

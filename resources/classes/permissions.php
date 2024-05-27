@@ -39,14 +39,14 @@ if (!class_exists('permissions')) {
 		/**
 		 * called when the object is created
 		 */
-		public function __construct($database = null, $domain_uuid = null, $user_uuid = null) {
+		public function __construct(?database $database = null, $domain_uuid = null, $user_uuid = null) {
 
 			//handle the database object
-			if (isset($database)) {
+			if ($database === null) {
 				$this->database = $database;
 			}
 			else {
-				$this->database = database::new();
+				$this->database = framework::database();
 			}
 
 			//set the domain_uuid
