@@ -2,8 +2,6 @@
 
 /**
  * sounds class
- *
- * @method string get
  */
 class sounds {
 
@@ -31,12 +29,15 @@ class sounds {
 		//miscellaneous
 			if (empty($this->sound_types) || (is_array($this->sound_types) && in_array('miscellaneous', $this->sound_types))) {
 				$x = 0;
-				if (if_group("superadmin")) {
+				if (permission_exists("sound_say")) {
 					$array['miscellaneous'][$x]['name'] = "say";
 					$array['miscellaneous'][$x]['value'] = "say:";
 					$x++;
+				}
+				if (permission_exists('tone_stream')) {
 					$array['miscellaneous'][$x]['name'] = "tone_stream";
 					$array['miscellaneous'][$x]['value'] = "tone_stream:";
+					$x++;
 				}
 			}
 		//recordings
