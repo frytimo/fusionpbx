@@ -239,7 +239,16 @@
 	echo "		font-size: 12px;\n";
 	echo "		}\n";
 	echo "</style>\n";
+?>
+<script src="https://code.jquery.com/jquery-3.5.1.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
 
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/summernote@0.9.0/dist/summernote-bs4.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.9.0/dist/summernote-bs4.min.js"></script>
+<?php
 //show the content
 	echo "<form name='frm' id='frm' method='post'>\n";
 
@@ -304,6 +313,7 @@
 	echo "	".$text['label-template_body']."\n";
 	echo "</td>\n";
 	echo "<td class='vtable' style='position: relative;' align='left'>\n";
+	echo "	<div id='summernote' style='height: 400px;'>" . $template_body . "</div>\n";
 	echo "	<textarea class='formfld' name='template_body' id='template_body' style='display: none;'>".$template_body."</textarea>\n";
 	echo "	<div id='editor'></div>\n";
 	echo "	<table cellpadding='0' cellspacing='0' border='0' style='float: right; padding-top: 5px;'>\n";
@@ -496,8 +506,74 @@
 		echo "	editor.commands.bindKey('Ctrl-H', null);\n"; //disable replace - control broken with bootstrap
 
 	echo "</script>\n";
+?>
+	<!-- include summernote css/js -->
+	<link href="https://cdn.jsdelivr.net/npm/summernote@0.9.0/dist/summernote.min.css" rel="stylesheet">
+	<script src="https://cdn.jsdelivr.net/npm/summernote@0.9.0/dist/summernote.min.js"></script>
+    <script>
+$(document).ready(function() {
+    // Initialize Summernote
+    $('#summernote').summernote({
+        height: 400
+    });
 
+    // Initialize Ace Editor
+    var editor = ace.edit("editor");
+
+    var isSyncing = false; // Prevent infinite loops
+
+    // Function to update Summernote from Ace
+    function updateSummernote() {
+        if (isSyncing) return;
+        isSyncing = true;
+        var aceContent = editor.getValue();
+        $('#summernote').summernote('code', aceContent);
+        isSyncing = false;
+    }
+
+    // Function to update Ace from Summernote
+    function updateAce() {
+        if (isSyncing) return;
+        isSyncing = true;
+        var summernoteContent = $('#summernote').summernote('code');
+        editor.setValue(summernoteContent, -1); // -1 prevents cursor jump
+        isSyncing = false;
+    }
+
+    // Sync Ace → Summernote on text change
+    editor.session.on('change', function() {
+        updateSummernote();
+    });
+
+    // Sync Summernote → Ace on text change
+    $('#summernote').on('summernote.change', function() {
+        updateAce();
+    });
+});
+
+//$(document).ready(function() {
+//    // Initialize Summernote
+//    $('#summernote').summernote({
+//        height: 400 // Set height
+//    });
+//
+//	var editor = ace.edit('editor');
+//
+//    // Function to update Summernote content
+//    function updateSummernote() {
+//        var aceContent = editor.getValue(); // Get content from Ace Editor
+//        $('#summernote').summernote('code', aceContent); // Update Summernote
+//    }
+//
+//    // Update Summernote on every keypress in Ace Editor
+//    editor.session.on('change', function() {
+//        updateSummernote();
+//    });
+//});
+
+
+    </script>
+<?php
 //include the footer
 	require_once "resources/footer.php";
 
-?>
