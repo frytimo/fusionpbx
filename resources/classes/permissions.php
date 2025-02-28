@@ -21,13 +21,10 @@
 */
 
 /**
- * permission class
+ * permissions class
  *
- * @method string add
- * @method string delete
- * @method string exists
  */
-if (!class_exists('permissions')) {
+
 	class permissions {
 
 		private $database;
@@ -36,6 +33,7 @@ if (!class_exists('permissions')) {
 		private $groups;
 		private $permissions;
 		private static $permission;
+		private $apcu_enabled;
 
 		/**
 		 * called when the object is created
@@ -70,18 +68,25 @@ if (!class_exists('permissions')) {
 				$this->user_uuid = $_SESSION['user_uuid'];
 			}
 
-			//get the permissions
-			if (isset($_SESSION['permissions'])) {
-				$this->permissions = $_SESSION['permissions'];
-			}
-			else {
-				//create the groups object
-				$groups = new groups($this->database, $this->domain_uuid, $this->user_uuid);
-				$this->groups = $groups->assigned();
+			//cache the permissions
+			$this->apcu_enabled = function_exists('apcu_enabled') && apcu_enabled();
 
-				//get the list of groups assigned to the user
-				if (!empty($this->groups)) {
-					$this->assigned();
+			if (!$this->apcu_enabled) {
+				$this->load_cache();
+			} else {
+				//get the permissions
+				if (isset($_SESSION['permissions'])) {
+					$this->permissions = $_SESSION['permissions'];
+				}
+				else {
+					//create the groups object
+					$groups = new groups($this->database, $this->domain_uuid, $this->user_uuid);
+					$this->groups = $groups->assigned();
+
+					//get the list of groups assigned to the user
+					if (!empty($this->groups)) {
+						$this->assigned();
+					}
 				}
 			}
 		}
@@ -125,9 +130,10 @@ if (!class_exists('permissions')) {
 
 		/**
 		 * Check to see if the permission exists
-		 * @var string $permission
+		 * @param string $permission_name
+		 * @return bool True if exists. False otherwise
 		 */
-		public function exists($permission_name) {
+		public function exists(string $permission_name): bool {
 
 			//if run from command line then return true
 			if (defined('STDIN')) {
@@ -198,15 +204,28 @@ if (!class_exists('permissions')) {
 		/**
 		 * Returns a new permission object
 		 */
-		public static function new($database = null, $domain_uuid = null, $user_uuid = null) {
+		public static function new($database = null, $domain_uuid = null, $user_uuid = null): self {
 			if (self::$permission === null) {
 				self::$permission = new permissions($database, $domain_uuid, $user_uuid);
 			}
 			return self::$permission;
 		}
 
+		private function load_cache() {
+			if ($this->apcu_enabled) {
+				$key = 'permissions_' . $this->user_uuid;
+				if (apcu_exists($key)) {
+					$this->permissions = apcu_fetch($key);
+				} else {
+					foreach ($this->database->select("SELECT permission_name from v_group_permissions p join v_user_groups g on p.group_uuid = g.group_uuid where g.user_uuid = :id", ['id' => $this->user_uuid]) as $row) {
+						$name = $row['permission_name'];
+						$this->permissions[$name] = $name;
+					}
+					apcu_store($key, $this->permissions, 5 * 60/*seconds*/);
+				}
+			}
+		}
 	}
-}
 
 //examples
 	/*
