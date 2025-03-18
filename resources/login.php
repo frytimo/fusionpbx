@@ -70,7 +70,9 @@
 				$sql .= "domain_uuid ";
 				$sql .= "from v_users ";
 				$sql .= "where user_email = :email ";
+				$sql .= "and domain_uuid = :domain_uuid ";
 				$parameters['email'] = $email;
+				$parameters['domain_uuid'] = $domain_uuid;
 				$results = $database->select($sql, $parameters, 'all');
 				unset($sql, $parameters);
 
@@ -311,6 +313,16 @@
 		echo "	<h5>".$text['label-email_sent']."</h5>\n";
 		echo "	".$text['description-email_sent']."<br />\n";
 		echo "</div>\n";
+
+		//remove the saved email from session
+		$_SESSION['valid_email'] = "";
+
+		//add the footer
+		$login_page = true;
+		include "resources/footer.php";
+
+		//stop processing
+		exit();
 	}
 
 //request the email address
