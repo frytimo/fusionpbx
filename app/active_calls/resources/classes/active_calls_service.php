@@ -141,6 +141,18 @@ class active_calls_service extends service implements websocket_service_interfac
 	private static $websocket_host = null;
 
 	/**
+	 * Database object
+	 * @var database
+	 */
+	private $database;
+
+	/**
+	 * Array of gateways with the UUID as the key
+	 * @var array
+	 */
+	private $gateways;
+
+	/**
 	 * Checks if an event exists in the SWITCH_EVENTS.
 	 * @param string $event_name The value to search for.
 	 * @return bool True if the value is found, false otherwise.
@@ -241,6 +253,12 @@ class active_calls_service extends service implements websocket_service_interfac
 		}
 		// re-connect to the websocket server
 		$this->connect_to_ws_server();
+
+		// re-connect to the database
+		$this->database = new database(['config' => parent::$config]);
+
+		// query the database for current gateways
+		$this->load_gateways();
 	}
 
 	/**
@@ -349,6 +367,9 @@ class active_calls_service extends service implements websocket_service_interfac
 		$suppress_ws_message = false;
 		// Suppress the Event Socket Error Message so it doesn't flood the system logs
 		$suppress_es_message = false;
+		//
+		// Main Loop
+		//
 		while ($this->running) {
 			$read = [];
 			// reconnect to event_socket
@@ -381,6 +402,7 @@ class active_calls_service extends service implements websocket_service_interfac
 				$suppress_ws_message = false;
 			}
 
+			// Ensure there is a connection to read from
 			if (!empty($read)) {
 				$write = $except = [];
 				// Wait for an event and timeout at 1/3 of a second so we can re-check all connections
@@ -391,6 +413,7 @@ class active_calls_service extends service implements websocket_service_interfac
 					return 1;
 				}
 
+				// Check for data ready
 				if (!empty($read)) {
 					$this->debug("Received event");
 					// Iterate over each socket event
@@ -759,12 +782,11 @@ class active_calls_service extends service implements websocket_service_interfac
 			$message->application = $call['application'] ?? '';
 			$message->secure = $call['secure'] ?? '';
 
-			if (true) {
-				$this->debug("-------- ACTIVE CALL ----------");
-				$this->debug($message);
-				$this->debug("In Progress: '$message->name', $message->unique_id");
-				$this->debug("-------------------------------");
-			}
+			$this->debug("-------- ACTIVE CALL ----------");
+			$this->debug($message);
+			$this->debug("In Progress: '$message->name', $message->unique_id");
+			$this->debug("-------------------------------");
+
 			$calls[] = $message;
 		}
 
@@ -869,7 +891,7 @@ class active_calls_service extends service implements websocket_service_interfac
 			// Notify system log of the message and event name
 			$this->debug("Sending Event: '$event->event_name'");
 
-			//send event to the web socket routing service
+			// Send event to the web socket routing service
 			websocket_client::send($this->ws_client->socket(), $message);
 		}
 	}
@@ -898,5 +920,24 @@ class active_calls_service extends service implements websocket_service_interfac
 	 */
 	private static function get_domain_uuid_by_name(database $database, string $domain_name): string {
 		return $database->execute("select domain_uuid from v_domains where domain_enabled='true' and domain_name = :domain_name limit 1", ['domain_name' => $domain_name], 'column') ?: '';
+	}
+
+	/**
+	 * Returns the gateway name based on the gateway UUID provided
+	 * @param database $database
+	 * @param string $gateway_uuid
+	 * @return string
+	 */
+	public static function get_gateway_name_by_uuid(database $database, string $gateway_uuid): string {
+		$table_prefix = database::TABLE_PREFIX;
+		return ($database->execute("select gateway_name from {$table_prefix}gateways where gateway_enabled='true' and gateway_uuid = :gateway_uuid limit 1", ['gateway_uuid' => $gateway_uuid], 'column') ?: '');
+	}
+
+	/**
+	 * Sets object property array gateways to the currently enabled gateways in the database
+	 */
+	protected function load_gateways() {
+		$table_prefix = database::TABLE_PREFIX;
+		$this->gateways = array_column($this->database->execute("select gateway_name, gateway_uuid from {$table_prefix}gateways where gateway_enabled='true'") ?: [], 'gateway_name', 'gateway_uuid');
 	}
 }
