@@ -46,7 +46,6 @@ class active_calls_service extends service implements websocket_service_interfac
 		['Event-Name' => 'HEARTBEAT'], // Ensures that the switch is still responding
 		['Event-Subclass' => 'valet_parking::info'],
 	];
-
 	const EVENT_KEYS = [
 		// Event name: CHANNEL_EXECUTE, CHANNEL_DESTROY, NEW_CALL...
 		'event_name',
@@ -90,22 +89,21 @@ class active_calls_service extends service implements websocket_service_interfac
 		'other_leg_unique_id',
 		'content_type',
 	];
-
 	//
 	// Maps the event key to the permission name
 	//
 	const PERMISSION_MAP = [
-		'channel_read_codec_name'   => 'call_active_codec',
-		'channel_read_codec_rate'   => 'call_active_codec',
-		'channel_write_codec_name'  => 'call_active_codec',
-		'channel_write_codec_rate'  => 'call_active_codec',
-		'caller_channel_name'       => 'call_active_profile',
-		'secure'                    => 'call_active_secure',
-		'application'               => 'call_active_application',
-		'playback_file_path'        => 'call_active_application',
-		'variable_current_application'=> 'call_active_application',
-		'channel_presence_id'		=> 'call_active_view',
-		'caller_context'			=> 'call_active_domain',
+		'channel_read_codec_name' => 'call_active_codec',
+		'channel_read_codec_rate' => 'call_active_codec',
+		'channel_write_codec_name' => 'call_active_codec',
+		'channel_write_codec_rate' => 'call_active_codec',
+		'caller_channel_name' => 'call_active_profile',
+		'secure' => 'call_active_secure',
+		'application' => 'call_active_application',
+		'playback_file_path' => 'call_active_application',
+		'variable_current_application' => 'call_active_application',
+		'channel_presence_id' => 'call_active_view',
+		'caller_context' => 'call_active_domain',
 	];
 
 	/**
@@ -132,11 +130,9 @@ class active_calls_service extends service implements websocket_service_interfac
 	 * @var filter
 	 */
 	private $event_filter;
-
 	private static $switch_port = null;
 	private static $switch_host = null;
 	private static $switch_password = null;
-
 	private static $websocket_port = null;
 	private static $websocket_host = null;
 
@@ -150,7 +146,7 @@ class active_calls_service extends service implements websocket_service_interfac
 	 * Array of gateways with the UUID as the key
 	 * @var array
 	 */
-	private $gateways;
+	private $gateway_names;
 
 	/**
 	 * Checks if an event exists in the SWITCH_EVENTS.
@@ -194,28 +190,28 @@ class active_calls_service extends service implements websocket_service_interfac
 		// Do not filter domain
 		if ($subscriber->has_permission('call_active_all') || $subscriber->is_service()) {
 			return filter_chain::and_link([
-				new event_filter(self::SWITCH_EVENTS),
-				new permission_filter(self::PERMISSION_MAP, $subscriber->get_permissions()),
-				new event_key_filter(self::EVENT_KEYS),
+					new event_filter(self::SWITCH_EVENTS),
+					new permission_filter(self::PERMISSION_MAP, $subscriber->get_permissions()),
+					new event_key_filter(self::EVENT_KEYS),
 			]);
 		}
 
 		// Filter on single domain name
 		if ($subscriber->has_permission('call_active_domain')) {
 			return filter_chain::and_link([
-				new event_filter(self::SWITCH_EVENTS),
-				new permission_filter(self::PERMISSION_MAP, $subscriber->get_permissions()),
-				new event_key_filter(self::EVENT_KEYS),
-				new caller_context_filter([$subscriber->get_domain_name()]),
+					new event_filter(self::SWITCH_EVENTS),
+					new permission_filter(self::PERMISSION_MAP, $subscriber->get_permissions()),
+					new event_key_filter(self::EVENT_KEYS),
+					new caller_context_filter([$subscriber->get_domain_name()]),
 			]);
 		}
 
 		// Filter on extensions
 		return filter_chain::and_link([
-			new event_filter(self::SWITCH_EVENTS),
-			new permission_filter(self::PERMISSION_MAP, $subscriber->get_permissions()),
-			new event_key_filter(self::EVENT_KEYS),
-			new extension_filter($subscriber->get_user_setting('extension', [])),
+				new event_filter(self::SWITCH_EVENTS),
+				new permission_filter(self::PERMISSION_MAP, $subscriber->get_permissions()),
+				new event_key_filter(self::EVENT_KEYS),
+				new extension_filter($subscriber->get_user_setting('extension', [])),
 		]);
 	}
 
@@ -246,7 +242,6 @@ class active_calls_service extends service implements websocket_service_interfac
 		parent::$config->read();
 
 		// use the connection information in the config file
-
 		// re-connect to the event socket
 		if ($this->connect_to_event_socket()) {
 			$this->register_event_socket_filters();
@@ -318,7 +313,6 @@ class active_calls_service extends service implements websocket_service_interfac
 				->long_description('--websockets-address <ip_addr>')
 				->callback('set_websockets_host_address')
 		);
-
 	}
 
 	protected static function set_websockets_port($port): void {
@@ -357,10 +351,13 @@ class active_calls_service extends service implements websocket_service_interfac
 		$this->event_filter = filter_chain::or_link([new event_key_filter(active_calls_service::EVENT_KEYS)]);
 
 		// Register callbacks for the topics
-		$this->on_topic('in.progress',  [$this, 'on_in_progress'] );
-		$this->on_topic('hangup',       [$this, 'on_hangup']      );
-		$this->on_topic('eavesdrop',    [$this, 'on_eavesdrop']   );
+		$this->on_topic('in.progress', [$this, 'on_in_progress']);
+		$this->on_topic('hangup', [$this, 'on_hangup']);
+		$this->on_topic('eavesdrop', [$this, 'on_eavesdrop']);
 		$this->on_topic('authenticate', [$this, 'on_authenticate']);
+
+		// Load the gateway information
+		$this->load_gateways();
 
 		$this->info("Starting " . self::class . " service");
 		// Suppress the WebSocket Server Error Message so it doesn't flood the system logs
@@ -375,7 +372,8 @@ class active_calls_service extends service implements websocket_service_interfac
 			// reconnect to event_socket
 			if ($this->event_socket === null || !$this->event_socket->is_connected()) {
 				if (!$this->connect_to_event_socket()) {
-					if (!$suppress_es_message) $this->error("Unable to connect to switch event server");
+					if (!$suppress_es_message)
+						$this->error("Unable to connect to switch event server");
 					$suppress_es_message = true;
 				} else {
 					$this->register_event_socket_filters();
@@ -386,7 +384,8 @@ class active_calls_service extends service implements websocket_service_interfac
 			if ($this->ws_client === null || !$this->ws_client->is_connected()) {
 				//$this->warn("Web socket disconnected");
 				if (!$this->connect_to_ws_server()) {
-					if (!$suppress_ws_message) $this->error("Unable to connect to websocket server.");
+					if (!$suppress_ws_message)
+						$this->error("Unable to connect to websocket server.");
 					$suppress_ws_message = true;
 				}
 			}
@@ -782,6 +781,9 @@ class active_calls_service extends service implements websocket_service_interfac
 			$message->application = $call['application'] ?? '';
 			$message->secure = $call['secure'] ?? '';
 
+			//replace the gateway in the application data with a friendly name
+			$this->update_gateway($message->application);
+
 			$this->debug("-------- ACTIVE CALL ----------");
 			$this->debug($message);
 			$this->debug("In Progress: '$message->name', $message->unique_id");
@@ -862,7 +864,6 @@ class active_calls_service extends service implements websocket_service_interfac
 		//$this->debug("=====================================");
 		//$this->debug("RAW EVENT: " . ($raw_event['$'] ?? ''));
 		//$this->debug("=====================================");
-
 		// get the switch message event object
 		$event = event_message::create_from_switch_event($raw_event, $this->event_filter);
 
@@ -923,14 +924,15 @@ class active_calls_service extends service implements websocket_service_interfac
 	}
 
 	/**
-	 * Returns the gateway name based on the gateway UUID provided
+	 * Returns the gateway name based on the gateway UUID provided ignoring whether or not the gateway is enabled
 	 * @param database $database
 	 * @param string $gateway_uuid
 	 * @return string
+	 * @internal This helper function should be in the gateways class
 	 */
 	public static function get_gateway_name_by_uuid(database $database, string $gateway_uuid): string {
 		$table_prefix = database::TABLE_PREFIX;
-		return ($database->execute("select gateway_name from {$table_prefix}gateways where gateway_enabled='true' and gateway_uuid = :gateway_uuid limit 1", ['gateway_uuid' => $gateway_uuid], 'column') ?: '');
+		return ($database->execute("select gateway_name from {$table_prefix}gateways where gateway_uuid = :gateway_uuid limit 1", ['gateway_uuid' => $gateway_uuid], 'column') ?: '');
 	}
 
 	/**
@@ -939,5 +941,52 @@ class active_calls_service extends service implements websocket_service_interfac
 	protected function load_gateways() {
 		$table_prefix = database::TABLE_PREFIX;
 		$this->gateways = array_column($this->database->execute("select gateway_name, gateway_uuid from {$table_prefix}gateways where gateway_enabled='true'") ?: [], 'gateway_name', 'gateway_uuid');
+	}
+
+	protected function update_gateway(string &$application_data) {
+		// Make sure we are adjusting a gateway
+		if (str_starts_with($application_data, 'sofia/gateway/')) {
+			// Get the UUID of the gateway
+			$uuid = substr($application_data, 14, 36);
+			// Ensure it is actually a UUID
+			if (is_uuid($uuid)) {
+				$this->debug("Updating gateway $uuid with name");
+				// Check the gateway names cache
+				foreach ($this->gateway_names as $gateway_uuid => $gateway_name) {
+					$data = str_replace($gateway_uuid, $gateway_name, $application_data);
+					// If the UUID was actually replaced with the name of the gateway then it was successful
+					if ($data != $application_data) {
+						// gateway cache hit
+						$application_data = $data;
+						// Notify user we were succesful
+						$this->debug("Replaced $uuid with $gateway_name");
+						// Finished processing
+						return;
+					}
+				}
+				//
+				// Gateway lookup needed because we don't have the name yet. This will
+				// happen when a gateway is added after the active_calls service was
+				// started.
+				//
+				// Query the database for the name of the gateway UUID
+				$gateway_name = self::get_gateway_name_by_uuid($this->database, $uuid);
+				// Make sure we have the new name
+				if (!empty($gateway_name)) {
+					// Cache the gateway name and UUID for future lookups
+					$this->gateway_names[$uuid] = $gateway_name;
+					// Update the gateway to display with the new name
+					$application_data = str_replace($uuid, $gateway_name, $application_data);
+					// Finished processing
+					return;
+				} else {
+					// Couldn't find the gateway so log it
+					$this->warn("Unable to match the gateway UUID of '$uuid' to any gateway name");
+				}
+			} else {
+				// The application data started with 'sofia/gateway' but we didn't detect a UUID so log it
+				$this->warn("Unable to find a gateway UUID to match. Expected gateway UUID but got '$uuid'");
+			}
+		}
 	}
 }
