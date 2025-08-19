@@ -55,11 +55,19 @@ class event_message implements filterable_payload {
 	private $event_filter;
 
 	/**
+	 * Modifies existing data in the object based on the key
+	 * @var modifier
+	 */
+	private $event_modifier;
+
+	private $event_post_filter;
+
+	/**
 	 * Creates an event message
 	 * @param array $event_array
 	 * @param filter $filter
 	 */
-	public function __construct(array $event_array, ?filter $filter = null) {
+	public function __construct(array $event_array, ?filter $filter = null, ?modifier $modifier = null, ?filter $post_filter = null) {
 
 		// Set the event to an empty array
 		$this->event = [];
@@ -67,7 +75,10 @@ class event_message implements filterable_payload {
 		// Clear the memory area for body and key_filter
 		$this->body = null;
 
+		// filters and modifiers
 		$this->event_filter = $filter;
+		$this->event_modifier = $modifier;
+		$this->event_post_filter = $post_filter;
 
 		// Set the event array to match
 		foreach ($event_array as $name => $value) {
@@ -88,6 +99,21 @@ class event_message implements filterable_payload {
 		// Use the filter chain to ensure the key is allowed
 		if ($this->event_filter === null || ($this->event_filter)($name, $value)) {
 			$this->event[$name] = $value;
+		} else {
+			return;
+		}
+
+		// Use a modifier chain to change any needed values in the event
+		if ($this->event_modifier !== null) {
+			// Modify the value
+			($this->event_modifier)($name, $this->event[$name], modifier_chain::last_link());
+		}
+
+		// Use a post-filter that may need to run after a modifier chain
+		if ($this->event_post_filter !== null) {
+			$allowed = ($this->event_post_filter)($name, $this->event[$name]);
+			// remove the entry
+			if (!$allowed) unset($this->event[$name]);
 		}
 	}
 
@@ -279,12 +305,12 @@ class event_message implements filterable_payload {
 		yield from $this->event_to_array();
 	}
 
-	public function offsetExists(mixed $offset): bool {
+	public function offsetExists($offset): bool {
 		self::sanitize_event_key($offset);
 		return isset($this->event[$offset]);
 	}
 
-	public function offsetGet(mixed $offset): mixed {
+	public function offsetGet($offset) {
 		self::sanitize_event_key($offset);
 		if ($offset === self::BODY_ARRAY_KEY) {
 			return $this->body;
@@ -292,7 +318,7 @@ class event_message implements filterable_payload {
 		return $this->event[$offset];
 	}
 
-	public function offsetSet(mixed $offset, mixed $value): void {
+	public function offsetSet($offset, $value): void {
 		self::sanitize_event_key($offset);
 		if ($offset === self::BODY_ARRAY_KEY) {
 			$this->body = $value;
@@ -301,7 +327,7 @@ class event_message implements filterable_payload {
 		}
 	}
 
-	public function offsetUnset(mixed $offset): void {
+	public function offsetUnset($offset): void {
 		self::sanitize_event_key($offset);
 		if ($offset === self::BODY_ARRAY_KEY) {
 			$this->body = null;

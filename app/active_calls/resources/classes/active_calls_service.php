@@ -143,10 +143,10 @@ class active_calls_service extends service implements websocket_service_interfac
 	private $database;
 
 	/**
-	 * Array of gateways with the UUID as the key
-	 * @var array
+	 * A modifier object
+	 * @var modifier
 	 */
-	private $gateway_names;
+	private $event_modifier;
 
 	/**
 	 * Checks if an event exists in the SWITCH_EVENTS.
@@ -241,19 +241,19 @@ class active_calls_service extends service implements websocket_service_interfac
 		// re-read the config file to get any possible changes
 		parent::$config->read();
 
-		// use the connection information in the config file
 		// re-connect to the event socket
 		if ($this->connect_to_event_socket()) {
 			$this->register_event_socket_filters();
 		}
+
 		// re-connect to the websocket server
 		$this->connect_to_ws_server();
 
 		// re-connect to the database
 		$this->database = new database(['config' => parent::$config]);
 
-		// query the database for current gateways
-		$this->load_gateways();
+		// Create a modifier to handle changing the gateway UUIDs to their names in an event
+		$this->event_modifier = modifier_chain::link([new gateway_modifier($this->database)]);
 	}
 
 	/**
@@ -865,7 +865,7 @@ class active_calls_service extends service implements websocket_service_interfac
 		//$this->debug("RAW EVENT: " . ($raw_event['$'] ?? ''));
 		//$this->debug("=====================================");
 		// get the switch message event object
-		$event = event_message::create_from_switch_event($raw_event, $this->event_filter);
+		$event = event_message::create_from_switch_event($raw_event, $this->event_filter, $this->event_modifier);
 
 		// Log the event
 		$this->debug("EVENT: '" . $event->name . "'");
@@ -923,70 +923,4 @@ class active_calls_service extends service implements websocket_service_interfac
 		return $database->execute("select domain_uuid from v_domains where domain_enabled='true' and domain_name = :domain_name limit 1", ['domain_name' => $domain_name], 'column') ?: '';
 	}
 
-	/**
-	 * Returns the gateway name based on the gateway UUID provided ignoring whether or not the gateway is enabled
-	 * @param database $database
-	 * @param string $gateway_uuid
-	 * @return string
-	 * @internal This helper function should be in the gateways class
-	 */
-	public static function get_gateway_name_by_uuid(database $database, string $gateway_uuid): string {
-		$table_prefix = database::TABLE_PREFIX;
-		return ($database->execute("select gateway_name from {$table_prefix}gateways where gateway_uuid = :gateway_uuid limit 1", ['gateway_uuid' => $gateway_uuid], 'column') ?: '');
-	}
-
-	/**
-	 * Sets object property array gateways to the currently enabled gateways in the database
-	 */
-	protected function load_gateways() {
-		$table_prefix = database::TABLE_PREFIX;
-		$this->gateways = array_column($this->database->execute("select gateway_name, gateway_uuid from {$table_prefix}gateways where gateway_enabled='true'") ?: [], 'gateway_name', 'gateway_uuid');
-	}
-
-	protected function update_gateway(string &$application_data) {
-		// Make sure we are adjusting a gateway
-		if (str_starts_with($application_data, 'sofia/gateway/')) {
-			// Get the UUID of the gateway
-			$uuid = substr($application_data, 14, 36);
-			// Ensure it is actually a UUID
-			if (is_uuid($uuid)) {
-				$this->debug("Updating gateway $uuid with name");
-				// Check the gateway names cache
-				foreach ($this->gateway_names as $gateway_uuid => $gateway_name) {
-					$data = str_replace($gateway_uuid, $gateway_name, $application_data);
-					// If the UUID was actually replaced with the name of the gateway then it was successful
-					if ($data != $application_data) {
-						// gateway cache hit
-						$application_data = $data;
-						// Notify user we were succesful
-						$this->debug("Replaced $uuid with $gateway_name");
-						// Finished processing
-						return;
-					}
-				}
-				//
-				// Gateway lookup needed because we don't have the name yet. This will
-				// happen when a gateway is added after the active_calls service was
-				// started.
-				//
-				// Query the database for the name of the gateway UUID
-				$gateway_name = self::get_gateway_name_by_uuid($this->database, $uuid);
-				// Make sure we have the new name
-				if (!empty($gateway_name)) {
-					// Cache the gateway name and UUID for future lookups
-					$this->gateway_names[$uuid] = $gateway_name;
-					// Update the gateway to display with the new name
-					$application_data = str_replace($uuid, $gateway_name, $application_data);
-					// Finished processing
-					return;
-				} else {
-					// Couldn't find the gateway so log it
-					$this->warn("Unable to match the gateway UUID of '$uuid' to any gateway name");
-				}
-			} else {
-				// The application data started with 'sofia/gateway' but we didn't detect a UUID so log it
-				$this->warn("Unable to find a gateway UUID to match. Expected gateway UUID but got '$uuid'");
-			}
-		}
-	}
 }
