@@ -81,9 +81,13 @@
 
 		//create pdf
 		$pdf = new FPDF('P', 'mm', 'A4');
-		$pdf->SetAutoPageBreak(true, 15);
+		$pdf->SetAutoPageBreak(false); //handle page breaks manually
 		$pdf->AddPage();
 		$pdf->SetFont('Arial', 'B', 16);
+
+		//page dimensions
+		$page_height = 297; //A4 height in mm
+		$bottom_margin = 15;
 
 		//title
 		$pdf->Cell(0, 10, $text['title-feature_codes'], 0, 1, 'C');
@@ -144,6 +148,12 @@
 					$cell_padding = 2; //1mm top + 1mm bottom
 					$row_height = max($line_height, $num_lines * $line_height) + $cell_padding;
 
+					//check if row fits on current page, if not add new page
+					if ($pdf->GetY() + $row_height > $page_height - $bottom_margin) {
+						$pdf->AddPage();
+						$pdf->SetFont('Arial', '', 9);
+					}
+
 					//save starting position
 					$x = $pdf->GetX();
 					$y = $pdf->GetY();
@@ -202,6 +212,12 @@
 					}
 					$cell_padding = 2; //1mm top + 1mm bottom
 					$row_height = max($line_height, $num_lines * $line_height) + $cell_padding;
+
+					//check if row fits on current page, if not add new page
+					if ($pdf->GetY() + $row_height > $page_height - $bottom_margin) {
+						$pdf->AddPage();
+						$pdf->SetFont('Arial', '', 9);
+					}
 
 					//save starting position
 					$x = $pdf->GetX();
