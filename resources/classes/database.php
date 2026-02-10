@@ -51,14 +51,6 @@ class database {
 	private static $database;
 
 	/**
-	 * Database connection
-	 *
-	 * @access private
-	 * @var PDO object
-	 */
-	public $db;
-
-	/**
 	 * Driver to use.
 	 *
 	 * @access public
@@ -270,6 +262,13 @@ class database {
 	public $domain_uuid;
 
 	/**
+	 * Undocumented variable
+	 *
+	 * @var database_provider
+	 */
+	private $engine;
+
+	/**
 	 * <p>Stores the user UUID making the request.</p>
 	 * <p>This is defaulted to the Session domain UUID.</p>
 	 *
@@ -334,16 +333,19 @@ class database {
 		}
 
 		// driver and type point to the same value
-		$this->driver = $config->get('database.0.type', 'pgsql');
-		$this->type = $config->get('database.0.type', 'pgsql');
-		$this->host = $config->get('database.0.host', '127.0.0.1');
-		$this->port = $config->get('database.0.port', '5432');
-		$this->username = $config->get('database.0.username', 'fusionpbx');
-		$this->password = $config->get('database.0.password', 'fusionpbx');
-		$this->db_name = $config->get('database.0.name', 'fusionpbx');
-		$this->db_secure = $config->get('database.0.secure', '');
-		$this->db_cert_authority = $config->get('database.0.cert_authority', '');
-		$this->ssl_mode = $config->get('database.0.ssl_mode', '');
+		$this->driver = $config->get('database.0.type');
+		$this->type = $this->driver;
+		$this->host = $config->get('database.0.host');
+		$this->port = $config->get('database.0.port');
+		$this->username = $config->get('database.0.username');
+		$this->password = $config->get('database.0.password');
+		$this->engine_name = $config->get('database.0.name');
+		$this->engine_secure = $config->get('database.0.secure');
+		$this->engine_cert_authority = $config->get('database.0.cert_authority');
+		$this->ssl_mode = $config->get('database.0.ssl_mode');
+
+		$classname = $this->driver . '_db';
+		$this->engine = new $classname($config);
 
 		// save the reference to the single instance of the config to this object
 		$this->config = $config;
@@ -375,167 +377,10 @@ class database {
 	 * <p>Database driver must be set before calling connect.</p>
 	 * <p>For types other than sqlite. Execution will stop on failure.</p>
 	 *
-	 * @depends database::driver Alias of database::type.
+	 * @return bool Returns true if the connection was successful. False otherwise.
 	 */
-	public function connect() {
-		// get the database connection settings
-		// $db_type = $conf['database.0.type'];
-		// $db_host = $conf['database.0.host'];
-		// $db_port = $conf['database.0.port'];
-		// $db_name = $conf['database.0.name'];
-		// $db_username = $conf['database.0.username'];
-		// $db_password = $conf['database.0.password'];
-
-		// debug info
-		// echo "db type:".$db_type."\n";
-		// echo "db host:".$db_host."\n";
-		// echo "db port:".$db_port."\n";
-		// echo "db name:".$db_name."\n";
-		// echo "db username:".$db_username."\n";
-		// echo "db password:".$db_password."\n";
-		// echo "db path:".$db_path."\n";
-		// echo "</pre>\n";
-
-		// set defaults
-		if (!isset($this->driver) && isset($db_type)) {
-			$this->driver = $db_type;
-		}
-		if (!isset($this->type) && isset($db_type)) {
-			$this->type = $db_type;
-		}
-		if (!isset($this->host) && isset($db_host)) {
-			$this->host = $db_host;
-		}
-		if (!isset($this->port) && isset($db_port)) {
-			$this->port = $db_port;
-		}
-		if (!isset($this->db_name) && isset($db_name)) {
-			$this->db_name = $db_name;
-		}
-		if (!isset($this->db_secure) && isset($db_secure)) {
-			$this->db_secure = $db_secure;
-		} else {
-			$this->db_secure = false;
-		}
-		if (!isset($this->username) && isset($db_username)) {
-			$this->username = $db_username;
-		}
-		if (!isset($this->password) && isset($db_password)) {
-			$this->password = $db_password;
-		}
-		if (!isset($this->path) && isset($db_path)) {
-			$this->path = $db_path;
-		}
-
-		if ($this->driver == 'sqlite') {
-			if (empty($this->db_name)) {
-				$server_name = $_SERVER['SERVER_NAME'];
-				$server_name = str_replace('www.', '', $server_name);
-				$db_name_short = $server_name;
-				$this->db_name = $server_name . '.db';
-			} else {
-				$db_name_short = $this->db_name;
-			}
-			$this->path = realpath($this->path);
-			if (file_exists($this->path . '/' . $this->db_name)) {
-				// connect to the database
-				$this->db = new PDO('sqlite:' . $this->path . '/' . $this->db_name);  // sqlite 3
-				// PRAGMA commands
-				$this->db->query('PRAGMA foreign_keys = ON;');
-				$this->db->query('PRAGMA journal_mode = wal;');
-				// add additional functions to SQLite so that they are accessible inside SQL
-				// bool PDO::sqliteCreateFunction ( string function_name, callback callback [, int num_args] )
-				$this->db->sqliteCreateFunction('md5', 'php_md5', 1);
-				$this->db->sqliteCreateFunction('unix_timestamp', 'php_unix_timestamp', 1);
-				$this->db->sqliteCreateFunction('now', 'php_now', 0);
-				$this->db->sqliteCreateFunction('sqlitedatatype', 'php_sqlite_data_type', 2);
-				$this->db->sqliteCreateFunction('strleft', 'php_left', 2);
-				$this->db->sqliteCreateFunction('strright', 'php_right', 2);
-			} else {
-				$error_message = 'file not found';
-				$message['message'] = $error_message;
-				$this->message = $message;
-				return false;
-			}
-		}
-
-		if ($this->driver == 'mysql') {
-			try {
-				// mysql pdo connection
-				if (strlen($this->host) == 0 && empty($this->port)) {
-					// if both host and port are empty use the unix socket
-					$this->db = new PDO("mysql:host=$this->host;unix_socket=/var/run/mysqld/mysqld.sock;dbname=$this->db_name", $this->username, $this->password);
-				} else {
-					if (empty($this->port)) {
-						// leave out port if it is empty
-						$this->db = new PDO("mysql:host=$this->host;dbname=$this->db_name;", $this->username, $this->password, [
-							PDO::ATTR_ERRMODE,
-							PDO::ERRMODE_EXCEPTION,
-						]);
-					} else {
-						$this->db = new PDO("mysql:host=$this->host;port=$this->port;dbname=$this->db_name;", $this->username, $this->password, [
-							PDO::ATTR_ERRMODE,
-							PDO::ERRMODE_EXCEPTION,
-						]);
-					}
-				}
-			} catch (PDOException $e) {
-				$message['message'] = $e->getMessage();
-				$message['code'] = $e->getCode();
-				$message['line'] = $e->getLine();
-				$message['file'] = $e->getFile();
-				$message['trace'] = $e->getTraceAsString();
-				$message['debug'] = debug_backtrace();
-				$this->message = $message;
-				return false;
-			}
-		}
-
-		if ($this->driver == 'pgsql') {
-			// database connection
-			try {
-				if (!empty($this->host)) {
-					if (empty($this->port)) {
-						$this->port = '5432';
-					}
-					if ($this->db_secure === true) {
-						$this->db = new PDO("pgsql:host=$this->host port=$this->port dbname=$this->db_name user=$this->username password=$this->password sslmode=$this->ssl_mode sslrootcert=$this->db_cert_authority");
-					} else {
-						$this->db = new PDO("pgsql:host=$this->host port=$this->port dbname=$this->db_name user=$this->username password=$this->password");
-					}
-				} else {
-					$this->db = new PDO("pgsql:dbname=$this->db_name user=$this->username password=$this->password");
-				}
-			} catch (PDOException $e) {
-				$message['message'] = $e->getMessage();
-				$message['code'] = $e->getCode();
-				$message['line'] = $e->getLine();
-				$message['file'] = $e->getFile();
-				$message['trace'] = $e->getTraceAsString();
-				$message['debug'] = debug_backtrace();
-				$this->message = $message;
-				return false;
-			}
-		}
-
-		if ($this->driver == 'odbc') {
-			// database connection
-			try {
-				$this->db = new PDO('odbc:' . $this->db_name, $this->username, $this->password);
-			} catch (PDOException $e) {
-				$message['message'] = $e->getMessage();
-				$message['code'] = $e->getCode();
-				$message['line'] = $e->getLine();
-				$message['file'] = $e->getFile();
-				$message['trace'] = $e->getTraceAsString();
-				$message['debug'] = debug_backtrace();
-				$this->message = $message;
-				return false;
-			}
-		}
-
-		// connected to the database
-		return true;
+	public function connect(): bool {
+		return $this->engine->connect($this->ssl_mode, $this->db_cert_authority);
 	}
 
 	/**
@@ -556,48 +401,8 @@ class database {
 				}
 			}
 		}
+
 		return $depth;
-	}
-
-	/**
-	 * Searches through all fields to see if domain_uuid exists
-	 *
-	 * @param string $name
-	 *
-	 * @return boolean <b>true</b> on success and <b>false</b> on failure
-	 * @see  database::get_apps()
-	 * @uses self::$apps directly
-	 */
-	public static function domain_uuid_exists($name) {
-		// get the $apps array from the installed apps from the core and mod directories
-		if (count(self::$apps) == 0) {
-			self::get_apps();
-		}
-
-		// search through all fields to see if domain_uuid exists
-		foreach (self::$apps as $x => &$app) {
-			if (is_array($app['db'])) {
-				foreach ($app['db'] as $y => $row) {
-					if (is_array($row['table']['name'])) {
-						$table_name = $row['table']['name']['text'];
-					} else {
-						$table_name = $row['table']['name'];
-					}
-					if ($table_name === self::TABLE_PREFIX . $name) {
-						if (is_array($row['fields'])) {
-							foreach ($row['fields'] as $field) {
-								if ($field['name'] == 'domain_uuid') {
-									return true;
-								}
-							}  // foreach
-						}  // is array
-					}
-				}  // foreach
-			}  // is array
-		}  // foreach
-
-		// not found
-		return false;
 	}
 
 	/**
@@ -651,26 +456,7 @@ class database {
 	 * @return bool True if the database is connected. False otherwise.
 	 */
 	public function is_connected(): bool {
-		try {
-			$stmt = false;
-			if ($this->db !== null)
-				$stmt = $this->db->query('SELECT 1');
-			return $stmt !== false;
-		} catch (PDOException $ex) {
-			// database is not connected
-			return false;
-		} catch (Exception $e) {
-			// some other error has occurred, so record it
-			$message['message'] = $e->getMessage();
-			$message['code'] = $e->getCode();
-			$message['line'] = $e->getLine();
-			$message['file'] = $e->getFile();
-			$message['trace'] = $e->getTraceAsString();
-			$message['debug'] = debug_backtrace();
-			$this->message = $message;
-			return false;
-		}
-		return true;
+		return $this->engine->is_connected();
 	}
 
 	/**
@@ -715,7 +501,7 @@ class database {
 			case 'count':
 				return $this->count();
 			default:
-				trigger_error('Object property not available. Name: '.$name, E_USER_ERROR);
+				trigger_error('Object property not available. Name: ' . $name, E_USER_ERROR);
 		}
 	}
 
@@ -743,11 +529,11 @@ class database {
 				$this->table = self::sanitize($value);
 				break;
 			case 'db_name':
-				$this->db_name = self::sanitize($value);
+				$this->engine_name = self::sanitize($value);
 				break;
 			case 'db':
 				if ($name instanceof PDO) {
-					$this->db = $value;
+					$this->engine = $value;
 				} else {
 					trigger_error('db property must be a PDO object!', E_USER_ERROR);
 				}
@@ -766,13 +552,13 @@ class database {
 				if (!file_exists($value)) {
 					trigger_error('db cert authority not found!', E_USER_WARNING);
 				}
-				$this->db_cert_authority = $value;
+				$this->engine_cert_authority = $value;
 				break;
 			case 'port':
 				$value = (int) $value;  // force cast to int
 				if ($value > 1023 && $value < 65536) {
 					$this->port = $value;
-				}  // valid values are 1024...65535
+				}                       // valid values are 1024...65535
 				else {
 					trigger_error('Port not a valid range', E_USER_ERROR);
 				}
@@ -835,21 +621,22 @@ class database {
 	 * @return int Represents the number of counted rows or -1 if failed.
 	 */
 	public function count() {
-		// connect to the database if needed
-		if (!$this->db) {
-			$this->connect();
-		}
-
 		// return if the table name is not set
 		if (empty($this->table)) {
 			return;
 		}
 
 		// sanitize the table name
-		// $this->table = self::sanitize($this->table); // no longer needed
+		if ($this->column_exists($this->table, self::singular($this->table) . '_uuid') === false) {
+			// try the primary key column name if the singular form with _uuid does not exist
+			$column_name = self::singular($this->table) . '_uuid';
+		} else {
+			// fall back to count(*) if the primary key column does not exist
+			$column_name = '*';
+		}
 
 		// get the number of rows
-		$sql = 'select count(*) as num_rows from ' . $this->table . ' ';
+		$sql = 'select count(' . $column_name . ') as num_rows from ' . $this->table . ' ';
 		$i = 0;
 		if (is_array($this->where)) {
 			foreach ($this->where as $row) {
@@ -892,72 +679,20 @@ class database {
 			}
 		}
 
-		// unset($this->where); //should not be objects resposibility
-		$prep_statement = $this->db->prepare($sql);
-		if ($prep_statement) {
-			if (!isset($params)) {
-				$params = null;
-			}
-			$prep_statement->execute($params);
-			$row = $prep_statement->fetch(PDO::FETCH_ASSOC);
-			if ($row['num_rows'] > 0) {
-				return $row['num_rows'];
-			} else {
-				return 0;
-			}
-		}
-		unset($prep_statement);
+		return $this->engine->execute($sql, $params);
 	}
 
-	public function execute($sql, $parameters = null, $return_type = 'all') {
-		// connect to the database if needed
-		if (!$this->db) {
-			$this->connect();
-		}
-
-		// set the error mode
-		$this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-		// run the query, and return the results
-		try {
-			$prep_statement = $this->db->prepare($sql);
-			if (is_array($parameters)) {
-				$prep_statement->execute($parameters);
-			} else {
-				$prep_statement->execute();
-			}
-			$message['message'] = 'OK';
-			$message['code'] = '200';
-			$message['sql'] = $sql;
-			if (is_array($parameters)) {
-				$message['parameters'] = $parameters;
-			}
-			$this->message = $message;
-
-			// return the results
-			switch ($return_type) {
-				case 'all':
-					return $prep_statement->fetchAll(PDO::FETCH_ASSOC);
-				case 'row':
-					return $prep_statement->fetch(PDO::FETCH_ASSOC);
-				case 'column';
-					return $prep_statement->fetchColumn();
-				default:
-					return $prep_statement->fetchAll(PDO::FETCH_ASSOC);
-			}
-		} catch (PDOException $e) {
-			$message['message'] = $e->getMessage();
-			$message['code'] = $e->getCode();
-			$message['line'] = $e->getLine();
-			$message['file'] = $e->getFile();
-			$message['trace'] = $e->getTraceAsString();
-			$message['debug'] = debug_backtrace();
-			$this->message = $message;
-			return false;
-		}
+	/**
+	 * Executes a query against the database.
+	 *
+	 * @param string $sql         The SQL statement to execute
+	 * @param array  $parameters  An optional array of parameters to bind to the query. Defaults to null.
+	 *
+	 * @return mixed The result of the query based on the specified return type.
+	 */
+	public function execute($sql, $parameters = null) {
+		return $this->engine->execute($sql, $parameters);
 	}
-
-	// Use this function to run complex queries
 
 	/**
 	 * Returns the config object used to create this database object
@@ -975,49 +710,8 @@ class database {
 	 * @depends connect()
 	 */
 	public function tables() {
-		$result = [];
-		// connect to the database if needed
-		if (!$this->db) {
-			$this->connect();
-		}
-		if ($this->type == 'sqlite') {
-			$sql = 'SELECT name FROM sqlite_master ';
-			$sql .= "WHERE type='table' ";
-			$sql .= 'order by name;';
-		}
-		if ($this->type == 'pgsql') {
-			$sql = 'select table_name as name ';
-			$sql .= 'from information_schema.tables ';
-			$sql .= "where table_schema='public' ";
-			$sql .= "and table_type='BASE TABLE' ";
-			$sql .= 'order by table_name ';
-		}
-		if ($this->type == 'mysql') {
-			$sql = 'show tables';
-		}
-		if ($this->type == 'mssql') {
-			$sql = 'SELECT * FROM sys.Tables order by name asc';
-		}
-		$prep_statement = $this->db->prepare($sql);
-		$prep_statement->execute();
-		$tmp = $prep_statement->fetchAll(PDO::FETCH_NAMED);
-		if ($this->type == 'pgsql' || $this->type == 'sqlite' || $this->type == 'mssql') {
-			if (is_array($tmp)) {
-				foreach ($tmp as $row) {
-					$result[]['name'] = $row['name'];
-				}
-			}
-		}
-		if ($this->type == 'mysql') {
-			if (is_array($tmp)) {
-				foreach ($tmp as $row) {
-					$table_array = array_values($row);
-					$result[]['name'] = $table_array[0];
-				}
-			}
-		}
-		return $result;
-	}  // delete
+		return $this->engine->tables();
+	}
 
 	/**
 	 * Checks if the table exists in the database.
@@ -1033,46 +727,12 @@ class database {
 	public function table_exists(string $table_name) {
 		if (self::sanitize($table_name) != $table_name) {
 			trigger_error('Table Name must be sanitized', E_USER_WARNING);
+
 			return false;
 		}
 
-		// connect to the database if needed
-		if (!$this->db) {
-			$this->connect();
-		}
-
-		// if unable to connect to the database
-		if (!$this->db) {
-			$message['message'] = 'Unable to connect to database';
-			$message['code'] = '500';
-			$message['line'] = __LINE__;
-			$message['file'] = __FILE__;
-			$message['trace'] = '';
-			$message['debug'] = debug_backtrace();
-			$this->message = $message;
-			return false;
-		}
-
-		// query table store to see if the table exists
-		$sql = '';
-		if ($this->type == 'sqlite') {
-			$sql .= "SELECT * FROM sqlite_master WHERE type='table' and name='$table_name' ";
-		}
-		if ($this->type == 'pgsql') {
-			$sql .= "select * from pg_tables where schemaname='public' and tablename = '$table_name' ";
-		}
-		if ($this->type == 'mysql') {
-			$sql .= "SELECT TABLE_NAME FROM information_schema.tables WHERE table_schema = '" . $this->db_name . "' and TABLE_NAME = '$table_name' ";
-		}
-		$prep_statement = $this->db->prepare($sql);
-		$prep_statement->execute();
-		$result = $prep_statement->fetchAll(PDO::FETCH_NAMED);
-		if (count($result) > 0) {
-			return true;  // table exists
-		} else {
-			return false;  // table doesn't exist
-		}
-	}  // count
+		return $this->engine->table_exists($table_name);
+	}
 
 	/**
 	 * Checks if the column exists in the database.
@@ -1090,123 +750,18 @@ class database {
 		// sanitize the table name
 		if (self::sanitize($table_name) != $table_name) {
 			trigger_error('Table Name must be sanitized', E_USER_WARNING);
+
 			return false;
 		}
 
 		// sanitize the column name
 		if (self::sanitize($column_name) != $column_name) {
 			trigger_error('Column Name must be sanitized', E_USER_WARNING);
+
 			return false;
 		}
 
-		// connect to the database if needed
-		if (!$this->db) {
-			$this->connect();
-		}
-
-		// if unable to connect to the database
-		if (!$this->db) {
-			$backtrace = debug_backtrace();
-			echo "Connection Failed<br />\n";
-			echo 'line number ' . __line__ . "<br />\n";
-			echo '<pre>';
-			print_r($backtrace);
-			echo '</pre>';
-			return false;
-		}
-
-		// check the sqlite database to see if the column exists
-		// if ($this->db_type == "sqlite") {
-		//	$table_info = $this->table_info($table_name);
-		//	if ($this->sqlite_column_exists($table_info, $column_name)) {
-		//		return true;
-		//	}
-		//	else {
-		//		return false;
-		//	}
-		// }
-
-		// check the postgresql database to see if the column exists
-		if ($this->type == 'pgsql') {
-			$sql = "SELECT attname FROM pg_attribute WHERE attrelid = (SELECT oid FROM pg_class WHERE relname = '$table_name' limit 1) AND attname = '$column_name'; ";
-		}
-
-		// check the mysql database to see if the column exists
-		if ($this->type == 'mysql') {
-			// $sql .= "SELECT * FROM information_schema.COLUMNS where TABLE_SCHEMA = '$db_name' and TABLE_NAME = '$table_name' and COLUMN_NAME = '$column_name' ";
-			$sql = "show columns from $table_name where field = '$column_name' ";
-		}
-
-		// return the results from the sql query
-		if (empty($sql)) {
-			return false;
-		} else {
-			$prep_statement = $this->db->prepare($sql);
-			$prep_statement->execute();
-			$result = $prep_statement->fetchAll(PDO::FETCH_NAMED);
-			if (!$result) {
-				return false;
-			}
-			if (count($result) > 0) {
-				return true;
-			} else {
-				return false;
-			}
-			unset($prep_statement);
-		}
-	}  // select
-
-	/**
-	 * Queries {@link database::table_info()} to return the fields.
-	 *
-	 * @access  public
-	 * @return array Two dimensional array
-	 * @depends table_info()
-	 */
-	public function fields() {
-		// public $db;
-		// public $type;
-		// public $table;
-		// public $name;
-
-		// initialize the array
-		$result = [];
-
-		// get the table info
-		$table_info = $this->table_info();
-
-		// set the list of fields
-		if ($this->type == 'sqlite') {
-			if (is_array($table_info)) {
-				foreach ($table_info as $row) {
-					$result[]['name'] = $row['name'];
-				}
-			}
-		}
-		if ($this->type == 'pgsql') {
-			if (is_array($table_info)) {
-				foreach ($table_info as $row) {
-					$result[]['name'] = $row['column_name'];
-				}
-			}
-		}
-		if ($this->type == 'mysql') {
-			if (is_array($table_info)) {
-				foreach ($table_info as $row) {
-					$result[]['name'] = $row['Field'];
-				}
-			}
-		}
-		if ($this->type == 'mssql') {
-			if (is_array($table_info)) {
-				foreach ($table_info as $row) {
-					$result[]['name'] = $row['COLUMN_NAME'];
-				}
-			}
-		}
-
-		// return the result array
-		return $result;
+		return $this->engine->column_exists($table_name, $column_name);
 	}
 
 	/**
@@ -1215,48 +770,13 @@ class database {
 	 * @return array table info
 	 * @depends connect()
 	 */
-	public function table_info() {
-		// public $db;
-		// public $type;
-		// public $table;
-		// public $name;
-
-		// connect to the database if needed
-		if (!$this->db) {
-			$this->connect();
+	public function table_info(string $table_name = '') {
+		$result = [];
+		if ($this->table_exists($table_name)) {
+			$result = $this->engine->table_info($table_name);
 		}
 
-		// get the table info
-		if (empty($this->table)) {
-			return false;
-		}
-		if ($this->type == 'sqlite') {
-			$sql = 'PRAGMA table_info(' . $this->table . ');';
-		}
-		if ($this->type == 'pgsql') {
-			$sql = 'SELECT ordinal_position, ';
-			$sql .= 'column_name, ';
-			$sql .= 'data_type, ';
-			$sql .= 'column_default, ';
-			$sql .= 'is_nullable, ';
-			$sql .= 'character_maximum_length, ';
-			$sql .= 'numeric_precision ';
-			$sql .= 'FROM information_schema.columns ';
-			$sql .= "WHERE table_name = '" . $this->table . "' ";
-			$sql .= "and table_catalog = '" . $this->db_name . "' ";
-			$sql .= 'ORDER BY ordinal_position; ';
-		}
-		if ($this->type == 'mysql') {
-			$sql = 'DESCRIBE ' . $this->table . ';';
-		}
-		if ($this->type == 'mssql') {
-			$sql = "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '" . $this->table . "'";
-		}
-		$prep_statement = $this->db->prepare($sql);
-		$prep_statement->execute();
-
-		// set the result array
-		return $prep_statement->fetchAll(PDO::FETCH_ASSOC);
+		return $result;
 	}
 
 	/**
@@ -1273,18 +793,6 @@ class database {
 	 * @depends connect()
 	 */
 	public function find() {
-		// connect;
-		// table;
-		// where;
-		// order_by;
-		// limit;
-		// offset;
-
-		// connect to the database if needed
-		if (!$this->db) {
-			$this->connect();
-		}
-
 		// get data from the database
 		$sql = 'select * from ' . $this->table . ' ';
 		if ($this->where) {
@@ -1372,16 +880,8 @@ class database {
 			$sql .= 'offset ' . $this->offset . ' ';
 		}
 
-		$prep_statement = $this->db->prepare($sql);
-		if ($prep_statement) {
-			$prep_statement->execute($params);
-			$array = $prep_statement->fetchAll(PDO::FETCH_ASSOC);
-			unset($prep_statement);
-			return $array;
-		} else {
-			return false;
-		}
-	}  // end function copy
+		return $this->engine->execute($sql, $params);
+	}
 
 	public function delete(array $array) {
 		// set the default value
@@ -1390,11 +890,6 @@ class database {
 		// return the array
 		if (!is_array($array)) {
 			return false;
-		}
-
-		// connect to the database if needed
-		if (!$this->db) {
-			$this->connect();
 		}
 
 		// set the message id
@@ -1578,7 +1073,7 @@ class database {
 		// use a try catch around the transaction
 		try {
 			// start the atomic transaction
-			$this->db->beginTransaction();
+			$this->engine->begin_transaction();
 
 			// delete the current data
 			foreach ($new_array as $table_name => $rows) {
@@ -1639,15 +1134,15 @@ class database {
 						}
 						unset($parameters);
 					}  // if permission
-				}  // foreach rows
-			}  // foreach $array
+				}      // foreach rows
+			}          // foreach $array
 
 			// commit the atomic transaction
-			$this->db->commit();
+			$this->engine->commit();
 		} catch (PDOException $e) {
 			// rollback the transaction on error
-			if ($this->db->inTransaction()) {
-				$this->db->rollback();
+			if ($this->engine->in_transaction()) {
+				$this->engine->rollback();
 			}
 
 			// prepare the message array
@@ -1658,6 +1153,7 @@ class database {
 			$message['trace'] = $e->getTraceAsString();
 			$message['debug'] = debug_backtrace();
 			$this->message = $message;
+
 			return false;
 		}
 
@@ -1720,7 +1216,7 @@ class database {
 			}
 			$sql .= ':transaction_result ';
 			$sql .= ')';
-			$statement = $this->db->prepare($sql);
+			$statement = $this->engine->prepare($sql);
 			if (isset($this->user_uuid) && is_uuid($this->user_uuid)) {
 				$statement->bindParam(':user_uuid', $this->user_uuid);
 			}
@@ -1744,8 +1240,9 @@ class database {
 			$statement->execute();
 			unset($sql);
 		}
+
 		return $retval;
-	}  // end function toggle
+	}
 
 	/**
 	 * Converts a plural English word to singular.
@@ -1759,10 +1256,13 @@ class database {
 		// "-es" is used for words that end in "-x", "-s", "-z", "-sh", "-ch" in which case you add
 		if (substr($word, -2) == 'es') {
 			if (substr($word, -4) == 'sses') {  // eg. 'addresses' to 'address'
+
 				return substr($word, 0, -2);
 			} elseif (substr($word, -3) == 'ses') {  // eg. 'databases' to 'database' (necessary!)
+
 				return substr($word, 0, -1);
 			} elseif (substr($word, -3) == 'ies') {  // eg. 'countries' to 'country'
+
 				return substr($word, 0, -3) . 'y';
 			} elseif (substr($word, -3, 1) == 'x') {
 				return substr($word, 0, -2);
@@ -1780,7 +1280,7 @@ class database {
 		} else {
 			return rtrim($word, 's');
 		}
-	}  // save method
+	}
 
 	/**
 	 * Get Relations searches through all fields to find relations
@@ -1871,66 +1371,15 @@ class database {
 	 *               <i>$return_type</i>.
 	 */
 	public function select(string $sql, ?array $parameters = [], string $return_type = 'all') {
-		// connect to the database if needed
-		if (!$this->db) {
-			$this->connect();
-		}
-
-		// unable to connect to the database
-		if (!$this->db) {
-			$error_message = "Connection Failed<br />\n";
-			$error_message .= 'line number ' . __line__ . "<br />\n";
-			$message['message'] = $error_message;
-			$this->message = $message;
-			return false;
-		}
-
-		// set the error mode
-		if ($this->db) {
-			$this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-		}
-
-		// reduce prepared statement latency
-		if ($this->db && defined('PDO::PGSQL_ATTR_DISABLE_PREPARES')) {
-			$this->db->setAttribute(PDO::PGSQL_ATTR_DISABLE_PREPARES, true);
-		}
-
-		// execute the query and return the results
-		try {
-			$prep_statement = $this->db->prepare($sql);
-			if (is_array($parameters)) {
-				$prep_statement->execute($parameters);
-			} else {
-				$prep_statement->execute();
-			}
-			$message['message'] = 'OK';
-			$message['code'] = '200';
-			$message['sql'] = $sql;
-			if (is_array($parameters)) {
-				$message['parameters'] = $parameters;
-			}
-			$this->message = $message;
-
-			// return the results
-			switch ($return_type) {
-				case 'all':
-					return $prep_statement->fetchAll(PDO::FETCH_ASSOC);
-				case 'row':
-					return $prep_statement->fetch(PDO::FETCH_ASSOC);
-				case 'column':
-					return $prep_statement->fetchColumn();
-				default:
-					return $prep_statement->fetchAll(PDO::FETCH_ASSOC);
-			}
-		} catch (PDOException $e) {
-			$message['message'] = $e->getMessage();
-			$message['code'] = $e->getCode();
-			$message['line'] = $e->getLine();
-			$message['file'] = $e->getFile();
-			$message['trace'] = $e->getTraceAsString();
-			$message['debug'] = debug_backtrace();
-			$this->message = $message;
-			return false;
+		// return the results
+		switch ($return_type) {
+			case 'row':
+				return $this->engine->fetch_row($sql, $parameters);
+			case 'column':
+				return $this->engine->fetch_column($sql, $parameters);
+			case 'all':
+			default:
+				return $this->engine->fetch_all($sql, $parameters);
 		}
 	}
 
@@ -1946,7 +1395,7 @@ class database {
 		$m = 0;
 
 		// connect to the database if needed
-		if (!$this->db) {
+		if (!$this->engine) {
 			$this->connect();
 		}
 
@@ -2022,7 +1471,7 @@ class database {
 		}
 		// execute the query, and return the results
 		try {
-			$prep_statement = $this->db->prepare($sql);
+			$prep_statement = $this->engine->prepare($sql);
 			$prep_statement->execute($params);
 			$message['message'] = 'OK';
 			$message['code'] = '200';
@@ -2047,6 +1496,7 @@ class database {
 			$this->result = '';
 			$m++;
 		}
+
 		return $this;
 	}
 
@@ -2059,6 +1509,7 @@ class database {
 	 */
 	public function uuid(string $uuid) {
 		$this->uuid = $uuid;
+
 		return $this;
 	}
 
@@ -2285,6 +1736,7 @@ class database {
 			$retval = $this->save($array);
 			unset($array);
 		}
+
 		return $retval;
 	}
 
@@ -2330,14 +1782,14 @@ class database {
 		// $this->debug["sql"] = true;
 
 		// connect to the database if needed
-		if (!$this->db) {
+		if (!$this->engine) {
 			$this->connect();
 		}
 
 		// use a try catch around the transaction
 		try {
 			// start the atomic transaction
-			$this->db->beginTransaction();
+			$this->engine->begin_transaction();
 
 			// loop through the array
 			if (is_array($array))
@@ -2389,7 +1841,7 @@ class database {
 							if ($parent_key_exists) {
 								$sql = 'SELECT ' . implode(', ', $parent_field_names) . ' FROM ' . $table_name . ' ';
 								$sql .= 'WHERE ' . $parent_key_name . " = '" . $parent_key_value . "'; ";
-								$prep_statement = $this->db->prepare($sql);
+								$prep_statement = $this->engine->prepare($sql);
 								if ($prep_statement) {
 									// get the data
 									try {
@@ -2401,6 +1853,7 @@ class database {
 										$message['message'] = $e->getMessage();
 										$message['sql'] = $sql;
 										$this->message = $message;
+
 										return false;
 									}
 
@@ -2490,18 +1943,17 @@ class database {
 									// add insert user parameter
 									$params['insert_user'] = $this->user_uuid ?? null;
 
-									// set the error mode
-									$this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+									// // set the error mode
+									// $this->engine->set_attribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-									// reduce prepared statement latency
-									if (defined('PDO::PGSQL_ATTR_DISABLE_PREPARES')) {
-										$this->db->setAttribute(PDO::PGSQL_ATTR_DISABLE_PREPARES, true);
-									}
+									// // reduce prepared statement latency
+									// if (defined('PDO::PGSQL_ATTR_DISABLE_PREPARES')) {
+									// 	$this->engine->set_attribute(PDO::PGSQL_ATTR_DISABLE_PREPARES, true);
+									// }
 
 									// run the query and return the results
 									try {
-										$prep_statement = $this->db->prepare($sql);
-										$prep_statement->execute($params);
+										$this->engine->add_transaction($sql, $params);
 										unset($prep_statement);
 										$message['message'] = 'OK';
 										$message['code'] = '200';
@@ -2692,16 +2144,16 @@ class database {
 										$params['update_user'] = $this->user_uuid ?? null;
 
 										// set the error mode
-										$this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+										$this->engine->set_attribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 										// reduce prepared statement latency
 										if (defined('PDO::PGSQL_ATTR_DISABLE_PREPARES')) {
-											$this->db->setAttribute(PDO::PGSQL_ATTR_DISABLE_PREPARES, true);
+											$this->engine->set_attribute(PDO::PGSQL_ATTR_DISABLE_PREPARES, true);
 										}
 
 										// run the query and return the results
 										try {
-											$prep_statement = $this->db->prepare($sql);
+											$prep_statement = $this->engine->prepare($sql);
 											$prep_statement->execute($params);
 											$message['message'] = 'OK';
 											$message['code'] = '200';
@@ -2810,7 +2262,7 @@ class database {
 												$sql = 'SELECT ' . implode(', ', $child_field_names) . ' FROM ' . $child_table_name . ' ';
 												$sql .= 'WHERE ' . $child_key_name . " = '" . $child_key_value . "'; ";
 												try {
-													$prep_statement = $this->db->prepare($sql);
+													$prep_statement = $this->engine->prepare($sql);
 													if ($prep_statement) {
 														// get the data
 														$prep_statement->execute();
@@ -2832,6 +2284,7 @@ class database {
 													$message['trace'] = $e->getTraceAsString();
 													$message['debug'] = debug_backtrace();
 													$this->message = $message;
+
 													return false;
 												}
 											} else {
@@ -2978,15 +2431,15 @@ class database {
 														$sql = str_replace(', WHERE', ' WHERE', $sql);
 
 														// set the error mode
-														$this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+														$this->engine->set_attribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 														// reduce prepared statement latency
 														if (defined('PDO::PGSQL_ATTR_DISABLE_PREPARES')) {
-															$this->db->setAttribute(PDO::PGSQL_ATTR_DISABLE_PREPARES, true);
+															$this->engine->set_attribute(PDO::PGSQL_ATTR_DISABLE_PREPARES, true);
 														}
 
 														try {
-															$prep_statement = $this->db->prepare($sql);
+															$prep_statement = $this->engine->prepare($sql);
 															$prep_statement->execute($params);
 															unset($prep_statement);
 															$message['details'][$m]['name'] = $key;
@@ -3145,16 +2598,16 @@ class database {
 													$params['insert_user'] = $this->user_uuid ?? null;
 
 													// set the error mode
-													$this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+													$this->engine->set_attribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 													// reduce prepared statement latency
 													if (defined('PDO::PGSQL_ATTR_DISABLE_PREPARES')) {
-														$this->db->setAttribute(PDO::PGSQL_ATTR_DISABLE_PREPARES, true);
+														$this->engine->set_attribute(PDO::PGSQL_ATTR_DISABLE_PREPARES, true);
 													}
 
 													// run the query and return the results
 													try {
-														$prep_statement = $this->db->prepare($sql);
+														$prep_statement = $this->engine->prepare($sql);
 														$prep_statement->execute($params);
 														unset($prep_statement);
 														$message['code'] = '200';
@@ -3200,21 +2653,21 @@ class database {
 											// unset the variables
 											unset($sql, $action, $child_key_name, $child_key_value);
 										}  // foreach value
-									}  // is array
-								}  // foreach array
+									}      // is array
+								}          // foreach array
 							}
-						}  // foreach schema_array
-				}  // foreach main array
+						}                                           // foreach schema_array
+				}                                           // foreach main array
 
 			// save the message
 			$this->message = $message;
 
 			// commit the atomic transaction
-			$this->db->commit();
+			$this->engine->commit();
 		} catch (PDOException $e) {
 			// rollback the transaction on error
-			if ($this->db->inTransaction()) {
-				$this->db->rollback();
+			if ($this->engine->in_transaction()) {
+				$this->engine->rollback();
 			}
 
 			// prepare the message array
@@ -3225,6 +2678,7 @@ class database {
 			$message['trace'] = $e->getTraceAsString();
 			$message['debug'] = debug_backtrace();
 			$this->message = $message;
+
 			return false;
 		}
 
@@ -3327,7 +2781,7 @@ class database {
 				}
 				$sql .= ':transaction_result ';
 				$sql .= ')';
-				$statement = $this->db->prepare($sql);
+				$statement = $this->engine->prepare($sql);
 				if (isset($this->domain_uuid) && is_uuid($this->domain_uuid)) {
 					$statement->bindParam(':domain_uuid', $this->domain_uuid);
 				}
@@ -3360,9 +2814,11 @@ class database {
 				$message['trace'] = $e->getTraceAsString();
 				$message['debug'] = debug_backtrace();
 				$this->message = $message;
+
 				return false;
 			}
 		}
+
 		return $this->message;
 	}
 
@@ -3608,30 +3064,7 @@ class database {
 	 * @return array get the indexes from the database
 	 */
 	public function get_database_indexes() {
-		// predefine the array
-		$database_indexes = array();
-
-		// get the index from the database
-		if ($this->type == 'pgsql') {
-			$sql = "SELECT \n";
-			$sql .= "    schemaname AS schema, \n";
-			$sql .= "    tablename AS table, \n";
-			$sql .= "    indexname AS index_name, \n";
-			$sql .= "    indexdef AS definition \n";
-			$sql .= "FROM \n";
-			$sql .= "    pg_indexes \n";
-			$sql .= "WHERE \n";
-			$sql .= "    schemaname NOT IN ('pg_catalog', 'information_schema') \n";
-			$sql .= "ORDER BY schemaname, tablename, indexname; \n";
-			$prep_statement = $this->db->prepare($sql);
-			$prep_statement->execute();
-			$pg_indexes = $prep_statement->fetchAll(PDO::FETCH_NAMED);
-			$database_indexes = array();
-			foreach($pg_indexes as $row) {
-				$database_indexes[$row['table']][$row['index_name']] = $row['definition'];
-			}
-		}
-		return $database_indexes;
+		return $this->engine->get_database_indexes();
 	}
 
 	/**
@@ -3641,11 +3074,11 @@ class database {
 	 */
 	public function update_indexes() {
 		// get the $apps array from the installed apps from the core and mod directories
-		database::get_apps();
+		app::list();
 
 		// build the list of tables
 		$tables = array();
-		foreach(self::$apps as $app) {
+		foreach (self::$apps as $app) {
 			if (!empty($app['db'])) {
 				$tables = array_merge($tables, $app['db']);
 			}
@@ -3659,12 +3092,11 @@ class database {
 
 		// loop through all of the tables
 		$i = 1;
-		foreach($tables as $table) {
+		foreach ($tables as $table) {
 			// get the table name
 			if (is_array($table['table']['name'])) {
 				$table_name = $table['table']['name']['text'];
-			}
-			else {
+			} else {
 				$table_name = $table['table']['name'];
 			}
 
@@ -3686,15 +3118,14 @@ class database {
 						// get the column name
 						if (is_array($column['name'])) {
 							$column_name = $column['name']['text'];
-						}
-						else {
+						} else {
 							$column_name = $column['name'];
 						}
 
 						// create the database index - postgresql index name limited to 63 bytes
 						if ($this->type == 'pgsql' && !isset($database_indexes[$table_name][substr($table_name . "_" . $column_name . "_fkey", 0, 63)])) {
 							$sql = "CREATE INDEX IF NOT EXISTS " . $table_name . "_" . $column_name . "_fkey ON " . $table_name . " (" . $column_name . ");\n";
-							$prep_statement = $this->db->prepare($sql);
+							$prep_statement = $this->engine->prepare($sql);
 							$prep_statement->execute();
 							$row['table_name'] = $table_name;
 							$row['column_name'] = $column_name;
@@ -3706,22 +3137,20 @@ class database {
 			}
 		}
 
-		//return the results
+		// return the results
 		return $array;
 	}
-}  // class database
+}
 
 // addtitional functions for sqlite
 if (!function_exists('php_md5')) {
-	function php_md5($string)
-	{
+	function php_md5($string) {
 		return md5($string);
 	}
 }
 
 if (!function_exists('php_unix_time_stamp')) {
-	function php_unix_time_stamp($string)
-	{
+	function php_unix_time_stamp($string) {
 		return strtotime($string);
 	}
 }
