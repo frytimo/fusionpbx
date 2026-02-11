@@ -176,9 +176,9 @@ class active_calls_service extends service implements websocket_service_interfac
 	/**
 	 * Builds a filter for the subscriber
 	 * @param subscriber $subscriber
-	 * @return filter
+	 * @return filter|null
 	 */
-	public static function create_filter_chain_for(subscriber $subscriber): filter {
+	public static function create_filter_chain_for(subscriber $subscriber): ?filter {
 		// Do not filter domain
 		if ($subscriber->has_permission('call_active_all') || $subscriber->is_service()) {
 			return filter_chain::and_link([
@@ -480,7 +480,7 @@ class active_calls_service extends service implements websocket_service_interfac
 
 		// Respond with bad command
 		if (empty($uuid)) {
-			websocket_client::send(websocket_message::request_is_bad($request_id, SERVICE_NAME, 'hangup'));
+			websocket_client::send($this->ws_client->socket(), websocket_message::request_is_bad($request_id, SERVICE_NAME, 'hangup'));
 		}
 
 		$host = self::$switch_host ?? parent::$config->get('switch.event_socket.host', '127.0.0.1');

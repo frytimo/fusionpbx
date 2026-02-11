@@ -25,7 +25,7 @@
 */
 
 //define the phrases class
-class phrases {
+class phrases implements app_config_db {
 
 	/**
 	 * declare constant variables
@@ -85,6 +85,34 @@ class phrases {
 		$this->uuid_prefix       = 'phrase_';
 		$this->toggle_field      = 'phrase_enabled';
 		$this->toggle_values     = ['true', 'false'];
+	}
+
+	public static function app_database_schema(): array {
+		//
+		// Phrases table only deviates from the standard table by the definition
+		// of the phrase_language field, so we can use the standard table and
+		// then add the additional field.
+		//
+		$phrases = app_schema::standard_table('phrases')
+			->field('phrase_language')
+		;
+
+		$phrase_details = app_schema::table('phrase_details')
+			->parent('phrases')
+			->primary_key()
+			->field('language')
+			->field('text')
+			->field('group')
+			->field('tag')
+			->field('pattern')
+			->field('function')
+			->field('data')
+			->field('method')
+			->field('type')
+			->field('order')
+			->timestamps()
+		;
+		return [$phrases, $phrase_details];
 	}
 
 	/**

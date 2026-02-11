@@ -27,7 +27,7 @@
 /**
  * dashboard class
  */
-class dashboard {
+class dashboard implements app_config_db {
 
 	/**
 	 * Application name constant
@@ -130,6 +130,34 @@ class dashboard {
 		$this->description_field = 'dashboard_description';
 		$this->location          = 'dashboard.php';
 		$this->uuid_prefix       = 'dashboard_';
+	}
+
+	public static function app_database_schema(): array {
+		$schema = new app_schema;
+
+		$schema->database_tables[] = app_schema::standard_table('dashboards');
+
+		$schema->database_tables[] = app_schema::standard_table('dashboard_widgets')
+			->columns([
+				'dashboard_widget_uuid',
+				'widget_path',
+				'widget_order',
+				'widget_enabled',
+			])
+			->foreign_key('dashboards')
+			->foreign_key('domains')
+		;
+
+		$schema->database_tables[] = app_schema::standard_table('dashboard_widget_groups')
+			->columns([
+				'dashboard_widget_group_uuid',
+				'group_name',
+			])
+			->foreign_key('dashboards')
+			->foreign_key('domains')
+		;
+
+		return $schema->to_array();
 	}
 
 	/**

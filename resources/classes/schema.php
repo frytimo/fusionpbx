@@ -1,43 +1,44 @@
 <?php
 
 /*
-  FusionPBX
-  Version: MPL 1.1
-
-  The contents of this file are subject to the Mozilla Public License Version
-  1.1 (the "License"); you may not use this file except in compliance with
-  the License. You may obtain a copy of the License at
-  http://www.mozilla.org/MPL/
-
-  Software distributed under the License is distributed on an "AS IS" basis,
-  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
-  for the specific language governing rights and limitations under the
-  License.
-
-  The Original Code is FusionPBX
-
-  The Initial Developer of the Original Code is
-  Mark J Crane <markjcrane@fusionpbx.com>
-  Copyright (C) 2013 - 2026
-  All Rights Reserved.
-
-  Contributor(s):
-  Mark J Crane <markjcrane@fusionpbx.com>
+ * FusionPBX
+ * Version: MPL 1.1
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * http://www.mozilla.org/MPL/
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ *
+ * The Original Code is FusionPBX
+ *
+ * The Initial Developer of the Original Code is
+ * Mark J Crane <markjcrane@fusionpbx.com>
+ * Copyright (C) 2013 - 2026
+ * All Rights Reserved.
+ *
+ * Contributor(s):
+ * Mark J Crane <markjcrane@fusionpbx.com>
  */
 
-//define the schema class
+// define the schema class
 class schema {
-
-	//define the public variables
+	// define the public variables
 	public $data_types;
 	public $result;
 
-	//define private variables
+	// define private variables
 	private $database;
-	private $applications;
 	private $db_type;
 	private $db_name;
 	private $schema_info;
+
+	// define private static variables
+	private static $applications = null;
 
 	/**
 	 * Constructor for the class.
@@ -47,36 +48,24 @@ class schema {
 	 * @param array $setting_array An optional array of settings to override default values. Defaults to [].
 	 */
 	public function __construct($setting_array = []) {
-
-		//set the global variables
+		// set the global variables
 		global $db_type, $db_name;
 
-		//includes files
+		// includes files
 		require dirname(__DIR__, 2) . "/resources/require.php";
 
-		//open a database connection
+		// open a database connection
 		$this->database = $setting_array['database'] ?? database::new();
 
-		//get the list of installed apps from the core and mod directories
-		$config_list = glob(dirname(__DIR__, 2) . "/*/*/app_config.php");
-		$x = 0;
-		foreach ($config_list as $config_path) {
-			try {
-				include($config_path);
-			} catch (Exception $e) {
-				//echo 'Caught exception: ',  $e->getMessage(), "\n";
-			}
-			$x++;
-		}
 		$this->applications = is_array($apps) ? $apps : [];
 
-		//set the db_type
+		// set the db_type
 		$this->db_type = $db_type;
 
-		//set the db_name
+		// set the db_name
 		$this->db_name = $db_name;
 
-		//get the table info
+		// get the table info
 		if ($this->db_type == "pgsql") {
 			$sql = "SELECT *, ordinal_position, ";
 			$sql .= "table_name, ";
@@ -111,13 +100,13 @@ class schema {
 		foreach ($this->applications as $app) {
 			if (isset($app['db']) && count($app['db'])) {
 				foreach ($app['db'] as $row) {
-					//create the sql string
+					// create the sql string
 					$table_name = $row['table']['name'];
 					$sql = "CREATE TABLE " . $row['table']['name'] . " (\n";
 					$field_count = 0;
 					foreach ($row['fields'] as $field) {
 						if (!empty($field['deprecated']) and ($field['deprecated'] == "true")) {
-							//skip this field
+							// skip this field
 						} else {
 							if ($field_count > 0) {
 								$sql .= ",\n";
@@ -137,13 +126,13 @@ class schema {
 							}
 							if (isset($field['key']) && isset($field['key']['type']) && ($field['key']['type'] == "foreign")) {
 								if ($this->db_type == "pgsql") {
-									//$sql .= " references ".$field['key']['reference']['table']."(".$field['key']['reference']['field'].")";
+									// $sql .= " references ".$field['key']['reference']['table']."(".$field['key']['reference']['field'].")";
 								}
 								if ($this->db_type == "sqlite") {
-									//$sql .= " references ".$field['key']['reference']['table']."(".$field['key']['reference']['field'].")";
+									// $sql .= " references ".$field['key']['reference']['table']."(".$field['key']['reference']['field'].")";
 								}
 								if ($this->db_type == "mysql") {
-									//$sql .= " references ".$field['key']['reference']['table']."(".$field['key']['reference']['field'].")";
+									// $sql .= " references ".$field['key']['reference']['table']."(".$field['key']['reference']['field'].")";
 								}
 							}
 							$field_count++;
@@ -172,15 +161,15 @@ class schema {
 	 */
 	public function exec() {
 		foreach ($this->result['sql'] as $sql) {
-			//start the sql transaction
+			// start the sql transaction
 			$this->database->beginTransaction();
-			//execute the sql query
+			// execute the sql query
 			try {
 				$this->database->execute($sql, null);
 			} catch (PDOException $error) {
 				echo "error: " . $error->getMessage() . " sql: $sql<br/>";
 			}
-			//complete the transaction
+			// complete the transaction
 			$this->database->commit();
 		}
 	}
@@ -197,59 +186,58 @@ class schema {
 	 * @return string
 	 */
 	public function upgrade($format = '') {
-
-		//set the global variable
+		// set the global variable
 		global $text, $output_format;
 
 		if ($format == '') {
 			$format = $output_format;
 		}
 
-		//get the db variables
-		//$config = new config;
-		//$config_exists = $config->exists();
-		//$config_path = $config->find();
-		//$config->get();
-		//$this->db_type = $config->db_type;
-		//$this->db_name = $config->db_name;
-		//$db_username = $config->db_username;
-		//$db_password = $config->db_password;
-		//$db_host = $config->db_host;
-		//$db_path = $config->db_path;
-		//$db_port = $config->db_port;
-		//includes files
+		// get the db variables
+		// $config = new config;
+		// $config_exists = $config->exists();
+		// $config_path = $config->find();
+		// $config->get();
+		// $this->db_type = $config->db_type;
+		// $this->db_name = $config->db_name;
+		// $db_username = $config->db_username;
+		// $db_password = $config->db_password;
+		// $db_host = $config->db_host;
+		// $db_path = $config->db_path;
+		// $db_port = $config->db_port;
+		// includes files
 
-		//add multi-lingual support
+		// add multi-lingual support
 		if (!isset($text)) {
 			$language = new text;
 			$text = $language->get(null, 'core/upgrade');
 		}
 
-		//PHP PDO check if table or column exists
-		//check if table exists
+		// PHP PDO check if table or column exists
+		// check if table exists
 		// SELECT * FROM sqlite_master WHERE type='table' AND name='v_cdr'
-		//check if column exists
+		// check if column exists
 		// SELECT * FROM sqlite_master WHERE type='table' AND name='v_cdr' AND sql LIKE '%caller_id_name TEXT,%'
-		//aditional information
+		// aditional information
 		// http://www.sqlite.org/faq.html#q9
-		//postgresql
-		//list all tables in the database
+		// postgresql
+		// list all tables in the database
 		// SELECT table_name FROM pg_tables WHERE schemaname='public';
-		//check if table exists
+		// check if table exists
 		// SELECT * FROM pg_tables WHERE schemaname='public' AND table_name = 'v_groups'
-		//check if column exists
+		// check if column exists
 		// SELECT attname FROM pg_attribute WHERE attrelid = (SELECT oid FROM pg_class WHERE relname = 'v_cdr') AND attname = 'caller_id_name';
-		//mysql
-		//list all tables in the database
+		// mysql
+		// list all tables in the database
 		// SELECT TABLE_NAME FROM information_schema.tables WHERE table_schema = 'fusionpbx'
-		//check if table exists
+		// check if table exists
 		// SELECT TABLE_NAME FROM information_schema.tables WHERE table_schema = 'fusionpbx' AND TABLE_NAME = 'v_groups'
-		//check if column exists
+		// check if column exists
 		// SELECT * FROM information_schema.COLUMNS where TABLE_SCHEMA = 'fusionpbx' AND TABLE_NAME = 'v_cdr' AND COLUMN_NAME = 'context'
-		//oracle
-		//check if table exists
+		// oracle
+		// check if table exists
 		// SELECT TABLE_NAME FROM ALL_TABLES
-		//update the app db array add exists true or false
+		// update the app db array add exists true or false
 		$sql = '';
 		foreach ($this->applications as $x => $app) {
 			if (isset($app['db'])) {
@@ -261,7 +249,7 @@ class schema {
 							$table_name = $row['table']['name'];
 						}
 					} else {
-						//old array syntax
+						// old array syntax
 						if (is_array($row['table'])) {
 							$table_name = $row['table']['text'];
 						} else {
@@ -269,17 +257,16 @@ class schema {
 						}
 					}
 					if (!empty($table_name)) {
-
-						//check if the table exists
+						// check if the table exists
 						if ($this->table_exists($table_name)) {
 							$this->applications[$x]['db'][$y]['exists'] = 'true';
 						} else {
 							$this->applications[$x]['db'][$y]['exists'] = 'false';
 						}
-						//check if the column exists
+						// check if the column exists
 						foreach ($row['fields'] as $z => $field) {
 							if (!empty($field['deprecated']) && $field['deprecated'] == "true") {
-								//skip this field
+								// skip this field
 							} else {
 								if (is_array($field['name'])) {
 									$field_name = $field['name']['text'];
@@ -288,10 +275,10 @@ class schema {
 								}
 								if (!empty($field_name)) {
 									if ($this->column_exists($table_name, $field_name)) {
-										//found
+										// found
 										$this->applications[$x]['db'][$y]['fields'][$z]['exists'] = 'true';
 									} else {
-										//not found
+										// not found
 										$this->applications[$x]['db'][$y]['fields'][$z]['exists'] = 'false';
 									}
 								}
@@ -304,17 +291,17 @@ class schema {
 			}
 		}
 
-		//prepare the variables
+		// prepare the variables
 		$sql_update = '';
 
-		//add missing tables and fields
+		// add missing tables and fields
 		foreach ($this->applications as $x => $app) {
 			if (isset($app['db'])) {
 				foreach ($app['db'] as $y => $row) {
 					if (is_array($row['table']['name'])) {
 						$table_name = $row['table']['name']['text'];
 						if ($this->table_exists($row['table']['name']['deprecated'])) {
-							$row['exists'] = "false"; //testing
+							$row['exists'] = "false";  // testing
 							if ($this->db_type == "pgsql") {
 								$sql_update .= "ALTER TABLE " . $row['table']['name']['deprecated'] . " RENAME TO " . $row['table']['name']['text'] . ";\n";
 							}
@@ -341,34 +328,34 @@ class schema {
 						$table_name = $row['table']['name'];
 					}
 
-					//check if the table exists
+					// check if the table exists
 					if ($row['exists'] == "true") {
 						if (count($row['fields']) > 0) {
 							foreach ($row['fields'] as $z => $field) {
 								if (!empty($field['deprecated']) && $field['deprecated'] == "true") {
-									//skip this field
+									// skip this field
 								} else {
-									//get the data type
+									// get the data type
 									if (is_array($field['type'])) {
 										$field_type = $field['type'][$this->db_type];
 									} else {
 										$field_type = $field['type'];
 									}
-									//get the field name
+									// get the field name
 									if (is_array($field['name'])) {
 										$field_name = $field['name']['text'];
 									} else {
 										$field_name = $field['name'];
 									}
 
-									//check if the field exists
+									// check if the field exists
 									//	if ($this->column_exists($table_name, $field_name)) {
 									//		$field['exists'] = "true";
 									//	}
 									//	else {
 									//		$field['exists'] = "false";
 									//	}
-									//add or rename fields
+									// add or rename fields
 									if (isset($field['name']['deprecated']) && $this->column_exists($table_name, $field['name']['deprecated'])) {
 										if ($this->db_type == "pgsql") {
 											$sql_update .= "ALTER TABLE " . $table_name . " RENAME COLUMN " . $field['name']['deprecated'] . " to " . $field['name']['text'] . ";\n";
@@ -378,18 +365,18 @@ class schema {
 											$sql_update .= "ALTER TABLE " . $table_name . " CHANGE " . $field['name']['deprecated'] . " " . $field['name']['text'] . " " . $field_type . ";\n";
 										}
 										if ($this->db_type == "sqlite") {
-											//a change has been made to the field name
+											// a change has been made to the field name
 											$this->applications[$x]['db'][$y]['rebuild'] = 'true';
 										}
 									} else {
-										//find missing fields and add them
+										// find missing fields and add them
 										if ($field['exists'] == "false") {
 											$sql_update .= "ALTER TABLE " . $table_name . " ADD " . $field_name . " " . $field_type . ";\n";
 										}
 									}
 
-									//change the schema data types if needed
-									//if the data type described in the app_config array is different than the type in the database then update the data type
+									// change the schema data types if needed
+									// if the data type described in the app_config array is different than the type in the database then update the data type
 									$db_field_type = $this->column_data_type($table_name, $field_name);
 									$field_type_array = explode("(", $field_type);
 									$field_type = $field_type_array[0];
@@ -400,22 +387,15 @@ class schema {
 												$sql_update .= "CAST(regexp_replace(" . $field_name . ", '([A-Z0-9]{4})([A-Z0-9]{12})', E'\\1-\\2')\n";
 												$sql_update .= "AS uuid);\n";
 											} else {
-												//field type has not changed
+												// field type has not changed
 												if ($db_field_type == "integer" && strtolower($field_type) == "serial") {
-
 												} elseif ($db_field_type == "timestamp without time zone" && strtolower($field_type) == "timestamp") {
-
 												} elseif ($db_field_type == "timestamp without time zone" && strtolower($field_type) == "datetime") {
-
 												} elseif ($db_field_type == "timestamp with time zone" && strtolower($field_type) == "timestamptz") {
-
 												} elseif ($db_field_type == "integer" && strtolower($field_type) == "numeric") {
-
 												} elseif ($db_field_type == "character" && strtolower($field_type) == "char") {
-
 												} elseif ($db_field_type == "json" && strtolower($field_type) == "jsonb") {
-
-												} //field type has changed
+												}  // field type has changed
 												else {
 													switch ($field_type) {
 														case 'numeric':
@@ -449,16 +429,16 @@ class schema {
 										if ($this->db_type == "mysql") {
 											$type = explode("(", $db_field_type);
 											if ($type[0] == $field_type) {
-												//do nothing
+												// do nothing
 											} elseif ($field_type == "numeric" && $type[0] == "decimal") {
-												//do nothing
+												// do nothing
 											} else {
 												$sql_update .= "ALTER TABLE " . $table_name . " modify " . $field_name . " " . $field_type . ";\n";
 											}
 											unset($type);
 										}
 										if ($this->db_type == "sqlite") {
-											//a change has been made to the field type
+											// a change has been made to the field type
 											$this->applications[$x]['db'][$y]['rebuild'] = 'true';
 										}
 									}
@@ -466,13 +446,13 @@ class schema {
 							}
 						}
 					} elseif (!is_array($row['table']['name'])) {
-						//create table
+						// create table
 						$sql_update .= $this->create_table($row['table']['name']);
 					}
 				}
 			}
 		}
-		//rebuild and populate the table
+		// rebuild and populate the table
 		foreach ($this->applications as $x => $app) {
 			if (isset($app['db'])) {
 				foreach ($app['db'] as $y => $row) {
@@ -483,18 +463,18 @@ class schema {
 					}
 					if (!empty($field['rebuild']) && $row['rebuild'] == "true") {
 						if ($this->db_type == "sqlite") {
-							//start the transaction
-							//$sql_update .= "BEGIN TRANSACTION;\n";
-							//rename the table
+							// start the transaction
+							// $sql_update .= "BEGIN TRANSACTION;\n";
+							// rename the table
 							$sql_update .= "ALTER TABLE " . $table_name . " RENAME TO tmp_" . $table_name . ";\n";
-							//create the table
+							// create the table
 							$sql_update .= $this->create_table($table_name);
-							//insert the data into the new table
+							// insert the data into the new table
 							$sql_update .= $this->insert_into($table_name);
-							//drop the old table
+							// drop the old table
 							$sql_update .= "DROP TABLE tmp_" . $table_name . ";\n";
-							//commit the transaction
-							//$sql_update .= "COMMIT;\n";
+							// commit the transaction
+							// $sql_update .= "COMMIT;\n";
 						}
 					}
 				}
@@ -504,13 +484,13 @@ class schema {
 		// initialize response variable
 		$response = '';
 
-		//display results as html
+		// display results as html
 		if ($format == "html") {
-			//show the database type
+			// show the database type
 			$response .= "<strong>" . $text['header-database_type'] . ": " . $this->db_type . "</strong><br /><br />";
-			//start the table
+			// start the table
 			$response .= "<table width='100%' border='0' cellpadding='20' cellspacing='0'>\n";
-			//show the changes
+			// show the changes
 			if (!empty($sql_update)) {
 				$response .= "<tr>\n";
 				$response .= "<td class='row_style1' colspan='3'>\n";
@@ -523,13 +503,13 @@ class schema {
 				$response .= "</td>\n";
 				$response .= "</tr>\n";
 			}
-			//list all tables
+			// list all tables
 			$response .= "<tr>\n";
 			$response .= "<th>" . $text['label-table'] . "</th>\n";
 			$response .= "<th>" . $text['label-exists'] . "</th>\n";
 			$response .= "<th>" . $text['label-details'] . "</th>\n";
 			$response .= "<tr>\n";
-			//build the html while looping through the app db array
+			// build the html while looping through the app db array
 			$sql = '';
 			foreach ($this->applications as $app) {
 				if (isset($app['db'])) {
@@ -541,14 +521,14 @@ class schema {
 						}
 						$response .= "<tr>\n";
 
-						//check if the table exists
+						// check if the table exists
 						if ($row['exists'] == "true") {
 							$response .= "<td valign='top' class='row_style1'>" . $table_name . "</td>\n";
 							$response .= "<td valign='top' class='vncell' style='padding-top: 3px;'>" . $text['option-true'] . "</td>\n";
 
 							if (count($row['fields']) > 0) {
 								$response .= "<td class='row_style1'>\n";
-								//show the list of columns
+								// show the list of columns
 								$response .= "<table border='0' cellpadding='10' cellspacing='0'>\n";
 								$response .= "<tr>\n";
 								$response .= "<th>" . $text['label-name'] . "</th>\n";
@@ -557,7 +537,7 @@ class schema {
 								$response .= "</tr>\n";
 								foreach ($row['fields'] as $field) {
 									if (!empty($field['deprecated']) && $field['deprecated'] == "true") {
-										//skip this field
+										// skip this field
 									} else {
 										if (is_array($field['name'])) {
 											$field_name = $field['name']['text'];
@@ -594,12 +574,12 @@ class schema {
 					}
 				}
 			}
-			//end the list of tables
+			// end the list of tables
 			$response .= "</table>\n";
 			$response .= "<br />\n";
 		}
 
-		//loop line by line through all the lines of sql code
+		// loop line by line through all the lines of sql code
 		$x = 0;
 		if (empty($sql_update) && $format == "text") {
 			$response .= "	" . $text['label-schema'] ?? '' . ":			" . $text['label-no_change'] . "\n";
@@ -607,10 +587,10 @@ class schema {
 			if ($format == "text") {
 				$response .= "	" . $text['label-schema'] . "\n";
 			}
-			//$this->db->beginTransaction();
+			// $this->db->beginTransaction();
 			$update_array = explode(";", $sql_update);
 			if (is_array($update_array) && count($update_array)) {
-				//drop views so that alter table statements complete
+				// drop views so that alter table statements complete
 				$result = $this->database->views('drop');
 
 				foreach ($update_array as $sql) {
@@ -626,19 +606,19 @@ class schema {
 					}
 				}
 			}
-			//$this->db->commit();
+			// $this->db->commit();
 			$response .= "\n";
 			unset($sql_update, $sql);
 		}
 
-		//refresh each postgresql subscription with its publication
+		// refresh each postgresql subscription with its publication
 		if ($this->db_type == "pgsql") {
-			//get the list of postgresql subscriptions
+			// get the list of postgresql subscriptions
 			$sql = "select subname from pg_subscription; ";
 			$pg_subscriptions = $this->database->select($sql, null, 'all');
 			unset($sql, $parameters);
 
-			//refresh each subscription publication
+			// refresh each subscription publication
 			foreach ($pg_subscriptions as $row) {
 				$sql = "ALTER SUBSCRIPTION " . $row['subname'] . " REFRESH PUBLICATION;";
 				$response .= $sql;
@@ -646,15 +626,14 @@ class schema {
 			}
 		}
 
-		//create views so that alter table statements complete
+		// create views so that alter table statements complete
 		$this->database->views('create');
 
-		//update database foreign key indexes
+		// update database foreign key indexes
 		$this->database->update_indexes();
 
-		//handle response
+		// handle response
 		return $response;
-
 	}
 
 	/**
@@ -679,9 +658,9 @@ class schema {
 			$sql = "select count(*) from $table_name ";
 			$result = $this->database->execute($sql, null);
 			if ($result > 0) {
-				return true; //table exists
+				return true;   // table exists
 			} else {
-				return false; //table doesn't exist
+				return false;  // table doesn't exist
 			}
 		}
 	}
@@ -702,7 +681,7 @@ class schema {
 		if ($this->db_type == 'pgsql') {
 			if (isset($this->schema_info[$table_name])) {
 				$table_details = $this->schema_info[$table_name];
-				foreach($table_details as $row) {
+				foreach ($table_details as $row) {
 					if ($row['column_name'] == $column_name) {
 						$column_default = $row['column_default'];
 						if ($details) {
@@ -711,6 +690,7 @@ class schema {
 						if (is_string($column_default)) {
 							$column_default = explode('::', $column_default)[0];
 							$column_default = trim($column_default, "'");
+
 							return $column_default;
 						}
 					}
@@ -728,7 +708,7 @@ class schema {
 		// 	}
 		// }
 
-		//return an empty string
+		// return an empty string
 		return '';
 	}
 
@@ -768,10 +748,11 @@ class schema {
 					return true;
 				}
 			}
+
 			return false;
 		}
 		if ($this->db_type == "mysql") {
-			//$sql .= "SELECT * FROM information_schema.COLUMNS where TABLE_SCHEMA = '".$this->db_name."' and TABLE_NAME = '$table_name' and COLUMN_NAME = '$column_name' ";
+			// $sql .= "SELECT * FROM information_schema.COLUMNS where TABLE_SCHEMA = '".$this->db_name."' and TABLE_NAME = '$table_name' and COLUMN_NAME = '$column_name' ";
 			$sql = "show columns from $table_name where field = '$column_name' ";
 		}
 
@@ -808,6 +789,7 @@ class schema {
 			if (!isset($this->schema_info[$table_name])) {
 				return false;
 			}
+
 			return $this->schema_info[$table_name];
 		}
 		if ($this->db_type == "sqlite") {
@@ -818,6 +800,7 @@ class schema {
 		}
 		$prep_statement = $this->database->db->prepare($sql);
 		$prep_statement->execute();
+
 		return $prep_statement->fetchAll(PDO::FETCH_ASSOC);
 	}
 
@@ -838,6 +821,7 @@ class schema {
 				return true;
 			}
 		}
+
 		return false;
 	}
 
@@ -866,11 +850,11 @@ class schema {
 						}
 						if ($table_name == $table) {
 							$sql = "CREATE TABLE " . $table_name . " (\n";
-							(int)$field_count = 0;
+							(int) $field_count = 0;
 							if (!empty($row['fields']) && is_array($row['fields'])) {
 								foreach ($row['fields'] as $field) {
 									if (!empty($field['deprecated']) && $field['deprecated'] == "true") {
-										//skip this row
+										// skip this row
 									} else {
 										if ($field_count > 0) {
 											$sql .= ",\n";
@@ -893,6 +877,7 @@ class schema {
 								}
 							}
 							$sql .= ");\n";
+
 							return $sql;
 						}
 					}
@@ -914,6 +899,7 @@ class schema {
 	 */
 	private function column_data_type($table_name, $column_name) {
 		$table_info = $this->table_info($table_name);
+
 		return $this->data_type($table_info, $column_name);
 	}
 
@@ -972,7 +958,7 @@ class schema {
 					$field_count = 0;
 					foreach ($row['fields'] as $field) {
 						if (!empty($field['deprecated']) && $field['deprecated'] == "true") {
-							//skip this field
+							// skip this field
 						} else {
 							if ($field_count > 0) {
 								$sql .= ",";
@@ -990,7 +976,7 @@ class schema {
 					$field_count = 0;
 					foreach ($row['fields'] as $field) {
 						if (!empty($field['deprecated']) && $field['deprecated'] == "true") {
-							//skip this field
+							// skip this field
 						} else {
 							if ($field_count > 0) {
 								$sql .= ",";
@@ -1026,16 +1012,58 @@ class schema {
 						}
 					}
 					$sql .= " FROM tmp_" . $table . ";\n";
+
 					return $sql;
 				}
 			}
 		}
-	} //end function
+	}
+
+	/**
+	 * Searches through all fields to see if domain_uuid exists
+	 *
+	 * @param string $name
+	 *
+	 * @return boolean <b>true</b> on success and <b>false</b> on failure
+	 * @see  database::get_apps()
+	 * @uses self::$apps directly
+	 */
+	public static function domain_uuid_exists($name) {
+		// get the $apps array from the installed apps from the core and mod directories
+		if (count(self::$apps) == 0) {
+			self::get_apps();
+		}
+
+		// search through all fields to see if domain_uuid exists
+		foreach (self::$apps as $x => &$app) {
+			if (is_array($app['db'])) {
+				foreach ($app['db'] as $y => $row) {
+					if (is_array($row['table']['name'])) {
+						$table_name = $row['table']['name']['text'];
+					} else {
+						$table_name = $row['table']['name'];
+					}
+					if ($table_name === database::TABLE_PREFIX . $name) {
+						if (is_array($row['fields'])) {
+							foreach ($row['fields'] as $field) {
+								if ($field['name'] == 'domain_uuid') {
+									return true;
+								}
+							}  // foreach
+						}      // is array
+					}
+				}              // foreach
+			}                  // is array
+		}                      // foreach
+
+		// not found
+		return false;
+	}
 }
 
-//example use
-//$schema = new schema();
-//$schema->db_type = $db_type;
-//$schema->upgrade();
-//$result_array = $schema->obj['sql'];
-//print_r($result_array);
+// example use
+// $schema = new schema();
+// $schema->db_type = $db_type;
+// $schema->upgrade();
+// $result_array = $schema->obj['sql'];
+// print_r($result_array);

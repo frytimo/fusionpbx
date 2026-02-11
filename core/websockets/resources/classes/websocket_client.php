@@ -108,7 +108,7 @@ class websocket_client {
 
 		// Put the blocking back to the previous state
 		if (!$is_blocking) {
-			$this->disable_block();
+			$this->set_blocking(false);
 		}
 	}
 

@@ -25,7 +25,7 @@
 */
 
 //define the contacts class
-class contacts {
+class contacts implements app_config_db {
 
 	/**
 	 * declare constant variables
@@ -324,5 +324,163 @@ class contacts {
 			}
 		}
 	} //method
+
+	public static function app_database_schema(): array {
+		$contacts = app_schema::standard_table('contacts')
+			// fields will automatically be prefixed with 'contact_'
+			->fields( [
+				'type',
+				'organization',
+				'name_prefix',
+				'name_given',
+				'name_family',
+				'name_middle',
+				'name_suffix',
+				'nickname',
+				'title',
+				'role',
+				'category',
+				'url',
+				'time_zone',
+				'note',
+			])
+			->columns([
+				'last_mod_date',
+				'last_mod_user',
+			])
+		;
+		$contact_addresses = app_schema::standard_table('contact_addresses')
+			->parent('contacts')
+			->columns([
+				'address_type',
+				'address_label',
+				'address_primary',
+				'address_street',
+				'address_extended',
+				'address_community',
+				'address_locality',
+				'address_region',
+				'address_postal_code',
+				'address_country',
+				'address_latitude',
+				'address_longitude',
+				'address_description',
+			])
+		;
+		$contact_phones = app_schema::standard_table('contact_phones')
+			->parent('contacts')
+			->columns([
+				'phone_label',
+				'phone_type_voice',
+				'phone_type_fax',
+				'phone_type_video',
+				'phone_type_text',
+				'phone_speed_dial',
+				'phone_country_code',
+				'phone_number',
+				'phone_extension',
+				'phone_primary',
+				'phone_description',
+			])
+		;
+		$contact_notes = app_schema::standard_table('contact_notes')
+			->parent('contacts')
+			->columns([
+				'contact_note',
+				['number' => 'contact_id']
+			])
+		;
+		$contact_emails = app_schema::table('contact_users')
+			->parent('contacts')
+			->columns([
+				'email_label',
+				'email_address',
+				'email_primary',
+				'email_description',
+			])
+			->foreign_key('users')
+		;
+		$contact_groups = app_schema::table('contact_groups')
+			->parent('contacts')
+			->columns([
+				'group_name',
+				'group_description',
+			])
+			->foreign_key('groups')
+		;
+		$contact_settings = app_schema::table('contact_settings')
+			->parent('contacts')
+			->columns([
+				'setting_name',
+				'setting_value',
+				'setting_enabled',
+				'setting_description',
+			])
+			->foreign_key('contact_settings')
+		;
+		$contact_relations = app_schema::table('contact_relations')
+			->parent('contacts')
+			->columns([
+				'relation_type',
+				'relation_label',
+				'relation_contact_uuid',
+				'relation_description',
+			])
+			->foreign_key('contacts', 'relation_contact_uuid')
+		;
+		$contact_emails = app_schema::table('contact_emails')
+			->parent('contacts')
+			->columns([
+				'email_label',
+				'email_address',
+				'email_primary',
+				'email_description',
+			])
+			->foreign_key('users')
+		;
+		$contact_urls = app_schema::table('contact_urls')
+			->parent('contacts')
+			->columns([
+				'url_label',
+				'url_address',
+				'url_primary',
+				'url_description',
+			])
+			->foreign_key('contact_urls')
+		;
+		$contact_times = app_schema::table('contact_times')
+			->parent('contacts')
+			->columns([
+				'time_label',
+				'time_type',
+				'time_value',
+				'time_description',
+			])
+			->foreign_key('contact_times')
+		;
+		$contact_attachments = app_schema::table('contact_attachments')
+			->parent('contacts')
+			->columns([
+				'attachment_label',
+				'attachment_type',
+				'attachment_path',
+				'attachment_description',
+			])
+			->foreign_key('contact_attachments')
+		;
+		return [
+			$contacts,
+			$contact_addresses,
+			$contact_phones,
+			$contact_notes,
+			$contact_emails,
+			$contact_groups,
+			$contact_settings,
+			$contact_relations,
+			$contact_urls,
+			$contact_times,
+			$contact_attachments,
+		];
+	}
 
 } //class
