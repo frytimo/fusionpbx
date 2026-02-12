@@ -150,7 +150,7 @@ class phrases implements app_config_db {
 		// get the database object from the settings object
 		$database = $settings->database();
 		// get the domain name using the domain_uuid in the database object
-		$domain_uuid = $settings->domain_uuid();
+		$domain_uuid = $settings->get_domain_uuid();
 		$domain_name = $database->select("SELECT domain_name from v_domains where domain_uuid = :domain_uuid", ['domain_uuid' => $domain_uuid], 'column');
 		// get the recording directory
 		$recordings_dir = $settings->get('switch', 'recordings', '/var/lib/freeswitch/recordings') . DIRECTORY_SEPARATOR . $domain_name;
