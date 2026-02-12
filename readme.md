@@ -1,7 +1,7 @@
 What is [FusionPBX](https://www.fusionpbx.com/)?
 --------------------------------------
 
-[FusionPBX](https://www.fusionpbx.com/) can be used as a single or domain based multi-tenant PBX, carrier grade switch, call center server, fax server, VoIP server, voicemail server, conference server, voice application server, multi-tenant appliance framework and more. [FreeSWITCH™](https://freeswitch.com) is a highly scalable, multi-threaded, multi-platform communication platform. 
+[FusionPBX](https://www.fusionpbx.com/) can be used as a single or domain based multi-tenant PBX, carrier grade switch, call center server, fax server, VoIP server, voicemail server, conference server, voice application server, multi-tenant appliance framework and more. [FreeSWITCH™](https://freeswitch.com) is a highly scalable, multi-threaded, multi-platform communication platform.
 
 It provides the functionality your business needs and brings carrier grade switching, and corporate-level phone system features to small, medium, and large businesses. Read more at [FusionPBX](https://www.fusionpbx.com/). [Please visit our youtube channel](https://www.youtube.com/FusionPBX)
 
@@ -26,6 +26,9 @@ Software Requirements
 --------------------------------------
 
 - FusionPBX will run on Debian, Ubuntu LTS, FreeBSD, CentOS, and more.
+- PHP 8.4
+- APCu Cache must be enabled
+- iNotify must be installed
 - [FusionPBX Installer](https://www.fusionpbx.com/download.php)
 
 How to Install FusionPBX
@@ -35,13 +38,29 @@ How to Install FusionPBX
 Debian Install
 ```
 wget -O - https://raw.githubusercontent.com/fusionpbx/fusionpbx-install.sh/master/debian/pre-install.sh | sh;
-cd /usr/src/fusionpbx-install.sh/debian && ./install.sh
+```
+
+```
+cd /usr/src/fusionpbx-install.sh/debian \
+  && sed -i 's/php_version=8.2/php_version=8.4/' /usr/src/fusionpbx-install.sh/debian/resources/config.sh \
+  && ./install.sh \
+  && apt install -y php8.4-apcu php8.4-inotify \
+  && echo "extension=apcu.so
+apc.enabled=1
+apc.shm_size=32M
+apc.entries_hint=4096
+apc.ttl=0
+apc.gc_ttl=3600" > /etc/php/8.4/mods-available/apcu.ini
 ```
 
 Ubuntu Install
 ```
 wget -O - https://raw.githubusercontent.com/fusionpbx/fusionpbx-install.sh/master/ubuntu/pre-install.sh | sh;
-cd /usr/src/fusionpbx-install.sh/ubuntu && ./install.sh
+```
+
+```
+cd /usr/src/fusionpbx-install.sh/ubuntu && sed -i 's/php_version=8.2/php_version=8.4/' /usr/src/fusionpbx-install.sh/debian/resources/config.sh && ./install.sh
+apt install -y php8.4-apcu php8.4-inotify
 ```
 
 FreeBSD Install
@@ -78,28 +97,28 @@ FusionPBX Memberships are for businesses that want to get the most out of Fusion
 [How to sign up](https://www.fusionpbx.com/app/account/members.php)
 -----------------
 
-[Create](https://www.fusionpbx.com/account) an Account. Then [login](https://www.fusionpbx.com/login) and click on **Become a Member** and then **Join Now**. [From there follow the simple instructions](https://www.fusionpbx.com/app/account/members.php). After signing up as a FusionPBX member you will get **instant access** to your member benefits. 
+[Create](https://www.fusionpbx.com/account) an Account. Then [login](https://www.fusionpbx.com/login) and click on **Become a Member** and then **Join Now**. [From there follow the simple instructions](https://www.fusionpbx.com/app/account/members.php). After signing up as a FusionPBX member you will get **instant access** to your member benefits.
 
 Receive News & Updates
 -----------------------
 
-FusionPBX Members receive regular updates on **new features** and **behavioral changes** in the project, as well as **advanced warning** of any security related issues. Be in the know as a Member. 
+FusionPBX Members receive regular updates on **new features** and **behavioral changes** in the project, as well as **advanced warning** of any security related issues. Be in the know as a Member.
 
 Advanced Bug Reporting
 -----------------------
 
-Beyond submitting your own Bug Reports, FusionPBX Members also get to **view select bug reports from other users** saving you the valuable time spent communicating the details of an issue that's already known. Become a Member today and help make FusionPBX even better. 
+Beyond submitting your own Bug Reports, FusionPBX Members also get to **view select bug reports from other users** saving you the valuable time spent communicating the details of an issue that's already known. Become a Member today and help make FusionPBX even better.
 
 Continuing Education
 -----------------------
 
-Receive access to an exclusive live session each month with developers of FusionPBX. Attending will help you stay on top of recent advancements, bug fixes, interface changes, and other relevant updates. If you're serious about telephony, and rely on FusionPBX as a revenue stream, you won't want to miss these valuable meetings. 
+Receive access to an exclusive live session each month with developers of FusionPBX. Attending will help you stay on top of recent advancements, bug fixes, interface changes, and other relevant updates. If you're serious about telephony, and rely on FusionPBX as a revenue stream, you won't want to miss these valuable meetings.
 
 
 Official Training
 ------------------
 
-Members receive access to past Admin Training Videos, Advanced Training Videos and exclusive, **Advanced Member Documentation**. This is valuable documentation that we are confident you will find it to be essential and important to your business. 
+Members receive access to past Admin Training Videos, Advanced Training Videos and exclusive, **Advanced Member Documentation**. This is valuable documentation that we are confident you will find it to be essential and important to your business.
 
 
 Feature Videos
@@ -136,7 +155,7 @@ The **Green** level Membership allows one individual access to all the following
 * Additional Member Applications *(Coming Soon)*
 
 
-**Price $100.00 USD Monthly** 
+**Price $100.00 USD Monthly**
 
 ---
 ---
