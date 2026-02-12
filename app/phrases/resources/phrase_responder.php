@@ -70,7 +70,7 @@ function fetch_recordings(database $database): array {
 function fetch_sound_files(settings $settings) {
 	$return_value = [];
 	//get the switch sound files
-	$file = new file($settings);
+	$file = new file(['settings' => $settings]);
 	$sound_files = $file->sounds();
 
 	//try finding display_name in the switch sound files
