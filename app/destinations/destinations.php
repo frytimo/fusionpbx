@@ -66,6 +66,7 @@
 				if (permission_exists('destination_delete')) {
 					$obj = new destinations;
 					$obj->delete($destinations);
+					message::add($text['message-delete']);
 				}
 				break;
 		}

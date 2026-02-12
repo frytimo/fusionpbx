@@ -1,8 +1,129 @@
 <?php
 
 class app {
-
 	private static $applications = null;
+
+	private static $permission_prefix = null;
+
+	private static $list_page = null;
+
+	private static $table = null;
+
+	private static $uuid_prefix = null;
+
+	private static $toggle_field = null;
+
+	private static $toggle_values = null;
+
+	/**
+	 * Set in the constructor. Must be a database object and cannot be null.
+	 * @var database Database Object
+	 */
+	private $database;
+
+	/**
+	 * Settings object set in the constructor. Must be a settings object and cannot be null.
+	 * @var settings Settings Object
+	 */
+	private $settings;
+
+	/**
+	 * User UUID set in the constructor. This can be passed in through the $settings_array associative array or set in the session global array
+	 * @var string
+	 */
+	private $user_uuid;
+
+	/**
+	 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set in the session global array
+	 * @var string
+	 */
+	private $domain_uuid;
+
+	protected $has_permission_prefix = false;
+
+	protected $has_list_page = false;
+
+	protected $has_table = false;
+
+	protected $has_uuid_prefix = false;
+
+	protected $has_toggle_field = false;
+
+	protected $has_toggle_values = false;
+
+	protected $has_delete = false;
+
+	protected $has_add = false;
+
+	protected $has_edit = false;
+
+	public function __construct() {
+		if (property_exists($this, 'permission_prefix')) {
+			$this->has_permission_prefix = true;
+		}
+		if (property_exists($this, 'list_page')) {
+			$this->has_list_page = true;
+		}
+		if (property_exists($this, 'table')) {
+			$this->has_table = true;
+		}
+		if (property_exists($this, 'uuid_prefix')) {
+			$this->has_uuid_prefix = true;
+		}
+		if (property_exists($this, 'toggle_field')) {
+			$this->has_toggle_field = true;
+		}
+		if (property_exists($this, 'toggle_values')) {
+			$this->has_toggle_values = true;
+		}
+		if ($this->has_permission_prefix && permission_exists(static::$permission_prefix . 'delete')) {
+			$this->has_delete = true;
+		}
+		if ($this->has_permission_prefix && permission_exists(static::$permission_prefix . 'add')) {
+			$this->has_add = true;
+		}
+		if ($this->has_permission_prefix && permission_exists(static::$permission_prefix . 'edit')) {
+			$this->has_edit = true;
+		}
+	}
+
+	public function delete(array $records) {
+		if (!$this->has_delete || empty($records)) {
+			return;
+		}
+
+		// add multi-lingual support
+		$language = new text;
+		$text = $language->get();
+
+		$checked = [];
+
+		// build the delete array
+		foreach ($records as $x => $record) {
+			if (!empty($record['checked']) && $record['checked'] == 'true' && is_uuid($record['uuid'])) {
+				$checked[static::$table][$x][static::$uuid_prefix . 'uuid'] = $record['uuid'];
+				$checked[static::$table][$x]['domain_uuid'] = $this->domain_uuid;
+			}
+		}
+
+		// delete the checked rows
+		if (!empty($checked)) {
+			// execute delete
+			$this->database->delete($checked);
+		}
+	}
+
+	public function copy($records) {
+		if ($this->has_add) {
+			// This method is intended to be overridden by child classes that need to perform actions when an app is copied.
+		}
+	}
+
+	public function toggle($records) {
+		if ($this->has_edit) {
+			// This method is intended to be overridden by child classes that need to perform actions when an app is toggled.
+		}
+	}
 
 	/**
 	 * Retrieves the configuration array for a specified application.
@@ -45,6 +166,7 @@ class app {
 		foreach ($schema_apps as $class) {
 			$schema[] = $class::get_database_schema();
 		}
+
 		return $schema;
 	}
 
@@ -54,6 +176,7 @@ class app {
 		foreach ($settings_apps as $class) {
 			$settings[] = $class::get_default_settings();
 		}
+
 		return $settings;
 	}
 
@@ -63,6 +186,7 @@ class app {
 		foreach ($permissions_apps as $class) {
 			$permissions[] = $class::get_default_permissions();
 		}
+
 		return $permissions;
 	}
 
@@ -72,6 +196,7 @@ class app {
 		foreach ($menus_apps as $class) {
 			$menus[] = $class::get_default_menus();
 		}
+
 		return $menus;
 	}
 
@@ -81,6 +206,7 @@ class app {
 		foreach ($default_destinations_apps as $class) {
 			$destinations[] = $class::get_default_destinations();
 		}
+
 		return $destinations;
 	}
 
@@ -90,6 +216,7 @@ class app {
 		foreach ($default_queues_apps as $class) {
 			$queues[] = $class::get_default_queues();
 		}
+
 		return $queues;
 	}
 
@@ -99,6 +226,7 @@ class app {
 		foreach ($default_all_apps as $class) {
 			$all[] = $class::get_default_all();
 		}
+
 		return $all;
 	}
 

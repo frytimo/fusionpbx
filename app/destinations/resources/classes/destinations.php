@@ -31,7 +31,7 @@
  * @method select build the html select
  */
 if (!class_exists('destinations')) {
-	class destinations {
+	class destinations extends app {
 
 		/**
 		* destinations array
@@ -1080,89 +1080,14 @@ if (!class_exists('destinations')) {
 		/**
 		* delete records
 		*/
-		public function delete($records) {
-			if (permission_exists($this->permission_prefix.'delete')) {
+		public function delete(array $records) {
+			parent::delete($records);
 
-				//add multi-lingual support
-					$language = new text;
-					$text = $language->get();
-
-				//validate the token
-					$token = new token;
-					if (!$token->validate($_SERVER['PHP_SELF'])) {
-						message::add($text['message-invalid_token'],'negative');
-						header('Location: '.$this->list_page);
-						exit;
-					}
-
-				//delete multiple records
-					if (is_array($records) && @sizeof($records) != 0) {
-
-						//build the delete array
-							foreach ($records as $x => $record) {
-								if (!empty($record['checked'] ) && $record['checked'] == 'true' && is_uuid($record['uuid'])) {
-
-									//build delete array
-										$array[$this->table][$x][$this->uuid_prefix.'uuid'] = $record['uuid'];
-
-									//get the dialplan uuid and context
-										$sql = "select dialplan_uuid, destination_context from v_destinations ";
-										$sql .= "where destination_uuid = :destination_uuid ";
-										$parameters['destination_uuid'] = $record['uuid'];
-										$database = $this->database;
-										$row = $database->select($sql, $parameters, 'row');
-										unset($sql, $parameters);
-
-									//include dialplan in array
-										if (is_uuid($row['dialplan_uuid'])) {
-											$array['dialplan_details'][$x]['dialplan_uuid'] = $row["dialplan_uuid"];
-											$array['dialplans'][$x]['dialplan_uuid'] = $row["dialplan_uuid"];
-											$destination_contexts[] = $row['destination_context'];
-										}
-
-								}
-							}
-
-						//delete the checked rows
-							if (is_array($array) && @sizeof($array) != 0) {
-
-								//grant temporary permissions
-									$p = new permissions;
-									$p->add('dialplan_delete', 'temp');
-									$p->add('dialplan_detail_delete', 'temp');
-
-								//execute delete
-									$database = $this->database;
-									$database->delete($array);
-									unset($array);
-
-								//revoke temporary permissions
-									$p->delete('dialplan_delete', 'temp');
-									$p->delete('dialplan_detail_delete', 'temp');
-
-								//clear the cache
-									if (is_array($destination_contexts) && @sizeof($destination_contexts) != 0) {
-										$destination_contexts = array_unique($destination_contexts);
-										$cache = new cache;
-										foreach ($destination_contexts as $destination_context) {
-											$cache->delete("dialplan:".$destination_context);
-										}
-									}
-
-								//clear the destinations session array
-									if (isset($_SESSION['destinations'][$this->domain_uuid]['array'])) {
-										unset($_SESSION['destinations'][$this->domain_uuid]['array']);
-									}
-
-								//set message
-									message::add($text['message-delete']);
-
-							}
-							unset($records);
-
-					}
+			// clear the destinations session array
+			if (isset($_SESSION['destinations']['array'])) {
+				unset($_SESSION['destinations']['array']);
 			}
-		} //method
+		}
 
 
 		/**
