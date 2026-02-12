@@ -27,12 +27,24 @@
 //includes files
 	require_once __DIR__ . "/resources/require.php";
 
+//call the logout events before session is destroyed
+	$classes = $autoload->get_interface_list('logout_event');
+	foreach ($classes as $class) {
+		$class::on_logout_pre_session_destroy($settings);
+	}
+
 //use custom logout destination if set otherwise redirect to the index page
 	$logout_destination = $settings->get('login', 'logout_destination', PROJECT_PATH.'/');
 
 //destroy session
 	session_unset();
 	session_destroy();
+
+//call the logout events after session is destroyed
+	$classes = $autoload->get_interface_list('logout_event');
+	foreach ($classes as $class) {
+		$class::on_logout_post_session_destroy($settings);
+	}
 
 //redirect the user to the logout page
 	header("Location: ".$logout_destination);
