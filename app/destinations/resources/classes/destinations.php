@@ -17,7 +17,7 @@
 
 	The Initial Developer of the Original Code is
 	Mark J Crane <markjcrane@fusionpbx.com>
-	Portions created by the Initial Developer are Copyright (C) 2017 - 2025
+	Portions created by the Initial Developer are Copyright (C) 2017 - 2023
 	the Initial Developer. All Rights Reserved.
 
 	Contributor(s):
@@ -26,52 +26,29 @@
 
 /**
  * destinations
+ *
+ * @method get_array get the destinations
+ * @method select build the html select
  */
+if (!class_exists('destinations')) {
 	class destinations {
 
 		/**
-		 * declare constant variables
-		 */
-		const app_name = 'destinations';
-		const app_uuid = '5ec89622-b19c-3559-64f0-afde802ab139';
+		* destinations array
+		*/
+		public $destinations;
 
 		/**
-		 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set in the session global array
-		 * @var string
+		 * domain_uuid
+		 * @var string must be a valid uuid
 		 */
 		public $domain_uuid;
 
 		/**
-		 * Domain name set in the constructor. This can be passed in through the $settings_array associative array or set in the session global array
-		 * @var string
+		 * user_uuid
+		 * @var string must be a valid uuid
 		 */
-		public $domain_name;
-
-		/**
-		 * declare public variables
-		 */
-		public $destinations;
-		public $start_stamp_begin;
-		public $start_stamp_end;
-		public $quick_select;
-
-		/**
-		 * Set in the constructor. Must be a database object and cannot be null.
-		 * @var database Database Object
-		 */
-		private $database;
-
-		/**
-		 * Settings object set in the constructor. Must be a settings object and cannot be null.
-		 * @var settings Settings Object
-		 */
-		private $settings;
-
-		/**
-		 * User UUID set in the constructor. This can be passed in through the $settings_array associative array or set in the session global array
-		 * @var string
-		 */
-		private $user_uuid;
+		public $user_uuid;
 
 		/**
 		* declare private variables
@@ -82,41 +59,76 @@
 		private $list_page;
 		private $table;
 		private $uuid_prefix;
-		private $select_mode;
-		private $language;
 
 		/**
-		* Called when the object is created
-		*/
-		public function __construct(array $setting_array = []) {
-			//set domain and user UUIDs
-			$this->domain_uuid = $setting_array['domain_uuid'] ?? $_SESSION['domain_uuid'] ?? '';
-			$this->domain_name = $setting_array['domain_name'] ?? $_SESSION['domain_name'] ?? '';
-			$this->user_uuid = $setting_array['user_uuid'] ?? $_SESSION['user_uuid'] ?? '';
+		 * Domain name used to filter settings
+		 * @var string
+		 */
+		public $domain_name;
 
-			//set objects
-			$this->database = $setting_array['database'] ?? database::new();
-			$this->settings = $setting_array['settings'] ?? new settings(['database' => $this->database, 'domain_uuid' => $this->domain_uuid, 'user_uuid' => $this->user_uuid]);
+		/**
+		 * Settings object used to fetch database settings once during object creation
+		 * @var settings object
+		 */
+		private $settings;
 
+		/**
+		 * Database object created once during object creation
+		 * @var database
+		 */
+		private $database;
+
+		/**
+		 * Initializes the object with optional params as key/value pairs for the settings.
+		 * Optional key / value pairs in which the values can be <i>domain_uuid</i>, <i>user_uuid</i>, <i>settings</i>,
+		 * and <i>database</i>. The domain_uuid is optional but can be supplied to override the currently selected domain in the
+		 * _SESSION global. The user_uuid is optional but can be supplied to override the currently logged in user. The settings
+		 * object can be supplied as to not re-read already parsed database values. The database object can be supplied as to not
+		 * create a new connection to the database. However, the app_uuid and app_name within the database object will be overridden
+		 * with the name and uuid of this object for transactions that are recorded in the database transactions table. If no
+		 * domain_uuid or user_uuid are supplied the object will pull this information from the current session. If the session is
+		 * not available only the default settings are used.
+		 * @param array $params Optional key/value pairs
+		 * @depends settings object This is auto-created during startup if not supplied
+		 * @depends database object This is auto-created during startup if not supplied
+		 */
+		public function __construct(array $params = []) {
 			//assign private variables
+			$this->app_name = 'destinations';
+			$this->app_uuid = '5ec89622-b19c-3559-64f0-afde802ab139';
 			$this->permission_prefix = 'destination_';
 			$this->list_page = 'destinations.php';
 			$this->table = 'destinations';
 			$this->uuid_prefix = 'destination_';
 
+			if (isset($params['domain_uuid'])) { $domain_uuid = $params['domain_uuid']; }
+			if (isset($params['user_uuid'])) { $user_uuid = $params['user_uuid']; }
+			if (isset($params['settings'])) { $settings = $params['settings']; }
+			if (isset($params['database'])) { $database = $params['database']; }
+
+			//set defaults
+			$this->domain_uuid = $domain_uuid ?? $_SESSION['domain_uuid'] ?? '';
+			$this->user_uuid = $user_uuid ?? $_SESSION['user_uuid'] ?? '';
+			$this->destinations = [];
+
+			//create a database connection
+			$this->database = $database ?? new database();
+
+			//set database to the destinations app for transaction recording
+			$this->database->app_name = $this->app_name;
+			$this->database->app_uuid = $this->app_uuid;
+
+			//get the settings
+			//if the domain_uuid and user_uuid are filled in then this will return the settings for the
+			//current user or current domain
+			$this->settings = $settings ?? new settings(['domain_uuid' => $this->domain_uuid, 'user_uuid' => $this->user_uuid]);
+
 			//get the domain_name
-			if (empty($this->domain_name) || !empty($this->domain_uuid)) {
-				$sql = "select domain_name from v_domains ";
-				$sql .= "where domain_uuid = :domain_uuid ";
-				$parameters['domain_uuid'] = $this->domain_uuid;
-				$this->domain_name = $this->database->select($sql, $parameters, 'column');
-			}
-
-			//set the select_mode
-			$this->select_mode = $this->settings->get('destinations', 'select_mode', 'default');
-
-			//get the language
-			$this->language = $this->settings->get('domain', 'language');
+			$sql = "select domain_name from v_domains ";
+			$sql .= "where domain_uuid = :domain_uuid ";
+			$parameters['domain_uuid'] = $this->domain_uuid;
+			$database = $this->database;
+			$this->domain_name = $database->select($sql, $parameters, 'column');
 		}
 
 		/**
@@ -201,127 +213,17 @@
 				return $destination_regex;
 
 		}
-		/**
-		* Build the destinations array
-		*/
-		public function get_destinations() {
-			//set the global variables
-			global $db_type;
-
-			//return now if the array exists
-			if (!empty($this->destinations)) {
-				return true;
-			}
-
-			//get the array from the app_config.php files
-			$config_list = glob(dirname(__DIR__, 4) . "/*/*/app_config.php");
-			$x = 0;
-			foreach ($config_list as $config_path) {
-				try {
-					include($config_path);
-				}
-				catch (Exception $e) {
-					//echo 'Caught exception: ',  $e->getMessage(), "\n";
-				}
-				$x++;
-			}
-			$i = 0;
-			foreach ($apps as $x => $app) {
-				if (isset($app['destinations'])) foreach ($app['destinations'] as $row) {
-					if (permission_exists($this->singular($row["name"])."_destinations")) {
-						$this->destinations[] = $row;
-					}
-				}
-			}
-			//put the array in order
-			if ($this->destinations !== null && is_array($this->destinations)) {
-				foreach ($this->destinations as $row) {
-					$option_groups[] = $row['label'];
-				}
-				array_multisort($option_groups, SORT_ASC, $this->destinations);
-			}
-
-			//add the sql and data to the array
-			if ($this->destinations !== null && is_array($this->destinations)) {
-				$x = 0;
-				foreach ($this->destinations as $row) {
-					if ($row['type'] === 'sql') {
-						$table_name = preg_replace('#[^a-zA-Z0-9_]#', '', $row['name']);
-						if (isset($row['sql'])) {
-							if (is_array($row['sql'])) {
-								$sql = trim($row['sql'][$db_type])." ";
-							}
-							else {
-								$sql = trim($row['sql'])." ";
-							}
-						}
-						else {
-							$field_count = count($row['field']);
-							$fields = '';
-							$c = 1;
-							foreach ($row['field'] as $key => $value) {
-								$key = preg_replace('#[^a-zA-Z0-9_]#', '', $key);
-								$value = preg_replace('#[^a-zA-Z0-9_]#', '', $value);
-								if ($field_count != $c) { $delimiter = ','; } else { $delimiter = ''; }
-								$fields .= $value." as ".$key.$delimiter." ";
-								$c++;
-							}
-							$sql = "select ".$fields;
-							$sql .= " from v_".$table_name." ";
-						}
-						if (isset($row['where'])) {
-							$sql .= trim($row['where'])." ";
-						}
-						$sql .= "order by ".trim($row['order_by']);
-						$sql = str_replace("\${domain_uuid}", $this->domain_uuid, $sql);
-						$result = $this->database->select($sql, null, 'all');
-
-						$this->destinations[$x]['result']['sql'] = $sql;
-						$this->destinations[$x]['result']['data'] = $result;
-					}
-					if ($row['type'] === 'array') {
-						$this->destinations[$x] = $row;
-					}
-					$x++;
-				}
-			}
-
-			$this->destinations[$x]['type'] = 'array';
-			$this->destinations[$x]['label'] = 'other';
-			$this->destinations[$x]['name'] = 'dialplans';
-			$this->destinations[$x]['field']['name'] = "name";
-			$this->destinations[$x]['field']['destination'] = "destination";
-			$this->destinations[$x]['select_value']['dialplan'] = "transfer:\${destination}";
-			$this->destinations[$x]['select_value']['ivr'] = "menu-exec-app:transfer \${destination}";
-			$this->destinations[$x]['select_label'] = "\${name}";
-			$y = 0;
-			$this->destinations[$x]['result']['data'][$y]['label'] = 'check_voicemail';
-			$this->destinations[$x]['result']['data'][$y]['name'] = '*98';
-			$this->destinations[$x]['result']['data'][$y]['destination'] = '*98 XML ${context}';
-			$y++;
-			$this->destinations[$x]['result']['data'][$y]['label'] = 'company_directory';
-			$this->destinations[$x]['result']['data'][$y]['name'] = '*411';
-			$this->destinations[$x]['result']['data'][$y]['destination'] = '*411 XML ${context}';
-			$y++;
-			$this->destinations[$x]['result']['data'][$y]['label'] = 'hangup';
-			$this->destinations[$x]['result']['data'][$y]['name'] = 'hangup';
-			$this->destinations[$x]['result']['data'][$y]['application'] = 'hangup';
-			$this->destinations[$x]['result']['data'][$y]['destination'] = '';
-			$y++;
-			$this->destinations[$x]['result']['data'][$y]['label'] = 'record';
-			$this->destinations[$x]['result']['data'][$y]['name'] = '*732';
-			$this->destinations[$x]['result']['data'][$y]['destination'] = '*732 XML ${context}';
-			$y++;
-		}
 
 		/**
-		* Build the destination select list
-		* @var string $destination_type can be ivr, dialplan, call_center_contact or bridge
-		* @var string $destination_name - current name
-		* @var string $destination_value - current value
-		* @var string $placeholder - descriptive text
-		*/
-		public function select($destination_type, $destination_name, $destination_value, $placeholder = null) {
+		 * Build the destination HTML select list
+		 * @global type $db_type
+		 * @param string $destination_type Can be <i>ivr</i>, <i>dialplan</i>, <i>call_center_contact</i> or <i>bridge</i>
+		 * @param string $destination_name Current name
+		 * @param string $destination_value Current value
+		 * @param array $filter_applications Optional. When supplied, filters out all other dialplan destinations except the ones specified
+		 * @return string
+		 */
+		public function select(string $destination_type, string $destination_name, string $destination_value, array $filter_applications = []) {
 
 			//set the global variables
 			global $db_type;
@@ -333,11 +235,132 @@
 			//initialize variable
 			$response = '';
 
-			//get the destinations
-			$this->get_destinations();
+			//get the select mode
+			$select_mode = $this->settings->get('destinations', 'select_mode', 'default');
 
 			//create a single destination select list
-			if ($this->select_mode == 'default') {
+			if ($select_mode === 'default') {
+				//get the destinations
+				if (empty($this->destinations) || count($this->destinations) === 0) {
+
+					//get the array from the app_config.php files
+					global $apps;
+					$config_list = glob($_SERVER["DOCUMENT_ROOT"] . PROJECT_PATH . "/*/*/app_config.php");
+					$x = 0;
+					foreach ($config_list as &$config_path) {
+						try {
+							include($config_path);
+						}
+						catch (Exception $e) {
+							//echo 'Caught exception: ',  $e->getMessage(), "\n";
+						}
+						$x++;
+					}
+
+					foreach ($apps as &$app) {
+						if (isset($app['destinations'])) {
+							//for loop is specified twice so filters don't have to be checked on each iteration
+							if (!empty($filter_applications)) {
+								foreach ($app['destinations'] as &$row) {
+									if (array_search($row['name'], $filter_applications) !== false  && permission_exists(self::singular($row["name"]) . "_destinations")) {
+										$this->destinations[] = $row;
+									}
+								}
+							}
+							else {
+								foreach ($app['destinations'] as &$row) {
+									if (permission_exists(self::singular($row["name"]) . "_destinations")) {
+										$this->destinations[] = $row;
+									}
+								}
+							}
+						}
+					}
+
+					//put the array in order
+					if ($this->destinations !== null && is_array($this->destinations)) {
+						foreach ($this->destinations as $row) {
+							$option_groups[] = $row['label'];
+						}
+						array_multisort($option_groups, SORT_ASC, $this->destinations);
+					}
+
+					//add the sql and data to the array
+					if ($this->destinations !== null && is_array($this->destinations)) {
+						$x = 0;
+						foreach ($this->destinations as $row) {
+							if ($row['type'] === 'sql') {
+								$table_name = preg_replace('#[^a-zA-Z0-9_]#', '', $row['name']);
+								if (isset($row['sql'])) {
+									if (is_array($row['sql'])) {
+										$sql = trim($row['sql'][$db_type])." ";
+									}
+									else {
+										$sql = trim($row['sql'])." ";
+									}
+								}
+								else {
+									$field_count = count($row['field']);
+									$fields = '';
+									$c = 1;
+									foreach ($row['field'] as $key => $value) {
+										$key = preg_replace('#[^a-zA-Z0-9_]#', '', $key);
+										$value = preg_replace('#[^a-zA-Z0-9_]#', '', $value);
+										if ($field_count != $c) { $delimiter = ','; } else { $delimiter = ''; }
+										$fields .= $value." as ".$key.$delimiter." ";
+										$c++;
+									}
+									$sql = "select ".$fields;
+									$sql .= " from v_".$table_name." ";
+								}
+								if (isset($row['where'])) {
+									$sql .= trim($row['where'])." ";
+								}
+								$sql .= "order by ".trim($row['order_by']);
+								$sql = str_replace("\${domain_uuid}", $this->domain_uuid, $sql);
+								$database = $this->database;
+								$result = $database->select($sql, null, 'all');
+
+								$this->destinations[$x]['result']['sql'] = $sql;
+								$this->destinations[$x]['result']['data'] = $result;
+							}
+							if ($row['type'] === 'array') {
+								$this->destinations[$x] = $row;
+							}
+							$x++;
+						}
+					}
+
+					//ensure these are not filtered out before including them
+					$permitted = (empty($filter_applications) || (array_search($key, $filter_applications) !== false) && permission_exists("{$singular}_destinations"));
+					if ($permitted) {
+						$this->destinations[$x]['type'] = 'array';
+						$this->destinations[$x]['label'] = 'other';
+						$this->destinations[$x]['name'] = 'dialplans';
+						$this->destinations[$x]['field']['name'] = "name";
+						$this->destinations[$x]['field']['destination'] = "destination";
+						$this->destinations[$x]['select_value']['dialplan'] = "transfer:\${destination}";
+						$this->destinations[$x]['select_value']['ivr'] = "menu-exec-app:transfer \${destination}";
+						$this->destinations[$x]['select_label'] = "\${name}";
+						$y = 0;
+						$this->destinations[$x]['result']['data'][$y]['label'] = 'check_voicemail';
+						$this->destinations[$x]['result']['data'][$y]['name'] = '*98';
+						$this->destinations[$x]['result']['data'][$y]['destination'] = '*98 XML ${context}';
+						$y++;
+						$this->destinations[$x]['result']['data'][$y]['label'] = 'company_directory';
+						$this->destinations[$x]['result']['data'][$y]['name'] = '*411';
+						$this->destinations[$x]['result']['data'][$y]['destination'] = '*411 XML ${context}';
+						$y++;
+						$this->destinations[$x]['result']['data'][$y]['label'] = 'hangup';
+						$this->destinations[$x]['result']['data'][$y]['name'] = 'hangup';
+						$this->destinations[$x]['result']['data'][$y]['application'] = 'hangup';
+						$this->destinations[$x]['result']['data'][$y]['destination'] = '';
+						$y++;
+						$this->destinations[$x]['result']['data'][$y]['label'] = 'record';
+						$this->destinations[$x]['result']['data'][$y]['name'] = '*732';
+						$this->destinations[$x]['result']['data'][$y]['destination'] = '*732 XML ${context}';
+					}
+				}
 
 				//remove special characters from the name
 				$destination_id = str_replace("]", "", $destination_name);
@@ -347,7 +370,7 @@
 				$select_style = 'width: 200px;';
 
 				//add additional
-				if (if_group("superadmin")) {
+				if (permission_exists("dialplan_edit")) {
 					$response .= "<script>\n";
 					$response .= "var Objs;\n";
 					$response .= "\n";
@@ -390,14 +413,11 @@
 					$response .= "\n";
 				}
 
-				//create the text object
-				$language2 = new text;
-
 				//set default to false
 				$select_found = false;
 
 				$response .= "	<select name='".$destination_name."' id='".$destination_id."' class='formfld' style='".$select_style."' onchange=\"".$onchange."\">\n";
-				$response .= "		<option value='' ".(!empty($placeholder) ? "selected='selected' disabled='disabled'" : null).">".(!empty($placeholder) ? $placeholder : null)."</option>\n";
+				$response .= "			<option value=''></option>\n";
 				foreach ($this->destinations as $row) {
 
 					$name = $row['name'];
@@ -405,12 +425,13 @@
 					$destination = $row['field']['destination'] ?? '';
 
 					//add multi-lingual support
-					if (file_exists(dirname(__DIR__, 4)."/app/".$name."/app_languages.php")) {
-						$text2 = $language2->get($this->language, 'app/'.$name);
+					if (file_exists($_SERVER["PROJECT_ROOT"]."/app/".$name."/app_languages.php")) {
+						$language2 = new text;
+						$text2 = $language2->get($_SESSION['domain']['language']['code'], 'app/'.$name);
 					}
 
 					if (!empty($row['result']['data']) && !empty($row['select_value'][$destination_type])) {
-						$response .= "		<optgroup label='".$text2['title-'.$name]."'>\n";
+						$response .= "		<optgroup label='".$text2['title-'.$label]."'>\n";
 						$label2 = $label;
 						foreach ($row['result']['data'] as $data) {
 							$select_value = $row['select_value'][$destination_type];
@@ -440,17 +461,19 @@
 										}
 									}
 									else {
-										$select_value = str_replace("\${".$key."}", $data[$key] ?? '', $select_value ?? '');
-										if (empty($data['label'])) {
-											$select_label = str_replace("\${".$key."}", $data[$key] ?? '', $select_label ?? '');
-										}
-										else {
-											$label = $data['label'];
-											$select_label = str_replace("\${".$key."}", $text2['option-'.$label], $select_label);
+										if (array_key_exists($key, $data)) {
+											$select_value = str_replace("\${".$key."}", $data[$key], $select_value ?? '');
+											if (empty($data['label'])) {
+												$select_label = str_replace("\${".$key."}", $data[$key], $select_label ?? '');
+											}
+											else {
+												$label = $data['label'];
+												$select_label = str_replace("\${".$key."}", $text2['option-'.$label], $select_label);
+											}
 										}
 									}
 									//application: hangup
-									if (!empty($data['application']) && $data['application'] === 'hangup') {
+									if (!empty($data['application'])) {
 										$select_value = str_replace("transfer", $data['application'], $select_value);
 									}
 								}
@@ -468,7 +491,6 @@
 							$response .= "			<option value='".escape($select_value)."' ".$selected.">".$select_label."</option>\n";
 						}
 						$response .= "		</optgroup>\n";
-						unset($text);
 					}
 				}
 				if (!$select_found) {
@@ -481,37 +503,23 @@
 					}
 				}
 				$response .= "	</select>\n";
-				if (if_group("superadmin")) {
+				if (permission_exists("dialplan_edit")) {
 					$response .= "<input type='button' id='btn_select_to_input_".$destination_id."' class='btn' name='' alt='back' onclick='changeToInput".$destination_id."(document.getElementById(\"".$destination_id."\"));this.style.visibility = \"hidden\";' value='&#9665;'>";
 				}
 			}
 
 			//create a dynamic destination select list
-			if ($this->select_mode == 'dynamic') {
+			if ($select_mode === 'dynamic') {
 
 				//remove special characters from the name
 				$destination_id = str_replace("]", "", $destination_name);
 				$destination_id = str_replace("[", "_", $destination_id);
 				//$destination_id = preg_replace('/[^a-zA-Z_,.]/', '', $destination_name);
 
-				//send request for destinations
-				echo "<script type=\"text/javascript\">\n";
-				echo "	function get_destinations(id, destination_type, action, search) {\n";
-				echo "		var xhttp = new XMLHttpRequest();\n";
-				echo "		xhttp.onreadystatechange = function() {\n";
-				echo "			if (this.readyState == 4 && this.status == 200) {\n";
-				echo "				document.getElementById(id).innerHTML = this.responseText;\n";
-				echo "			}\n";
-				echo "		};\n";
-				echo "		if (action) {\n";
-				echo "			xhttp.open(\"GET\", \"/app/destinations/resources/destinations.php?destination_type=\"+destination_type+\"&action=\"+action, true);\n";
-				echo "		}\n";
-				echo "		else {\n";
-				echo "			xhttp.open(\"GET\", \"/app/destinations/resources/destinations.php?destination_type=\"+destination_type, true);\n";
-				echo "		}\n";
-				echo "		xhttp.send();\n";
-				echo "	}\n";
-				echo "</script>\n";
+				//include the javascript contents in the reponse
+				$response .= "<script type='text/javascript'>\n";
+				$response .= file_get_contents(__DIR__ . '/../scripts/destinations.js');
+				$response .= "</script>\n";
 
 				//get the destinations
 				$destinations = $this->get($destination_type);
@@ -519,7 +527,7 @@
 				//get the destination label
 				foreach($destinations as $key => $value) {
 					foreach($value as $k => $row) {
-						if (!empty($row['destination']) && $destination_value == $row['destination']) {
+						if ($destination_value == $row['destination']) {
 							$destination_key = $key;
 							$destination_label = $row['label'];
 							break 2;
@@ -531,21 +539,22 @@
 				$language2 = new text;
 
 				//build the destination select list in html
-				$response .= "	<select id='{$destination_id}_type' class='formfld' style='".$select_style."' onchange=\"get_destinations('".$destination_id."', '".$destination_type."', this.value);\">\n";
+				$response .= "	<select id='{$destination_id}_type' class='formfld' style='{$select_style}' onchange=\"get_destinations('{$destination_id}', '{$destination_type}', this.value);\">\n";
 				$response .= " 		<option value=''></option>\n";
 				foreach($destinations as $key => $value) {
-					$singular = $this->singular($key);
-					if (permission_exists("{$singular}_destinations")) {
+					$singular = self::singular($key);
+					$permitted = (empty($filter_applications) || (array_search($key, $filter_applications) !== false) && permission_exists("{$singular}_destinations"));
+					if ($permitted) {
 						//determine if selected
 						$selected = (isset($destination_key) && $key == $destination_key) ? "selected='selected'" : '';
 
 						//add multi-lingual support
-						if (file_exists(dirname(__DIR__, 4)."/app/".$key."/app_languages.php")) {
-							$text2 = $language2->get($this->language, 'app/'.$key);
-							$found = 'true';
+						if (file_exists($_SERVER["PROJECT_ROOT"]."/app/".$key."/app_languages.php")) {
+							$language2 = new text;
+							$text2 = $language2->get($_SESSION['domain']['language']['code'], 'app/'.$key);
 						}
 						if ($key == 'other') {
-							$text2 = $language2->get($this->language, 'app/dialplans');
+							$text2 = $language2->get($_SESSION['domain']['language']['code'], 'app/dialplans');
 						}
 						//add the application to the select list
 						$response .= "		<option id='{$singular}' class='{$key}' value='".$key."' $selected>".$text2['title-'.$key]."</option>\n";
@@ -557,7 +566,7 @@
 					if (isset($destination_key) && $key == $destination_key) {
 						foreach($value as $k => $row) {
 							$selected = ($row['destination'] == $destination_value) ? "selected='selected'" : '';
-							$uuid = isset($row[$this->singular($key).'_uuid']) ? $row[$this->singular($key).'_uuid'] : ($row['uuid'] ?? '');
+							$uuid = isset($row[self::singular($key).'_uuid']) ? $row[self::singular($key).'_uuid'] : ($row['uuid'] ?? '');
 							$response .= "		<option id='{$uuid}' value='".$row['destination']."' $selected>".$row['label']."</option>\n";
 						}
 					}
@@ -593,15 +602,111 @@
 		public function all($destination_type) {
 
 			//set the global variables
-			global $db_type, $settings;
+			global $db_type;
+
+			//connect to the database
+			$database = $this->database;
 
 			//set default values
 			$destination_name = '';
 			$destination_id = '';
 
-
 			//get the destinations
-			$this->get_destinations();
+			if (count($this->destinations) === 0) {
+
+				//get the array from the app_config.php files
+				$config_list = glob($_SERVER["DOCUMENT_ROOT"] . PROJECT_PATH . "/*/*/app_config.php");
+				$x = 0;
+				foreach ($config_list as &$config_path) {
+					try {
+						include($config_path);
+					}
+					catch (Exception $e) {
+						//echo 'Caught exception: ',  $e->getMessage(), "\n";
+					}
+					$x++;
+				}
+				$i = 0;
+				foreach ($apps as $x => &$app) {
+					if (isset($app['destinations'])) {
+						foreach ($app['destinations'] as &$row) {
+							$this->destinations[] = $row;
+						}
+					}
+				}
+
+				//put the array in order
+				foreach ($this->destinations as $row) {
+					$option_groups[] = $row['label'];
+				}
+				array_multisort($option_groups, SORT_ASC, $this->destinations);
+
+				//add the sql and data to the array
+				$x = 0;
+				foreach ($this->destinations as $row) {
+					if ($row['type'] === 'sql') {
+						$table_name = preg_replace('#[^a-zA-Z0-9_]#', '', $row['name']);
+						if (isset($row['sql'])) {
+							if (is_array($row['sql'])) {
+								$sql = trim($row['sql'][$db_type])." ";
+							}
+							else {
+								$sql = trim($row['sql'])." ";
+							}
+						}
+						else {
+							$field_count = count($row['field']);
+							$fields = '';
+							$c = 1;
+							foreach ($row['field'] as $key => $value) {
+								$key = preg_replace('#[^a-zA-Z0-9_]#', '', $key);
+								$value = preg_replace('#[^a-zA-Z0-9_]#', '', $value);
+								if ($field_count != $c) { $delimiter = ','; } else { $delimiter = ''; }
+								$fields .= $value." as ".$key.$delimiter." ";
+								$c++;
+							}
+							$sql = "select ".$fields;
+							$sql .= " from v_".$table_name." ";
+						}
+						if (isset($row['where'])) {
+							$sql .= trim($row['where'])." ";
+						}
+						$sql .= "order by ".trim($row['order_by']);
+						$sql = str_replace("\${domain_uuid}", $this->domain_uuid, $sql);
+						$result = $database->select($sql, null, 'all');
+
+						$this->destinations[$x]['result']['sql'] = $sql;
+						$this->destinations[$x]['result']['data'] = $result;
+					}
+					if ($row['type'] === 'array') {
+						$this->destinations[$x] = $row;
+					}
+					$x++;
+				}
+
+				$this->destinations[$x]['type'] = 'array';
+				$this->destinations[$x]['label'] = 'other';
+				$this->destinations[$x]['name'] = 'dialplans';
+				$this->destinations[$x]['field']['name'] = "name";
+				$this->destinations[$x]['field']['destination'] = "destination";
+				$this->destinations[$x]['select_value']['dialplan'] = "transfer:\${destination}";
+				$this->destinations[$x]['select_value']['ivr'] = "menu-exec-app:transfer \${destination}";
+				$this->destinations[$x]['select_label'] = "\${name}";
+				$y=0;
+				$this->destinations[$x]['result']['data'][$y]['name'] = 'check_voicemail';
+				$this->destinations[$x]['result']['data'][$y]['destination'] = '*98 XML ${context}';
+				$y++;
+				$this->destinations[$x]['result']['data'][$y]['name'] = 'company_directory';
+				$this->destinations[$x]['result']['data'][$y]['destination'] = '*411 XML ${context}';
+				$y++;
+				$this->destinations[$x]['result']['data'][$y]['name'] = 'hangup';
+				$this->destinations[$x]['result']['data'][$y]['application'] = 'hangup';
+				$this->destinations[$x]['result']['data'][$y]['destination'] = '';
+				$y++;
+				$this->destinations[$x]['result']['data'][$y]['name'] = 'record';
+				$this->destinations[$x]['result']['data'][$y]['destination'] = '*732 XML ${context}';
+				$y++;
+			}
 
 			//remove special characters from the name
 			$destination_id = str_replace("]", "", $destination_name);
@@ -617,9 +722,9 @@
 				$destination = $row['field']['destination'] ?? '';
 
 				//add multi-lingual support
-				if (file_exists(dirname(__DIR__, 4)."/app/".$name."/app_languages.php")) {
+				if (file_exists($_SERVER["PROJECT_ROOT"]."/app/".$name."/app_languages.php")) {
 					$language2 = new text;
-					$text2 = $language2->get($this->language, 'app/'.$name);
+					$text2 = $language2->get($_SESSION['domain']['language']['code'], 'app/'.$name);
 				}
 
 				if (!empty($row['result']['data']) && !empty($row['select_value'][$destination_type])) {
@@ -705,14 +810,114 @@
 		public function get($destination_type) {
 
 			//set the global variables
-			global $db_type, $settings;
+			global $db_type;
 
-			//predefine the destination value
-			$destination_value = '';
-
+			//connect to the database
+			$database = $this->database;
 
 			//get the destinations
-			$this->get_destinations();
+			if (count($this->destinations) === 0) {
+
+				//get the array from the app_config.php files
+				$config_list = glob($_SERVER["DOCUMENT_ROOT"] . PROJECT_PATH . "/*/*/app_config.php");
+				$x = 0;
+				foreach ($config_list as &$config_path) {
+					try {
+						include($config_path);
+					}
+					catch (Exception $e) {
+						//echo 'Caught exception: ',  $e->getMessage(), "\n";
+					}
+					$x++;
+				}
+				$i = 0;
+				foreach ($apps as $x => &$app) {
+					if (isset($app['destinations'])) {
+						foreach ($app['destinations'] as &$row) {
+							$this->destinations[] = $row;
+						}
+					}
+				}
+
+				//put the array in order
+				foreach ($this->destinations as $row) {
+					$option_groups[] = $row['label'];
+				}
+				array_multisort($option_groups, SORT_ASC, $this->destinations);
+
+				//add the sql and data to the array
+				$x = 0;
+				foreach ($this->destinations as $row) {
+					if ($row['type'] === 'sql') {
+						$table_name = preg_replace('#[^a-zA-Z0-9_]#', '', $row['name']);
+						if (isset($row['sql'])) {
+							if (is_array($row['sql'])) {
+								$sql = trim($row['sql'][$db_type])." ";
+							}
+							else {
+								$sql = trim($row['sql'])." ";
+							}
+						}
+						else {
+							$field_count = count($row['field']);
+							$fields = '';
+							$c = 1;
+							foreach ($row['field'] as $key => $value) {
+								$key = preg_replace('#[^a-zA-Z0-9_]#', '', $key);
+								$value = preg_replace('#[^a-zA-Z0-9_]#', '', $value);
+								if ($field_count != $c) { $delimiter = ','; } else { $delimiter = ''; }
+								$fields .= $value." as ".$key.$delimiter." ";
+								$c++;
+							}
+							//$sql = "select * ";
+							$sql = "select ".$fields;
+							$sql .= " from v_".$table_name." ";
+						}
+						if (isset($row['where'])) {
+							$sql .= trim($row['where'])." ";
+						}
+						$sql .= "order by ".trim($row['order_by']);
+						$sql = str_replace("\${domain_uuid}", $this->domain_uuid, $sql);
+						$result = $database->select($sql, null, 'all');
+
+						$this->destinations[$x]['result']['sql'] = $sql;
+						$this->destinations[$x]['result']['data'] = $result;
+					}
+					if ($row['type'] === 'array') {
+						$this->destinations[$x] = $row;
+					}
+					$x++;
+				}
+
+				$this->destinations[$x]['type'] = 'array';
+				$this->destinations[$x]['label'] = 'other';
+				$this->destinations[$x]['name'] = 'other';
+				$this->destinations[$x]['field']['label'] = "label";
+				$this->destinations[$x]['field']['name'] = "name";
+				$this->destinations[$x]['field']['extension'] = "extension";
+				$this->destinations[$x]['field']['destination'] = "destination";
+				$this->destinations[$x]['select_value']['dialplan'] = "transfer:\${destination}";
+				$this->destinations[$x]['select_value']['ivr'] = "menu-exec-app:transfer \${destination}";
+				$this->destinations[$x]['select_label'] = "\${name}";
+				$y = 0;
+				$this->destinations[$x]['result']['data'][$y]['name'] = 'check_voicemail';
+				$this->destinations[$x]['result']['data'][$y]['extension'] = '*98';
+				$this->destinations[$x]['result']['data'][$y]['destination'] = '*98 XML ${context}';
+				$y++;
+				$this->destinations[$x]['result']['data'][$y]['name'] = 'company_directory';
+				$this->destinations[$x]['result']['data'][$y]['extension'] = '*411';
+				$this->destinations[$x]['result']['data'][$y]['destination'] = '*411 XML ${context}';
+				$y++;
+				$this->destinations[$x]['result']['data'][$y]['name'] = 'hangup';
+				$this->destinations[$x]['result']['data'][$y]['application'] = 'hangup';
+				$this->destinations[$x]['result']['data'][$y]['destination'] = '';
+				$y++;
+				$this->destinations[$x]['result']['data'][$y]['name'] = 'record';
+				$this->destinations[$x]['result']['data'][$y]['extension'] = '*732';
+				$this->destinations[$x]['result']['data'][$y]['destination'] = '*732 XML ${context}';
+				$y++;
+
+			}
 
 			//remove special characters from the name
 			$destination_id = str_replace("]", "", $destination_name ?? '');
@@ -729,9 +934,9 @@
 				$destination = $row['field']['destination'] ?? null;
 
 				//add multi-lingual support
-				if (file_exists(dirname(__DIR__, 4)."/app/".$name."/app_languages.php")) {
+				if (file_exists($_SERVER["PROJECT_ROOT"]."/app/".$name."/app_languages.php")) {
 					$language2 = new text;
-					$text2 = $language2->get($this->language, 'app/'.$name);
+					$text2 = $language2->get($_SESSION['domain']['language']['code'], 'app/'.$name);
 				}
 
 				if (isset($row['result']) && isset($row['result']['data'][0]) && !empty($row['select_value'][$destination_type])) {
@@ -769,7 +974,7 @@
 										$select_label = str_replace("\${".$key."}", ($data[$key] ?? ''), $select_label);
 									}
 									else {
-										$select_label = str_replace("\${".$key."}", ($text2['option-'.$label] ?? ''), $select_label);
+										$select_label = str_replace("\${".$key."}", $text2['option-'.$label], $select_label);
 									}
 								}
 								//application: hangup
@@ -792,7 +997,7 @@
 						$select_label = str_replace("&#9993", 'email-icon', $select_label);
 						$select_label = escape(trim($select_label));
 						$select_label = str_replace('email-icon', '&#9993', $select_label);
-						if (isset($destination_value) && $select_value == $destination_value) { $selected = true; } else { $selected = false; }
+						if (isset($destination_value) && $select_value == $destination_value) { $selected = "true' "; } else { $selected = 'false'; }
 						if ($label2 == 'destinations') { $select_label = format_phone($select_label); }
 
 						$array[$name][$i] = $data;
@@ -900,7 +1105,8 @@
 										$sql = "select dialplan_uuid, destination_context from v_destinations ";
 										$sql .= "where destination_uuid = :destination_uuid ";
 										$parameters['destination_uuid'] = $record['uuid'];
-										$row = $this->database->select($sql, $parameters, 'row');
+										$database = $this->database;
+										$row = $database->select($sql, $parameters, 'row');
 										unset($sql, $parameters);
 
 									//include dialplan in array
@@ -917,12 +1123,13 @@
 							if (is_array($array) && @sizeof($array) != 0) {
 
 								//grant temporary permissions
-									$p = permissions::new();
+									$p = new permissions;
 									$p->add('dialplan_delete', 'temp');
 									$p->add('dialplan_detail_delete', 'temp');
 
 								//execute delete
-									$this->database->delete($array);
+									$database = $this->database;
+									$database->delete($array);
 									unset($array);
 
 								//revoke temporary permissions
@@ -947,10 +1154,12 @@
 									message::add($text['message-delete']);
 
 							}
+							unset($records);
 
 					}
 			}
 		} //method
+
 
 		/**
 		 * destination summary returns an array
@@ -965,11 +1174,8 @@
 					$time_zone = date_default_timezone_get();
 				}
 
-			//set the time zone for php
-				date_default_timezone_set($time_zone);
-
 			//build the date range
-				if (!empty($this->start_stamp_begin) || !empty($this->start_stamp_end)) {
+				if ((!empty($this->start_stamp_begin) && strlen($this->start_stamp_begin) > 0) || !empty($this->start_stamp_end)) {
 					unset($this->quick_select);
 					if (strlen($this->start_stamp_begin) > 0 && !empty($this->start_stamp_end)) {
 						$sql_date_range = " and start_stamp between :start_stamp_begin::timestamptz and :start_stamp_end::timestamptz \n";
@@ -1070,8 +1276,7 @@
 				}
 				$sql .= " and direction = 'inbound' \n";
 				$sql .= " and caller_destination is not null \n";
-				$sql .= " and leg = 'a' \n";
-				$sql .= $sql_date_range ?? '';
+				$sql .= $sql_date_range;
 				$sql .= ") as c \n";
 
 				$sql .= "where \n";
@@ -1080,13 +1285,14 @@
 					$sql .= "and d.domain_uuid = :domain_uuid \n";
 				}
 				$sql .= "and destination_type = 'inbound' \n";
-				$sql .= "and destination_enabled = true \n";
+				$sql .= "and destination_enabled = 'true' \n";
 				$sql .= "group by d.domain_uuid, d.destination_uuid, d.dialplan_uuid, n.domain_name, d.destination_type, d.destination_prefix, d.destination_number \n";
 				$sql .= "order by destination_number asc \n";
 				if (!(!empty($_GET['show']) && $_GET['show'] === 'all' && permission_exists('destination_summary_all'))) {
 					$parameters['domain_uuid'] = $this->domain_uuid;
 				}
-				$summary = $this->database->select($sql, $parameters, 'all');
+				$database = $this->database;
+				$summary = $database->select($sql, $parameters, 'all');
 				unset($parameters);
 
 				//if (!empty($this->start_stamp_begin) && !empty($this->start_stamp_end)) {
@@ -1097,10 +1303,11 @@
 				return $summary;
 		}
 
+
 		/**
 		* define singular function to convert a word in english to singular
 		*/
-		public function singular($word) {
+		public static function singular($word) {
 			//"-es" is used for words that end in "-x", "-s", "-z", "-sh", "-ch" in which case you add
 			if (substr($word, -2) == "es") {
 				if (substr($word, -4) == "sses") { // eg. 'addresses' to 'address'
@@ -1134,10 +1341,27 @@
 			else {
 				return rtrim($word, "s");
 			}
-		} //method
+		}
 
+		/**
+		 * Transforms an array of destination number with the syntax of "transfer: 100 XML localhost" to just "100"
+		 * The destinations array should be passed in from the select array that is returned in a POST request
+		 * @param array $destinations
+		 */
+		public static function transform_destination_numbers(array &$destinations) {
+			if (!empty($destinations)) {
+				foreach ($destinations as $key => $destination) {
+					if (!empty($destination['destination_number'])) {
+						$matches = [];
+						$number = $destination['destination_number'];
+						preg_match('/\b(\d+)\b/', $number, $matches);
+						$destinations[$key]['destination_number'] = $matches[0];
+					}
+				}
+			}
+		}
 	} //class
-
+}
 /*
 $obj = new destinations;
 //$destinations = $obj->destinations;
