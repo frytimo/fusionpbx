@@ -30,6 +30,7 @@
 //call the logout events before session is destroyed
 	$classes = $autoload->get_interface_list('logout_event');
 	foreach ($classes as $class) {
+		// Call events for OpenID handling
 		$class::on_logout_pre_session_destroy($settings);
 	}
 
