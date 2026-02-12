@@ -78,6 +78,10 @@ if (!class_exists('destinations')) {
 		 */
 		private $database;
 
+		public $start_stamp_begin;
+		public $start_stamp_end;
+		public $quick_select;
+
 		/**
 		 * Initializes the object with optional params as key/value pairs for the settings.
 		 * Optional key / value pairs in which the values can be <i>domain_uuid</i>, <i>user_uuid</i>, <i>settings</i>,
