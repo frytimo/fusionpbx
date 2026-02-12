@@ -3,7 +3,7 @@
 /**
  * access controls class
  */
-class access_controls {
+class access_controls extends app {
 
 	/**
 	 * declare constant variables
@@ -44,10 +44,10 @@ class access_controls {
 	/**
 	 * declare private variables
 	 */
-	private $permission_prefix;
-	private $list_page;
-	private $table;
-	private $uuid_prefix;
+	const permission_prefix = 'access_control_';
+	const list_page = 'access_controls.php';
+	const table = 'access_controls';
+	const uuid_prefix = 'access_control_';
 
 	/**
 	 * called when the object is created
@@ -61,8 +61,6 @@ class access_controls {
 		$config         = $setting_array['config'] ?? config::load();
 		$this->database = $setting_array['database'] ?? database::new(['config' => $config]);
 
-		//assign private variables
-		$this->list_page = 'access_controls.php';
 	}
 
 	/**
@@ -76,13 +74,7 @@ class access_controls {
 	 */
 	public function delete($records) {
 
-		//assign private variables
-		$this->permission_prefix = 'access_control_';
-		$this->table             = 'access_controls';
-		$this->uuid_prefix       = 'access_control_';
-
-		if (permission_exists($this->permission_prefix . 'delete')) {
-
+		if (permission_exists(self::permission_prefix . 'delete')) {
 			//add multi-lingual support
 			$language = new text;
 			$text     = $language->get();

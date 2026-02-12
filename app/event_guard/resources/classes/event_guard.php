@@ -1,38 +1,39 @@
 <?php
+
 /*
-	FusionPBX
-	Version: MPL 1.1
-
-	The contents of this file are subject to the Mozilla Public License Version
-	1.1 (the "License"); you may not use this file except in compliance with
-	the License. You may obtain a copy of the License at
-	http://www.mozilla.org/MPL/
-
-	Software distributed under the License is distributed on an "AS IS" basis,
-	WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
-	for the specific language governing rights and limitations under the
-	License.
-
-	The Original Code is FusionPBX
-
-	The Initial Developer of the Original Code is
-	Mark J Crane <markjcrane@fusionpbx.com>
-	Portions created by the Initial Developer are Copyright (C) 2019-2025
-	the Initial Developer. All Rights Reserved.
-
-	Contributor(s):
-	Mark J Crane <markjcrane@fusionpbx.com>
-*/
+ * FusionPBX
+ * Version: MPL 1.1
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * http://www.mozilla.org/MPL/
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ *
+ * The Original Code is FusionPBX
+ *
+ * The Initial Developer of the Original Code is
+ * Mark J Crane <markjcrane@fusionpbx.com>
+ * Portions created by the Initial Developer are Copyright (C) 2019-2025
+ * the Initial Developer. All Rights Reserved.
+ *
+ * Contributor(s):
+ * Mark J Crane <markjcrane@fusionpbx.com>
+ */
 
 /**
  * event_guard_logs class
  */
 class event_guard {
-
 	/**
 	 * declare constant variables
 	 */
 	const app_name = 'event_guard';
+
 	const app_uuid = 'c5b86612-1514-40cb-8e2c-3f01a8f6f637';
 
 	/**
@@ -69,10 +70,12 @@ class event_guard {
 	 * declare the variables
 	 */
 	private $name;
+
 	private $table;
 	private $toggle_field;
 	private $toggle_values;
 	private $location;
+	private $config;
 
 	/**
 	 * Initializes the object with setting array.
@@ -82,20 +85,53 @@ class event_guard {
 	 *
 	 * @return void
 	 */
-	public function __construct(array $setting_array = []) {
-		// Set domain and user UUIDs
-		$this->domain_uuid = $setting_array['domain_uuid'] ?? $_SESSION['domain_uuid'] ?? '';
-		$this->user_uuid   = $setting_array['user_uuid'] ?? $_SESSION['user_uuid'] ?? '';
-
-		// Set the objects
-		$this->database = $setting_array['database'] ?? database::new();
-
-		// Assign the variables
-		$this->name          = 'event_guard_log';
-		$this->table         = 'event_guard_logs';
-		$this->toggle_field  = '';
+	public function __construct($params = []) {
+		// assign the variables
+		$this->name = 'event_guard_log';
+		$this->table = 'event_guard_logs';
+		$this->toggle_field = '';
 		$this->toggle_values = ['block', 'pending'];
-		$this->location      = 'event_guard_logs.php';
+		$this->location = 'event_guard_logs.php';
+		$this->config = config::load();
+		$this->database = database::new(['config' => $this->config]);
+	}
+
+	/**
+	 * Removes all duplicate IPs from the logs leaving the most recent entries. If there are many IPs then this could be a heavy operation.
+	 * @return null
+	 */
+	public function sweep() {
+		$driver = $this->config->get('database.0.driver');
+		$prefix = database::TABLE_PREFIX;
+		if ($driver === 'pgsql') {
+			$sql = "DELETE FROM {$prefix}event_guard_logs";
+			$sql .= " WHERE event_guard_log_uuid IN (";
+			$sql .= "	SELECT event_guard_log_uuid FROM (";
+			$sql .= "		SELECT event_guard_log_uuid,";
+			$sql .= "			   ROW_NUMBER() OVER (PARTITION BY ip_address ORDER BY insert_date DESC) AS row_num";
+			$sql .= "		FROM {$prefix}event_guard_logs";
+			$sql .= "	) subquery";
+			$sql .= "	WHERE row_num > 1";
+			$sql .= ");";
+		}
+		if ($driver === 'mysql') {
+			$sql .= "DELETE t FROM {$prefix}event_guard_logs t";
+			$sql .= "	JOIN (";
+			$sql .= "		SELECT event_guard_log_uuid";
+			$sql .= "		FROM (";
+			$sql .= "			SELECT event_guard_log_uuid,";
+			$sql .= "				   ROW_NUMBER() OVER (PARTITION BY ip_address ORDER BY insert_date DESC) AS row_num";
+			$sql .= "			FROM {$prefix}event_guard_logs";
+			$sql .= "		) subquery";
+			$sql .= "		WHERE row_num > 1";
+			$sql .= "	) to_delete";
+			$sql .= "	ON t.event_guard_log_uuid = to_delete.event_guard_log_uuid";
+		}
+		if (!empty($sql)) {
+			$this->database->execute($sql);
+		}
+
+		return;
 	}
 
 	/**
@@ -109,10 +145,9 @@ class event_guard {
 	 */
 	public function delete($records) {
 		if (permission_exists($this->name . '_delete')) {
-
 			// Add multi-lingual support
 			$language = new text;
-			$text     = $language->get();
+			$text = $language->get();
 
 			// Validate the token
 			$token = new token;
@@ -159,10 +194,9 @@ class event_guard {
 	 */
 	public function unblock($records) {
 		if (permission_exists($this->name . '_unblock')) {
-
 			// Add multi-lingual support
 			$language = new text;
-			$text     = $language->get();
+			$text = $language->get();
 
 			// Validate the token
 			$token = new token;
@@ -174,16 +208,16 @@ class event_guard {
 
 			// Delete multiple records
 			if (is_array($records) && @sizeof($records) != 0) {
-				//build the delete array
+				// build the delete array
 				$x = 0;
 				foreach ($records as $record) {
-					//add to the array
+					// add to the array
 					if (!empty($record['checked']) && $record['checked'] == 'true' && is_uuid($record['event_guard_log_uuid'])) {
 						$array[$this->table][$x]['event_guard_log_uuid'] = $record['event_guard_log_uuid'];
-						$array[$this->table][$x]['log_status']           = 'pending';
+						$array[$this->table][$x]['log_status'] = 'pending';
 					}
 
-					//increment the id
+					// increment the id
 					$x++;
 				}
 
@@ -222,10 +256,9 @@ class event_guard {
 	 */
 	public function toggle($records) {
 		if (permission_exists($this->name . '_edit')) {
-
 			// Add multi-lingual support
 			$language = new text;
-			$text     = $language->get();
+			$text = $language->get();
 
 			// Validate the token
 			$token = new token;
@@ -244,8 +277,8 @@ class event_guard {
 					}
 				}
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql  = "select " . $this->name . "_uuid as uuid, " . $this->toggle_field . " as toggle from v_" . $this->table . " ";
-					$sql  .= "where " . $this->name . "_uuid in (" . implode(', ', $uuids) . ") ";
+					$sql = "select " . $this->name . "_uuid as uuid, " . $this->toggle_field . " as toggle from v_" . $this->table . " ";
+					$sql .= "where " . $this->name . "_uuid in (" . implode(', ', $uuids) . ") ";
 					$rows = $this->database->select($sql, null, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
 						foreach ($rows as $row) {
@@ -260,7 +293,7 @@ class event_guard {
 				foreach ($states as $uuid => $state) {
 					// Create the array
 					$array[$this->table][$x][$this->name . '_uuid'] = $uuid;
-					$array[$this->table][$x][$this->toggle_field]   = $state == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
+					$array[$this->table][$x][$this->toggle_field] = $state == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
 
 					// Increment the id
 					$x++;
@@ -291,10 +324,9 @@ class event_guard {
 	 */
 	public function copy($records) {
 		if (permission_exists($this->name . '_add')) {
-
 			// Add multi-lingual support
 			$language = new text;
-			$text     = $language->get();
+			$text = $language->get();
 
 			// Validate the token
 			$token = new token;
@@ -306,7 +338,6 @@ class event_guard {
 
 			// Copy the checked records
 			if (is_array($records) && @sizeof($records) != 0) {
-
 				// Get checked records
 				foreach ($records as $record) {
 					if (!empty($record['checked']) && $record['checked'] == 'true' && is_uuid($record['event_guard_log_uuid'])) {
@@ -316,8 +347,8 @@ class event_guard {
 
 				// Create the array from existing data
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql  = "select * from v_" . $this->table . " ";
-					$sql  .= "where event_guard_log_uuid in (" . implode(', ', $uuids) . ") ";
+					$sql = "select * from v_" . $this->table . " ";
+					$sql .= "where event_guard_log_uuid in (" . implode(', ', $uuids) . ") ";
 					$rows = $this->database->select($sql, null, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
 						$x = 0;
@@ -325,7 +356,7 @@ class event_guard {
 							// Convert boolean values to a string
 							foreach ($row as $key => $value) {
 								if (gettype($value) == 'boolean') {
-									$value     = $value ? 'true' : 'false';
+									$value = $value ? 'true' : 'false';
 									$row[$key] = $value;
 								}
 							}
