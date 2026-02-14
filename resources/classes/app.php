@@ -354,15 +354,30 @@ abstract class app implements app_config_db {
 
 	public static function get_app_config_destinations(): array {
 		$destinations = [];
-		foreach (self::list() as $app) {
-			if (isset($app['destinations']) && is_array($app['destinations'])) {
-				foreach ($app['destinations'] as $destination) {
+		foreach (self::list() as $apps) {
+			if (!empty($apps['destinations'])) {
+				foreach ($apps['destinations'] as $destination) {
+					$singular_name = database::singular($destination['name']);
+					$destination['name_singular'] = $singular_name;
+					$destination['permission'] = $singular_name . '_destinations';
+					$destination['has_permission'] = permission_exists($destination['permission']);
 					$destinations[] = $destination;
 				}
 			}
 		}
 
 		return $destinations;
+	}
+
+	public static function get_app_config_all(): array {
+		$all = [];
+		$all['destinations'] = self::default_destinations();
+		$all['queues'] = self::default_queues();
+		$all['menus'] = self::default_menus();
+		$all['permissions'] = self::default_permissions();
+		$all['settings'] = self::default_settings();
+		$all['db'] = self::database_schemas();
+		return $all;
 	}
 
 	/**

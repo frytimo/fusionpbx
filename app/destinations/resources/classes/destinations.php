@@ -1022,7 +1022,7 @@ class destinations extends app {
 		}
 
 		if (!$selected) {
-			$destination_label = str_replace(":", " ", $destination_value);
+			$destination_label = str_replace(":", " ", $destination_value ?? '');
 			$destination_label = str_replace("menu-exec-app", "", $destination_label);
 			$destination_label = str_replace("transfer", "", $destination_label);
 			$destination_label = str_replace("XML " . $this->domain_name, "", $destination_label);
@@ -1032,7 +1032,7 @@ class destinations extends app {
 			// $array[$name][$i]['destination'] = $destination_value;
 			// $array[$name][$i]['select_name'] = $select_name;
 			// $array[$name][$i]['select_value'] = $select_value;
-			$array[$name][$i]['destination'] = $destination_value;
+			$array[$name][$i]['destination'] = $destination_value ?? '';
 
 			$i++;
 		}
