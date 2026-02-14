@@ -143,24 +143,18 @@ class destinations extends app {
 		$this->domain_name = $database->select($sql, $parameters, 'column');
 	}
 
-	protected function on_delete(array &$checked) {
+	protected function on_delete(array &$checked) {}
 
-	}
+	protected function on_copy(array &$uuids) {}
 
-	protected function on_copy(array &$uuids)	{
-
-	}
-
-	protected function on_toggle(array &$checked){
-
-	}
+	protected function on_toggle(array &$checked) {}
 
 	/**
 	 * Schema for the destinations table
 	 *
 	 * @return array
 	 */
-	public static function app_database_schema(): array	{
+	public static function app_database_schema(): array {
 		$table_destinations = app_schema::standard_table(name: 'destinations')
 			->foreign_key(foreign_table: 'dialplans')
 			->foreign_key(foreign_table: 'fax')
