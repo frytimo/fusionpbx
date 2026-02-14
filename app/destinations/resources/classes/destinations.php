@@ -143,6 +143,22 @@ class destinations extends app {
 		$this->domain_name = $database->select($sql, $parameters, 'column');
 	}
 
+	protected function on_delete(array &$checked) {
+
+	}
+
+	protected function on_copy(array &$uuids)	{
+
+	}
+
+	protected function on_toggle(array &$checked){
+
+	}
+
+	public static function app_database_schema(): array	{
+		return [];
+	}
+
 	/**
 	 * Convert destination number to a regular expression
 	 * @var string $array destination_prefix, destination_trunk_prefix, destination_area_code, destination_number
