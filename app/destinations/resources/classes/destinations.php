@@ -1080,15 +1080,12 @@
 		/**
 		* delete records
 		*/
-		public function delete(array $records) {
-			parent::delete($records);
-
+		public function after_delete() {
 			// clear the destinations session array
 			if (isset($_SESSION['destinations']['array'])) {
 				unset($_SESSION['destinations']['array']);
 			}
 		}
-
 
 		/**
 		 * destination summary returns an array
