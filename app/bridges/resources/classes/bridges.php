@@ -26,7 +26,7 @@
  */
 
 // define the bridges class
-class bridges implements app_config_db {
+class bridges extends app {
 	/**
 	 * declare constant variables
 	 */
@@ -94,55 +94,14 @@ class bridges implements app_config_db {
 		$this->toggle_values = ['true', 'false'];
 	}
 
-	/**
-	 * Deletes one or multiple records from the access controls table.
-	 *
-	 * @param array $records An array of record IDs to delete, where each ID is an associative array
-	 *                       containing 'uuid' and 'checked' keys. The 'checked' value indicates
-	 *                       whether the corresponding checkbox was checked for deletion.
-	 *
-	 * @return void No return value; this method modifies the database state and sets a message.
-	 */
-	public function delete($records) {
-		if (permission_exists($this->permission_prefix . 'delete')) {
-			// add multi-lingual support
-			$language = new text;
-			$text = $language->get();
+	protected function on_delete(array &$checked) {
+		return;
+	}
 
-			// validate the token
-			$token = new token;
-			if (!$token->validate($_SERVER['PHP_SELF'])) {
-				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
-				exit;
-			}
-
-			// delete multiple records
-			if (is_array($records) && @sizeof($records) != 0) {
-				// build the delete array
-				foreach ($records as $x => $record) {
-					if (!empty($record['checked']) && $record['checked'] == 'true' && is_uuid($record['uuid'])) {
-						$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $record['uuid'];
-						$array[$this->table][$x]['domain_uuid'] = $this->domain_uuid;
-					}
-				}
-
-				// delete the checked rows
-				if (is_array($array) && @sizeof($array) != 0) {
-					// execute delete
-					$this->database->delete($array);
-					unset($array);
-
-					// clear the destinations session array
-					if (isset($_SESSION['destinations']['array'])) {
-						unset($_SESSION['destinations']['array']);
-					}
-
-					// set message
-					message::add($text['message-delete']);
-				}
-				unset($records);
-			}
+	public function after_delete() {
+		// clear the destinations session array
+		if (isset($_SESSION['destinations']['array'])) {
+			unset($_SESSION['destinations']['array']);
 		}
 	}
 
@@ -155,153 +114,81 @@ class bridges implements app_config_db {
 	 *
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
-	public function toggle($records) {
-		if (permission_exists($this->permission_prefix . 'edit')) {
-			// add multi-lingual support
-			$language = new text;
-			$text = $language->get();
-
-			// validate the token
-			$token = new token;
-			if (!$token->validate($_SERVER['PHP_SELF'])) {
-				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
-				exit;
+	public function on_toggle(array &$uuids) {
+		$sql = "select " . $this->uuid_prefix . "uuid as uuid, " . $this->toggle_field . " as toggle from v_" . $this->table . " ";
+		$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
+		$sql .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+		$parameters['domain_uuid'] = $this->domain_uuid;
+		$rows = $this->database->select($sql, $parameters, 'all');
+		if (!empty($rows)) {
+			$states = [];
+			foreach ($rows as $row) {
+				$states[$row['uuid']] = $row['toggle'];
 			}
 
-			// toggle the checked records
-			if (is_array($records) && @sizeof($records) != 0) {
-				// get current toggle state
-				foreach ($records as $x => $record) {
-					if (!empty($record['checked']) && $record['checked'] == 'true' && is_uuid($record['uuid'])) {
-						$uuids[] = "'" . $record['uuid'] . "'";
-					}
-				}
-				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql = "select " . $this->uuid_prefix . "uuid as uuid, " . $this->toggle_field . " as toggle from v_" . $this->table . " ";
-					$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
-					$sql .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
-					$parameters['domain_uuid'] = $this->domain_uuid;
-					$rows = $this->database->select($sql, $parameters, 'all');
-					if (is_array($rows) && @sizeof($rows) != 0) {
-						foreach ($rows as $row) {
-							$states[$row['uuid']] = $row['toggle'];
-						}
-					}
-					unset($sql, $parameters, $rows, $row);
-				}
-
-				// build update array
-				$x = 0;
-				foreach ($states as $uuid => $state) {
-					$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $uuid;
-					$array[$this->table][$x][$this->toggle_field] = $state == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
-					$x++;
-				}
-
-				// save the changes
-				if (is_array($array) && @sizeof($array) != 0) {
-					// save the array
-
-					$this->database->save($array);
-					unset($array);
-
-					// clear the destinations session array
-					if (isset($_SESSION['destinations']['array'])) {
-						unset($_SESSION['destinations']['array']);
-					}
-
-					// set message
-					message::add($text['message-toggle']);
-				}
-				unset($records, $states);
+			// build update array
+			$array = [];
+			$x = 0;
+			foreach ($states as $uuid => $state) {
+				$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $uuid;
+				$array[$this->table][$x][$this->toggle_field] = $state == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
+				$x++;
 			}
+			$uuids = $array;
+		}
+	}
+
+	public function after_toggle() {
+		// clear the destinations session array
+		if (isset($_SESSION['destinations']['array'])) {
+			unset($_SESSION['destinations']['array']);
 		}
 	}
 
 	/**
-	 * Copies one or more records
-	 * @param array $records An array of record IDs to delete, where each ID is an associative array
-	 *                       containing 'uuid' and 'checked' keys. The 'checked' value indicates
-	 *                       whether the corresponding checkbox was checked for deletion.
+	 * Gets the database records using the UUIDs
 	 *
-	 * @return void No return value; this method modifies the database state and sets a message.
+	 * @param array $uuids
+	 * @return never
 	 */
-	public function copy($records) {
-		if (permission_exists($this->permission_prefix . 'add')) {
-			// add multi-lingual support
-			$language = new text;
-			$text = $language->get();
-
-			// validate the token
-			$token = new token;
-			if (!$token->validate($_SERVER['PHP_SELF'])) {
-				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
-				exit;
-			}
-
-			// copy the checked records
-			if (is_array($records) && @sizeof($records) != 0) {
-				// get checked records
-				foreach ($records as $x => $record) {
-					if (!empty($record['checked']) && $record['checked'] == 'true' && is_uuid($record['uuid'])) {
-						$uuids[] = "'" . $record['uuid'] . "'";
+	protected function on_copy(array &$uuids) {
+		$array = [];
+		$sql = "select * from v_" . $this->table . " ";
+		$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
+		$sql .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+		$parameters['domain_uuid'] = $this->domain_uuid;
+		$rows = $this->database->select($sql, $parameters, 'all');
+		if (!empty($rows)) {
+			foreach ($rows as $x => $row) {
+				// convert boolean values to a string
+				foreach ($row as $key => $value) {
+					if (gettype($value) == 'boolean') {
+						$value = $value ? 'true' : 'false';
+						$row[$key] = $value;
 					}
 				}
 
-				// create insert array from existing data
-				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql = "select * from v_" . $this->table . " ";
-					$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
-					$sql .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
-					$parameters['domain_uuid'] = $this->domain_uuid;
-					$rows = $this->database->select($sql, $parameters, 'all');
-					if (is_array($rows) && @sizeof($rows) != 0) {
-						foreach ($rows as $x => $row) {
-							// convert boolean values to a string
-							foreach ($row as $key => $value) {
-								if (gettype($value) == 'boolean') {
-									$value = $value ? 'true' : 'false';
-									$row[$key] = $value;
-								}
-							}
+				// copy data
+				$array[$this->table][$x] = $row;
 
-							// copy data
-							$array[$this->table][$x] = $row;
-
-							// overwrite
-							$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = uuid();
-							$array[$this->table][$x]['bridge_description'] = trim($row['bridge_description'] . ' (' . $text['label-copy'] . ')');
-						}
-					}
-					unset($sql, $parameters, $rows, $row);
-				}
-
-				// save the changes and set the message
-				if (is_array($array) && @sizeof($array) != 0) {
-					// save the array
-
-					$this->database->save($array);
-					unset($array);
-
-					// set message
-					message::add($text['message-copy']);
-				}
-				unset($records);
+				// overwrite
+				$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = uuid();
+				$array[$this->table][$x]['bridge_description'] = trim($row['bridge_description'] . ' (' . $text['label-copy'] . ')');
 			}
+			$uuids = $array;
 		}
 	}
 
 	public static function app_database_schema(): array {
 		$table = app_schema::table('bridges');
-		$table->primary_key()
+		$table
+			->primary_key()
 			->foreign_key('domains')
 			->name()
 			->description()
 			->enabled()
-			->field('destination', true)
-		;
+			->field('destination', true);
+
 		return [$table];
 	}
 }

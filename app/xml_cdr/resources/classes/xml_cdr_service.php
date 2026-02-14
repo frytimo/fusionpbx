@@ -39,7 +39,7 @@ class xml_cdr_service extends service {
 		parent::$config->read();
 
 		// Connect to the database
-		$this->database = new database(['config' => parent::$config]);
+		$this->database = database::new(['config' => parent::$config]);
 
 		// get the settings using global defaults
 		$this->settings = new settings(['database' => $this->database]);
