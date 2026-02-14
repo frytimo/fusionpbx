@@ -293,49 +293,31 @@ class destinations extends app {
 		// create a single destination select list
 		if ($select_mode === 'default') {
 			// get the destinations
-			if (empty($this->destinations) || count($this->destinations) === 0) {
+			if (empty($this->destinations)) {
 				// get the array from the app_config.php files
-				global $apps;
-				$config_list = glob($_SERVER["DOCUMENT_ROOT"] . PROJECT_PATH . "/*/*/app_config.php");
-				$x = 0;
-				foreach ($config_list as &$config_path) {
-					try {
-						include ($config_path);
-					} catch (Exception $e) {
-						// echo 'Caught exception: ',  $e->getMessage(), "\n";
-					}
-					$x++;
-				}
+				$destinations = app::get_app_config_destinations();
 
-				foreach ($apps as &$app) {
-					if (isset($app['destinations'])) {
-						// for loop is specified twice so filters don't have to be checked on each iteration
-						if (!empty($filter_applications)) {
-							foreach ($app['destinations'] as &$row) {
-								if (array_search($row['name'], $filter_applications) !== false && permission_exists(self::singular($row["name"]) . "_destinations")) {
-									$this->destinations[] = $row;
-								}
-							}
-						} else {
-							foreach ($app['destinations'] as &$row) {
-								if (permission_exists(self::singular($row["name"]) . "_destinations")) {
-									$this->destinations[] = $row;
-								}
-							}
+				foreach ($destinations as $row) {
+					// for loop is specified twice so filters don't have to be checked on each iteration
+					if (!empty($filter_applications)) {
+						if ($row['has_permission'] && array_search($row['name'], $filter_applications) !== false) {
+							$this->destinations[] = $row;
+						}
+					} else {
+						if ($row['has_permission']) {
+							$this->destinations[] = $row;
 						}
 					}
 				}
 
 				// put the array in order
-				if ($this->destinations !== null && is_array($this->destinations)) {
-					foreach ($this->destinations as $row) {
-						$option_groups[] = $row['label'];
-					}
-					array_multisort($option_groups, SORT_ASC, $this->destinations);
+				foreach ($this->destinations as $row) {
+					$option_groups[] = $row['label'];
 				}
+				array_multisort($option_groups, SORT_ASC, $this->destinations);
 
 				// add the sql and data to the array
-				if ($this->destinations !== null && is_array($this->destinations)) {
+				if (!empty($this->destinations)) {
 					$x = 0;
 					foreach ($this->destinations as $row) {
 						if ($row['type'] === 'sql') {
@@ -383,8 +365,7 @@ class destinations extends app {
 				}
 
 				// ensure these are not filtered out before including them
-				$permitted = (empty($filter_applications) || (array_search($key, $filter_applications) !== false) && permission_exists("{$singular}_destinations"));
-				if ($permitted) {
+				if (empty($filter_applications) || in_array('other', $filter_applications)) {
 					$this->destinations[$x]['type'] = 'array';
 					$this->destinations[$x]['label'] = 'other';
 					$this->destinations[$x]['name'] = 'dialplans';
@@ -662,101 +643,82 @@ class destinations extends app {
 		$destination_id = '';
 
 		// get the destinations
-		if (count($this->destinations) === 0) {
-			// get the array from the app_config.php files
-			$config_list = glob($_SERVER["DOCUMENT_ROOT"] . PROJECT_PATH . "/*/*/app_config.php");
-			$x = 0;
-			foreach ($config_list as &$config_path) {
-				try {
-					include ($config_path);
-				} catch (Exception $e) {
-					// echo 'Caught exception: ',  $e->getMessage(), "\n";
-				}
-				$x++;
-			}
-			$i = 0;
-			foreach ($apps as $x => &$app) {
-				if (isset($app['destinations'])) {
-					foreach ($app['destinations'] as &$row) {
-						$this->destinations[] = $row;
-					}
-				}
-			}
+		$this->destinations = app::get_app_config_destinations();
 
-			// put the array in order
-			foreach ($this->destinations as $row) {
-				$option_groups[] = $row['label'];
-			}
-			array_multisort($option_groups, SORT_ASC, $this->destinations);
+		// add the sql and data to the array
+		$x = 0;
+		foreach ($this->destinations as $row) {
+			// assign the label
+			$option_groups[] = $row['label'];
 
-			// add the sql and data to the array
-			$x = 0;
-			foreach ($this->destinations as $row) {
-				if ($row['type'] === 'sql') {
-					$table_name = preg_replace('#[^a-zA-Z0-9_]#', '', $row['name']);
-					if (isset($row['sql'])) {
-						if (is_array($row['sql'])) {
-							$sql = trim($row['sql'][$db_type]) . " ";
-						} else {
-							$sql = trim($row['sql']) . " ";
-						}
+			if ($row['type'] === 'sql') {
+				$table_name = preg_replace('#[^a-zA-Z0-9_]#', '', $row['name']);
+				if (isset($row['sql'])) {
+					if (is_array($row['sql'])) {
+						$sql = trim($row['sql'][$db_type]) . " ";
 					} else {
-						$field_count = count($row['field']);
-						$fields = '';
-						$c = 1;
-						foreach ($row['field'] as $key => $value) {
-							$key = preg_replace('#[^a-zA-Z0-9_]#', '', $key);
-							$value = preg_replace('#[^a-zA-Z0-9_]#', '', $value);
-							if ($field_count != $c) {
-								$delimiter = ',';
-							} else {
-								$delimiter = '';
-							}
-							$fields .= $value . " as " . $key . $delimiter . " ";
-							$c++;
+						$sql = trim($row['sql']) . " ";
+					}
+				} else {
+					$field_count = count($row['field']);
+					$fields = '';
+					$c = 1;
+					foreach ($row['field'] as $key => $value) {
+						$key = preg_replace('#[^a-zA-Z0-9_]#', '', $key);
+						$value = preg_replace('#[^a-zA-Z0-9_]#', '', $value);
+						if ($field_count != $c) {
+							$delimiter = ',';
+						} else {
+							$delimiter = '';
 						}
-						$sql = "select " . $fields;
-						$sql .= " from v_" . $table_name . " ";
+						$fields .= $value . " as " . $key . $delimiter . " ";
+						$c++;
 					}
-					if (isset($row['where'])) {
-						$sql .= trim($row['where']) . " ";
-					}
-					$sql .= "order by " . trim($row['order_by']);
-					$sql = str_replace("\${domain_uuid}", $this->domain_uuid, $sql);
-					$result = $database->select($sql, null, 'all');
+					$sql = "select " . $fields;
+					$sql .= " from v_" . $table_name . " ";
+				}
+				if (isset($row['where'])) {
+					$sql .= trim($row['where']) . " ";
+				}
+				$sql .= "order by " . trim($row['order_by']);
+				$sql = str_replace("\${domain_uuid}", $this->domain_uuid, $sql);
+				$result = $database->select($sql, null, 'all');
 
-					$this->destinations[$x]['result']['sql'] = $sql;
-					$this->destinations[$x]['result']['data'] = $result;
-				}
-				if ($row['type'] === 'array') {
-					$this->destinations[$x] = $row;
-				}
-				$x++;
+				$this->destinations[$x]['result']['sql'] = $sql;
+				$this->destinations[$x]['result']['data'] = $result;
 			}
-
-			$this->destinations[$x]['type'] = 'array';
-			$this->destinations[$x]['label'] = 'other';
-			$this->destinations[$x]['name'] = 'dialplans';
-			$this->destinations[$x]['field']['name'] = "name";
-			$this->destinations[$x]['field']['destination'] = "destination";
-			$this->destinations[$x]['select_value']['dialplan'] = "transfer:\${destination}";
-			$this->destinations[$x]['select_value']['ivr'] = "menu-exec-app:transfer \${destination}";
-			$this->destinations[$x]['select_label'] = "\${name}";
-			$y = 0;
-			$this->destinations[$x]['result']['data'][$y]['name'] = 'check_voicemail';
-			$this->destinations[$x]['result']['data'][$y]['destination'] = '*98 XML ${context}';
-			$y++;
-			$this->destinations[$x]['result']['data'][$y]['name'] = 'company_directory';
-			$this->destinations[$x]['result']['data'][$y]['destination'] = '*411 XML ${context}';
-			$y++;
-			$this->destinations[$x]['result']['data'][$y]['name'] = 'hangup';
-			$this->destinations[$x]['result']['data'][$y]['application'] = 'hangup';
-			$this->destinations[$x]['result']['data'][$y]['destination'] = '';
-			$y++;
-			$this->destinations[$x]['result']['data'][$y]['name'] = 'record';
-			$this->destinations[$x]['result']['data'][$y]['destination'] = '*732 XML ${context}';
-			$y++;
+			if ($row['type'] === 'array') {
+				$this->destinations[$x] = $row;
+			}
+			$x++;
 		}
+
+		// put the label array in order
+		array_multisort($option_groups, SORT_ASC, $this->destinations);
+
+		$this->destinations[$x]['type'] = 'array';
+		$this->destinations[$x]['label'] = 'other';
+		$this->destinations[$x]['name'] = 'dialplans';
+		$this->destinations[$x]['field']['name'] = "name";
+		$this->destinations[$x]['field']['destination'] = "destination";
+		$this->destinations[$x]['select_value']['dialplan'] = "transfer:\${destination}";
+		$this->destinations[$x]['select_value']['ivr'] = "menu-exec-app:transfer \${destination}";
+		$this->destinations[$x]['select_label'] = "\${name}";
+		$y = 0;
+		$this->destinations[$x]['result']['data'][$y]['name'] = 'check_voicemail';
+		$this->destinations[$x]['result']['data'][$y]['destination'] = '*98 XML ${context}';
+		$y++;
+		$this->destinations[$x]['result']['data'][$y]['name'] = 'company_directory';
+		$this->destinations[$x]['result']['data'][$y]['destination'] = '*411 XML ${context}';
+		$y++;
+		$this->destinations[$x]['result']['data'][$y]['name'] = 'hangup';
+		$this->destinations[$x]['result']['data'][$y]['application'] = 'hangup';
+		$this->destinations[$x]['result']['data'][$y]['destination'] = '';
+		$y++;
+		$this->destinations[$x]['result']['data'][$y]['name'] = 'record';
+		$this->destinations[$x]['result']['data'][$y]['destination'] = '*732 XML ${context}';
+		$y++;
+
 
 		// remove special characters from the name
 		$destination_id = str_replace("]", "", $destination_name);
@@ -869,24 +831,7 @@ class destinations extends app {
 		// get the destinations
 		if (count($this->destinations) === 0) {
 			// get the array from the app_config.php files
-			$config_list = glob($_SERVER["DOCUMENT_ROOT"] . PROJECT_PATH . "/*/*/app_config.php");
-			$x = 0;
-			foreach ($config_list as &$config_path) {
-				try {
-					include ($config_path);
-				} catch (Exception $e) {
-					// echo 'Caught exception: ',  $e->getMessage(), "\n";
-				}
-				$x++;
-			}
-			$i = 0;
-			foreach ($apps as $x => &$app) {
-				if (isset($app['destinations'])) {
-					foreach ($app['destinations'] as &$row) {
-						$this->destinations[] = $row;
-					}
-				}
-			}
+			$this->destinations = app::get_app_config_destinations();
 
 			// put the array in order
 			foreach ($this->destinations as $row) {
