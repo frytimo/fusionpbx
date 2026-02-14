@@ -1,18 +1,13 @@
 <?php
 
-class app {
+abstract class app implements app_config_db {
+
 	private static $applications = null;
-
 	private static $permission_prefix = null;
-
 	private static $list_page = null;
-
 	private static $table = null;
-
 	private static $uuid_prefix = null;
-
 	private static $toggle_field = null;
-
 	private static $toggle_values = null;
 
 	/**
@@ -40,21 +35,13 @@ class app {
 	private $domain_uuid;
 
 	protected $has_permission_prefix = false;
-
 	protected $has_list_page = false;
-
 	protected $has_table = false;
-
 	protected $has_uuid_prefix = false;
-
 	protected $has_toggle_field = false;
-
 	protected $has_toggle_values = false;
-
 	protected $has_delete = false;
-
 	protected $has_add = false;
-
 	protected $has_edit = false;
 
 	public function __construct() {
@@ -76,54 +63,162 @@ class app {
 		if (property_exists($this, 'toggle_values')) {
 			$this->has_toggle_values = true;
 		}
-		if ($this->has_permission_prefix && permission_exists(static::$permission_prefix . 'delete')) {
-			$this->has_delete = true;
-		}
-		if ($this->has_permission_prefix && permission_exists(static::$permission_prefix . 'add')) {
-			$this->has_add = true;
-		}
-		if ($this->has_permission_prefix && permission_exists(static::$permission_prefix . 'edit')) {
-			$this->has_edit = true;
+		if ($this->has_permission_prefix) {
+			if (permission_exists($this->permission_prefix . 'delete')) {
+				$this->has_delete = true;
+			}
+			if (permission_exists($this->permission_prefix . 'add')) {
+				$this->has_add = true;
+			}
+			if (permission_exists($this->permission_prefix . 'edit')) {
+				$this->has_edit = true;
+			}
 		}
 	}
 
-	public function delete(array $records) {
+	public function delete(array $records, string $table = '', string $uuid_prefix = '') {
 		if (!$this->has_delete || empty($records)) {
 			return;
 		}
 
-		// add multi-lingual support
-		$language = new text;
-		$text = $language->get();
-
 		$checked = [];
-
 		// build the delete array
 		foreach ($records as $x => $record) {
 			if (!empty($record['checked']) && $record['checked'] == 'true' && is_uuid($record['uuid'])) {
-				$checked[static::$table][$x][static::$uuid_prefix . 'uuid'] = $record['uuid'];
-				$checked[static::$table][$x]['domain_uuid'] = $this->domain_uuid;
+				$checked[$table][$x][$uuid_prefix . 'uuid'] = $record['uuid'];
+				$checked[$table][$x]['domain_uuid'] = $this->domain_uuid;
 			}
 		}
+
+		// always call the before delete method even if there are no checked records to allow for any necessary pre-delete actions to be performed
+		$this->before_delete($checked);
 
 		// delete the checked rows
 		if (!empty($checked)) {
 			// execute delete
 			$this->database->delete($checked);
 		}
+
+		// always call the after delete method even if there are no checked records to allow for any necessary post-delete actions to be performed
+		$this->after_delete($checked);
 	}
 
-	public function copy($records) {
+	abstract protected function on_delete(array &$checked);
+
+	/**
+	 * This method is intended to be overridden by child classes that need to perform actions before records are deleted. It receives an array of the records that are checked for deletion and can be used to perform any necessary pre-delete actions before the delete occurs.
+	 *
+	 * @param array $checked An array of records that are checked for deletion, where each record is an associative array containing the 'uuid' and 'checked' keys.
+	 * @return void No return value; this method is intended for performing actions before the delete occurs.
+	 */
+	protected function before_delete(array &$checked) {}
+
+	/**
+	 * This method is intended to be overridden by child classes that need to perform actions after records are deleted. It receives an array of the records that were deleted and can be used to perform any necessary cleanup actions after the delete occurs.
+	 *
+	 * @param array $records An array of records that were deleted, where each record is an associative array containing the 'uuid' and 'checked' keys.
+	 * @return void No return value; this method is intended for performing actions after the delete occurs.
+	 */
+	protected function after_delete() {}
+
+	/**
+	 * Copies one or more records
+	 *
+	 * @param array $records Array of records to delete, where each record is an associative array containing the 'uuid' and 'checked' keys.
+	 */
+	public function copy(array $records) {
 		if ($this->has_add) {
-			// This method is intended to be overridden by child classes that need to perform actions when an app is copied.
+			$uuids = [];
+			// get checked records
+			foreach ($records as $x => $record) {
+				if (!empty($record['checked']) && $record['checked'] == 'true' && is_uuid($record['uuid'])) {
+					$uuids[] = "'" . $record['uuid'] . "'";
+				}
+			}
+			$array = $this->on_copy($uuids);
+			if (!empty($array)) {
+				$this->database->save($array);
+			}
 		}
 	}
 
-	public function toggle($records) {
-		if ($this->has_edit) {
-			// This method is intended to be overridden by child classes that need to perform actions when an app is toggled.
+	/**
+	 * This method is intended to be overridden by child classes that need to perform actions when records are copied. It should return an array of data to be saved to the database.
+	 *
+	 * @param array $uuids An array of UUIDs that are being copied. This array can be modified by the child class to perform any necessary copy actions and should return an array of data to be saved to the database.
+	 * @return array An array of data to be saved to the database after the copy action is performed.
+	 */
+	abstract protected function on_copy(array &$uuids);
+
+	/**
+	 * This method is intended to be overridden by child classes that need to perform actions before records are copied.
+	 *
+	 * @param array $uuids An array of UUIDs that are being copied. This array can be modified by the child class to perform any necessary pre-copy actions.
+	 * @return void No return value; this method is intended for performing actions before the copy occurs.
+	 */
+	protected function before_copy(array &$uuids) {}
+
+	/**
+	 * This method is intended to be overridden by child classes that need to perform actions after records are copied.
+	 *
+	 * @param array $uuids An array of UUIDs that were copied. This array can be modified by the child class to perform any necessary post-copy actions.
+	 * @return void No return value; this method is intended for performing actions after the copy occurs.
+	 */
+	protected function after_copy() {}
+
+	public function toggle(array $records) {
+		if (!$this->has_edit || empty($records)) {
+			return;
 		}
+
+		$uuids = [];
+
+		// get current toggle state
+		foreach ($records as $x => $record) {
+			if (!empty($record['checked']) && $record['checked'] == 'true' && is_uuid($record['uuid'])) {
+				$uuids[] = "'" . $record['uuid'] . "'";
+			}
+		}
+
+		// perform any necessary actions before toggling in the child class
+		$this->before_toggle($uuids);
+
+		// get the updated toggle state from the child class
+		$array = $this->on_toggle($uuids);
+
+		// save the changes
+		if (!empty($array)) {
+			// save the array
+			$this->database->save($array);
+		}
+
+		// perform any necessary actions after toggling in the child class
+		$this->after_toggle($uuids);
 	}
+
+	/**
+	 * This method is intended to be overridden by child classes that need to perform actions when records are toggled. It should return an array of data to be saved to the database.
+	 *
+	 * @param array $uuids An array of UUIDs that are being toggled. This array can be modified by the child class to perform any necessary toggle actions and should return an array of data to be saved to the database.
+	 * @return array An array of data to be saved to the database after the toggle action is performed.
+	 */
+	abstract protected function on_toggle(array &$checked);
+
+	/**
+	 * This method is intended to be overridden by child classes that need to perform actions before records are toggled.
+	 *
+	 * @param array $checked An array of UUIDs that are being toggled. This array can be modified by the child class to perform any necessary pre-toggle actions.
+	 * @return void No return value; this method is intended for performing actions before the toggle occurs.
+	 */
+	protected function before_toggle(array &$checked) {}
+
+	/**
+	 * This method is intended to be overridden by child classes that need to perform actions after records are toggled.
+	 *
+	 * @param array $checked An array of UUIDs that were toggled. This array can be modified by the child class to perform any necessary post-toggle actions.
+	 * @return void No return value; this method is intended for performing actions after the toggle occurs.
+	 */
+	protected function after_toggle() {}
 
 	/**
 	 * Retrieves the configuration array for a specified application.
@@ -255,6 +350,19 @@ class app {
 
 		// app not found
 		return $matches;
+	}
+
+	public static function get_app_config_destinations(): array {
+		$destinations = [];
+		foreach (self::list() as $app) {
+			if (isset($app['destinations']) && is_array($app['destinations'])) {
+				foreach ($app['destinations'] as $destination) {
+					$destinations[] = $destination;
+				}
+			}
+		}
+
+		return $destinations;
 	}
 
 	/**
