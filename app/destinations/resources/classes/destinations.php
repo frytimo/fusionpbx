@@ -30,7 +30,7 @@
  * @method get_array get the destinations
  * @method select build the html select
  */
-if (!class_exists('destinations')) {
+
 	class destinations extends app {
 
 		/**
@@ -1290,7 +1290,7 @@ if (!class_exists('destinations')) {
 			}
 		}
 	} //class
-}
+
 /*
 $obj = new destinations;
 //$destinations = $obj->destinations;
