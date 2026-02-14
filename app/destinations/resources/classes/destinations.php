@@ -155,8 +155,49 @@ class destinations extends app {
 
 	}
 
+	/**
+	 * Schema for the destinations table
+	 *
+	 * @return array
+	 */
 	public static function app_database_schema(): array	{
-		return [];
+		$table_destinations = app_schema::standard_table(name: 'destinations')
+			->foreign_key(foreign_table: 'dialplans')
+			->foreign_key(foreign_table: 'fax')
+			->foreign_key(foreign_table: 'users')
+			->foreign_key(foreign_table: 'groups')
+			->field(name: 'provider_uuid', type: 'uuid')
+			->field(name: 'type')
+			->field(name: 'number', indexed: true)
+			->field(name: 'trunk_prefix')
+			->field(name: 'area_code')
+			->field(name: 'prefix')
+			->field(name: 'condition_field')
+			->field(name: 'number_regex')
+			->field(name: 'caller_id_name')
+			->field(name: 'caller_id_number')
+			->field(name: 'cid_name_prefix')
+			->field(name: 'context', indexed: true)
+			->field(name: 'record', type: 'boolean')
+			->field(name: 'hold_music')
+			->field(name: 'distinctive_ring')
+			->field(name: 'ringback')
+			->field(name: 'accountcode')
+			->field(name: 'type_voice', type: 'numeric')
+			->field(name: 'type_fax', type: 'numeric')
+			->field(name: 'type_emergency', type: 'numeric')
+			->field(name: 'type_text', type: 'numeric')
+			->field(name: 'conditions', type: 'json')
+			->field(name: 'actions', type: 'json')
+			->field(name: 'app')
+			->field(name: 'data', indexed: true)
+			->field(name: 'alternate_app')
+			->field(name: 'alternate_data')
+			->field(name: 'order', type: 'numeric')
+			->field(name: 'email')
+		;
+
+		return $table_destinations->to_array();
 	}
 
 	/**
