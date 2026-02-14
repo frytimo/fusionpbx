@@ -28,8 +28,7 @@
 
 //includes files
 	require_once dirname(__DIR__, 2) . "/resources/require.php";
-	require_once "resources/check_auth.php";
-	require_once "resources/classes/ringbacks.php";
+	require_once dirname(__DIR__, 2) . "/resources/check_auth.php";
 
 //check permissions
 	if (permission_exists('ring_group_add') || permission_exists('ring_group_edit')) {
@@ -59,18 +58,19 @@
 	$onkeyup = '';
 
 //initialize the database object
-	$database = new database();
 	$database->app_name = 'ring_groups';
 	$database->app_uuid = '1d61fb65-1eec-bc73-a6ee-a6203b4fe6f2';
 
 //initialize the settings object with domain and user
 	$domain_uuid = $_SESSION['domain_uuid'] ?? '';
 	$user_uuid = $_SESSION['user_uuid'] ?? '';
-	$setting = new settings(['domain_uuid' => $domain_uuid, 'user_uuid' => $user_uuid]);
+if (!($settings instanceof settings)) {
+	$settings = new settings(['domain_uuid' => $domain_uuid, 'user_uuid' => $user_uuid]);
+}
 
 //initialize the destinations objects with the settings object so we don't re-read the database
-	$destination = new destinations(['settings' => $setting, 'domain_uuid' => $domain_uuid, 'user_uuid' => $user_uuid]);
-	$timeout_destination = new destinations(['settings' => $setting, 'domain_uuid' => $domain_uuid, 'user_uuid' => $user_uuid]);
+	$destination = new destinations(['settings' => $settings, 'domain_uuid' => $domain_uuid, 'user_uuid' => $user_uuid]);
+	$timeout_destination = new destinations(['settings' => $settings, 'domain_uuid' => $domain_uuid, 'user_uuid' => $user_uuid]);
 
 //get the total domain ring group count
 	$sql = "select count(*) from v_ring_groups ";
@@ -913,14 +913,14 @@
 			$row['destination_number'] = '';
 		}
 		//check if the setting is enabled
-		if ($setting->get('destinations','ring_group_select_mode', 'false') === 'true') {
+		if (/*$settings->get('destinations','ring_group_select_mode', false) == 'true'*/true) {
 			// isolate the extension number
 			$matches = [];
 			preg_match('/\b(\d+)\b/', $row['destination_number'], $matches);
 			// put extension number to transfer syntax
 			$select_destination_number = "transfer:" . $matches[0] . " XML " . $destination->domain_name;
 			//display select box
-			echo $destination->select('dialplan', "ring_group_destinations[$x][destination_number]", $select_destination_number ?? '', ['extensions', 'destinations']);
+			echo $destination->select('dialplan', "ring_group_destinations[$x][destination_number]", $select_destination_number ?? '', ['extensions', 'destinations', 'dialplans']);
 		}
 		//standard text input box is required
 		else {
