@@ -35,8 +35,9 @@ if (!defined('STDIN') && (!function_exists('apcu_enabled') || !apcu_enabled())) 
 
 // class auto loader
 if (!class_exists('auto_loader')) {
+	$enable_cache = getenv('DISABLE_CACHE') !== 'true';
 	require_once __DIR__ . "/classes/auto_loader.php";
-	$autoload = new auto_loader();
+	$autoload = new auto_loader($enable_cache);
 }
 
 // load config file
