@@ -31,7 +31,7 @@
  *
  * @author Tim Fry <tim@fusionpbx.com>
  */
-class active_calls_service extends service implements websocket_service_interface {
+class active_calls_service extends service implements websocket_service_interface, app_config_permissions {
 
 	const SWITCH_EVENTS = [
 		['Event-Name' => 'CHANNEL_CREATE'],
@@ -139,6 +139,22 @@ class active_calls_service extends service implements websocket_service_interfac
 
 	private static $websocket_port = null;
 	private static $websocket_host = null;
+
+	public static function app_config_permissions(): array {
+		return app_config::permissions()
+			->prefix('call_active')
+				->meld(
+					['view','hangup','eavesdrop','domain'],
+					['superadmin', 'admin']
+				)
+				->meld(
+					['all','codec','secure','application','profile'],
+					['superadmin']
+				)
+				->name('call_active_direction')
+			->to_array()
+		;
+	}
 
 	/**
 	 * Checks if an event exists in the SWITCH_EVENTS.
