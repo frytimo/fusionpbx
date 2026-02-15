@@ -46,7 +46,7 @@ class app_permissions {
 		return $this;
 	}
 
-	public function names(string ...$names): self {
+	public function names(array $names): self {
 		foreach ($names as $name) {
 			$name = $this->prefix . $name;
 			$this->names[$name][] = $this->group_name;
@@ -78,9 +78,27 @@ class app_permissions {
 	}
 }
 
-$permissions = app_permissions::new()->prefix('call_recordings')->meld(['view','add','edit','delete'], ['superadmin','admin']);
 
 // Example usage:
+// $permissions = app_permissions::new()
+// 	->prefix('call_active')
+// 		->meld(
+// 			['view', 'eavesdrop', 'hangup', 'domain'],
+// 			['superadmin', 'admin']
+// 		)
+// 		->meld(
+// 			['all','direction','profile','application','codec','secure'],
+// 			['superadmin']
+// 		)
+// ;
+//
+// $permissions = app_permissions::new()
+// 	->prefix('call_recordings')
+//  	->meld(
+//			['view','add','edit','delete'],
+//			['superadmin','admin']
+// 		)
+// ;
 // $permissions = app_permissions::new()
 // 	->prefix('access_control')
 // 		->group(group_name: 'superadmin')
@@ -99,21 +117,20 @@ $permissions = app_permissions::new()->prefix('call_recordings')->meld(['view','
 // 				'edit',
 // 			)
 // ;
-
-$permissions = app_permissions::new()
-	->prefix('call_active')
-		->add('view'     , ['superadmin','admin'])
-		->add('eavesdrop', ['superadmin','admin'])
-		->add('hangup'   , ['superadmin','admin'])
-		->group('superadmin')
-			->names(
-				'all',
-				'direction',
-				'profile',
-				'application',
-				'codec',
-				'secure',
-			)
-		->add('domain', ['superadmin','admin'])
-;
+// $permissions = app_permissions::new()
+// 	->prefix('call_active')
+// 		->add('view'     , ['superadmin','admin'])
+// 		->add('eavesdrop', ['superadmin','admin'])
+// 		->add('hangup'   , ['superadmin','admin'])
+// 		->group('superadmin')
+// 			->names(
+// 				'all',
+// 				'direction',
+// 				'profile',
+// 				'application',
+// 				'codec',
+// 				'secure',
+// 			)
+// 		->add('domain', ['superadmin','admin'])
+// ;
 
