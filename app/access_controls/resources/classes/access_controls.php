@@ -3,7 +3,7 @@
 /**
  * access controls class
  */
-class access_controls extends app {
+class access_controls extends app implements app_config_db, app_config_permissions {
 	/**
 	 * declare constant variables
 	 */
@@ -75,8 +75,33 @@ class access_controls extends app {
 		throw new \Exception('Not implemented');
 	}
 
-	public static function app_database_schema(): array {
-		throw new \Exception('Not implemented');
+	public static function app_config_db(): array {
+		$access_controls_table = app_config::db()->standard_table('access_controls')
+			->field(name: 'default')->boolean()->indexed()
+		;
+		$access_control_nodes_table = app_config::db()
+			->table('access_control_nodes')
+				->primary_key()
+				->foreign_key(foreign_table: 'access_controls')
+				->columns([
+					'node_type',
+					'node_cidr',
+					'node_description',
+				])
+				->timestamps()
+		;
+		return [$access_controls_table, $access_control_nodes_table];
+	}
+
+	public static function app_config_permissions(): array {
+		return app_config::permissions()
+			->prefix('access_control')
+				->meld(
+					['view','add','edit','delete','node_view','node_add','node_edit','node_delete'],
+					['superadmin']
+				)
+			->to_array()
+		;
 	}
 
 	public function after_delete() {
