@@ -88,5 +88,3 @@
 		$apps[$x]['default_settings'][$y]['default_setting_enabled'] = "true";
 		$apps[$x]['default_settings'][$y]['default_setting_description'] = "Aastra SIP silence suppression - silence suppression: deactivated (0), activated (1); enabled on G.711 with CN(RFC3389) or G.729AB";
 		$y++;
-		
-?>
