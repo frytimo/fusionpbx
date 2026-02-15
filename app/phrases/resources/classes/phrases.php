@@ -95,10 +95,10 @@ class phrases implements app_config_db {
 		// of the phrase_language field, so we can use the standard table and
 		// then add the additional field.
 		//
-		$phrases = app_schema::standard_table('phrases')
+		$phrases = app_db::standard_table('phrases')
 			->field('phrase_language');
 
-		$phrase_details = app_schema::table('phrase_details')
+		$phrase_details = app_db::table('phrase_details')
 			->parent('phrases')
 			->primary_key()
 			->field('language')

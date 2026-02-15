@@ -133,11 +133,11 @@ class dashboard implements app_config_db {
 	}
 
 	public static function app_database_schema(): array {
-		$schema = new app_schema;
+		$schema = new app_db;
 
-		$schema->database_tables[] = app_schema::standard_table('dashboards');
+		$schema->database_tables[] = app_db::standard_table('dashboards');
 
-		$schema->database_tables[] = app_schema::standard_table('dashboard_widgets')
+		$schema->database_tables[] = app_db::standard_table('dashboard_widgets')
 			->columns([
 				'dashboard_widget_uuid',
 				'widget_path',
@@ -148,7 +148,7 @@ class dashboard implements app_config_db {
 			->foreign_key('domains')
 		;
 
-		$schema->database_tables[] = app_schema::standard_table('dashboard_widget_groups')
+		$schema->database_tables[] = app_db::standard_table('dashboard_widget_groups')
 			->columns([
 				'dashboard_widget_group_uuid',
 				'group_name',

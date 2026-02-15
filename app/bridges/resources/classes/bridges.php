@@ -180,7 +180,7 @@ class bridges extends app {
 	}
 
 	public static function app_database_schema(): array {
-		$table = app_schema::table('bridges');
+		$table = app_db::table('bridges');
 		$table
 			->primary_key()
 			->foreign_key('domains')

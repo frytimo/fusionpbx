@@ -326,7 +326,7 @@ class contacts implements app_config_db {
 	} //method
 
 	public static function app_database_schema(): array {
-		$contacts = app_schema::standard_table('contacts')
+		$contacts = app_db::standard_table('contacts')
 			// fields will automatically be prefixed with 'contact_'
 			->fields( [
 				'type',
@@ -349,7 +349,7 @@ class contacts implements app_config_db {
 				'last_mod_user',
 			])
 		;
-		$contact_addresses = app_schema::standard_table('contact_addresses')
+		$contact_addresses = app_db::standard_table('contact_addresses')
 			->parent('contacts')
 			->columns([
 				'address_type',
@@ -367,7 +367,7 @@ class contacts implements app_config_db {
 				'address_description',
 			])
 		;
-		$contact_phones = app_schema::standard_table('contact_phones')
+		$contact_phones = app_db::standard_table('contact_phones')
 			->parent('contacts')
 			->columns([
 				'phone_label',
@@ -383,14 +383,14 @@ class contacts implements app_config_db {
 				'phone_description',
 			])
 		;
-		$contact_notes = app_schema::standard_table('contact_notes')
+		$contact_notes = app_db::standard_table('contact_notes')
 			->parent('contacts')
 			->columns([
 				'contact_note',
 				['number' => 'contact_id']
 			])
 		;
-		$contact_emails = app_schema::table('contact_users')
+		$contact_emails = app_db::table('contact_users')
 			->parent('contacts')
 			->columns([
 				'email_label',
@@ -400,7 +400,7 @@ class contacts implements app_config_db {
 			])
 			->foreign_key('users')
 		;
-		$contact_groups = app_schema::table('contact_groups')
+		$contact_groups = app_db::table('contact_groups')
 			->parent('contacts')
 			->columns([
 				'group_name',
@@ -408,7 +408,7 @@ class contacts implements app_config_db {
 			])
 			->foreign_key('groups')
 		;
-		$contact_settings = app_schema::table('contact_settings')
+		$contact_settings = app_db::table('contact_settings')
 			->parent('contacts')
 			->columns([
 				'setting_name',
@@ -418,7 +418,7 @@ class contacts implements app_config_db {
 			])
 			->foreign_key('contact_settings')
 		;
-		$contact_relations = app_schema::table('contact_relations')
+		$contact_relations = app_db::table('contact_relations')
 			->parent('contacts')
 			->columns([
 				'relation_type',
@@ -428,7 +428,7 @@ class contacts implements app_config_db {
 			])
 			->foreign_key('contacts', 'relation_contact_uuid')
 		;
-		$contact_emails = app_schema::table('contact_emails')
+		$contact_emails = app_db::table('contact_emails')
 			->parent('contacts')
 			->columns([
 				'email_label',
@@ -438,7 +438,7 @@ class contacts implements app_config_db {
 			])
 			->foreign_key('users')
 		;
-		$contact_urls = app_schema::table('contact_urls')
+		$contact_urls = app_db::table('contact_urls')
 			->parent('contacts')
 			->columns([
 				'url_label',
@@ -448,7 +448,7 @@ class contacts implements app_config_db {
 			])
 			->foreign_key('contact_urls')
 		;
-		$contact_times = app_schema::table('contact_times')
+		$contact_times = app_db::table('contact_times')
 			->parent('contacts')
 			->columns([
 				'time_label',
@@ -458,7 +458,7 @@ class contacts implements app_config_db {
 			])
 			->foreign_key('contact_times')
 		;
-		$contact_attachments = app_schema::table('contact_attachments')
+		$contact_attachments = app_db::table('contact_attachments')
 			->parent('contacts')
 			->columns([
 				'attachment_label',

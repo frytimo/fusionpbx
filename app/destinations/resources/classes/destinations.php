@@ -155,7 +155,7 @@ class destinations extends app {
 	 * @return array
 	 */
 	public static function app_database_schema(): array {
-		$table_destinations = app_schema::standard_table(name: 'destinations')
+		$table_destinations = app_db::standard_table(name: 'destinations')
 			->foreign_key(foreign_table: 'dialplans')
 			->foreign_key(foreign_table: 'fax')
 			->foreign_key(foreign_table: 'users')

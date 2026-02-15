@@ -148,6 +148,52 @@ class app_schema_table {
 		return $this->append_field($field);
 	}
 
+	public function indexed(): self {
+		$last_field = end($this->fields);
+		$last_field->indexed();
+		return $this;
+	}
+
+	public function type_text(): self {
+		$last_field = end($this->fields);
+		$last_field->type('text');
+		return $this;
+	}
+
+	public function type_uuid(): self {
+		$last_field = end($this->fields);
+		$last_field->type('uuid');
+		return $this;
+	}
+
+	public function type_boolean(): self {
+		$last_field = end($this->fields);
+		$last_field->type('boolean');
+		return $this;
+	}
+
+	public function boolean(): self {
+		return $this->type_boolean();
+	}
+
+	public function type_timestamptz(): self {
+		$last_field = end($this->fields);
+		$last_field->type('timestamptz');
+		return $this;
+	}
+
+	public function type_date(): self {
+		$last_field = end($this->fields);
+		$last_field->type('date');
+		return $this;
+	}
+
+	public function type_char(int $length): self {
+		$last_field = end($this->fields);
+		$last_field->type("char($length)");
+		return $this;
+	}
+
 	public function fields(string|array $names, bool $indexed = false, string $description_key = '', string $type = ''): self {
 		if (is_array($names)) {
 			// recursive call for each field name in the array

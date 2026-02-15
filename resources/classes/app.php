@@ -1,6 +1,6 @@
 <?php
 
-abstract class app implements app_config_db {
+abstract class app {
 
 	private static $applications = null;
 	private static $permission_prefix = null;
