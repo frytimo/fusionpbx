@@ -15,7 +15,7 @@
  * @author Tim Fry <tim@fusionpbx.com>
  * @version 1.0.0
  */
-class active_conferences_service extends base_websocket_system_service implements websocket_service_interface {
+class active_conferences_service extends base_websocket_system_service implements websocket_service_interface, app_config_permissions, app_config_default_settings {
 
 	/**
 	 * Direct mapping of switch events using Key => Value pair
@@ -172,6 +172,86 @@ class active_conferences_service extends base_websocket_system_service implement
 	 * @var array
 	 */
 	protected $conference_name_cache;
+
+	public static function app_config_default_settings(): array {
+		return app_config::default_settings()
+			->create(
+				'0242ad2b-72c7-42f8-b8fe-8716654e0c99',
+				'active_conferences',
+				'reconnect_delay',
+				'numeric',
+				'2000',
+				'true',
+				'Base delay in milliseconds before attempting to reconnect to the switch server if the connection is lost'
+			)->add(
+				default_setting::new(
+					'9451b1a9-4f81-4819-bfe4-47cc468cd095',
+					'active_conferences',
+					'ping_interval',
+					'numeric',
+					'15000',
+					'true',
+					'Interval in milliseconds to send ping messages to clients to keep the connection alive'
+			)->add(
+				default_setting::new(
+					'605791c3-f20a-438c-98ec-869b600d27ea',
+					'active_conferences',
+					'auth_timeout',
+					'numeric',
+					'3000',
+					'true',
+					'Timeout in milliseconds waiting for WebSocket authentication before redirecting to login.',
+			)
+			)->add(
+				default_setting::new(
+					'ea18eab7-9772-4ade-b318-a70a2ed40906',
+					'active_conferences',
+					'pong_timeout',
+					'numeric',
+					'500',
+					'true',
+					'Timeout in milliseconds waiting for pong response before reloading the page.',
+			)
+			)->add(
+				default_setting::new(
+					'31b5f0e3-aec7-403b-be3d-94dbf3b8a59e',
+					'active_conferences',
+					'refresh_interval',
+					'numeric',
+					'0',
+					'true',
+					'Optional interval in milliseconds to periodically refresh conference data. Set to 0 to disable (rely on WebSocket events only).',
+			)
+			)->add(
+				default_setting::new(
+					'3a757df6-37ce-4351-b046-d3ba2eaffd18',
+					'active_conferences',
+					'max_reconnect_delay',
+					'numeric',
+					'15000',
+					'true',
+					'Maximum delay in milliseconds between reconnection attempts (exponential backoff cap).',
+			)->to_array()
+		;
+	}
+
+	public static function app_config_permissions(): array {
+		return app_config::permissions()
+			->prefix('conference_active_view')
+				->meld(
+					['lock','kick','mute','deaf','video'],
+					['superadmin', 'admin', 'user']
+				)
+				->meld(
+					['view'],
+					['superadmin', 'admin']
+				)
+				->name('energy')
+				->name('volume')
+				->name('gain')
+			->to_array()
+		;
+	}
 
 	/**
 	 * Builds a filter for the subscriber
