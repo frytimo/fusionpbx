@@ -41,30 +41,35 @@ abstract class service {
 	 * @var int Syslog level
 	 */
 	protected static $log_level = null;
+
 	/**
 	 * config object
 	 *
 	 * @var config config object
 	 */
 	protected static $config;
+
 	/**
 	 * Holds the parsed options from the command line
 	 *
 	 * @var array
 	 */
 	protected static $parsed_command_options;
+
 	/**
 	 * Cli Options Array
 	 *
 	 * @var array
 	 */
 	protected static $available_command_options = [];
+
 	/**
 	 * Holds the configuration file location
 	 *
 	 * @var string
 	 */
 	protected static $config_file = "";
+
 	/**
 	 * Fork the service to it's own process ID
 	 *
@@ -112,15 +117,49 @@ abstract class service {
 	 */
 	protected static $allow_run_as_root = false;
 
+	/**
+	 * User and group information for dropping privileges
+	 */
 	protected static $posix_username = null;
+
+	/**
+	 * Group name for dropping privileges
+	 *
+	 * @var string
+	 */
 	protected static $posix_groupname = null;
 
-
+	/**
+	 * User and group information for dropping privileges
+	 */
 	protected static $user_name = null;
+
+	/**
+	 * Group name for dropping privileges
+	 *
+	 * @var string
+	 */
 	protected static $group_name = null;
+
+	/**
+	 * User and group IDs for dropping privileges
+	 *
+	 * @var int
+	 */
 	protected static $uid = null;
+
+	/**
+	 * Group ID for dropping privileges
+	 *
+	 * @var int
+	 */
 	protected static $gid = null;
 
+	/**
+	 * Message to show in the log when settings are reloaded
+	 *
+	 * @var string
+	 */
 	protected static $dump_file = null;
 
 	/**
@@ -333,6 +372,11 @@ abstract class service {
 		return $index;
 	}
 
+	/**
+	 * Detects if the terminal supports color output for debugging clarity
+	 *
+	 * @return boolean
+	 */
 	protected static function supports_color(): bool {
 		// Must be CLI
 		if (PHP_SAPI !== 'cli') {
@@ -858,6 +902,13 @@ abstract class service {
 
 	}
 
+	/**
+	 * Generate a core dump and log the backtrace when the SIGQUIT signal is received.
+	 *
+	 * This method is called when the SIGQUIT signal is received. It generates a core dump of the current state of the service and logs the backtrace to a file for debugging purposes. The core dump is saved to a temporary file with a name that includes the class name and timestamp. After generating the core dump, it calls the on_sigquit method to allow child classes to handle any additional actions that need to be taken when the SIGQUIT signal is received, and then exits the service gracefully.
+	 *
+	 * @return void
+	 */
 	final public function trigger_sigquit() {
 		$this->dump_file = sys_get_temp_dir() . DIRECTORY_SEPARATOR . static::class . '_' . date('YmdHis') . '.core';
 		$this->warning("Generating core dump to $this->dump_file");
