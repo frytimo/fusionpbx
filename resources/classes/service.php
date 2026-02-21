@@ -40,7 +40,7 @@ abstract class service {
 	 *
 	 * @var int Syslog level
 	 */
-	protected static $log_level = LOG_NOTICE;
+	protected static $log_level = null;
 	/**
 	 * config object
 	 *
@@ -71,6 +71,14 @@ abstract class service {
 	 * @var bool
 	 */
 	protected static $daemon_mode = false;
+
+	/**
+	 * Indicates if the service is running under systemd
+	 *
+	 * @var bool
+	 */
+	private static $is_systemd = false;
+
 	/**
 	 * Suppress the timestamp
 	 * Used to suppress the timestamp in syslog
@@ -78,6 +86,14 @@ abstract class service {
 	 * @var bool
 	 */
 	protected static $show_timestamp_log = false;
+
+	/**
+	 * Indicates if the terminal supports colors
+	 *
+	 * @var bool
+	 */
+	protected static $has_term_colors = false;
+
 	/**
 	 * Operating System process identification file
 	 *
@@ -104,6 +120,25 @@ abstract class service {
 	protected static $group_name = null;
 	protected static $uid = null;
 	protected static $gid = null;
+
+	protected static $dump_file = null;
+
+	/**
+	 * Colors for each log level when outputting to the console
+	 *
+	 * @var array
+	 */
+	protected static array $term_colors = [
+		LOG_EMERG => "\033[1;31m",    // LOG_EMERG - bright red
+		LOG_ALERT => "\033[1;31m",    // LOG_ALERT - bright red
+		LOG_CRIT => "\033[1;31m",     // LOG_CRIT - bright red
+		LOG_ERR => "\033[1;31m",      // LOG_ERR - bright red
+		LOG_WARNING => "\033[1;33m",  // LOG_WARNING - bright yellow
+		LOG_NOTICE => "\033[34m",     // LOG_NOTICE - blue
+		LOG_INFO => "\033[0m",        // LOG_INFO - normal
+		LOG_DEBUG => "\033[90m",      // LOG_DEBUG - dark grey
+		-1 => "\033[0m",              // Reset color for any custom log levels above LOG_DEBUG
+	];
 
 	/**
 	 * Track the internal loop. It is recommended to use this variable to control the loop inside the run function. See
@@ -298,6 +333,41 @@ abstract class service {
 		return $index;
 	}
 
+	protected static function supports_color(): bool {
+		// Must be CLI
+		if (PHP_SAPI !== 'cli') {
+			return false;
+		}
+
+		// Must be a TTY
+		if (!function_exists('posix_isatty') || !posix_isatty(STDOUT)) {
+			return false;
+		}
+
+		// Respect NO_COLOR standard
+		if (getenv('NO_COLOR') !== false) {
+			return false;
+		}
+
+		// Force color if explicitly requested
+		if (getenv('CLICOLOR_FORCE') === '1') {
+			return true;
+		}
+
+		// If CLICOLOR is explicitly disabled
+		if (getenv('CLICOLOR') === '0') {
+			return false;
+		}
+
+		// Check TERM capability
+		$term = getenv('TERM');
+		if ($term === false || $term === 'dumb') {
+			return false;
+		}
+
+		return true;
+	}
+
 	/**
 	 * Creates a new instance of the service class, initializing it and returning the object.
 	 *
@@ -307,16 +377,10 @@ abstract class service {
 		//can only start from command line
 		defined('STDIN') or die('Unauthorized');
 
-		// Allow debug to be enabled from the environment variable that systemctl sets, but override with command line option if given
-		$log_level = $_ENV['DEBUG_ENABLED'] ?? null;
-		if ($log_level !== null) {
-			// Enable debug
-			$log_level = 7;
-		} else {
-			// Default to NOTICE if invalid level LOG_NOTICE
-			$log_level = 5;
-		}
-		self::set_debug_level($log_level);
+		// Detect if we are running under systemd by checking for the presence of the 'INVOCATION_ID' environment variable, which is set by systemd for each service invocation.
+		self::$is_systemd = getenv('INVOCATION_ID') !== false;
+
+		self::$has_term_colors = self::supports_color();
 
 		//parse the cli options and store them statically
 		self::parse_service_command_options();
@@ -374,8 +438,23 @@ abstract class service {
 		//get the name of child object
 		$class = self::base_class_name();
 
+		// Command line options override the configuration file
+		if (self::$log_level !== null) {
+			$log_level = self::$log_level;
+		} else {
+			// Check if the debug level is set in the configuration
+			if (self::$config->get("$class.debug") != "true") {
+				// Get the log level from the configuration, or use the default that would have been from the command line options
+				$log_level = self::$config->get("$class.log_level", LOG_NOTICE);
+			} else {
+				// Set to debug level
+				$log_level = LOG_DEBUG;
+			}
+		}
+		self::set_debug_level("$log_level");
+
 		//create the child object
-		$service = new $class();
+		$service = new static();
 
 		//initialize the service
 		$service->init();
@@ -733,7 +812,7 @@ abstract class service {
 		}
 
 		// Show the details to the user
-		self::log("Starting up...");
+		self::log("Starting up " . static::base_class_name() . " service...", LOG_NOTICE);
 		self::log("Mode      : " . (self::$daemon_mode ? "Daemon" : "Foreground"), LOG_INFO);
 		self::log("Service   : $basename", LOG_INFO);
 		self::log("Process ID: $pid", LOG_INFO);
@@ -772,6 +851,42 @@ abstract class service {
 
 		// Stop the process gracefully when the SIGTERM signal is sent to the process
 		pcntl_signal(SIGTERM, [$this, 'shutdown']);
+
+		// Other signals
+		pcntl_signal(SIGINT, [$this, 'shutdown']);				// SIGINT is the signal sent when a user presses Ctrl+C in the terminal. It is used to interrupt a process and can be handled to perform cleanup tasks before exiting.
+		pcntl_signal(SIGQUIT, [$this, 'trigger_sigquit']);		// SIGQUIT is the signal sent when a user presses Ctrl+\ in the terminal. It is similar to SIGINT but also generates a core dump. It can be handled to perform cleanup tasks before exiting.
+
+	}
+
+	final public function trigger_sigquit() {
+		$this->dump_file = sys_get_temp_dir() . DIRECTORY_SEPARATOR . static::class . '_' . date('YmdHis') . '.core';
+		$this->warning("Generating core dump to $this->dump_file");
+		$backtrace = debug_backtrace();
+		file_put_contents( sys_get_temp_dir() . DIRECTORY_SEPARATOR . static::class . '.log', print_r($backtrace, true) . "\n");
+		$dump = var_export($this, true);
+		file_put_contents($this->dump_file, $dump, FILE_APPEND);
+
+		// Call the child class method to handle any additional actions that need to be taken when the SIGQUIT signal is received
+		$this->on_sigquit();
+
+		// Stop the service gracefully
+		exit();
+	}
+
+	/**
+	 * Method to be overridden by child classes to handle any additional actions that need to be taken when the SIGQUIT signal is received.
+	 *
+	 * This method is called when the SIGQUIT signal is received. Child classes can override this method to perform any necessary actions that should occur when the SIGQUIT signal is received, such as logging additional information, performing cleanup tasks, or generating a core dump.
+	 *
+	 * @return void
+	 */
+	protected function on_sigquit() {
+		//
+		// By default, it does nothing, but child classes can implement their own logic here to respond to the SIGQUIT signal as needed.
+		//
+		// For example, websockets might want to log additional information about the connection count, perform cleanup tasks, or
+		// generate a core dump for debugging purposes when the SIGQUIT signal is received.
+		//
 	}
 
 	/**
@@ -779,7 +894,7 @@ abstract class service {
 	 *
 	 * @return void
 	 */
-	public function trigger_sigusr2() {
+	final public function trigger_sigusr2() {
 		// Notify the user that the SIGUSR2 signal was received and that the service is shutting down
 		$this->notice("SIGUSR2 received, shutting down...");
 
@@ -847,7 +962,7 @@ abstract class service {
 	 */
 	final public function trigger_sigusr1() {
 		// Notify the user that the SIGUSR1 signal was received and that the settings are being reloaded
-		$this->notice("SIGUSR1 received, reloading settings...");
+		$this->debug("SIGUSR1 received, reloading settings...");
 
 		// Reload the config file
 		$this->reload();
@@ -868,7 +983,7 @@ abstract class service {
 	final public function trigger_sighup() {
 
 		// Notify the user that the SIGHUP signal was received and that the settings are being reloaded
-		$this->notice("SIGHUP received, reloading settings...");
+		$this->debug("SIGHUP received, reloading settings...");
 
 		// Reload the config file
 		$this->reload();
@@ -905,12 +1020,28 @@ abstract class service {
 		// Track if the settings have been reloaded at least once so we can show the log level in the log after the first reload
 		static $settings_loaded = false;
 
-		// Check if debug logging is set in the config file
+		// Get the class name without the namespace
 		$class_name = static::base_class_name();
-		self::$log_level = self::$config->get($class_name . '.log_level', self::$log_level);
 
+		// Check if debug logging is set in the config file
+		self::$log_level = self::$config->get("$class_name.log_level", self::$log_level);
+
+		// Command line options override the configuration file
+		if (isset(self::$parsed_command_options['debug']) || isset(self::$parsed_command_options['d'])) {
+			// Get the log level from the command line options
+			$log_level = self::$parsed_command_options['debug']	?? self::$parsed_command_options['d'];
+		} else {
+			// Check if the debug level is set in the configuration
+			if (self::$config->get("$class_name.debug") != "true") {
+				// Get the log level from the configuration, or use the default that would have been from the command line options
+				$log_level = self::$config->get("$class_name.log_level", LOG_NOTICE);
+			} else {
+				// Set to debug level
+				$log_level = LOG_DEBUG;
+			}
+		}
 		// Set the log level for this service
-		self::set_debug_level(self::$log_level);
+		self::set_debug_level("$log_level");
 
 		// If the settings have been reloaded at least once, then we know this is not the first time we are reloading
 		// the settings, so we can show the log level in the log
@@ -932,7 +1063,7 @@ abstract class service {
 	 */
 	protected static function set_debug_level(string $debug_level) {
 		// Map user input log level to syslog constant
-		switch ($debug_level) {
+		switch (strtolower($debug_level)) {
 			case '0':
 			case 'emergency':
 				self::$log_level = 0; // Hardware failures LOG_EMERG
@@ -1062,7 +1193,7 @@ abstract class service {
 		//ensure we unlink the correct PID file if needed
 		if (self::is_running()) {
 			unlink(self::$pid_file);
-			self::log("Initiating Shutdown...", LOG_NOTICE);
+			self::log("Initiating Shutdown...", LOG_WARNING);
 			$this->running = false;
 		}
 		//this should remain the last statement to execute before exit
@@ -1132,18 +1263,26 @@ abstract class service {
 	protected static function log(string $message, int $level = LOG_NOTICE) {
 		// Check if we need to show the message
 		if ($level <= self::$log_level) {
-			// When not in daemon mode we log to console directly
-			if (!self::$daemon_mode) {
-				$level_as_string = self::log_level_to_string($level);
-				if (!self::$show_timestamp_log) {
-					echo "[$level_as_string] $message\n";
-				} else {
-					$time = date('Y-m-d H:i:s');
-					echo "[$time][$level_as_string] $message\n";
-				}
+			// echo "$message\n";
+			$log_string = self::log_level_to_string($level);
+			if (!self::$show_timestamp_log) {
+				$message_to_log = '['. $log_string . '] ' . $message;
 			} else {
-				// Log the message to syslog
-				syslog($level, 'fusionpbx[' . posix_getpid() . ']: [' . static::class . '] ' . $message);
+				$time = date('Y-m-d H:i:s');
+				$message_to_log = "$time [$log_string] $message";
+			}
+
+			// Check if we are running in systemd or in daemon mode.
+			if (self::$is_systemd || self::$daemon_mode) {
+				// Log the message to syslog when running in systemd or daemon mode.
+				syslog($level, $message_to_log);
+			} else {
+				if (self::$has_term_colors) {
+					// Add color to the log message based on the log level when not running in systemd or daemon mode.
+					$message_to_log = self::$term_colors[$level] . $message_to_log . self::$term_colors[-1];
+				}
+				// Log the message to the console directly when not running in systemd or daemon mode.
+				echo "$message_to_log\n";
 			}
 		}
 	}
