@@ -906,7 +906,8 @@ abstract class service {
 		static $settings_loaded = false;
 
 		// Check if debug logging is set in the config file
-		self::$log_level = self::$config->get('xml_cdr.log_level', self::$log_level);
+		$class_name = static::base_class_name();
+		self::$log_level = self::$config->get($class_name . '.log_level', self::$log_level);
 
 		// Set the log level for this service
 		self::set_debug_level(self::$log_level);
