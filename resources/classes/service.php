@@ -307,6 +307,17 @@ abstract class service {
 		//can only start from command line
 		defined('STDIN') or die('Unauthorized');
 
+		// Allow debug to be enabled from the environment variable that systemctl sets, but override with command line option if given
+		$log_level = $_ENV['DEBUG_ENABLED'] ?? null;
+		if ($log_level !== null) {
+			// Enable debug
+			$log_level = 7;
+		} else {
+			// Default to NOTICE if invalid level LOG_NOTICE
+			$log_level = 5;
+		}
+		self::set_debug_level($log_level);
+
 		//parse the cli options and store them statically
 		self::parse_service_command_options();
 
@@ -541,10 +552,32 @@ abstract class service {
 		return $help_options;
 	}
 
+	/**
+	 * Set the username to run the service as.
+	 *
+	 * Called from the command line option parser when the user sets the '-u' or '--user' option. This will
+	 * drop privileges to the specified user after starting the service. The user must exist on the system
+	 * and have permissions to read the configuration file and write to the PID file.
+	 *
+	 * @param string $username The name of the user to run the service as.
+	 *
+	 * @return void
+	 */
 	protected static function set_username($username) {
 		self::$posix_username = $username;
 	}
 
+	/**
+	 * Set the group name to run the service as.
+	 *
+	 * Called from the command line option parser when the user sets the '-g' or '--group' option. This
+	 * will drop privileges to the specified group after starting the service. The group must exist on
+	 * the system and have permissions to read the configuration file and write to the PID file.
+	 *
+	 * @param string $groupname The name of the group to run the service as.
+	 *
+	 * @return void
+	 */
 	protected static function set_groupname($groupname) {
 		self::$posix_groupname = $groupname;
 	}
@@ -731,18 +764,163 @@ abstract class service {
 		pcntl_async_signals(true);
 
 		// A signal listener to reload the service for any config changes in the database
-		pcntl_signal(SIGUSR1, [$this, 'reload_settings']);
-		pcntl_signal(SIGHUP, [$this, 'reload_settings']);
+		pcntl_signal(SIGUSR1, [$this, 'trigger_sigusr1']);
+		pcntl_signal(SIGHUP, [$this, 'trigger_sighup']);
 
 		// A signal listener to stop the service
-		pcntl_signal(SIGUSR2, [self::class, 'shutdown']);
-		pcntl_signal(SIGTERM, [self::class, 'shutdown']);
+		pcntl_signal(SIGUSR2, [$this, 'trigger_sigusr2']);
+
+		// Stop the process gracefully when the SIGTERM signal is sent to the process
+		pcntl_signal(SIGTERM, [$this, 'shutdown']);
+	}
+
+	/**
+	 * Stop services gracefully
+	 *
+	 * @return void
+	 */
+	public function trigger_sigusr2() {
+		// Notify the user that the SIGUSR2 signal was received and that the service is shutting down
+		$this->notice("SIGUSR2 received, shutting down...");
+
+		// Stop the service gracefully
+		$this->stop();
+	}
+
+	/**
+	 * Stop the service gracefully by setting the running variable to false. It is recommended to use this variable to control the loop inside the run function. See
+	 * the example below the class for a more complete explanation
+	 *
+	 * @return void
+	 */
+	protected function stop() {
+		$this->running = false;
 	}
 
 	/**
 	 * Display version notice
 	 */
-	abstract protected static function display_version(): void;
+	protected static function display_version(): void {
+		// Get the base class name without the namespace
+		$display_name = static::get_display_name();
+
+		// Get the version from the child class constant
+		$version = static::get_version();
+
+		// Display the class name and version
+		echo "$display_name version $version\n";
+	}
+
+	/**
+	 * Get the version from the child class constant.
+	 *
+	 * @return string The version defined in the child class constant.
+	 */
+	public static function get_version(): string {
+		return static::VERSION;
+	}
+
+	/**
+	 * Get the display name for the service by converting the base class name to a more human-readable format.
+	 *
+	 * This method takes the base class name (without the namespace), replaces underscores with spaces, and capitalizes each word to create a user-friendly display name for the service.
+	 *
+	 * @return string The formatted display name for the service.
+	 */
+	public static function get_display_name(): string {
+		// Get the base class name without the namespace
+		$class_name = static::base_class_name();
+
+		// Set the display name by replacing underscores with spaces and capitalizing each word
+		$display_name = str_replace('_', ' ', $class_name);
+		return ucwords($display_name);
+	}
+
+	/**
+	 * Handle the SIGUSR1 signal to reload settings.
+	 *
+	 * When the SIGUSR1 signal is sent to this process, the on_reload_settings method is called to handle the reloading of settings.
+	 * This allows any child classes to use the updated config file settings without having to restart the service. After the settings are reloaded, the child class method reload_settings
+	 * is called to allow the child class to handle any additional actions that need to be taken after the settings are reloaded.
+	 *
+	 * @return void
+	 */
+	final public function trigger_sigusr1() {
+		// Notify the user that the SIGUSR1 signal was received and that the settings are being reloaded
+		$this->notice("SIGUSR1 received, reloading settings...");
+
+		// Reload the config file
+		$this->reload();
+
+		// Call the child class method to handle the settings reload
+		$this->reload_settings();
+	}
+
+	/**
+	 * Handle the SIGHUP signal to reload settings.
+	 *
+	 * When the SIGHUP signal is sent to this process, the on_reload_settings method is called to handle the reloading of settings.
+	 * This allows any child classes to use the updated config file settings without having to restart the service. After the settings are reloaded, the child class method reload_settings
+	 * is called to allow the child class to handle any additional actions that need to be taken after the settings are reloaded.
+	 *
+	 * @return void
+	 */
+	final public function trigger_sighup() {
+
+		// Notify the user that the SIGHUP signal was received and that the settings are being reloaded
+		$this->notice("SIGHUP received, reloading settings...");
+
+		// Reload the config file
+		$this->reload();
+
+		// Call the child class method to handle the settings reload
+		$this->reload_settings();
+	}
+
+	/**
+	 * Method to be overridden by child classes to handle any additional actions that need to be taken after the settings are reloaded.
+	 *
+	 * This method is called after the config file is reloaded when the SIGHUP or SIGUSR1 signals are received. Child classes can override this method to perform any necessary actions that should occur after the settings have been reloaded, such as updating internal variables, refreshing connections, or logging additional information.
+	 *
+	 * @return void
+	 */
+	protected function reload_settings() {
+		// This method can be overridden by child classes to handle any additional actions that need to be taken after the settings are reloaded.
+	}
+
+	/**
+	 * Reloads config files and calls the child class reload_settings
+	 *
+	 * When the SIGHUP and SIGUSR1 signals are sent to this process, the config file is re-read and then
+	 * and the log level is updated. This allows any child classes to use the updated config file settings
+	 * without having to restart the service. After the settings are reloaded, the child class method reload_settings
+	 * is called to allow the child class to handle any additional actions that need to be taken after the settings are reloaded.
+	 *
+	 * @return void
+	 */
+	private function reload() {
+		// re-read the config file to get any possible changes
+		self::$config->read();
+
+		// Track if the settings have been reloaded at least once so we can show the log level in the log after the first reload
+		static $settings_loaded = false;
+
+		// Check if debug logging is set in the config file
+		self::$log_level = self::$config->get('xml_cdr.log_level', self::$log_level);
+
+		// Set the log level for this service
+		self::set_debug_level(self::$log_level);
+
+		// If the settings have been reloaded at least once, then we know this is not the first time we are reloading
+		// the settings, so we can show the log level in the log
+		if ($settings_loaded) {
+			$this->notice("Log level set to ".self::log_level_to_string(self::$log_level));
+		}
+		$settings_loaded = true;
+
+		// Call the child class method to handle the settings reload
+
+	}
 
 	/**
 	 * Parses the debug level to an integer and stores it in the class for syslog use
@@ -756,43 +934,43 @@ abstract class service {
 		switch ($debug_level) {
 			case '0':
 			case 'emergency':
-				self::$log_level = LOG_EMERG; // Hardware failures
+				self::$log_level = 0; // Hardware failures LOG_EMERG
 				break;
 			case '1':
 			case 'alert':
-				self::$log_level = LOG_ALERT; // Loss of network connection or a condition that should be corrected immediately
+				self::$log_level = 1; // Loss of network connection or a condition that should be corrected immediately LOG_ALERT
 				break;
 			case '2':
 			case 'critical':
-				self::$log_level = LOG_CRIT; // Condition like low disk space
+				self::$log_level = 2; // Condition like low disk space LOG_CRIT
 				break;
 			case '3':
 			case 'error':
-				self::$log_level = LOG_ERR;  // Database query failure, file not found
+				self::$log_level = 3;  // Database query failure, file not found LOG_ERR
 				break;
 			case '4':
 			case 'warning':
-				self::$log_level = LOG_WARNING; // Deprecated function usage, approaching resource limits
+				self::$log_level = 4; // Deprecated function usage, approaching resource limits LOG_WARNING
 				break;
 			case '5':
 			case 'notice':
-				self::$log_level = LOG_NOTICE; // Normal conditions
+				self::$log_level = 5; // Normal conditions LOG_NOTICE
 				break;
 			case '6':
 			case 'info':
-				self::$log_level = LOG_INFO; // Informational
+				self::$log_level = 6; // Informational LOG_INFO
 				break;
 			case '7':
 			case 'debug':
-				self::$log_level = LOG_DEBUG; // Debugging
+				self::$log_level = 7; // Debugging LOG_DEBUG
 				break;
 			default:
-				self::$log_level = LOG_NOTICE; // Default to NOTICE if invalid level
+				self::$log_level = 5; // Default to NOTICE if invalid level LOG_NOTICE
 		}
 
 		// When we are using LOG_DEBUG there is a high chance we are logging to the console
 		// directly without systemctl so enable the timestamps by default
-		if (self::$log_level === LOG_DEBUG && !self::$daemon_mode) {
+		if (self::$log_level === 7 && !self::$daemon_mode) {
 			self::show_timestamp();
 		}
 	}
@@ -976,7 +1154,7 @@ abstract class service {
 	 *
 	 * @return string The log level as a string.
 	 */
-	private static function log_level_to_string(int $level = LOG_NOTICE): string {
+	protected static function log_level_to_string(int $level = LOG_NOTICE): string {
 		switch ($level) {
 			case 0:
 				return 'EMERGENCY';
@@ -1002,7 +1180,7 @@ abstract class service {
 	/**
 	 * Child classes must provide a mechanism to reload settings
 	 */
-	abstract protected function reload_settings(): void;
+	//abstract protected function reload_settings(): void;
 
 	/**
 	 * Logs a message at the DEBUG level.
