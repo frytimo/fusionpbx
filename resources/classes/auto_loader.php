@@ -38,6 +38,8 @@ class auto_loader {
 	const CLASSES_FILE = 'autoloader_cache.php';
 	const INTERFACES_KEY = "autoloader_interfaces";
 	const INTERFACES_FILE = "autoloader_interface_cache.php";
+	const CACHE_VERSION_KEY = 'autoloader_cache_version';
+	const CACHE_VERSION = 2;
 	/**
 	 * Cache path and file name for classes
 	 *
@@ -109,13 +111,23 @@ class auto_loader {
 		$this->interfaces = [];
 		$this->traits = [];
 
-		//use apcu when available
-		if ($this->apcu_enabled && apcu_exists(self::CLASSES_KEY)) {
+		//check cache version to invalidate old caches
+		$cache_version_valid = false;
+		if ($this->apcu_enabled) {
+			$cached_version = apcu_fetch(self::CACHE_VERSION_KEY, $version_exists);
+			if ($version_exists && $cached_version === self::CACHE_VERSION) {
+				$cache_version_valid = true;
+			}
+		}
+
+		//use apcu when available and version is valid
+		if ($this->apcu_enabled && $cache_version_valid && apcu_exists(self::CLASSES_KEY)) {
 			$this->classes = apcu_fetch(self::CLASSES_KEY, $classes_cached);
 			$this->interfaces = apcu_fetch(self::INTERFACES_KEY, $interfaces_cached);
-			//don't use files when we are using apcu caching
-			if ($classes_cached && $interfaces_cached)
+			//verify we got valid data
+			if ($classes_cached && $interfaces_cached && !empty($this->classes)) {
 				return true;
+			}
 		}
 
 		//use PHP engine to parse it
@@ -128,8 +140,9 @@ class auto_loader {
 			$this->interfaces = include self::$interfaces_file;
 		}
 
-		//catch edge case of first time using apcu cache
-		if ($this->apcu_enabled) {
+		//populate apcu cache from file cache if available
+		if ($this->apcu_enabled && !empty($this->classes)) {
+			apcu_store(self::CACHE_VERSION_KEY, self::CACHE_VERSION);
 			apcu_store(self::CLASSES_KEY, $this->classes);
 			apcu_store(self::INTERFACES_KEY, $this->interfaces);
 		}
@@ -258,11 +271,9 @@ class auto_loader {
 
 		//update RAM cache when available
 		if ($this->apcu_enabled) {
-			$classes_cached = apcu_store(self::CLASSES_KEY, $this->classes);
-			$interfaces_cached = apcu_store(self::INTERFACES_KEY, $this->interfaces);
-			//do not save to drive when we are using apcu
-			if ($classes_cached && $interfaces_cached)
-				return true;
+			apcu_store(self::CACHE_VERSION_KEY, self::CACHE_VERSION);
+			apcu_store(self::CLASSES_KEY, $this->classes);
+			apcu_store(self::INTERFACES_KEY, $this->interfaces);
 		}
 
 		//export the classes array using PHP engine
@@ -329,6 +340,7 @@ class auto_loader {
 
 		//check for apcu cache
 		if (function_exists('apcu_enabled') && apcu_enabled()) {
+			apcu_delete(self::CACHE_VERSION_KEY);
 			apcu_delete(self::CLASSES_KEY);
 			apcu_delete(self::INTERFACES_KEY);
 		}
@@ -432,8 +444,8 @@ class auto_loader {
 	 */
 	private function loader($class_name): bool {
 
-		//sanitize the class name
-		$class_name = preg_replace('[^a-zA-Z0-9_]', '', $class_name);
+		//sanitize the class name (preserve backslashes for namespaces)
+		$class_name = preg_replace('/[^a-zA-Z0-9_\\\\]/', '', $class_name);
 
 		//find the path using the class_name as the key in the classes array
 		if (isset($this->classes[$class_name])) {
