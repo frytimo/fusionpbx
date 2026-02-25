@@ -61,7 +61,7 @@
 
 //get http post variables and set them to php variables
 	if (!empty($_POST)) {
-		$domain_name = strtolower($_POST["domain_name"]);
+		$domain_name = domains::sanitize($_POST["domain_name"] ?? '');
 		$domain_enabled = $_POST["domain_enabled"];
 		$domain_description = $_POST["domain_description"];
 	}

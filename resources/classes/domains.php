@@ -550,6 +550,9 @@ class domains {
 							}
 						}
 
+						// sanitize the domain name to prevent directory traversal and other security issues
+						$domain_name = domains::sanitize($domain_name);
+
 						//delete the directories
 						if (!empty($domain_name)) {
 							//set the needle
@@ -562,24 +565,24 @@ class domains {
 							//delete the dialplan
 							@unlink($_SESSION['switch']['dialplan']['dir'] . '/' . $domain_name . '.xml');
 							if (!empty($_SESSION['switch']['dialplan']['dir'])) {
-								system('rm -rf ' . $_SESSION['switch']['dialplan']['dir'] . '/' . $domain_name);
+								system('rm -rf ' . escapeshellarg($_SESSION['switch']['dialplan']['dir'] . '/' . $domain_name));
 							}
 
 							//delete the dialplan public
 							@unlink($_SESSION['switch']['dialplan']['dir'] . '/public/' . $domain_name . '.xml');
 							if (!empty($_SESSION['switch']['dialplan']['dir'])) {
-								system('rm -rf ' . $_SESSION['switch']['dialplan']['dir'] . '/public/' . $domain_name);
+								system('rm -rf ' . escapeshellarg($_SESSION['switch']['dialplan']['dir'] . '/public/' . $domain_name));
 							}
 
 							//delete the extension
 							@unlink($_SESSION['switch']['extensions']['dir'] . '/' . $domain_name . '.xml');
 							if (!empty($_SESSION['switch']['extensions']['dir'])) {
-								system('rm -rf ' . $_SESSION['switch']['extensions']['dir'] . '/' . $domain_name);
+								system('rm -rf ' . escapeshellarg($_SESSION['switch']['extensions']['dir'] . '/' . $domain_name));
 							}
 
 							//delete fax
 							if (!empty($_SESSION['switch']['storage']['dir'])) {
-								system('rm -rf ' . $_SESSION['switch']['storage']['dir'] . '/fax/' . $domain_name);
+								system('rm -rf ' . escapeshellarg($_SESSION['switch']['storage']['dir'] . '/fax/' . $domain_name));
 							}
 
 							//delete the gateways
@@ -881,5 +884,61 @@ class domains {
 		//return the domains array
 		return $domains;
 	}
+	public static function sanitize(string $domain_name): string {
+		//convert to lowercase (domain names are case-insensitive)
+		$domain_name = strtolower($domain_name);
 
+		//remove spaces
+		$domain_name = str_replace(' ', '', $domain_name);
+
+		//remove protocol prefixes (http://, https://, ftp://, etc.)
+		$domain_name = preg_replace('#^[a-z][a-z0-9+\.-]*://#i', '', $domain_name);
+
+		//remove www. prefix
+		$domain_name = preg_replace('#^www\.#', '', $domain_name);
+
+		//remove any path, query string, or fragment
+		$domain_name = preg_replace('#[/?#].*$#', '', $domain_name);
+
+		//remove port number if present
+		$domain_name = preg_replace('#:\d+$#', '', $domain_name);
+
+		//remove invalid characters (keep only a-z, 0-9, dots, and hyphens)
+		//note: underscores are NOT valid in domain names per RFC 1034/1035
+		$domain_name = preg_replace('/[^a-z0-9\.\-]/', '', $domain_name);
+
+		//remove consecutive dots
+		$domain_name = preg_replace('/\.{2,}/', '.', $domain_name);
+
+		//remove leading and trailing dots and hyphens
+		$domain_name = trim($domain_name, '.-');
+
+		//validate each label: must not start/end with hyphen
+		$labels = explode('.', $domain_name);
+		$valid_labels = [];
+		foreach ($labels as $label) {
+			//trim hyphens from start and end of each label
+			$label = trim($label, '-');
+			//only keep non-empty labels
+			if ($label !== '') {
+				//limit label length to 63 characters (RFC 1035)
+				if (strlen($label) > 63) {
+					$label = substr($label, 0, 63);
+					//ensure it doesn't end with a hyphen after truncation
+					$label = rtrim($label, '-');
+				}
+				$valid_labels[] = $label;
+			}
+		}
+		$domain_name = implode('.', $valid_labels);
+
+		//limit total domain name length to 253 characters (RFC 1035)
+		if (strlen($domain_name) > 253) {
+			$domain_name = substr($domain_name, 0, 253);
+			//ensure it doesn't end with a dot or hyphen after truncation
+			$domain_name = rtrim($domain_name, '.-');
+		}
+
+		return $domain_name;
+	}
 }
