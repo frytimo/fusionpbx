@@ -325,4 +325,4 @@ if (!empty($_GET["contact_uuid"]) && is_uuid($_GET["contact_uuid"])) {
 //include the footer
 	require_once "resources/footer.php";
 
-?>
+

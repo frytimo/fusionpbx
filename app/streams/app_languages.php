@@ -297,4 +297,4 @@ $text['description-stream_description']['zh-cn'] = "输入说明。";
 $text['description-stream_description']['ja-jp'] = "説明を入力してください。";
 $text['description-stream_description']['ko-kr'] = "설명을 입력합니다.";
 
-?>
+

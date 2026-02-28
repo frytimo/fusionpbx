@@ -681,4 +681,4 @@
 		list($paging_controls, $rows_per_page) = paging($num_rows, $param, $rows_per_page, false, $result_count); //bottom
 	}
 
-?>
+

@@ -460,4 +460,4 @@ $text['theme-message-menu_reset']['zh-cn'] = "菜单状态重置";
 $text['theme-message-menu_reset']['ja-jp'] = "メニュー状態のリセット";
 $text['theme-message-menu_reset']['ko-kr'] = "메뉴 상태 재설정";
 
-?>
+

@@ -61,5 +61,3 @@ else {
 //default redirect
 	header('Location: call_broadcasts.php');
 	exit;
-
-?>

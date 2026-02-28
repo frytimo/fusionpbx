@@ -44,5 +44,3 @@ $array['dashboard_widgets'][$x]['dashboard_widget_groups'][$y]['dashboard_widget
 $array['dashboard_widgets'][$x]['dashboard_widget_groups'][$y]['dashboard_widget_uuid'] = 'c3c37d29-b654-4024-8ee4-d752b3e4db46';
 $array['dashboard_widgets'][$x]['dashboard_widget_groups'][$y]['group_name'] = 'admin';
 $y++;
-
-?>

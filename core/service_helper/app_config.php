@@ -95,4 +95,4 @@ $apps[$x]['default_settings'][$y]['default_setting_name'] = "text";
 $apps[$x]['default_settings'][$y]['default_setting_value'] = "* * * * *";
 $apps[$x]['default_settings'][$y]['default_setting_enabled'] = "true";
 $apps[$x]['default_settings'][$y]['default_setting_description'] = "Cron interval for service helper (default every minute).";
-?>
+

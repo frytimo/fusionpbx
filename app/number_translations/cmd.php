@@ -64,4 +64,4 @@
 		header("Location: number_translations.php");
 	}
 
-?>
+

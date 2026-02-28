@@ -189,5 +189,3 @@ function download_send_headers($filename) {
 
 //include the footer
 	require_once "resources/footer.php";
-
-?>

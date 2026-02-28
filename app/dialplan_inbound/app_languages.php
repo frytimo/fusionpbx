@@ -944,5 +944,3 @@ $text['confirm-update-complete']['tr-tr'] = "Güncelleme Tamamlandı";
 $text['confirm-update-complete']['zh-cn'] = "更新完成";
 $text['confirm-update-complete']['ja-jp'] = "アップデート完了";
 $text['confirm-update-complete']['ko-kr'] = "업데이트 완료";
-
-?>

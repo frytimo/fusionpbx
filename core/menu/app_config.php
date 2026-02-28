@@ -391,4 +391,3 @@
 		$apps[$x]['default_settings'][$y]['default_setting_description'] = "Reloads the menu when switching tenants/domains - useful when custom menu(s) exist.";
 		$y++;
 
-?>

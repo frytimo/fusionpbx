@@ -56,4 +56,4 @@ function parse_attachments($connection, $message_number, $option = '') {
 	return array_values($attachments); //reindex
 }
 
-?>
+

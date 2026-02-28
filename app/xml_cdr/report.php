@@ -185,4 +185,3 @@ for ($y = 0; $y < 4; $y++) {
 //show the footer
 	require_once "resources/footer.php";
 
-?>

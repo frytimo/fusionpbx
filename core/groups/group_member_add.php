@@ -76,4 +76,4 @@
 //redirect the user
 	header("Location: group_members.php?group_uuid=".urlencode($group_uuid)."&group_name=".urlencode($group_name));
 
-?>
+

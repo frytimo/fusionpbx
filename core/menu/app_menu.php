@@ -271,4 +271,3 @@
 	$apps[$x]['menu'][$y]['groups'][] = "fax";
 	$y++;
 
-?>

@@ -6,4 +6,4 @@ $array['dashboards'][$x]['dashboard_name'] = 'default';
 $array['dashboards'][$x]['dashboard_enabled'] = 'true';
 $array['dashboards'][$x]['dashboard_description'] = 'Default Dashboard';
 
-?>
+

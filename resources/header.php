@@ -115,4 +115,4 @@
 		require_once("app/translate/translate_header.php");
 	}
 
-?>
+

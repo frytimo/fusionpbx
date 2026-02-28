@@ -96,4 +96,3 @@
 		$apps[$x]['default_settings'][$y]['default_setting_description'] = "Mode of the PC network port on back of phone  Bridge=1 Router=0 ExpansionModule=2";
 		$y++;
 
-?>

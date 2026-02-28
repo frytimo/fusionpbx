@@ -651,4 +651,4 @@ echo '<td id="duration_${uuid}"></td>'.PHP_EOL;
 	connect_active_calls_widget();
 </script>
 
-<?php echo "</div>\n"; ?>
+<?php echo "</div>\n"; 

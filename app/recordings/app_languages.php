@@ -864,4 +864,4 @@ $text['description-with_password']['zh-cn'] = "拨打 *732 并输入密码 ||REC
 $text['description-with_password']['ja-jp'] = "*732 にダイヤルし、パスワード ||RECORDING_PASSWORD|| を入力し、その後に作成する録音の番号を入力します。 または、最良の結果を得るには、16 ビット 8khz/16khz モノラル WAV ファイルをアップロードします。";
 $text['description-with_password']['ko-kr'] = "*732를 다이얼하고 비밀번호 ||RECORDING_PASSWORD||를 입력한 다음 생성할 녹음 번호를 입력합니다. 또는 최상의 결과를 얻으려면 16비트 8khz/16khz 모노 WAV 파일을 업로드하십시오.";
 
-?>
+

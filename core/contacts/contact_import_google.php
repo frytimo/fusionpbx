@@ -605,4 +605,4 @@ function curl_file_get_contents($url) {
 	curl_close($curl);
 	return $contents;
 }
-?>
+

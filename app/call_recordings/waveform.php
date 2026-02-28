@@ -120,5 +120,3 @@
 		@unlink($temp_filename);
 
 	}
-
-?>

@@ -44,5 +44,3 @@
 		$obj->binary = isset($_GET['binary']) ? true : false;
 		$obj->download();
 	}
-
-?>

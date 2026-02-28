@@ -114,4 +114,4 @@ echo "<div id=\"ajax_reponse\"></div>\n";
 echo "<br><br>";
 
 require_once "resources/footer.php";
-?>
+

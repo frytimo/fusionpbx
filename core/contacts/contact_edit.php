@@ -2738,4 +2738,4 @@ if (permission_exists('contact_note_view')) {
 //include the footer
 	require_once "resources/footer.php";
 
-?>
+

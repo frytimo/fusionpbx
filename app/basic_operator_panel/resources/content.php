@@ -700,4 +700,3 @@ if (if_group("superadmin") && isset($_GET['debug'])) {
 }
 */
 
-?>

@@ -55,4 +55,4 @@
 	header("Location: ".PROJECT_PATH."/core/menu/menu_edit.php?id=".urlencode($menu_uuid));
 	return;
 
-?>
+

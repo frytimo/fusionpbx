@@ -1419,5 +1419,3 @@ function type_onchange(dialplan_detail_type) {
 
 //show the footer
 	require_once "resources/footer.php";
-
-?>

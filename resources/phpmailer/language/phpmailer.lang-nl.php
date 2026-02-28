@@ -22,4 +22,4 @@ $PHPMAILER_LANG['empty_message']        = 'Berichttekst is leeg';//Message body 
 $PHPMAILER_LANG['invalid_address']      = 'Ongeldig adres';//Invalid address
 $PHPMAILER_LANG['variable_set']         = 'Kan de volgende variablen niet instellen of resetten: ';//Cannot set or reset variable:
 
-?>
+

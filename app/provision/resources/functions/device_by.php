@@ -28,4 +28,4 @@ function device_by_ext($ext, $domain) {
 	return is_array($row) && @sizeof($row) != 0 ? $row : false;
 }
 
-?>
+

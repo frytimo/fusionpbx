@@ -503,4 +503,4 @@
 		echo "<span class='hud_expander' onclick=\"$('#hud_system_counts_details').slideToggle('fast');\"><span class='fas fa-ellipsis-h'></span></span>\n";
 	}
 	echo "</div>\n";
-?>
+

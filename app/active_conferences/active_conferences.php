@@ -171,4 +171,4 @@ $ac_js_hash = file_exists($ac_js_file) ? md5_file($ac_js_file) : $version;
 //include the footer
 	require_once "resources/footer.php";
 
-?>
+

@@ -900,4 +900,3 @@ class rfc822_addresses_class
 
 */
 
-?>

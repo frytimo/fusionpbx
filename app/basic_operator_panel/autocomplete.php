@@ -183,4 +183,3 @@
 		if (isset($_GET['debug'])) { echo "</pre>"; }
 	}
 
-?>

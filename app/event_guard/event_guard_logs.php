@@ -307,4 +307,4 @@ echo "</form>\n";
 // include the footer
 require_once "resources/footer.php";
 
-?>
+

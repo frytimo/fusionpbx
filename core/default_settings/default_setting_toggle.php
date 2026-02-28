@@ -75,4 +75,4 @@
 	$search = preg_replace('#[^a-zA-Z0-9_\-\.]# ', '', $search);
 	header("Location: default_settings.php".($search != '' ? '?search='.$search : null));
 
-?>
+

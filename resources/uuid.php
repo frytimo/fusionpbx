@@ -6,4 +6,4 @@
 //show the uuid
 	echo uuid();
 
-?>
+

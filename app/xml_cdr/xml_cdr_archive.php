@@ -34,4 +34,3 @@
 //includes files
 	require_once "xml_cdr.php";
 
-?>

@@ -53,5 +53,3 @@
 		$y++;
 		$apps[$x]['permissions'][$y]['name'] = "inbound_route_copy";
 		$apps[$x]['permissions'][$y]['groups'][] = "superadmin";
-
-?>

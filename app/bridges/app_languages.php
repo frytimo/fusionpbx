@@ -621,5 +621,3 @@ $text['description-destination_number']['tr-tr'] = "Eylemin hedef numarasını a
 $text['description-destination_number']['zh-cn'] = "设置操作的目标号码。";
 $text['description-destination_number']['ja-jp'] = "アクションの宛先番号を設定します。";
 $text['description-destination_number']['ko-kr'] = "작업의 대상 번호를 설정합니다.";
-
-?>

@@ -35,4 +35,4 @@ $y=0;
 	$apps[$x]['menu'][$y]['groups'][] = "superadmin";
 	$y++;
 
-?>
+

@@ -51,4 +51,3 @@ function google_get_groups($token) {
 
 	return $groups;
 }
-?>

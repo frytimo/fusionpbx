@@ -20,4 +20,3 @@
 	$v_button_icon_stop = "<button type='button' class='btn btn-default btn-icon'><span class='fas fa-stop'></span></button>";
 	$v_button_icon_download = "<button type='button' class='btn btn-default btn-icon'><span class='fas fa-cloud-download-alt'></span></button>";
 
-?>

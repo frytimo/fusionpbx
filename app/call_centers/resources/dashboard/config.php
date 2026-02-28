@@ -37,5 +37,3 @@ $array['dashboard_widgets'][$x]['dashboard_widget_groups'][$y]['dashboard_uuid']
 $array['dashboard_widgets'][$x]['dashboard_widget_groups'][$y]['dashboard_widget_group_uuid'] = '22d8937c-a9b3-4458-b34c-0ebeda15ffad';
 $array['dashboard_widgets'][$x]['dashboard_widget_groups'][$y]['dashboard_widget_uuid'] = '9083305a-ebb4-4b67-bb9b-8c09cf030261';
 $array['dashboard_widgets'][$x]['dashboard_widget_groups'][$y]['group_name'] = 'agent';
-
-?>

@@ -71,4 +71,4 @@ else {
 }
 header("Location: ".$location);
 
-?>
+

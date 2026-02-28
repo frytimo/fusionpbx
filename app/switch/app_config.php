@@ -68,4 +68,4 @@
 		$apps[$x]['default_settings'][$y]['default_setting_description'] = "";
 		$y++;
 
-?>
+

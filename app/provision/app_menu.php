@@ -13,4 +13,4 @@
 	//$apps[$x]['menu'][0]['groups'][] = "admin";
 	//$apps[$x]['menu'][0]['groups'][] = "superadmin";
 
-?>
+

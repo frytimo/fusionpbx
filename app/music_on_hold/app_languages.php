@@ -1377,4 +1377,4 @@ $text['button-clear']['zh-cn'] = "清除";
 $text['button-clear']['ja-jp'] = "クリア";
 $text['button-clear']['ko-kr'] = "분명한";
 
-?>
+

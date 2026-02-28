@@ -81,5 +81,3 @@ if ($domains_processed == 1) {
 	unset($table_exists);
 
 }
-
-?>

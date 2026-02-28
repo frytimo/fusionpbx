@@ -13,4 +13,3 @@ function object_to_array($obj) {
 	return array_map('object_to_array', $obj);
 }
 
-?>

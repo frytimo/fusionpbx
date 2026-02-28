@@ -52,4 +52,4 @@ if (!empty($domains_processed) && $domains_processed == 1) {
 		unset($result);
 }
 
-?>
+

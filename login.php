@@ -32,4 +32,4 @@
 //redirect to the dashboard
 	header("Location: ".$settings->get('login', 'destination', PROJECT_PATH.'/core/dashboard/'));
 
-?>
+

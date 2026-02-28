@@ -390,4 +390,4 @@
 //include footer
 	require_once "resources/footer.php";
 
-?>
+

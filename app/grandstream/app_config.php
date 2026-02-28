@@ -1289,4 +1289,4 @@
 		$apps[$x]['default_settings'][$y]['default_setting_description'] = "SNMPv1/v2c Community string. Default is 'public'.";
 		$y++;
 
-?>
+

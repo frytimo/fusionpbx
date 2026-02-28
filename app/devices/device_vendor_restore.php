@@ -144,5 +144,3 @@
 //redirect
 	header('Location: device_vendors.php');
 	exit;
-
-?>

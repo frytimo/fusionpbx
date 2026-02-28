@@ -153,5 +153,3 @@ var record_count = 0;
 
 //include the footer
 	require_once "resources/footer.php";
-
-?>

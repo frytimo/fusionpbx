@@ -45,4 +45,3 @@ function persistformvar($form_array) {
 //persistformvar($_POST);
 //persistformvar($_GET);
 
-?>

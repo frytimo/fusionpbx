@@ -163,4 +163,4 @@
 		echo json_encode($contacts, true);
 	}
 
-?>
+

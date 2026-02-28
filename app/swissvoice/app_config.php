@@ -41,4 +41,3 @@
 		$apps[$x]['default_settings'][$y]['default_setting_description'] = "Separatea by comma. Default = PCMU,PCMA,G726-32,G729,G723,iLBC,AMR,G722,AMR-WB";
 		$y++;
 
-?>

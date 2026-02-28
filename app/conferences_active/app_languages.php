@@ -1322,5 +1322,3 @@ $text['button-start-rec']['tr-tr'] = "Kaydı Başlat";
 $text['button-start-rec']['zh-cn'] = "开始录制";
 $text['button-start-rec']['ja-jp'] = "記録開始";
 $text['button-start-rec']['ko-kr'] = "기록 시작";
-
-?>

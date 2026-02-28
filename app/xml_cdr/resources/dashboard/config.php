@@ -150,4 +150,4 @@ $array['dashboard_widgets'][$x]['dashboard_widget_groups'][$y]['dashboard_widget
 $array['dashboard_widgets'][$x]['dashboard_widget_groups'][$y]['group_name'] = 'user';
 $y++;
 
-?>
+

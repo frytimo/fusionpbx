@@ -134,5 +134,3 @@ else if (window.attachEvent) {
 
 //include the footer
 	require_once "resources/footer.php";
-
-?>

@@ -38,4 +38,4 @@
 	$apps[$x]['menu'][$y]['groups'][] = "agent";
 	$y++;
 
-?>
+

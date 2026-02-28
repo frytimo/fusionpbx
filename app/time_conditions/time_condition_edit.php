@@ -1355,4 +1355,4 @@ if ($action == 'update') {
 //include the footer
 	require_once "resources/footer.php";
 
-?>
+

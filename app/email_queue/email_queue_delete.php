@@ -55,6 +55,3 @@
 		//redirect the user
 			header('Location: email_queues.php');
 	}
-
-
-?>

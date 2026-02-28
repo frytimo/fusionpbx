@@ -36,5 +36,3 @@
 	$apps[$x]['menu'][$y]['groups'][] = "admin";
 	$y++;
 	*/
-
-?>

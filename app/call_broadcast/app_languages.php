@@ -1052,5 +1052,3 @@ $text['file-error']['tr-tr'] = "Üzgünüz, Dosya türüne izin verilmiyor";
 $text['file-error']['zh-cn'] = "抱歉，不允许的文件类型";
 $text['file-error']['ja-jp'] = "申し訳ありませんが、ファイル形式は許可されていません";
 $text['file-error']['ko-kr'] = "죄송합니다. 파일 형식이 허용되지 않습니다.";
-
-?>

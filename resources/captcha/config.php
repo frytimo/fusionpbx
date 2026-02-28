@@ -104,4 +104,4 @@ $pathtofonts = "/captcha/fonts/"; //path from the root of the website
 
 
 
-?>
+

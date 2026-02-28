@@ -432,4 +432,4 @@
 		$apps[$x]['default_settings'][$y]['default_setting_enabled'] = "true";
 		$apps[$x]['default_settings'][$y]['default_setting_description'] = "Auto calculate daylight saving start and stop date and times.";
 
-?>
+

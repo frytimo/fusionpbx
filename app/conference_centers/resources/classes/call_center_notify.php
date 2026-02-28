@@ -66,5 +66,3 @@ class call_center_notify {
 	} //function
 
 } //class
-
-?>

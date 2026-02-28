@@ -48,5 +48,4 @@
 	$location = 'access_controls.php'.($search != '' ? "?search=".urlencode($search) : null);
 
 	header("Location: ".$location);
-
-?>
+	exit();

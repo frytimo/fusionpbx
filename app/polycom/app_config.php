@@ -848,4 +848,4 @@
 		$apps[$x]['default_settings'][$y]['default_setting_enabled'] = "false";
 		$apps[$x]['default_settings'][$y]['default_setting_description'] = "0 (default) - The attendant can pick up calls to monitored users while they show as ringing. 1 - The attendant cannot pick up monitored calls.";
 
-?>
+

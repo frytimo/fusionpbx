@@ -270,4 +270,4 @@ connect_websocket();
 render_conference_room();
 </script>
 
-<?php require_once "resources/footer.php"; ?>
+<?php require_once "resources/footer.php"; 

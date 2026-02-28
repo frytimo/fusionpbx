@@ -272,5 +272,3 @@
 	echo "</div>\n";
 	echo "<input type='hidden' name='".$settings->get('app', 'calls_active')['name']."' value='".$settings->get('app', 'calls_active')['hash']."'>\n";
 	echo "</form>\n";
-
-?>

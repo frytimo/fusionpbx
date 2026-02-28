@@ -2672,4 +2672,3 @@ $text['message-emails_resent']['zh-cn'] = "电子邮件已重新发送";
 $text['message-emails_resent']['ja-jp'] = "再送信メール";
 $text['message-emails_resent']['ko-kr'] = "이메일 재전송";
 
-?>

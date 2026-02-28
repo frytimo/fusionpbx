@@ -250,5 +250,3 @@
 			echo $email_response;
 		}
 	}
-
-?>

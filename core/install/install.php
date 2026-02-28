@@ -370,4 +370,4 @@
 	$view->assign("content", $content);
 	echo $view->render('template.htm');
 
-?>
+

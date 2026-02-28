@@ -120,5 +120,3 @@
 //redirect
 	header("Location: device_profiles.php");
 	return;
-
-?>

@@ -211,5 +211,3 @@
 		return escape(cmd);
 	}
 */
-
-?>

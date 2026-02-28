@@ -239,4 +239,4 @@ $array['dashboard_widgets'][$x]['dashboard_widget_groups'][$y]['group_name'] = '
 //$array['dashboard_widgets'][$x]['dashboard_widget_groups'][$y]['dashboard_widget_uuid'] = '2a0a6742-bd2d-449a-88ac-b3ed255c9f8e';
 //$array['dashboard_widgets'][$x]['dashboard_widget_groups'][$y]['group_name'] = 'admin';
 
-?>
+

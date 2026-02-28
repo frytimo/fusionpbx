@@ -192,5 +192,3 @@
 	if (is_uuid($device_uuid)) {
 		header("Location: device_edit.php?id=".urlencode($device_uuid));
 	}
-
-?>

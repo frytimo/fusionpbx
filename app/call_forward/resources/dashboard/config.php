@@ -88,5 +88,3 @@ $array['dashboard_widgets'][$x]['dashboard_widget_groups'][$y]['dashboard_widget
 $array['dashboard_widgets'][$x]['dashboard_widget_groups'][$y]['dashboard_widget_uuid'] = '714e513d-be78-4c63-8f8d-951d48a7fc0e';
 $array['dashboard_widgets'][$x]['dashboard_widget_groups'][$y]['group_name'] = 'user';
 $y++;
-
-?>

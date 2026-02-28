@@ -61,4 +61,4 @@
 	}
 	echo json_encode(['error' => 'Configuration not found']);
 
-?>
+

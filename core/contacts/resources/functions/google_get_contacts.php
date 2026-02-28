@@ -113,4 +113,4 @@ if (!function_exists('google_get_contacts')) {
 		return $contacts;
 	}
 }
-?>
+

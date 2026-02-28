@@ -81,5 +81,3 @@
 //send the redirect
 	$_SESSION["message"] = $response;
 	header("Location: call_center_queues.php?savemsg=".urlencode($response));
-
-?>

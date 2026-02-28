@@ -409,4 +409,4 @@ if (count($_POST)>0 && empty($_POST["persistformvar"])) {
 //include the footer
 	require_once "resources/footer.php";
 
-?>
+

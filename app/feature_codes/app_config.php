@@ -43,4 +43,4 @@
 		$y++;
 		$apps[$x]['permissions'][$y]['name'] = "feature_codes_raw";
 
-?>
+

@@ -438,4 +438,4 @@
 		$apps[$x]['default_settings'][$y]['default_setting_value'] = "";
 		$apps[$x]['default_settings'][$y]['default_setting_enabled'] = "false";
 		$apps[$x]['default_settings'][$y]['default_setting_description'] = "Multicast address to listen to when multicast listening is enabled. Must include port. Read here for more info (such as volume overrides and priority settings): https://service.snom.com/spaces/wiki/pages/234343129/mc_address";
-?>
+

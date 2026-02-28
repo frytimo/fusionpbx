@@ -200,5 +200,3 @@
 		$apps[$x]['default_settings'][$y]['default_setting_enabled'] = "false";
 		$apps[$x]['default_settings'][$y]['default_setting_description'] = "The expiry that Avaya phones will populate in their SUBSCRIBE messages. This should be set to equal or less than the nonce-ttl value that is set in your SIP profile.";
 		$y++;
-
-?>

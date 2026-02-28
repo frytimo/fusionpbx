@@ -908,4 +908,4 @@ window.addEventListener('resize', update_parent_height);
 //show the footer
 	require_once "resources/footer.php";
 
-?>
+

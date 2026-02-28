@@ -1566,4 +1566,4 @@ $text['label-scroll']['ja-jp'] = "スクロール";
 $text['label-scroll']['ko-kr'] = "스크롤";
 
 
-?>
+

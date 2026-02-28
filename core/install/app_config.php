@@ -36,4 +36,3 @@
 		//$apps[$x]['permissions'][$y]['groups'][] = "superadmin";
 		//$y++;
 
-?>

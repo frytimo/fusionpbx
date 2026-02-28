@@ -233,4 +233,4 @@
 	header("Location: extensions.php?".(!empty($order_by) ? '&order_by='.$order_by.'&order='.$order : null).(is_numeric($page) ? '&page='.$page : null));
 	exit;
 
-?>
+

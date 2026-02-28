@@ -61,4 +61,4 @@
 		echo "<script id='title_script'>set_title('".$time_diff."');</script>";
 	}
 	unset ($sql, $parameters, $row);
-?>
+

@@ -793,4 +793,3 @@ class pop3_stream
 	}
 };
 
-?>

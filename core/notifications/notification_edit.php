@@ -443,4 +443,3 @@ $document['title'] = $text['title-notifications'];
 
 // include the footer
 	require_once "resources/footer.php";
-?>

@@ -155,5 +155,3 @@
 	echo "<center>\n";
 	echo "	<input type='button' class='btn' style='margin-top: 15px;' value='".$text['button-close']."' onclick=\"$('#test_result_layer').fadeOut(200);\">\n";
 	echo "</center>\n";
-
-?>

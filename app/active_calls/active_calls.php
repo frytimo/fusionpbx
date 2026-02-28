@@ -1043,4 +1043,4 @@ echo "<script src='resources/javascript/arrows.js?v=$version'></script>\n";
 	connectWebsocket();
 </script>
 
-<?php require_once "resources/footer.php"; ?>
+<?php require_once "resources/footer.php"; 

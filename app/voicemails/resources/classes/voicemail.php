@@ -1712,4 +1712,4 @@ foreach ($_SESSION['user']['extension'] as $value) {
 }
 */
 
-?>
+

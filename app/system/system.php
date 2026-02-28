@@ -606,4 +606,4 @@ Con	Portions created by the Initial Developer are Copyright (C) 2008-2025
 //include the footer
 	require_once "resources/footer.php";
 
-?>
+

@@ -214,4 +214,3 @@
 //how to use this feature
 	// cd /var/www/fusionpbx; /usr/bin/php /var/www/fusionpbx/app/email_queue/resources/send.php
 
-?>

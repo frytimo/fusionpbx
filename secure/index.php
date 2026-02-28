@@ -32,4 +32,4 @@
 //set a redirect
 	header("Location: /core/dashboard/index.php");
 
-?>
+

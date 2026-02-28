@@ -104,5 +104,3 @@
 		unset($sql, $num_rows);
 
 	}
-
-?>

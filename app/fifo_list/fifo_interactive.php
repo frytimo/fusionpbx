@@ -148,4 +148,4 @@ echo "<br><br>";
 
 require_once "resources/footer.php";
 
-?>
+

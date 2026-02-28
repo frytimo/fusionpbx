@@ -585,5 +585,3 @@ echo "<br><br>\n";
 
 //include the footer
 	require_once "resources/footer.php";
-
-?>

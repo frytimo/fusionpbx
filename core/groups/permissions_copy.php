@@ -125,4 +125,3 @@
 //redirect
 	header("Location: groups.php");
 
-?>

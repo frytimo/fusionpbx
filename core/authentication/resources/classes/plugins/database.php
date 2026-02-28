@@ -397,4 +397,4 @@ class plugin_database {
 	}
 }
 
-?>
+

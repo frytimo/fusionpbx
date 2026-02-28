@@ -42,4 +42,3 @@
 		$apps[$x]['permissions'][$y]['name'] = "log_path_view";
 		$apps[$x]['permissions'][$y]['groups'][] = "superadmin";
 
-?>

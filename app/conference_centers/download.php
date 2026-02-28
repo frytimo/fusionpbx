@@ -40,5 +40,3 @@
 //download
 	$obj = new conference_centers;
 	$obj->download();
-
-?>

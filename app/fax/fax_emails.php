@@ -296,4 +296,4 @@ if (!empty($result) && @sizeof($result) != 0) {
 	}
 }
 
-?>
+

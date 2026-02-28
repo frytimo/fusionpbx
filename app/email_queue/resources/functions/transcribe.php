@@ -397,4 +397,3 @@ if (!function_exists('transcribe')) {
 	}
 }
 
-?>

@@ -415,4 +415,4 @@
 //include header
 	require_once "resources/footer.php";
 
-?>
+

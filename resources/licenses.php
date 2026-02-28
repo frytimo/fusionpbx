@@ -111,4 +111,3 @@ https://github.com/ablanco/jquery.pwstrength.bootstrap/blob/master/MIT-LICENSE.t
 
 */
 
-?>

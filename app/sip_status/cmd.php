@@ -137,4 +137,4 @@
 //redirect the user
 	header("Location: sip_status.php");
 
-?>
+

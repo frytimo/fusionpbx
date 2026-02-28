@@ -108,5 +108,3 @@
 		echo "access denied";
 		exit;
 	}
-
-?>

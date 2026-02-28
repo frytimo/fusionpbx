@@ -46,4 +46,4 @@
 		$apps[$x]['permissions'][$y]['name'] = "upgrade_switch";
 		$apps[$x]['permissions'][$y]['groups'][] = "superadmin";
 
-?>
+

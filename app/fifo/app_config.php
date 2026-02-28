@@ -288,4 +288,3 @@
 	//cache details
 		$apps[$x]['cache']['key'] = "dialplan.\${domain_name}";
 
-?>

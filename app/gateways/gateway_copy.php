@@ -153,4 +153,3 @@
 	header("Location: gateways.php");
 	return;
 
-?>

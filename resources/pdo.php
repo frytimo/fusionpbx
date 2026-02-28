@@ -279,4 +279,4 @@ if ($db_type == "odbc") {
 	}
 } //end if db_type pgsql
 
-?>
+

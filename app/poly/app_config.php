@@ -281,4 +281,3 @@
 		$apps[$x]['default_settings'][$y]['default_setting_description'] = "Handset 10 outbound dialplan rules";
 		$y++;
 
-?>

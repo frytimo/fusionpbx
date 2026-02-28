@@ -486,4 +486,4 @@ $text['button-flush_cache']['zh-cn'] = "刷新缓存";
 $text['button-flush_cache']['ja-jp'] = "キャッシュのフラッシュ";
 $text['button-flush_cache']['ko-kr'] = "플러시 캐시";
 
-?>
+

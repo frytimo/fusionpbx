@@ -406,4 +406,4 @@
 	//cache details
 		$apps[$x]['cache']['key'] = "dialplan.\${dialplan_context}";
 
-?>
+

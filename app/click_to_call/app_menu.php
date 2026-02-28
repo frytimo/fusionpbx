@@ -32,5 +32,3 @@
 	$apps[$x]['menu'][$y]['path'] = "/app/click_to_call/click_to_call.php";
 	$apps[$x]['menu'][$y]['order'] = "";
 	$y++;
-
-?>

@@ -84,4 +84,4 @@
 //show the domains as json
 	echo json_encode($domains, true);
 
-?>
+

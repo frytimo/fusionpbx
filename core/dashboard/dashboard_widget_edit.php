@@ -1443,4 +1443,4 @@ document.addEventListener('DOMContentLoaded', function() {
 //include the footer
 	require_once "resources/footer.php";
 
-?>
+

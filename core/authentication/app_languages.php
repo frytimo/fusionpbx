@@ -189,4 +189,4 @@ $text['button-forgot_password']['zh-cn'] = "忘记密码？";
 $text['button-forgot_password']['ja-jp'] = "パスワードを忘れた？";
 $text['button-forgot_password']['ko-kr'] = "비밀번호를 잊으셨나요?";
 
-?>
+
