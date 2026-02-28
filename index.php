@@ -31,9 +31,11 @@
 	if (isset($_SESSION["username"])) {
 		if (!empty($settings->get('login', 'destination'))) {
 			header("Location: ".$settings->get('login', 'destination'));
+			exit();
 		}
 		elseif (file_exists(__DIR__."/core/dashboard/app_config.php")) {
 			header("Location: ".PROJECT_PATH."/core/dashboard/");
+			exit();
 		}
 		else {
 			require_once "resources/header.php";
@@ -48,6 +50,7 @@
 		else {
 			//login prompt
 			header("Location: ".PROJECT_PATH."/login.php");
+			exit();
 		}
 	}
 
