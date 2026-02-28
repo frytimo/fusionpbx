@@ -111,17 +111,22 @@ class auto_loader {
 		$this->interfaces = [];
 		$this->traits = [];
 
-		//check cache version to invalidate old caches
-		$cache_version_valid = false;
+		//check APCu cache version
+		$apcu_version_valid = false;
 		if ($this->apcu_enabled) {
 			$cached_version = apcu_fetch(self::CACHE_VERSION_KEY, $version_exists);
 			if ($version_exists && $cached_version === self::CACHE_VERSION) {
-				$cache_version_valid = true;
+				$apcu_version_valid = true;
+			} else if ($version_exists) {
+				//clear stale APCu cache
+				apcu_delete(self::CACHE_VERSION_KEY);
+				apcu_delete(self::CLASSES_KEY);
+				apcu_delete(self::INTERFACES_KEY);
 			}
 		}
 
 		//use apcu when available and version is valid
-		if ($this->apcu_enabled && $cache_version_valid && apcu_exists(self::CLASSES_KEY)) {
+		if ($this->apcu_enabled && $apcu_version_valid && apcu_exists(self::CLASSES_KEY)) {
 			$this->classes = apcu_fetch(self::CLASSES_KEY, $classes_cached);
 			$this->interfaces = apcu_fetch(self::INTERFACES_KEY, $interfaces_cached);
 			//verify we got valid data
@@ -130,25 +135,42 @@ class auto_loader {
 			}
 		}
 
-		//use PHP engine to parse it
+		//check file cache version and load if valid
+		$file_cache_valid = false;
 		if (file_exists(self::$classes_file)) {
-			$this->classes = include self::$classes_file;
+			$cached_data = include self::$classes_file;
+			//validate structure and version
+			if (is_array($cached_data) && isset($cached_data['version']) && $cached_data['version'] === self::CACHE_VERSION) {
+				$this->classes = $cached_data['classes'] ?? [];
+				$file_cache_valid = true;
+			} else {
+				//delete stale file cache
+				@unlink(self::$classes_file);
+			}
 		}
 
 		//do the same for interface to class mappings
-		if (file_exists(self::$interfaces_file)) {
-			$this->interfaces = include self::$interfaces_file;
+		if ($file_cache_valid && file_exists(self::$interfaces_file)) {
+			$cached_data = include self::$interfaces_file;
+			//validate structure and version
+			if (is_array($cached_data) && isset($cached_data['version']) && $cached_data['version'] === self::CACHE_VERSION) {
+				$this->interfaces = $cached_data['interfaces'] ?? [];
+			} else {
+				//delete stale file cache
+				@unlink(self::$interfaces_file);
+				$file_cache_valid = false;
+			}
 		}
 
-		//populate apcu cache from file cache if available
-		if ($this->apcu_enabled && !empty($this->classes)) {
+		//populate apcu cache from file cache if available and valid
+		if ($this->apcu_enabled && $file_cache_valid && !empty($this->classes)) {
 			apcu_store(self::CACHE_VERSION_KEY, self::CACHE_VERSION);
 			apcu_store(self::CLASSES_KEY, $this->classes);
 			apcu_store(self::INTERFACES_KEY, $this->interfaces);
 		}
 
 		//return true when we have classes and false if the array is still empty
-		return (!empty($this->classes) && !empty($this->interfaces));
+		return ($file_cache_valid && !empty($this->classes) && !empty($this->interfaces));
 	}
 
 	/**
@@ -276,8 +298,12 @@ class auto_loader {
 			apcu_store(self::INTERFACES_KEY, $this->interfaces);
 		}
 
-		//export the classes array using PHP engine
-		$classes_array = var_export($this->classes, true);
+		//prepare versioned data structure for classes
+		$classes_data = [
+			'version' => self::CACHE_VERSION,
+			'classes' => $this->classes,
+		];
+		$classes_array = var_export($classes_data, true);
 
 		//put the array in a form that it can be loaded directly to an array
 		$class_result = file_put_contents(self::$classes_file, "<?php\n return " . $classes_array . ";\n");
@@ -287,8 +313,12 @@ class auto_loader {
 			self::log(LOG_WARNING, $error_array['message'] ?? '');
 		}
 
-		//export the interfaces array using PHP engine
-		$interfaces_array = var_export($this->interfaces, true);
+		//prepare versioned data structure for interfaces
+		$interfaces_data = [
+			'version' => self::CACHE_VERSION,
+			'interfaces' => $this->interfaces,
+		];
+		$interfaces_array = var_export($interfaces_data, true);
 
 		//put the array in a form that it can be loaded directly to an array
 		$interface_result = file_put_contents(self::$interfaces_file, "<?php\n return " . $interfaces_array . ";\n");
