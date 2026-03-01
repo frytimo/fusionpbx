@@ -49,7 +49,7 @@ class url_paging extends url {
 	public function __construct(settings $settings, ?string $url = null) {
 		parent::__construct($url);
 		$this->settings = $settings;
-		$this->rows_per_page = $settings->get('domain', 'paging', 50);
+		$this->rows_per_page = (int)$settings->get('domain', 'paging', 50);
 		$this->total_rows = 0;
 		$this->page = (int) $this->get('page', 0);
 		$this->set_page($this->page);
