@@ -199,11 +199,11 @@ class url {
 	/**
 	 * Query in the link
 	 *
-	 * @param bool $unsafe Whether to return the unsafe (original) query parameters or the sanitized ones. Default is false (sanitized).
+	 * @param int $unsafe Whether to return the unsafe (original) query parameters or the sanitized ones. Default is self::SAFE (sanitized).
 	 *
 	 * @return string
 	 */
-	public function get_query(bool $unsafe = self::SAFE): string {
+	public function get_query(int $unsafe = self::SAFE): string {
 		$params = $unsafe ? $this->unsafe_params : $this->params;
 		return implode('&', array_map(function ($param, $key) {
 			return "$key=$param";
