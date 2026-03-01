@@ -67,7 +67,7 @@ class url_paging extends url {
 	}
 
 	public function get_rows_per_page(): int {
-		return $this->rows_per_page;
+		return (int)$this->rows_per_page;
 	}
 
 	/**
