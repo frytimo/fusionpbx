@@ -53,12 +53,16 @@ class url {
 	const BUILD_FORCE_HOST = 2;
 	const BUILD_FORCE_PATH = 4;
 
+	const SAFE = 0;
+	const UNSAFE = 1;
+
 	private $parts;
 	private $scheme;
 	private $host;
 	private $port;
 	private $path;
 	private $params;
+	private $unsafe_params;
 	private $fragment;
 
 	private $original_url;
@@ -76,10 +80,6 @@ class url {
 		$this->fragment = '';
 		$this->params = [];
 
-		// if no URL provided, attempt to use the current request URI
-		$url = $url ?? $_SERVER['REQUEST_URI'] ?? '';
-
-		// decode the URL to handle cases where it may be double-encoded or contain encoded characters
 		$parsed = parse_url(urldecode($url));
 
 		// must be valid
@@ -193,12 +193,16 @@ class url {
 
 	/**
 	 * Query in the link
+	 *
+	 * @param bool $unsafe Whether to return the unsafe (original) query parameters or the sanitized ones. Default is false (sanitized).
+	 *
 	 * @return string
 	 */
-	public function get_query(): string {
+	public function get_query(bool $unsafe = self::SAFE): string {
+		$params = $unsafe ? $this->unsafe_params : $this->params;
 		return implode('&', array_map(function ($param, $key) {
 			return "$key=$param";
-		}, $this->params, array_keys($this->params)));
+		}, $params, array_keys($params)));
 	}
 
 	/**
@@ -314,8 +318,11 @@ class url {
 
 	/**
 	 * Sets the query part of the URL using a string. When an empty string is provided it will unset all parameters.
+	 *
 	 * @param string $query Full parameter string without the scheme or domain or path parts
+	 *
 	 * @return self
+	 *
 	 * @see self::set_query_param()
 	 */
 	public function set_query(string $query = ''): self {
@@ -366,12 +373,11 @@ class url {
 		return $this->params;
 	}
 
-	public function get(string $key, mixed $default = null): mixed {
+	public function get(string $key, mixed $default = null, bool $unsafe = false): mixed {
+		if ($unsafe) {
+			return $this->get_query_param($key, $default);
+		}
 		return $this->get_query_param($key, $default);
-	}
-
-	public function has(string $key): bool {
-		return isset($this->params[strtolower($key)]);
 	}
 
 	/**
@@ -380,10 +386,15 @@ class url {
 	 * @param mixed $default
 	 * @return mixed
 	 */
-	public function get_query_param(string $key, mixed $default = null): mixed {
+	public function get_query_param(string $key, mixed $default = null, bool $unsafe = false): mixed {
 		// framework specific to use lowercase only for param keys
 		$key = strtolower($key);
-		return isset($this->params[$key]) ? $this->params[$key] : $default;
+
+		// filter is 0 for safe (sanitized) and 1 for unsafe (original)
+		$filter = (int)$unsafe;
+
+		// return the value if it exists, otherwise return the default
+		return isset($this->params[$key][$filter]) ? $this->params[$key][$filter] : $default;
 	}
 
 	/**
@@ -394,19 +405,33 @@ class url {
 	 * @throws \InvalidArgumentException
 	 */
 	public function set_query_param(string $key, mixed $value): self {
+
 		$key = strtolower($key);
 		if (!strlen($key)) {
 			throw new \InvalidArgumentException("Key must not be empty", 500);
 		}
+
+		// Sanitize the value for the safe parameters
 		$filtered = filter_var($value, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-		// remove keys that have invalid values
+
+		// Remove keys that have invalid values from the safe parameters but keep them in the unsafe parameters for reference
 		if ($key === 'sort' && !in_array($filtered, [self::SORT_ASC, self::SORT_DSC, self::SORT_NATURAL])) {
-			unset($this->params['sort']);
+			// Wipe it from memory
+			unset($filtered);
 		} elseif ($key === 'page' && !is_numeric($filtered)) {
-			unset($this->params['page']);
-		} else {
-			$this->params[$key] = $filtered;
+			// Wipe it from memory
+			unset($filtered);
 		}
+
+		// Only set the safe param if it is valid after the filter
+		if (isset($filtered)) {
+			$this->params[$key][self::SAFE] = $filtered;
+		}
+
+		// Store the unsafe param for reference even if the value is invalid for the safe parameters
+		$this->params[$key][self::UNSAFE] = $value;
+
+		// Allow chaining
 		return $this;
 	}
 
