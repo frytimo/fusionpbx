@@ -38,8 +38,10 @@ class auto_loader {
 	const CLASSES_FILE = 'autoloader_cache.php';
 	const INTERFACES_KEY = "autoloader_interfaces";
 	const INTERFACES_FILE = "autoloader_interface_cache.php";
+	const INHERITANCE_KEY = "autoloader_inheritance";
+	const INHERITANCE_FILE = "autoloader_inheritance_cache.php";
 	const CACHE_VERSION_KEY = 'autoloader_cache_version';
-	const CACHE_VERSION = 2;
+	const CACHE_VERSION = 3;
 	/**
 	 * Cache path and file name for classes
 	 *
@@ -52,6 +54,12 @@ class auto_loader {
 	 * @var string
 	 */
 	private static $interfaces_file = null;
+	/**
+	 * Cache path and file name for inheritance
+	 *
+	 * @var string
+	 */
+	private static $inheritance_file = null;
 	private $classes;
 	/**
 	 * Tracks the APCu extension for caching to RAM drive across requests
@@ -65,6 +73,12 @@ class auto_loader {
 	 * @var array
 	 */
 	private $interfaces;
+	/**
+	 * Maps classes/interfaces to their parent class/interface
+	 *
+	 * @var array
+	 */
+	private $inheritance;
 	/**
 	 * @var array
 	 */
@@ -90,6 +104,11 @@ class auto_loader {
 			self::$interfaces_file = sys_get_temp_dir() . DIRECTORY_SEPARATOR . self::INTERFACES_FILE;
 		}
 
+		//set inheritance cache location
+		if (empty(self::$inheritance_file)) {
+			self::$inheritance_file = sys_get_temp_dir() . DIRECTORY_SEPARATOR . self::INHERITANCE_FILE;
+		}
+
 		//classes must be loaded before this object is registered
 		if ($disable_cache || !$this->load_cache()) {
 			//cache miss so load them
@@ -109,6 +128,7 @@ class auto_loader {
 	public function load_cache(): bool {
 		$this->classes = [];
 		$this->interfaces = [];
+		$this->inheritance = [];
 		$this->traits = [];
 
 		//check APCu cache version
@@ -122,6 +142,7 @@ class auto_loader {
 				apcu_delete(self::CACHE_VERSION_KEY);
 				apcu_delete(self::CLASSES_KEY);
 				apcu_delete(self::INTERFACES_KEY);
+				apcu_delete(self::INHERITANCE_KEY);
 			}
 		}
 
@@ -129,8 +150,9 @@ class auto_loader {
 		if ($this->apcu_enabled && $apcu_version_valid && apcu_exists(self::CLASSES_KEY)) {
 			$this->classes = apcu_fetch(self::CLASSES_KEY, $classes_cached);
 			$this->interfaces = apcu_fetch(self::INTERFACES_KEY, $interfaces_cached);
+			$this->inheritance = apcu_fetch(self::INHERITANCE_KEY, $inheritance_cached);
 			//verify we got valid data
-			if ($classes_cached && $interfaces_cached && !empty($this->classes)) {
+			if ($classes_cached && $interfaces_cached && $inheritance_cached && !empty($this->classes)) {
 				return true;
 			}
 		}
@@ -162,11 +184,25 @@ class auto_loader {
 			}
 		}
 
+		//do the same for inheritance mappings
+		if ($file_cache_valid && file_exists(self::$inheritance_file)) {
+			$cached_data = include self::$inheritance_file;
+			//validate structure and version
+			if (is_array($cached_data) && isset($cached_data['version']) && $cached_data['version'] === self::CACHE_VERSION) {
+				$this->inheritance = $cached_data['inheritance'] ?? [];
+			} else {
+				//delete stale file cache
+				@unlink(self::$inheritance_file);
+				$file_cache_valid = false;
+			}
+		}
+
 		//populate apcu cache from file cache if available and valid
 		if ($this->apcu_enabled && $file_cache_valid && !empty($this->classes)) {
 			apcu_store(self::CACHE_VERSION_KEY, self::CACHE_VERSION);
 			apcu_store(self::CLASSES_KEY, $this->classes);
 			apcu_store(self::INTERFACES_KEY, $this->interfaces);
+			apcu_store(self::INHERITANCE_KEY, $this->inheritance);
 		}
 
 		//return true when we have classes and false if the array is still empty
@@ -222,9 +258,8 @@ class auto_loader {
 			}
 
 			// Regex to capture class, interface, or trait declarations
-			// It optionally captures an "implements" clause
-			// Note: This regex is a simplified version and may need adjustments for edge cases
-			$pattern = '/\b(class|interface|trait)\s+(\w+)(?:\s+extends\s+\w+)?(?:\s+implements\s+([^\\{]+))?/';
+			// Now captures the extends clause properly as $match[3]
+			$pattern = '/\b(class|interface|trait)\s+(\w+)(?:\s+extends\s+(\w+))?(?:\s+implements\s+([^\\{]+))?/';
 
 			if (preg_match_all($pattern, $file_content, $matches, PREG_SET_ORDER)) {
 				foreach ($matches as $match) {
@@ -241,10 +276,16 @@ class auto_loader {
 					// Store the class/interface/trait with its file overwriting any existing declaration.
 					$this->classes[$full_name] = $file;
 
+					// Track inheritance (what this class/interface extends)
+					if (isset($match[3]) && trim($match[3]) !== '') {
+						$parent_name = trim($match[3], " \n\r\t\v\x00\\");
+						$this->inheritance[$full_name] = $parent_name;
+					}
+
 					// If it's a class that implements interfaces, process the implements clause.
-					if ($type === 'class' && isset($match[3]) && trim($match[3]) !== '') {
+					if ($type === 'class' && isset($match[4]) && trim($match[4]) !== '') {
 						// Split the interface list by commas.
-						$interface_list = explode(',', $match[3]);
+						$interface_list = explode(',', $match[4]);
 						foreach ($interface_list as $interface) {
 							$interface_name = trim($interface, " \n\r\t\v\x00\\");
 							// Check that it is declared as an array so we can record the classes
@@ -296,6 +337,7 @@ class auto_loader {
 			apcu_store(self::CACHE_VERSION_KEY, self::CACHE_VERSION);
 			apcu_store(self::CLASSES_KEY, $this->classes);
 			apcu_store(self::INTERFACES_KEY, $this->interfaces);
+			apcu_store(self::INHERITANCE_KEY, $this->inheritance);
 		}
 
 		//prepare versioned data structure for classes
@@ -328,7 +370,22 @@ class auto_loader {
 			self::log(LOG_WARNING, $error_array['message'] ?? '');
 		}
 
-		$result = ($class_result && $interface_result);
+		//prepare versioned data structure for inheritance
+		$inheritance_data = [
+			'version' => self::CACHE_VERSION,
+			'inheritance' => $this->inheritance,
+		];
+		$inheritance_array = var_export($inheritance_data, true);
+
+		//put the array in a form that it can be loaded directly to an array
+		$inheritance_result = file_put_contents(self::$inheritance_file, "<?php\n return " . $inheritance_array . ";\n");
+		if ($inheritance_result === false) {
+			//file failed to save - send error to syslog when debugging
+			$error_array = error_get_last();
+			self::log(LOG_WARNING, $error_array['message'] ?? '');
+		}
+
+		$result = ($class_result && $interface_result && $inheritance_result);
 
 		return $result;
 	}
@@ -373,6 +430,7 @@ class auto_loader {
 			apcu_delete(self::CACHE_VERSION_KEY);
 			apcu_delete(self::CLASSES_KEY);
 			apcu_delete(self::INTERFACES_KEY);
+			apcu_delete(self::INHERITANCE_KEY);
 		}
 
 		//set default file
@@ -405,6 +463,21 @@ class auto_loader {
 			//send to syslog when debugging with either environment variable or debug in the url
 			self::log(LOG_WARNING, $error_array['message'] ?? '');
 		}
+
+		if (empty(self::$inheritance_file)) {
+			self::$inheritance_file = sys_get_temp_dir() . DIRECTORY_SEPARATOR . self::INHERITANCE_FILE;
+		}
+
+		//set inheritance file to clear
+		$inheritance_file = self::$inheritance_file;
+
+		//remove the file when it exists
+		if (file_exists($inheritance_file)) {
+			@unlink($inheritance_file);
+			$error_array = error_get_last();
+			//send to syslog when debugging with either environment variable or debug in the url
+			self::log(LOG_WARNING, $error_array['message'] ?? '');
+		}
 	}
 
 	/**
@@ -432,7 +505,7 @@ class auto_loader {
 	}
 
 	/**
-	 * Returns a list of classes implementing the interface
+	 * Returns a list of classes implementing the interface or any interface that extends it
 	 *
 	 * @param string $interface_name
 	 *
@@ -443,13 +516,53 @@ class auto_loader {
 		if (empty($this->classes) || empty($this->interfaces)) {
 			return [];
 		}
-		//check if we have an interface with that name
-		if (!empty($this->interfaces[$interface_name])) {
-			//return the list of classes associated with that interface
-			return $this->interfaces[$interface_name];
+
+		//get direct implementers of this interface
+		$result = $this->interfaces[$interface_name] ?? [];
+
+		//find all child interfaces (interfaces that extend this interface)
+		$child_interfaces = $this->get_child_interfaces($interface_name);
+
+		//for each child interface, get its implementers
+		foreach ($child_interfaces as $child_interface) {
+			if (!empty($this->interfaces[$child_interface])) {
+				$result = array_merge($result, $this->interfaces[$child_interface]);
+			}
 		}
-		//interface is not implemented by any classes
-		return [];
+
+		//remove duplicates and return
+		return array_unique($result);
+	}
+
+	/**
+	 * Recursively finds all interfaces that extend the given interface
+	 *
+	 * @param string $interface_name The interface to find children for
+	 * @param array $visited Track visited interfaces to avoid infinite loops
+	 *
+	 * @return array List of child interface names
+	 */
+	private function get_child_interfaces(string $interface_name, array &$visited = []): array {
+		$children = [];
+
+		// Mark as visited to prevent infinite recursion
+		if (in_array($interface_name, $visited, true)) {
+			return [];
+		}
+		$visited[] = $interface_name;
+
+		// Find all interfaces that extend this interface
+		foreach ($this->inheritance as $class_name => $parent_name) {
+			if ($parent_name === $interface_name) {
+				// Record this as a child
+				$children[] = $class_name;
+
+				// Recursively find children of this child
+				$children = array_merge($children, $this->get_child_interfaces($class_name, $visited));
+			}
+		}
+
+		return $children;
 	}
 
 	/**
