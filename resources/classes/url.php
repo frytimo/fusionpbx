@@ -32,6 +32,10 @@
  */
 declare(strict_types=1);
 
+if (!defined('FILTER_SANITIZE_DOMAIN')) {
+	define('FILTER_SANITIZE_DOMAIN', -1);
+}
+
 /**
  * Lightweight URL helper.
  * - Mutable; chainable setters return $this.
@@ -259,7 +263,7 @@ class url {
 	public function set_host(string $host = ''): self {
 		if (strlen($host)) {
 			// Use PHP features from 8.3 or higher when available to filter the domain
-			if (defined('FILTER_SANITIZE_DOMAIN')) {
+			if (FILTER_SANITIZE_DOMAIN !== -1) {
 				// PHP 8.3 or higher
 				$host = filter_var($host, FILTER_SANITIZE_DOMAIN);
 			} else {
