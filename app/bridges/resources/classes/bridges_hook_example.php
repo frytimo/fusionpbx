@@ -43,7 +43,7 @@
  * - Filter out bridges based on custom criteria
  */
 
-class bridges_hook_example implements bridges_hook {
+class bridges_hook_example implements list_page_hook {
 
 	/**
 	 * Hook: Before bridge action processing
@@ -55,7 +55,7 @@ class bridges_hook_example implements bridges_hook {
 	 * @param string $action The action (copy|toggle|delete)
 	 * @param array $bridges The bridges array with checked items and their UUIDs
 	 */
-	public static function on_bridges_action_pre(settings $settings, string $action, array &$bridges): void {
+	public static function on_render_pre_action(settings $settings, string &$action, array &$bridges): void {
 		// Example: Log all actions
 		error_log("Bridge action pre-processing: action=" . $action . ", count=" . count($bridges));
 
@@ -78,7 +78,7 @@ class bridges_hook_example implements bridges_hook {
 	 * @param string $action The action that was performed
 	 * @param array $bridges The bridges that were processed
 	 */
-	public static function on_bridges_action_post(settings $settings, string $action, array $bridges): void {
+	public static function on_render_post_action(settings $settings, string $action, array $bridges): void {
 		// Example: Create audit log entry
 		error_log("Bridge action completed: action=" . $action . ", count=" . count($bridges));
 
@@ -101,7 +101,7 @@ class bridges_hook_example implements bridges_hook {
 	 * @param settings $settings The settings object
 	 * @param array $parameters The query parameters array (passed by reference)
 	 */
-	public static function on_bridges_query_pre(settings $settings, array &$parameters): void {
+	public static function on_render_pre_query(settings $settings, array &$parameters): void {
 		// Example: Add a custom parameter that could be used in SQL
 		// $parameters['custom_filter'] = $settings->get('domain', 'custom_bridge_filter', '');
 
@@ -121,7 +121,7 @@ class bridges_hook_example implements bridges_hook {
 	 * @param settings $settings The settings object
 	 * @param array $bridges The bridges fetched from database (passed by reference)
 	 */
-	public static function on_bridges_list_post_fetch(settings $settings, array &$bridges): void {
+	public static function on_render_post_query(settings $settings, array &$bridges): void {
 		// Example: Add custom field to each bridge
 		foreach ($bridges as &$bridge) {
 			// Add a computed field (e.g., based on bridge_enabled status)
@@ -148,7 +148,7 @@ class bridges_hook_example implements bridges_hook {
 	 * @param array $row The bridge row data (passed by reference)
 	 * @param int $row_index Zero-based row index in the table
 	 */
-	public static function on_bridges_row_render(settings $settings, array &$row, int $row_index): void {
+	public static function on_render_row(settings $settings, array &$row, int $row_index): void {
 		// Example: Mark every other row
 		$row['_custom_css_class'] = ($row_index % 2 === 0) ? 'even' : 'odd';
 
@@ -165,5 +165,10 @@ class bridges_hook_example implements bridges_hook {
 
 		// Note: You can add custom fields with '_' prefix to avoid conflicts
 		// These are available in the row rendering context
+		// Drop or hide the row
+		if ($row['bridge_enabled'] === 'false') {
+			// This will skip rendering this row
+			unset($row);
+		}
 	}
 }

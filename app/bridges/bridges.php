@@ -39,19 +39,21 @@
 	$language = new text;
 	$text = $language->get();
 
-//set additional variables
-	$search = $_GET["search"] ?? '';
-	$show = $_GET["show"] ?? '';
+//create a new instance of the url with paging class
+	$url_paging = new url_paging($settings);
 
 //set from session variables
 	$list_row_edit_button = $settings->get('theme', 'list_row_edit_button', false);
 
-//get the http post data
-	if (!empty($_POST['bridges'])) {
-		$action = $_POST['action'];
-		$search = $_POST['search'] ?? '';
-		$bridges = $_POST['bridges'];
-	}
+//get request data from url object
+	$show = $url_paging->get('show', '');
+	$order = $url_paging->get('order', '');
+	$action = $url_paging->get('action', '');
+	$search = $url_paging->get('search', '');
+	$order_by = $url_paging->get('order_by', '');
+
+//get bridges from the url for post processing
+	$bridges = $url_paging->get('bridges', []);
 
 //invoke pre-action hook
 	if (!empty($action) && !empty($bridges)) {
@@ -92,74 +94,21 @@
 		exit;
 	}
 
-//get order and order by
-	$order_by = $_GET["order_by"] ?? '';
-	$order = $_GET["order"] ?? '';
-
-//add the search string
-	if (!empty($search)) {
-		$search =  strtolower($_GET["search"]);
-		$sql_search = " (";
-		$sql_search .= "	lower(bridge_name) like :search ";
-		$sql_search .= "	or lower(bridge_destination) like :search ";
-		$sql_search .= "	or lower(bridge_description) like :search ";
-		$sql_search .= ") ";
-		$parameters['search'] = '%'.$search.'%';
-	}
-
 //invoke pre-query hook
-	if (!isset($parameters)) {
-		$parameters = [];
-	}
 	foreach ($autoload->get_interface_list('bridges_hook') as $class) {
-		$class::on_bridges_query_pre($settings, $parameters);
+		$class::on_bridges_query_pre($url_paging);
 	}
 
 //get the count
-	$sql = "select count(bridge_uuid) from v_bridges ";
-	if (!empty($show) && $show == "all" && permission_exists('bridge_all')) {
-		if (isset($sql_search)) {
-			$sql .= "where ".$sql_search;
-		}
-	}
-	else {
-		$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
-		if (isset($sql_search)) {
-			$sql .= "and ".$sql_search;
-		}
-		$parameters['domain_uuid'] = $domain_uuid;
-	}
-	$num_rows = $database->select($sql, $parameters ?? null, 'column');
+	$num_rows = bridges::count($url_paging);
+	$url_paging->set_total_rows($num_rows);
 
 //prepare to page the results
-	$rows_per_page = $settings->get('domain', 'paging', 50);
-	$param = !empty($search) ? "&search=".$search : null;
-	$param = (isset($_GET['show']) && $_GET['show'] == 'all' && permission_exists('bridge_all')) ? "&show=all" : null;
-	$page = isset($_GET['page']) && is_numeric($_GET['page']) ? $_GET['page'] : 0;
-	list($paging_controls, $rows_per_page) = paging($num_rows, $param, $rows_per_page);
-	list($paging_controls_mini, $rows_per_page) = paging($num_rows, $param, $rows_per_page, true);
-	$offset = $rows_per_page * $page;
+	$paging_controls = url_paging::html_paging_controls($url_paging);
+	$paging_controls_mini = url_paging::html_paging_mini_controls($url_paging);
 
 //get the list
-	$sql = "select d.domain_uuid, b.bridge_uuid, d.domain_name, b.bridge_name, b.bridge_destination, cast(bridge_enabled as text), bridge_description ";
-	$sql .= "from v_bridges as b, v_domains as d ";
-	$sql .= "where b.domain_uuid = d.domain_uuid ";
-	if (!empty($show) && $show == "all" && permission_exists('bridge_all')) {
-		if (isset($sql_search)) {
-			$sql .= "and ".$sql_search;
-		}
-	}
-	else {
-		$sql .= "and (b.domain_uuid = :domain_uuid or b.domain_uuid is null) ";
-		if (isset($sql_search)) {
-			$sql .= "and ".$sql_search;
-		}
-		$parameters['domain_uuid'] = $domain_uuid;
-	}
-	$sql .= order_by($order_by, $order, 'bridge_name', 'asc');
-	$sql .= limit_offset($rows_per_page, $offset);
-	$bridges = $database->select($sql, $parameters ?? null, 'all');
-	unset($sql, $parameters);
+	$bridges = bridges::fetch($url_paging);
 
 //invoke post-fetch hook
 	foreach ($autoload->get_interface_list('bridges_hook') as $class) {
