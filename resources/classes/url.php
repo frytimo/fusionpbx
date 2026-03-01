@@ -83,6 +83,7 @@ class url {
 		$this->path = '';
 		$this->fragment = '';
 		$this->params = [];
+		$url = $url ?? '';
 
 		$parsed = parse_url(urldecode($url));
 
