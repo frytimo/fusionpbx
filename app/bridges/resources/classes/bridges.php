@@ -152,6 +152,7 @@ class bridges extends app {
 	 * @return never
 	 */
 	protected function on_copy(array &$uuids) {
+		global $text;
 		$array = [];
 		$sql = "select * from v_" . $this->table . " ";
 		$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
@@ -190,5 +191,63 @@ class bridges extends app {
 			->field('destination', true);
 
 		return [$table];
+	}
+
+	private static function build_query_conditions(url_paging $url, bool $include_disabled = true, string $field_prefix = ''): array {
+		$conditions = [];
+		$parameters = [];
+
+		$show = $url->get('show', '');
+		$show_all = ($show === 'all' && permission_exists('bridge_all'));
+		$domain_uuid = $url->get_settings()->get_domain_uuid();
+
+		if (!$show_all) {
+			if ((!is_uuid($domain_uuid)) && isset($_SESSION['domain_uuid']) && is_uuid($_SESSION['domain_uuid'])) {
+				$domain_uuid = $_SESSION['domain_uuid'];
+			}
+			if (is_uuid($domain_uuid)) {
+				$conditions[] = "(".$field_prefix."domain_uuid = :domain_uuid or ".$field_prefix."domain_uuid is null)";
+				$parameters['domain_uuid'] = $domain_uuid;
+			}
+		}
+
+		$search = $url->get('search', '');
+		if ($search !== null && $search !== '') {
+			$conditions[] = "(lower(".$field_prefix."bridge_name) like :search or lower(".$field_prefix."bridge_destination) like :search or lower(".$field_prefix."bridge_description) like :search)";
+			$parameters['search'] = '%' . strtolower($search) . '%';
+		}
+
+		if (!$include_disabled) {
+			$conditions[] = $field_prefix."bridge_enabled = :bridge_enabled";
+			$parameters['bridge_enabled'] = 'true';
+		}
+
+		return [$conditions, $parameters];
+	}
+
+	public static function count(url_paging $url_paging, bool $include_disabled = true): int {
+		list($conditions, $parameters) = self::build_query_conditions($url_paging, $include_disabled);
+		$sql = "select count(bridge_uuid) from v_bridges";
+		if (!empty($conditions)) {
+			$sql .= " where " . implode(" and ", $conditions);
+		}
+
+		return $url_paging->get_settings()->database()->select($sql, $parameters, 'column');
+	}
+
+	public static function fetch(url_paging $url_paging, bool $include_disabled = true): array {
+		list($conditions, $parameters) = self::build_query_conditions($url_paging, $include_disabled, 'b.');
+		$sql = "select d.domain_uuid, b.bridge_uuid, d.domain_name, b.bridge_name, b.bridge_destination, cast(b.bridge_enabled as text) as bridge_enabled, b.bridge_description ";
+		$sql .= "from v_bridges as b, v_domains as d ";
+		$sql .= "where b.domain_uuid = d.domain_uuid ";
+		if (!empty($conditions)) {
+			$sql .= " and " . implode(" and ", $conditions);
+		}
+		$order_by = $url_paging->get('order_by', 'bridge_name');
+		$order = $url_paging->get('order', 'asc');
+		$sql .= order_by($order_by, $order, 'bridge_name', 'asc');
+		$sql .= limit_offset($url_paging->get_rows_per_page(), $url_paging->offset());
+
+		return $url_paging->get_settings()->database()->select($sql, $parameters, 'all');
 	}
 }
