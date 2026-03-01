@@ -123,7 +123,7 @@ class url {
 	 * @param string $url
 	 * @return self
 	 */
-	public static function from_string(string $url): self {
+	public static function from_string(string $url): static {
 		return new self($url);
 	}
 
@@ -132,7 +132,7 @@ class url {
 	 * @param array $parts
 	 * @return self
 	 */
-	public static function from_parts(array $parts): self {
+	public static function from_parts(array $parts): static {
 		$u = new self();
 		// more validation needed here
 		$u->parts = $parts;
@@ -223,7 +223,7 @@ class url {
 	 * @return self
 	 * @throws InvalidArgumentException
 	 */
-	public function set_scheme(string $scheme = ''): self {
+	public function set_scheme(string $scheme = ''): static {
 		if (strlen($scheme)) {
 			$scheme = strtolower($scheme);
 			if (!in_array($scheme, ['http', 'https'], true)) {
@@ -239,7 +239,7 @@ class url {
 	 * @param string $username
 	 * @return self
 	 */
-	public function set_username(string $username): self {
+	public function set_username(string $username): static {
 		$this->username = $username;
 		return $this;
 	}
@@ -249,7 +249,7 @@ class url {
 	 * @param string $password
 	 * @return self
 	 */
-	public function set_password(string $password): self {
+	public function set_password(string $password): static {
 		$this->password = $password;
 		return $this;
 	}
@@ -260,7 +260,7 @@ class url {
 	 * @return self
 	 * @throws InvalidArgumentException
 	 */
-	public function set_host(string $host = ''): self {
+	public function set_host(string $host = ''): static {
 		if (strlen($host)) {
 			// Use PHP features from 8.3 or higher when available to filter the domain
 			if (FILTER_SANITIZE_DOMAIN !== -1) {
@@ -293,7 +293,7 @@ class url {
 	 * @return self
 	 * @throws InvalidArgumentException
 	 */
-	public function set_port($port = ''): self {
+	public function set_port($port = ''): static {
 		if (strlen("$port")) {
 			$port = (int)$port;
 			if ($port < 1 || $port > 65535) {
@@ -314,7 +314,7 @@ class url {
 	 * @return self
 	 * @see filter_var()
 	 */
-	public function set_path(string $path = ''): self {
+	public function set_path(string $path = ''): static {
 		// Strip out suspicious characters but keep slashes
 		$this->path = filter_var($path, FILTER_SANITIZE_URL);
 		return $this;
@@ -329,7 +329,7 @@ class url {
 	 *
 	 * @see self::set_query_param()
 	 */
-	public function set_query(string $query = ''): self {
+	public function set_query(string $query = ''): static {
 		if (strlen($query)) {
 			$pos = strpos($query, '#');
 			if ($pos > 0) {
@@ -360,7 +360,7 @@ class url {
 	 * @return self
 	 * @see filter_var()
 	 */
-	public function set_fragment(string $fragment = ''): self {
+	public function set_fragment(string $fragment = ''): static {
 		if (strlen($fragment)) {
 			$fragment = filter_var($fragment, FILTER_SANITIZE_URL);
 		}
@@ -402,41 +402,57 @@ class url {
 	}
 
 	/**
-	 * Sets a query parameter sanitizing the value before it is added to the query part
-	 * @param string $key
+	 * Alias of set_query_param
+	 *
+	 * @param string $key Key is converted to lowercase
 	 * @param mixed $value
+	 *
+	 * @return this
+	 *
+	 * @see url::set_query_param()
+	 */
+	public function set(string $key, mixed $value): static {
+		return $this->set_query_param($key, $value);
+	}
+
+	/**
+	 * Sets a query parameter sanitizing the value before it is added to the query part
+	 * @param string $key Key is converted to lowercase
+	 * @param mixed $value
+	 *
 	 * @return self
+	 *
 	 * @throws \InvalidArgumentException
 	 */
-	public function set_query_param(string $key, mixed $value): self {
+	public function set_query_param(string $key, mixed $value): static {
 
 		$key = strtolower($key);
 		if (!strlen($key)) {
 			throw new \InvalidArgumentException("Key must not be empty", 500);
 		}
 
-		// Sanitize the value for the safe parameters
-		$filtered = filter_var($value, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-
-		// Remove keys that have invalid values from the safe parameters but keep them in the unsafe parameters for reference
-		if ($key === 'sort' && !in_array($filtered, [self::SORT_ASC, self::SORT_DSC, self::SORT_NATURAL])) {
-			// Wipe it from memory
-			unset($filtered);
-		} elseif ($key === 'page' && !is_numeric($filtered)) {
-			// Wipe it from memory
-			unset($filtered);
-		}
-
-		// Only set the safe param if it is valid after the filter
-		if (isset($filtered)) {
-			$this->params[$key][self::SAFE] = $filtered;
-		}
-
 		// Store the unsafe param for reference even if the value is invalid for the safe parameters
 		$this->params[$key][self::UNSAFE] = $value;
 
+		$filtered = $this->filter_query_modifier($key, $value);
+
+		// Only set the safe param if it is valid after the filter
+		if ($filtered !== null) {
+			$this->params[$key][self::SAFE] = $filtered;
+		}
+
 		// Allow chaining
 		return $this;
+	}
+
+	protected function filter_query_modifier(string $key, mixed $value): mixed {
+		$filtered = filter_var($value, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+		// Remove keys that have invalid values from the safe parameters but keep them in the unsafe parameters for reference
+		if ($key === 'sort' && !in_array($filtered, [self::SORT_ASC, self::SORT_DSC, self::SORT_NATURAL])) {
+			$filtered = null;
+		}
+		// Sanitize the value for the safe parameters
+		return $filtered;
 	}
 
 	/**
@@ -444,7 +460,7 @@ class url {
 	 * @param string $key string of the key value
 	 * @return self
 	 */
-	public function unset_query_param(string $key): self {
+	public function unset_query_param(string $key): static {
 		unset($this->params[$key]);
 		return $this;
 	}
@@ -467,7 +483,7 @@ class url {
 	 * @param array $segments
 	 * @return self
 	 */
-	public function set_path_segments(array $segments): self {
+	public function set_path_segments(array $segments): static {
 		// Assumes segments are already encoded how you want them
 		$this->path = '/' . implode('/', array_map('strval', $segments));
 		return $this;
@@ -478,7 +494,7 @@ class url {
 	 * @param string $segment
 	 * @return self
 	 */
-	public function append_path(string $segment): self {
+	public function append_path(string $segment): static {
 		$path = rtrim((string) ($this->path ?? ''), '/');
 		$segment = ltrim($segment, '/');
 		$this->path = ($path === '' ? '' : $path . '/') . $segment;
@@ -623,54 +639,11 @@ class url {
 	}
 
 	/**
-	 * Returns a new URL object with the page link incremented by one
-	 * @return self
-	 */
-	public function page_next(): self {
-		$url = clone $this;
-		$page = (int)$this->get_query_param('page', 0);
-		$url->set_query_param('page', ++$page);
-		return $url;
-	}
-
-	/**
-	 * Returns a new URL object with the page link decremented by one
-	 * @return self
-	 */
-	public function page_prev(): self {
-		// create a copy
-		$url = clone $this;
-		// get the page
-		$page = (int)$this->get_query_param('page', 0);
-		// above zero set a page
-		if (--$page > 0) {
-			$url->set_query_param('page', $page);
-		} else {
-			// remove the page parameter
-			$url->unset_query_param('page');
-		}
-		// return the new object with the modified page number
-		return $url;
-	}
-
-	public function page_first(): self {
-		$url = clone $this;
-		$url->unset_query_param('page');
-		return $url;
-	}
-
-	public function page_set($page): self {
-		$url = clone $this;
-		$url->set_query_param('page', $page);
-		return $url;
-	}
-
-	/**
 	 * Sets the order_by query parameter
 	 * @param string $order_by
 	 * @return self
 	 */
-	public function set_order_by(string $order_by = ''): self {
+	public function set_order_by(string $order_by = ''): static {
 		// Create a clone
 		$url = clone $this;
 		if (strlen($order_by) > 0) {
@@ -682,17 +655,25 @@ class url {
 		return $url;
 	}
 
+	/**
+	 * Get order_by query value in URL parts mode.
+	 *
+	 * @return string
+	 */
 	public function get_order_by(): string {
 		return $this->get_query_param('order_by', '');
 	}
 
 	/**
 	 * Sets the sort query parameter
+	 *
 	 * @param string $sort
+	 *
 	 * @return self
+	 *
 	 * @throws \InvalidArgumentException
 	 */
-	public function set_sort(string $sort = self::SORT_NATURAL): self {
+	public function set_sort(string $sort = self::SORT_NATURAL): static {
 		// Create a clone
 		$url = clone $this;
 		if ($sort === self::SORT_NATURAL) {
@@ -705,19 +686,39 @@ class url {
 		return $url;
 	}
 
+	/**
+	 * Get sort query value in URL parts mode.
+	 *
+	 * @return string
+	 */
 	public function get_sort(): string {
-		return $this->get_query_param('sort', self::SORT_NATURAL);
+		return (string) $this->get_query_param('sort', self::SORT_NATURAL);
 	}
 
-	public function sort_asc(): self {
+	/**
+	 * Return clone with ascending sort in URL parts mode.
+	 *
+	 * @return self
+	 */
+	public function sort_asc(): static {
 		return $this->set_sort(self::SORT_ASC);
 	}
 
-	public function sort_desc(): self {
+	/**
+	 * Return clone with descending sort in URL parts mode.
+	 *
+	 * @return self
+	 */
+	public function sort_desc(): static {
 		return $this->set_sort(self::SORT_DSC);
 	}
 
-	public function remove_parameters(): self {
+	/**
+	 * Return clone with natural sorting in URL parts mode.
+	 *
+	 * @return self
+	 */
+	public function remove_parameters(): static {
 		$this->params = [];
 		$this->fragment = '';
 		return $this;
