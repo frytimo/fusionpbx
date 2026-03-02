@@ -30,10 +30,11 @@ interface list_page_hook extends page_hook {
 	 * Called for each table row during rendering
 	 * Allows hooks to customize individual row data before display
 	 *
-	 * @param settings $settings The settings object
-	 * @param array $row The row data (passed by reference for modification)
-	 * @param int $row_index The zero-based index of the row in the table
+	 * @param url   $url       The URL object
+	 * @param array $row       The row data (passed by reference for modification)
+	 * @param int   $row_index The zero-based index of the row in the table
+	 *
 	 * @return void
 	 */
-	public static function on_render_row(settings $settings, array &$row, int $row_index): void;
+	public static function on_render_row(url $url, array &$row, int $row_index): void;
 }

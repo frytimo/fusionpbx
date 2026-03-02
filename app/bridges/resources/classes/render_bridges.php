@@ -17,7 +17,7 @@
  * - Decorate table rows with custom CSS classes or fields
  * - Filter out certain bridges from display based on custom logic
  */
-abstract class render_bridges implements bridge_hook {
+abstract class render_bridges implements bridge_hooks {
 
     public static function on_list_pre_action(settings $settings, string &$action, array &$items): void {
         // Default: do nothing

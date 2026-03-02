@@ -43,28 +43,60 @@
  * - Add custom fields or decorators to table rows
  * - Filter out bridges based on custom criteria
  */
-class bridges_hook_example implements bridge_list_hook {
-	public static function on_pre_action(settings $settings, string &$action, array &$items): void {
+class bridges_hook_example implements bridge_hooks {
+
+	/*
+	 * Implement the bridge_hooks interface methods
+	 * You can choose to implement only the hooks you need
+	 * The autoloader will call these hooks at the appropriate times
+	 */
+
+
+	/**
+	 * Triggers before a bridge record is saved
+	 *
+	 * @param url    $url The URL object
+	 * @param array &$data The bridge data (passed by reference for modification)
+	 *
+	 * @return void
+	 */
+	public static function on_pre_save(url $url, array &$data): void {
 		throw new \Exception('Not implemented');
 	}
 
-	public static function on_post_action(settings $settings, string $action, array $items): void {
+	/**
+	 * Triggers after a bridge record is saved
+	 *
+	 * @param url $url The URL object
+	 * @param array $data The bridge data that was saved
+	 *
+	 * @return void
+	 */
+	public static function on_post_save(url $url, array $data): void {
 		throw new \Exception('Not implemented');
 	}
 
-	public static function on_pre_query(settings $settings, array &$parameters): void {
+	public static function on_pre_action(url $url, string &$action, array &$items): void {
 		throw new \Exception('Not implemented');
 	}
 
-	public static function on_post_query(settings $settings, array &$items): void {
+	public static function on_post_action(url $url, string $action, array $items): void {
 		throw new \Exception('Not implemented');
 	}
 
-	public static function on_pre_render(settings $settings, template $template): void {
+	public static function on_pre_query(url $url, array &$parameters): void {
 		throw new \Exception('Not implemented');
 	}
 
-	public static function on_post_render(settings $settings, string &$html): void {
+	public static function on_post_query(url $url, array &$items): void {
+		throw new \Exception('Not implemented');
+	}
+
+	public static function on_pre_render(url $url, template $template): void {
+		throw new \Exception('Not implemented');
+	}
+
+	public static function on_post_render(url $url, string &$html): void {
 		throw new \Exception('Not implemented');
 	}
 
@@ -78,11 +110,11 @@ class bridges_hook_example implements bridge_list_hook {
 	 * - Apply conditional formatting data
 	 * - Decorate rows with additional metadata
 	 *
-	 * @param settings $settings The settings object
+	 * @param url $url The URL object
 	 * @param array $row The bridge row data (passed by reference)
 	 * @param int $row_index Zero-based row index in the table
 	 */
-	public static function on_render_row(settings $settings, array &$row, int $row_index): void {
+	public static function on_render_row(url $url, array &$row, int $row_index): void {
 		// Example: Mark every other row
 		$row['_custom_css_class'] = ($row_index % 2 === 0) ? 'even' : 'odd';
 
