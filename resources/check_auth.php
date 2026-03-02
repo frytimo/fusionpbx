@@ -97,6 +97,8 @@
 //session validate: use HTTP_USER_AGENT as a default value
 	if (!isset($conf['session.validate'])) {
 		$conf['session.validate'][] = 'HTTP_USER_AGENT';
+	} elseif (!is_array($conf['session.validate'])) {
+		$conf['session.validate'] = [$conf['session.validate']];
 	}
 
 //session validate: prepare the server array
