@@ -25,7 +25,7 @@
 */
 
 //define the ring groups class
-class ring_groups {
+class ring_groups extends app {
 
 	/**
 	 * declare constant variables
@@ -41,44 +41,14 @@ class ring_groups {
 	public $ring_group_uuid;
 
 	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 *
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
-	 * Settings object set in the constructor. Must be a settings object and cannot be null.
-	 *
-	 * @var settings Settings Object
-	 */
-	private $settings;
-
-	/**
-	 * User UUID set in the constructor. This can be passed in through the $settings_array associative array or set in
-	 * the session global array
-	 *
-	 * @var string
-	 */
-	private $user_uuid;
-
-	/**
-	 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set
-	 * in the session global array
-	 *
-	 * @var string
-	 */
-	private $domain_uuid;
-
-	/**
 	 * declare private variables
 	 */
-	private $permission_prefix;
-	private $list_page;
-	private $table;
-	private $uuid_prefix;
-	private $toggle_field;
-	private $toggle_values;
+	protected $permission_prefix;
+	protected $list_page;
+	protected $table;
+	protected $uuid_prefix;
+	protected $toggle_field;
+	protected $toggle_values;
 
 	/**
 	 * Initializes the object with setting array.
@@ -103,6 +73,9 @@ class ring_groups {
 		$this->uuid_prefix       = 'ring_group_';
 		$this->toggle_field      = 'ring_group_enabled';
 		$this->toggle_values     = ['true', 'false'];
+
+		//initialize the parent class
+		parent::__construct();
 	}
 
 	/**

@@ -38,6 +38,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //get posted data
 	if (!empty($_POST['fax_servers']) && is_array($_POST['fax_servers'])) {
@@ -48,6 +50,9 @@
 
 //process the http post data by action
 	if (!empty($action) && !empty($fax_servers) && is_array($fax_servers) && @sizeof($fax_servers) != 0) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $fax);
+
 		switch ($action) {
 			case 'copy':
 				if (permission_exists('fax_extension_copy')) {
@@ -63,9 +68,16 @@
 				break;
 		}
 
+		//dispatch post-action hook
+		app::dispatch_list_post_action(null, $url, $action, $fax);
+
 		header('Location: fax.php'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get order and order by
 	$order_by = $_GET["order_by"] ?? 'fax_name';
@@ -161,6 +173,8 @@
 	$sql .= order_by($order_by, $order, 'fax_name', 'asc', $sort);
 	$sql .= limit_offset($rows_per_page, $offset);
 	$result = $database->select($sql, $parameters ?? null, 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $result);
 	unset($sql, $parameters);
 
 //create token
@@ -242,6 +256,8 @@
 	if (is_array($result) && @sizeof($result) != 0) {
 		$x = 0;
 		foreach ($result as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
 			if (permission_exists('fax_extension_edit')) {
 				$list_row_url = "fax_edit.php?id=".urlencode($row['fax_uuid']);

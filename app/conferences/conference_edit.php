@@ -234,8 +234,7 @@
 					$p->add('dialplan_add', 'temp');
 					$p->add('dialplan_edit', 'temp');
 
-					$database->save($array);
-					$response = $database->message;
+					(new conferences)->save($array);
 					unset($array);
 
 					$p->delete('dialplan_add', 'temp');

@@ -38,6 +38,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //get posted data
 	if (is_array($_POST['pin_numbers'])) {
@@ -48,6 +50,9 @@
 
 //process the http post data by action
 	if ($action != '' && is_array($pin_numbers) && @sizeof($pin_numbers) != 0) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $pin_numbers);
+
 		switch ($action) {
 			case 'copy':
 				if (permission_exists('pin_number_add')) {
@@ -69,9 +74,16 @@
 				break;
 		}
 
+		//dispatch post-action hook
+		app::dispatch_list_post_action(null, $url, $action, $pin_numbers);
+
 		header('Location: pin_numbers.php'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get order and order by
 	$order_by = $_GET["order_by"];
@@ -112,6 +124,8 @@
 	$sql .= order_by($order_by, $order, 'pin_number', 'asc');
 	$sql .= limit_offset($rows_per_page, $offset);
 	$pin_numbers = $database->select($sql, $parameters, 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $pin_numbers);
 	unset($sql, $parameters);
 
 //create token
@@ -188,6 +202,8 @@
 	if (is_array($pin_numbers) && @sizeof($pin_numbers) != 0) {
 		$x = 0;
 		foreach ($pin_numbers as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
 			if (permission_exists('pin_number_edit')) {
 				$list_row_url = "pin_number_edit.php?id=".urlencode($row['pin_number_uuid']);

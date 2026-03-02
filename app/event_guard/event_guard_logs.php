@@ -38,6 +38,8 @@ if (!permission_exists('event_guard_log_view')) {
 // add multi-lingual support
 $language = new text;
 $text = $language->get();
+//create the url object
+$url = new url();
 
 // get the http post data
 if (!empty($_POST['event_guard_logs']) && is_array($_POST['event_guard_logs'])) {
@@ -48,6 +50,9 @@ if (!empty($_POST['event_guard_logs']) && is_array($_POST['event_guard_logs'])) 
 
 // process the http post data by action
 if (!empty($action) && !empty($event_guard_logs) && is_array($event_guard_logs) && @sizeof($event_guard_logs) != 0) {
+	//dispatch pre-action hook
+	app::dispatch_list_pre_action(null, $url, $action, $event_guard_logs);
+
 	switch ($action) {
 		case 'sweep':
 			if (permission_exists('event_guard_log_delete')) {
@@ -76,9 +81,16 @@ if (!empty($action) && !empty($event_guard_logs) && is_array($event_guard_logs) 
 	}
 
 	// redirect the user
+	//dispatch post-action hook
+	app::dispatch_list_post_action(null, $url, $action, $event_guard_logs);
+
 	header('Location: event_guard_logs.php' . ($search != '' ? '?search=' . urlencode($search) : ''));
 	exit;
 }
+
+//dispatch pre-query hook
+$query_parameters = [];
+app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 // get order and order by
 $order_by = $_GET["order_by"] ?? null;
@@ -162,6 +174,8 @@ $sql .= order_by($order_by, $order, 'log_date', 'desc');
 $sql .= limit_offset($rows_per_page, $offset);
 $parameters['time_zone'] = $time_zone;
 $event_guard_logs = $database->select($sql, $parameters ?? null, 'all');
+//dispatch post-query hook
+app::dispatch_list_post_query(null, $url, $event_guard_logs);
 unset($sql, $parameters);
 
 // create token
@@ -250,6 +264,8 @@ echo "</tr>\n";
 if (is_array($event_guard_logs) && @sizeof($event_guard_logs) != 0) {
 	$x = 0;
 	foreach ($event_guard_logs as $row) {
+		//dispatch render-row hook
+		app::dispatch_list_render_row(null, $url, $row, $x);
 		$list_row_url = '';
 		if (permission_exists('event_guard_log_edit')) {
 			$list_row_url = "event_guard_log_edit.php?id=" . urlencode($row['event_guard_log_uuid']);

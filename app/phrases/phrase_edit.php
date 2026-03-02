@@ -282,10 +282,8 @@ if (count($_POST) > 0 && empty($_POST["persistformvar"])) {
 				$p->add('phrase_detail_add', 'temp');
 				$p->add('phrase_detail_edit', 'temp');
 				$p->add('phrase_detail_delete', 'temp');
-				$database->app_name = 'phrases';
-				$database->app_uuid = '5c6f597c-9b78-11e4-89d3-123b93f75cba';
 				if (count($array) > 0) {
-					$database->save($array);
+					(new phrases)->save($array);
 					unset($array);
 				}
 				if (count($drop_rows) > 0) {

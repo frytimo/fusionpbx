@@ -184,7 +184,7 @@
 			$array['email_queue'][0]['email_response'] = $email_response;
 
 		//save the data
-			$database->save($array);
+			(new email_queue)->save($array);
 
 		//redirect the user
 			if (isset($action)) {

@@ -205,8 +205,7 @@
 			$p->add('sip_profile_setting_add', 'temp');
 
 		//save to the data
-			$database->save($array);
-			$message = $database->message;
+			(new sip_profiles)->save($array);
 
 		//revoke temporary permissions
 			$p->delete('sip_profile_domain_add', 'temp');

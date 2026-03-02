@@ -335,7 +335,7 @@
 						$array['conference_rooms'][0]['enabled'] = $enabled;
 						$array['conference_rooms'][0]['description'] = $description;
 
-						$database->save($array);
+						(new conference_centers)->save($array);
 						unset($array);
 
 					//assign the logged in user to the conference room
@@ -409,7 +409,7 @@
 						}
 						$array['conference_rooms'][0]['description'] = $description;
 
-						$database->save($array);
+						(new conference_centers)->save($array);
 						unset($array);
 
 					//set message

@@ -138,7 +138,7 @@
 						$array['vars'][0]['var_description'] = $var_description;
 
 					//execute insert/update
-						$database->save($array);
+						(new vars)->save($array);
 						unset($array);
 
 					//unset the user defined variables

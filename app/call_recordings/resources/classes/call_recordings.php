@@ -27,7 +27,7 @@
 /**
  * call_recordings class
  */
-class call_recordings {
+class call_recordings extends app {
 
 	/**
 	 * declare constant variables
@@ -36,42 +36,12 @@ class call_recordings {
 	const app_uuid = 'b1b70f85-6b42-429b-8c5a-60c8b02b7d14';
 
 	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 *
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
-	 * Settings object set in the constructor. Must be a settings object and cannot be null.
-	 *
-	 * @var settings Settings Object
-	 */
-	private $settings;
-
-	/**
-	 * User UUID set in the constructor. This can be passed in through the $settings_array associative array or set in
-	 * the session global array
-	 *
-	 * @var string
-	 */
-	private $user_uuid;
-
-	/**
 	 * Username set in the constructor. This can be passed in through the $settings_array associative array or set in
 	 * the session global array
 	 *
 	 * @var string
 	 */
 	private $username;
-
-	/**
-	 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set
-	 * in the session global array
-	 *
-	 * @var string
-	 */
-	private $domain_uuid;
 
 	/**
 	 * Domain name set in the constructor. This can be passed in through the $settings_array associative array or set
@@ -85,7 +55,7 @@ class call_recordings {
 	 * declare the variables
 	 */
 	private $name;
-	private $table;
+	protected $table;
 	private $description_field;
 	private $location;
 	public $recording_uuid;
@@ -113,6 +83,9 @@ class call_recordings {
 		$this->table             = 'call_recordings';
 		$this->description_field = 'call_recording_description';
 		$this->location          = 'call_recordings.php';
+
+		//initialize the parent class
+		parent::__construct();
 	}
 
 	/**

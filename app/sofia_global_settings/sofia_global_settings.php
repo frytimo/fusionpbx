@@ -35,6 +35,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //set the defaults
 	$action = '';
@@ -52,6 +54,9 @@
 
 //process the http post data by action
 	if (!empty($action) && !empty($sofia_global_settings) && @sizeof($sofia_global_settings) != 0) {
+
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $sofia_global_settings);
 
 		switch ($action) {
 			case 'copy':
@@ -75,9 +80,16 @@
 		}
 
 		//redirect the user
+		//dispatch post-action hook
+		app::dispatch_list_post_action(null, $url, $action, $sofia_global_settings);
+
 		header('Location: sofia_global_settings.php'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get order and order by
 	$order_by = $_GET["order_by"] ?? '';
@@ -129,6 +141,8 @@
 	$sql .= order_by($order_by, $order, 'global_setting_name', 'asc');
 	$sql .= limit_offset($rows_per_page, $offset);
 	$sofia_global_settings = $database->select($sql, $parameters ?? [], 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $sofia_global_settings);
 	unset($sql, $parameters);
 
 //create token
@@ -204,6 +218,8 @@
 	if (!empty($sofia_global_settings) && @sizeof($sofia_global_settings) != 0) {
 		$x = 0;
 		foreach ($sofia_global_settings as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
 			if (permission_exists('sofia_global_setting_edit')) {
 				$list_row_url = "sofia_global_setting_edit.php?id=".urlencode($row['sofia_global_setting_uuid']);

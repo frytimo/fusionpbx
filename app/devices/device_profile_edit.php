@@ -173,7 +173,7 @@
 			}
 
 		//save to the data
-			$database->save($array);
+			(new device)->save($array);
 
 		//remove checked keys
 			if (

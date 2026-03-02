@@ -202,12 +202,7 @@
 					}
 
 				//save to the data
-					if (is_uuid($gateway_uuid)) {
-						$database->uuid($gateway_uuid);
-					}
-					$database->save($array);
-					$message = $database->message;
-
+						(new gateways)->save($array);
 				//remove xml file (if any) if not enabled
 					if ($enabled != true && !empty($settings->get('switch', 'sip_profiles'))) {
 						$gateway_xml_file = $settings->get('switch', 'sip_profiles')."/".$profile."/v_".$gateway_uuid.".xml";

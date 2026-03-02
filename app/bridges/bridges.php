@@ -57,9 +57,7 @@
 
 //invoke pre-action hook
 	if (!empty($action) && !empty($bridges)) {
-		foreach ($autoload->get_interface_list('bridges_hook') as $class) {
-			$class::on_bridges_action_pre($settings, $action, $bridges);
-		}
+		app::dispatch_list_pre_action('bridge_list_page_hook', $url_paging, $action, $bridges);
 	}
 
 //process the http post data by action
@@ -86,18 +84,15 @@
 		}
 
 		//invoke post-action hook
-		foreach ($autoload->get_interface_list('bridges_hook') as $class) {
-			$class::on_bridges_action_post($settings, $action, $bridges);
-		}
+		app::dispatch_list_post_action('bridge_list_page_hook', $url_paging, $action, $bridges);
 
 		header('Location: bridges.php'.(!empty($search) ? '?search='.urlencode($search) : ''));
 		exit;
 	}
 
 //invoke pre-query hook
-	foreach ($autoload->get_interface_list('bridges_hook') as $class) {
-		$class::on_bridges_query_pre($url_paging);
-	}
+	$query_parameters = [];
+	app::dispatch_list_pre_query('bridge_list_page_hook', $url_paging, $query_parameters);
 
 //get the count
 	$num_rows = bridges::count($url_paging);
@@ -111,9 +106,7 @@
 	$bridges = bridges::fetch($url_paging);
 
 //invoke post-fetch hook
-	foreach ($autoload->get_interface_list('bridges_hook') as $class) {
-		$class::on_bridges_list_post_fetch($settings, $bridges);
-	}
+	app::dispatch_list_post_query('bridge_list_page_hook', $url_paging, $bridges);
 
 //create token
 	$object = new token;
@@ -203,9 +196,7 @@
 		$x = 0;
 		foreach ($bridges as $row) {
 			//invoke row-render hook
-			foreach ($autoload->get_interface_list('bridges_hook') as $class) {
-				$class::on_bridges_row_render($settings, $row, $x);
-			}
+			app::dispatch_list_render_row('bridge_list_page_hook', $url_paging, $row, $x);
 
 			$list_row_url = '';
 			if (permission_exists('bridge_edit')) {

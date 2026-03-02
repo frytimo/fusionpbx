@@ -25,7 +25,7 @@
 */
 
 //define the number translations class
-class number_translations {
+class number_translations extends app {
 
 	/**
 	 * declare constant variables
@@ -41,13 +41,12 @@ class number_translations {
 	/**
 	 * declare private variables
 	 */
-	private $database;
-	private $permission_prefix;
-	private $list_page;
-	private $table;
-	private $uuid_prefix;
-	private $toggle_field;
-	private $toggle_values;
+	protected $permission_prefix;
+	protected $list_page;
+	protected $table;
+	protected $uuid_prefix;
+	protected $toggle_field;
+	protected $toggle_values;
 	private $json;
 	private $xml;
 	private $display_type;
@@ -71,6 +70,9 @@ class number_translations {
 		$this->uuid_prefix       = 'number_translation_';
 		$this->toggle_field      = 'number_translation_enabled';
 		$this->toggle_values     = ['true', 'false'];
+
+		//call parent constructor to initialize has_* flags
+		parent::__construct();
 	}
 
 	/**

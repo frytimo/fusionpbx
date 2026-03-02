@@ -12,36 +12,6 @@ class access_controls extends app implements app_config_db, app_config_permissio
 	const app_uuid = '1416a250-f6e1-4edc-91a6-5c9b883638fd';
 
 	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 *
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
-	 * Settings object set in the constructor. Must be a settings object and cannot be null.
-	 *
-	 * @var settings Settings Object
-	 */
-	private $settings;
-
-	/**
-	 * User UUID set in the constructor. This can be passed in through the $settings_array associative array or set in
-	 * the session global array
-	 *
-	 * @var string
-	 */
-	private $user_uuid;
-
-	/**
-	 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set
-	 * in the session global array
-	 *
-	 * @var string
-	 */
-	private $domain_uuid;
-
-	/**
 	 * declare private variables
 	 */
 	const permission_prefix = 'access_control_';
@@ -61,19 +31,16 @@ class access_controls extends app implements app_config_db, app_config_permissio
 		// set objects
 		$config = $setting_array['config'] ?? config::load();
 		$this->database = $setting_array['database'] ?? database::new(['config' => $config]);
+
+		// call parent constructor to initialize has_* flags
+		parent::__construct();
 	}
 
-	protected function on_delete(array &$checked) {
-		throw new \Exception('Not implemented');
-	}
+	protected function on_delete(array &$checked) {}
 
-	protected function on_copy(array &$uuids) {
-		throw new \Exception('Not implemented');
-	}
+	protected function on_copy(array &$uuids) { return []; }
 
-	protected function on_toggle(array &$checked) {
-		throw new \Exception('Not implemented');
-	}
+	protected function on_toggle(array &$checked) { return []; }
 
 	public static function app_config_db(): array {
 		$access_controls_table = app_config::db()->standard_table('access_controls')

@@ -38,6 +38,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //set the defaults
 	$sql_search = '';
@@ -54,6 +56,9 @@
 
 //process the http post data by action
 	if (!empty($action) && is_array($phrases)) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $phrases);
+
 		switch ($action) {
 			case 'copy':
 				if (permission_exists('phrase_add')) {
@@ -78,9 +83,16 @@
 				break;
 		}
 
+		//dispatch post-action hook
+		app::dispatch_list_post_action(null, $url, $action, $phrases);
+
 		header('Location: phrases.php'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get order and order by
 	$order_by = $_GET["order_by"] ?? '';
@@ -135,6 +147,8 @@
 	$sql .= order_by($order_by, $order, 'phrase_name', 'asc');
 	$sql .= limit_offset($rows_per_page, $offset);
 	$phrases = $database->select($sql, $parameters ?? null, 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $phrases);
 	unset($sql, $parameters);
 
 //create token
@@ -221,6 +235,8 @@
 	if (is_array($phrases) && @sizeof($phrases) != 0) {
 		$x = 0;
 		foreach($phrases as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
 			if (permission_exists('phrase_edit')) {
 				$list_row_url = "phrase_edit.php?id=".urlencode($row['phrase_uuid']);

@@ -25,7 +25,7 @@
 */
 
 //define the sip profiles class
-class sip_profiles {
+class sip_profiles extends app {
 
 	/**
 	 * declare constant variables
@@ -34,44 +34,14 @@ class sip_profiles {
 	const app_uuid = 'a6a7c4c5-340a-43ce-bcbc-2ed9bab8659d';
 
 	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 *
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
-	 * Settings object set in the constructor. Must be a settings object and cannot be null.
-	 *
-	 * @var settings Settings Object
-	 */
-	private $settings;
-
-	/**
-	 * User UUID set in the constructor. This can be passed in through the $settings_array associative array or set in
-	 * the session global array
-	 *
-	 * @var string
-	 */
-	private $user_uuid;
-
-	/**
-	 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set
-	 * in the session global array
-	 *
-	 * @var string
-	 */
-	private $domain_uuid;
-
-	/**
 	 * declare private variables
 	 */
-	private $permission_prefix;
-	private $list_page;
-	private $table;
-	private $uuid_prefix;
-	private $toggle_field;
-	private $toggle_values;
+	protected $permission_prefix;
+	protected $list_page;
+	protected $table;
+	protected $uuid_prefix;
+	protected $toggle_field;
+	protected $toggle_values;
 
 	/**
 	 * declare public variables
@@ -102,6 +72,9 @@ class sip_profiles {
 		$this->uuid_prefix       = 'sip_profile_';
 		$this->toggle_field      = 'sip_profile_enabled';
 		$this->toggle_values     = ['true', 'false'];
+
+		//initialize the parent class
+		parent::__construct();
 	}
 
 	/**

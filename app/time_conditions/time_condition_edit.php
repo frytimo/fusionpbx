@@ -189,7 +189,7 @@
 					$array['dialplans'][0]['dialplan_description'] = $dialplan_description;
 
 				//execute insert/update
-					$database->save($array);
+					(new time_conditions)->save($array);
 					unset($array);
 
 				//revoke temporary permissions
@@ -484,7 +484,7 @@
 					$p->add('dialplan_detail_edit', 'temp');
 
 				//execute insert
-					$database->save($array);
+					(new time_conditions)->save($array);
 					unset($array);
 
 				//revoke temporary permissions

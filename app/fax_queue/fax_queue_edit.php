@@ -162,7 +162,7 @@
 			$array['fax_queue'][0]['fax_response'] = $fax_response;
 
 		//save the data
-			$database->save($array);
+			(new fax_queue)->save($array);
 
 		//redirect the user
 			if (isset($action)) {

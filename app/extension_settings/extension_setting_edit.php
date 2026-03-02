@@ -149,7 +149,7 @@
 			$array['extension_settings'][0]['extension_setting_description'] = $extension_setting_description;
 
 		//save the data
-			$database->save($array);
+			(new extension_settings)->save($array);
 
 		//clear the cache
 			$sql = "select extension, number_alias, user_context from v_extensions ";

@@ -38,6 +38,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //set from session variables
 	$list_row_edit_button = $settings->get('theme', 'list_row_edit_button', false);
@@ -51,6 +53,9 @@
 
 //process the http post data by action
 	if (!empty($action) && !empty($conference_controls)) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $conference_controls);
+
 		switch ($action) {
 			case 'copy':
 				if (permission_exists('conference_control_add')) {
@@ -72,9 +77,16 @@
 				break;
 		}
 
+		//dispatch post-action hook
+		app::dispatch_list_post_action(null, $url, $action, $conference_controls);
+
 		header('Location: conference_controls.php'.(!empty($search) ? '?search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get order and order by
 	$order_by = $_GET["order_by"] ?? '';
@@ -115,6 +127,8 @@
 	$sql .= order_by($order_by, $order, 'control_name', 'asc');
 	$sql .= limit_offset($rows_per_page, $offset);
 	$conference_controls = $database->select($sql, $parameters ?? null, 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $conference_controls);
 	unset($sql, $parameters);
 
 //create token
@@ -189,6 +203,8 @@
 	if (!empty($conference_controls)) {
 		$x = 0;
 		foreach ($conference_controls as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			if (permission_exists('conference_control_edit')) {
 				$list_row_url = "conference_control_edit.php?id=".urlencode($row['conference_control_uuid']);
 			}

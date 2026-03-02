@@ -29,7 +29,7 @@
  */
 
 //define the call_forward class
-class call_forward {
+class call_forward extends app {
 
 	/**
 	 * declare constant variables
@@ -65,35 +65,13 @@ class call_forward {
 	public $outbound_caller_id_number;
 
 	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 *
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
-	 * Settings object set in the constructor. Must be a settings object and cannot be null.
-	 *
-	 * @var settings Settings Object
-	 */
-	private $settings;
-
-	/**
-	 * User UUID set in the constructor. This can be passed in through the $settings_array associative array or set in
-	 * the session global array
-	 *
-	 * @var string
-	 */
-	private $user_uuid;
-
-	/**
 	 * declare private variables
 	 */
 	private $extension;
 	private $number_alias;
 	private $toll_allow;
-	private $toggle_field;
-	private $toggle_values;
+	protected $toggle_field;
+	protected $toggle_values;
 
 	/**
 	 * Initializes the object with setting array.
@@ -116,6 +94,9 @@ class call_forward {
 		//assign private variables
 		$this->toggle_field  = 'forward_all_enabled';
 		$this->toggle_values = ['true', 'false'];
+
+		//initialize the parent class
+		parent::__construct();
 	}
 
 	/**

@@ -37,6 +37,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //get posted data
 	if (!empty($_POST['profiles']) && is_array($_POST['profiles'])) {
@@ -54,6 +56,9 @@
 
 //process the http post data by action
 	if (!empty($action) && !empty($profiles) && is_array($profiles) && @sizeof($profiles) != 0) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $device_profiles);
+
 		switch ($action) {
 			case 'copy':
 				if (permission_exists('device_profile_add')) {
@@ -75,9 +80,16 @@
 				break;
 		}
 
+		//dispatch post-action hook
+		app::dispatch_list_post_action(null, $url, $action, $device_profiles);
+
 		header('Location: device_profiles.php'.($search != '' ? '?search='.urlencode($search).'&fields='.urlencode($fields) : null));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get variables used to control the order
 	$order_by = $_GET["order_by"] ?? null;
@@ -149,6 +161,8 @@
 	$sql .= order_by($order_by, $order, 'device_profile_name', 'asc');
 	$sql .= limit_offset($rows_per_page, $offset);
 	$device_profiles = $database->select($sql, $parameters ?? null, 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $device_profiles);
 	unset($sql, $parameters);
 
 //create token
@@ -244,6 +258,8 @@
 	if (is_array($device_profiles) && @sizeof($device_profiles) != 0) {
 		$x = 0;
 		foreach($device_profiles as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
 			if (permission_exists('device_profile_edit')) {
 				$list_row_url = "device_profile_edit.php?id=".urlencode($row['device_profile_uuid']);

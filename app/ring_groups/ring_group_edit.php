@@ -470,8 +470,7 @@ if (!($settings instanceof settings)) {
 			$p->add("dialplan_edit", "temp");
 
 		//save to the data
-			$database->save($array);
-			$message = $database->message;
+			(new ring_groups)->save($array);
 
 		//remove the temporary permission
 			$p->delete("dialplan_add", "temp");

@@ -27,7 +27,7 @@
 */
 
 //define the switch_music_on_hold class
-class switch_music_on_hold {
+class switch_music_on_hold extends app {
 
 	/**
 	 * declare constant variables
@@ -36,42 +36,12 @@ class switch_music_on_hold {
 	const app_uuid = '1dafe0f8-c08a-289b-0312-15baf4f20f81';
 
 	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 *
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
-	 * Settings object set in the constructor. Must be a settings object and cannot be null.
-	 *
-	 * @var settings Settings Object
-	 */
-	private $settings;
-
-	/**
-	 * User UUID set in the constructor. This can be passed in through the $this->settings_array associative array or
-	 * set in the session global array
-	 *
-	 * @var string
-	 */
-	private $user_uuid;
-
-	/**
 	 * Username set in the constructor. This can be passed in through the $this->settings_array associative array or
 	 * set in the session global array
 	 *
 	 * @var string
 	 */
 	private $username;
-
-	/**
-	 * Domain UUID set in the constructor. This can be passed in through the $this->settings_array associative array or
-	 * set in the session global array
-	 *
-	 * @var string
-	 */
-	private $domain_uuid;
 
 	/**
 	 * Domain name set in the constructor. This can be passed in through the $this->settings_array associative array or
@@ -87,10 +57,10 @@ class switch_music_on_hold {
 	private $xml;
 	private $app_name;
 	private $app_uuid;
-	private $permission_prefix;
-	private $list_page;
-	private $table;
-	private $uuid_prefix;
+	protected $permission_prefix;
+	protected $list_page;
+	protected $table;
+	protected $uuid_prefix;
 
 	/**
 	 * Initializes the object with setting array.
@@ -114,6 +84,9 @@ class switch_music_on_hold {
 		$this->list_page         = 'music_on_hold.php';
 		$this->table             = 'music_on_hold';
 		$this->uuid_prefix       = 'music_on_hold_';
+
+		//initialize the parent class
+		parent::__construct();
 	}
 
 	/**
@@ -241,7 +214,7 @@ class switch_music_on_hold {
 	 * This method retrieves the contents of the template, replaces variables,
 	 * and writes the updated XML config file to disk. The XML is then reloaded.
 	 */
-	public function save() {
+	public function save_config() {
 		//get the contents of the template
 		if (file_exists('/usr/share/examples/fusionpbx')) {
 			$file_contents = file_get_contents("/usr/share/examples/fusionpbx/resources/templates/conf/autoload_configs/local_stream.conf.xml");
@@ -489,4 +462,4 @@ class switch_music_on_hold {
 //build and save the XML
 //$moh = new switch_music_on_hold;
 //$moh->xml();
-//$moh->save();
+//$moh->save_config();

@@ -165,7 +165,7 @@
 			}
 
 		//save to the database
-			$database->save($array);
+			(new call_center)->save($array);
 
 		//syncrhonize configuration
 			save_call_center_xml();

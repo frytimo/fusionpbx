@@ -134,7 +134,7 @@
 			$array['event_guard_logs'][0]['log_status'] = $log_status;
 
 		//save the data
-			$database->save($array);
+			(new event_guard)->save($array);
 
 		//redirect the user
 			if (isset($action)) {

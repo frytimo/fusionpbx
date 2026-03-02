@@ -47,6 +47,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //get posted data
 	if (!empty($_POST['devices']) && is_array($_POST['devices'])) {
@@ -56,6 +58,9 @@
 
 //process the http post data by action
 	if (!empty($action) && !empty($devices) && is_array($devices) && @sizeof($devices) != 0) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $devices);
+
 		switch ($action) {
 			case 'toggle':
 				if (permission_exists('device_edit')) {
@@ -71,9 +76,16 @@
 				break;
 		}
 
+		//dispatch post-action hook
+		app::dispatch_list_post_action(null, $url, $action, $devices);
+
 		header('Location: devices.php'.($search != '' ? '?search='.urlencode($search).'&fields='.urlencode($fields) : null));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get order and order by and sanatize the values
 	$order_by = $_GET["order_by"] ?? '';
@@ -288,6 +300,8 @@
 	$sql .= limit_offset($rows_per_page, $offset);
 	$parameters['time_zone'] = $time_zone;
 	$devices = $database->select($sql, $parameters, 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $devices);
 	unset($sql, $parameters);
 
 //alternate_found
@@ -413,6 +427,8 @@
 	if (!empty($devices) && @sizeof($devices) != 0) {
 		$x = 0;
 		foreach($devices as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 
 			$device_profile_name = '';
 			foreach($device_profiles as $profile) {

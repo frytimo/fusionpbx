@@ -25,7 +25,7 @@
 */
 
 //define the device class
-class device {
+class device extends app {
 
 	/**
 	 * declare constant variables
@@ -50,28 +50,6 @@ class device {
 	public $device_profile_uuid;
 
 	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 *
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
-	 * Settings object set in the constructor. Must be a settings object and cannot be null.
-	 *
-	 * @var settings Settings Object
-	 */
-	private $settings;
-
-	/**
-	 * User UUID set in the constructor. This can be passed in through the $settings_array associative array or set in
-	 * the session global array
-	 *
-	 * @var string
-	 */
-	private $user_uuid;
-
-	/**
 	 * Username set in the constructor. This can be passed in through the $settings_array associative array or set in
 	 * the session global array
 	 *
@@ -90,12 +68,12 @@ class device {
 	/**
 	 * declare private variables
 	 */
-	private $permission_prefix;
-	private $list_page;
-	private $table;
-	private $uuid_prefix;
-	private $toggle_field;
-	private $toggle_values;
+	protected $permission_prefix;
+	protected $list_page;
+	protected $table;
+	protected $uuid_prefix;
+	protected $toggle_field;
+	protected $toggle_values;
 	private $tables;
 
 	/**
@@ -115,6 +93,9 @@ class device {
 		//set objects
 		$this->database = $setting_array['database'] ?? database::new();
 		$this->settings = $setting_array['settings'] ?? new settings(['database' => $this->database, 'domain_uuid' => $this->domain_uuid, 'user_uuid' => $this->user_uuid]);
+
+		//initialize the parent class
+		parent::__construct();
 	}
 
 	/**

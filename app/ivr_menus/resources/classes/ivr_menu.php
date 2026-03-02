@@ -25,7 +25,7 @@
 */
 
 //define the ivr_menu class
-class ivr_menu {
+class ivr_menu extends app {
 
 	/**
 	 * declare constant variables
@@ -56,20 +56,6 @@ class ivr_menu {
 	public $order_by;
 
 	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 *
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
-	 * Settings object set in the constructor. Must be a settings object and cannot be null.
-	 *
-	 * @var settings Settings Object
-	 */
-	private $settings;
-
-	/**
 	 * Domain name set in the constructor. This can be passed in through the $settings_array associative array or set
 	 * in the session global array
 	 *
@@ -80,12 +66,12 @@ class ivr_menu {
 	/**
 	 * declare private variables
 	 */
-	private $permission_prefix;
-	private $list_page;
-	private $table;
-	private $uuid_prefix;
-	private $toggle_field;
-	private $toggle_values;
+	protected $permission_prefix;
+	protected $list_page;
+	protected $table;
+	protected $uuid_prefix;
+	protected $toggle_field;
+	protected $toggle_values;
 
 	/**
 	 * Initializes the object with setting array.
@@ -105,6 +91,9 @@ class ivr_menu {
 
 		//assign private variables
 		$this->list_page = 'ivr_menus.php';
+
+		//initialize the parent class
+		parent::__construct();
 	}
 
 	/**

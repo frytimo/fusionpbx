@@ -129,7 +129,7 @@
 			$array['sofia_global_settings'][0]['global_setting_description'] = $global_setting_description;
 
 		//save the data
-			$database->save($array);
+			(new sofia_global_settings)->save($array);
 
 		//redirect the user
 			if (isset($action)) {

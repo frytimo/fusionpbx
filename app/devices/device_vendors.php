@@ -38,6 +38,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //get posted data
 	if (!empty($_POST['vendors']) && is_array($_POST['vendors'])) {
@@ -48,6 +50,9 @@
 
 //process the http post data by action
 	if (!empty($action) && !empty($vendors) && is_array($vendors) && @sizeof($vendors) != 0) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $device_vendors);
+
 		switch ($action) {
 			case 'toggle':
 				if (permission_exists('device_vendor_edit')) {
@@ -63,9 +68,16 @@
 				break;
 		}
 
+		//dispatch post-action hook
+		app::dispatch_list_post_action(null, $url, $action, $device_vendors);
+
 		header('Location: device_vendors.php'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get variables used to control the order
 	$order_by = $_GET["order_by"] ?? null;
@@ -113,6 +125,8 @@
 	$sql .= order_by($order_by, $order, 'name', 'asc');
 	$sql .= limit_offset($rows_per_page, $offset);
 	$result = $database->select($sql, $parameters ?? null, 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $result);
 	unset($sql, $parameters);
 
 //create token
@@ -185,6 +199,8 @@
 	if (is_array($result) && @sizeof($result) != 0) {
 		$x = 0;
 		foreach($result as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
 			if (permission_exists('device_vendor_edit')) {
 				$list_row_url = "device_vendor_edit.php?id=".urlencode($row['device_vendor_uuid']);

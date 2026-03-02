@@ -240,7 +240,7 @@
 					}
 
 				//execute insert/update
-					$database->save($array);
+					(new voicemail)->save($array);
 					unset($array);
 
 				//revoke any temporary permissions granted

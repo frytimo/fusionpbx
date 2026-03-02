@@ -474,8 +474,7 @@
 			$p->add("dialplan_edit", "temp");
 
 		//save to the data
-			$database->save($array);
-			$message = $database->message;
+			(new call_center)->save($array);
 
 		//remove the temporary permission
 			$p->delete("dialplan_add", "temp");

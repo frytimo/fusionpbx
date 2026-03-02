@@ -38,6 +38,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //get the http post data
 	if (!empty($_POST['time_conditions']) && is_array($_POST['time_conditions'])) {
@@ -48,6 +50,9 @@
 
 //process the http post data by action
 	if (!empty($action) && !empty($time_conditions) && is_array($time_conditions) && @sizeof($time_conditions) != 0) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $time_conditions);
+
 		switch ($action) {
 			case 'copy':
 				if (permission_exists('time_condition_add')) {
@@ -69,9 +74,16 @@
 				break;
 		}
 
+		//dispatch post-action hook
+		app::dispatch_list_post_action(null, $url, $action, $time_conditions);
+
 		header('Location: time_conditions.php'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get order and order by
 	$order_by = $_GET["order_by"] ?? 'dialplan_name';
@@ -121,6 +133,8 @@
 	$sql .= order_by($order_by, $order, null, null, $sort);
 	$sql .= limit_offset($rows_per_page, $offset);
 	$dialplans = $database->select($sql, $parameters ?? null, 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $dialplans);
 	unset($sql, $parameters);
 
 //create token
@@ -211,6 +225,8 @@
 	if (is_array($dialplans) && @sizeof($dialplans) != 0) {
 		$x = 0;
 		foreach ($dialplans as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
 			if (permission_exists('time_condition_edit')) {
 				$list_row_url = "time_condition_edit.php?id=".urlencode($row['dialplan_uuid']);

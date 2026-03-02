@@ -3,7 +3,7 @@
 /**
  * email_queue class
  */
-class email_queue {
+class email_queue extends app {
 
 	/**
 	 * declare constant variables
@@ -12,42 +12,12 @@ class email_queue {
 	const app_uuid = '5befdf60-a242-445f-91b3-2e9ee3e0ddf7';
 
 	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 *
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
-	 * Settings object set in the constructor. Must be a settings object and cannot be null.
-	 *
-	 * @var settings Settings Object
-	 */
-	private $settings;
-
-	/**
-	 * User UUID set in the constructor. This can be passed in through the $settings_array associative array or set in
-	 * the session global array
-	 *
-	 * @var string
-	 */
-	private $user_uuid;
-
-	/**
-	 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set
-	 * in the session global array
-	 *
-	 * @var string
-	 */
-	private $domain_uuid;
-
-	/**
 	 * declare the variables
 	 */
 	private $name;
-	private $table;
-	private $toggle_field;
-	private $toggle_values;
+	protected $table;
+	protected $toggle_field;
+	protected $toggle_values;
 	private $location;
 
 	/**
@@ -73,6 +43,9 @@ class email_queue {
 		$this->toggle_field  = '';
 		$this->toggle_values = ['true', 'false'];
 		$this->location      = 'email_queue.php';
+
+		//initialize the parent class
+		parent::__construct();
 	}
 
 	/**

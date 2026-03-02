@@ -120,7 +120,7 @@
 				}
 
 				if (is_uuid($array['conference_profile_params'][0]['conference_profile_param_uuid'])) {
-					$database->save($array);
+					(new conference_profiles)->save($array);
 					unset($array);
 				}
 

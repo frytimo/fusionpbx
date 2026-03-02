@@ -868,7 +868,7 @@
 					}
 
 				//save to the data';
-					$message = $database->save($array);
+					(new extension)->save($array);
 					unset($array);
 
 				//reload the access control list

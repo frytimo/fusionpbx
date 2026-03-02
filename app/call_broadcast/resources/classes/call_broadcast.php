@@ -28,7 +28,7 @@
 /**
  * call broadcast class
  */
-class call_broadcast {
+class call_broadcast extends app {
 
 	/**
 	 * declare constant variables
@@ -37,35 +37,12 @@ class call_broadcast {
 	const app_uuid = 'efc11f6b-ed73-9955-4d4d-3a1bed75a056';
 
 	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 *
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
-	 * User UUID set in the constructor. This can be passed in through the $settings_array associative array or set in
-	 * the session global array
-	 *
-	 * @var string
-	 */
-	private $user_uuid;
-
-	/**
-	 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set
-	 * in the session global array
-	 *
-	 * @var string
-	 */
-	private $domain_uuid;
-
-	/**
 	 * declare private variables
 	 */
-	private $permission_prefix;
-	private $list_page;
-	private $table;
-	private $uuid_prefix;
+	protected $permission_prefix;
+	protected $list_page;
+	protected $table;
+	protected $uuid_prefix;
 
 	/**
 	 * Initializes the object with the provided settings.
@@ -87,6 +64,9 @@ class call_broadcast {
 		$this->list_page         = 'call_broadcast.php';
 		$this->table             = 'call_broadcasts';
 		$this->uuid_prefix       = 'call_broadcast_';
+
+		//initialize the parent class
+		parent::__construct();
 	}
 
 	/**

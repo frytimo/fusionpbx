@@ -38,6 +38,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //set additional variables
 	$search = $_GET["search"] ?? '';
@@ -55,6 +57,9 @@
 
 //process the http post data by action
 	if (!empty($action) && is_array($call_broadcasts)) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $call_broadcasts);
+
 		switch ($action) {
 			case 'copy':
 				if (permission_exists('call_broadcast_add')) {
@@ -70,9 +75,16 @@
 				break;
 		}
 
+		//dispatch post-action hook
+		app::dispatch_list_post_action(null, $url, $action, $call_broadcasts);
+
 		header('Location: call_broadcast.php'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get the http get variables and set them to php variables
 	$order_by = $_GET["order_by"] ?? '';
@@ -142,6 +154,8 @@
 	$sql .= order_by($order_by, $order, 'broadcast_name', 'asc');
 	$sql .= limit_offset($rows_per_page, $offset);
 	$result = $database->select($sql, $parameters ?? null, 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $result);
 	unset($sql, $parameters);
 
 //create token
@@ -222,6 +236,8 @@
 	if (!empty($result)) {
 		$x = 0;
 		foreach($result as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
 			if (permission_exists('call_broadcast_edit')) {
 				$list_row_url = "call_broadcast_edit.php?id=".urlencode($row['call_broadcast_uuid']);

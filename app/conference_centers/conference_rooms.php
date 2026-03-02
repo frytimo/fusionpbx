@@ -38,6 +38,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //set additional variables
 	$show = $_REQUEST["show"] ?? '';
@@ -63,6 +65,9 @@
 
 //process the http post data by action
 	if (!empty($action) && !empty($conference_rooms)) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $conference_rooms);
+
 		switch ($action) {
 			case 'toggle':
 				if (permission_exists('conference_room_edit')) {
@@ -79,11 +84,18 @@
 				break;
 		}
 
+		//dispatch post-action hook
+		app::dispatch_list_post_action(null, $url, $action, $conference_rooms);
+
 		header('Location: conference_rooms.php'.(!empty($search) ? '?search='.urlencode($search) : ''));
 		exit;
 	}
 
 /*
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
+
 //if the $_GET array exists then process it
 	if (!empty($_GET) && empty($_GET["search"])) {
 		//get http GET variables and set them as php variables
@@ -201,6 +213,8 @@
 		$conference_center->search = $search;
 	}
 	$result = $conference_center->rooms();
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $result);
 
 //create token
 	$object = new token;
@@ -309,6 +323,8 @@
 	if (is_array($result) > 0) {
 		$x = 0;
 		foreach ($result as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			$conference_room_name = $row['conference_room_name'];
 			$moderator_pin = $row['moderator_pin'];
 			$participant_pin = $row['participant_pin'];

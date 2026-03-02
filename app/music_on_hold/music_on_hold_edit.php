@@ -143,7 +143,7 @@
 						$array['music_on_hold'][0]['music_on_hold_chime_max'] = strlen($music_on_hold_chime_max) != 0 ? $music_on_hold_chime_max : null;
 
 					//execute
-						$database->save($array);
+						(new switch_music_on_hold)->save($array);
 						unset($array);
 
 					//clear the cache

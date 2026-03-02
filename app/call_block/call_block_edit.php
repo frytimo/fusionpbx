@@ -207,7 +207,7 @@
 						$array['call_block'][0]['date_added'] = time();
 						$array['call_block'][0]['call_block_description'] = $call_block_description;
 
-						$database->save($array);
+						(new call_block)->save($array);
 						unset($array);
 
 						message::add($text['label-add-complete']);
@@ -254,7 +254,7 @@
 						$array['call_block'][0]['date_added'] = time();
 						$array['call_block'][0]['call_block_description'] = $call_block_description;
 
-						$database->save($array);
+						(new call_block)->save($array);
 						unset($array);
 
 						message::add($text['label-update-complete']);

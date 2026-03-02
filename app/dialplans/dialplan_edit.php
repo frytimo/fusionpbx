@@ -310,7 +310,7 @@
 			$array['dialplans'][$x]['dialplan_xml'] = $dialplan_array[$dialplan_uuid];
 
 		//add or update the database
-			$database->save($array);
+			(new dialplan)->save($array);
 			unset($array);
 
 		//remove checked dialplan details

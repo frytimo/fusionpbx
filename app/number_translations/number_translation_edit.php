@@ -147,7 +147,7 @@
 			}
 
 		//save the data
-			$database->save($array);
+			(new number_translations)->save($array);
 
 		//redirect the user
 			if (!empty($action)) {

@@ -39,6 +39,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //set additional variables
 	$show = $_GET["show"] ?? '';
@@ -70,6 +72,9 @@
 
 //process the http post data by action
 	if (!empty($action) && !empty($ring_groups)) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $ring_groups);
+
 		switch ($action) {
 			case 'copy':
 				$obj = new ring_groups;
@@ -85,9 +90,16 @@
 				break;
 		}
 
+			//dispatch post-action hook
+			app::dispatch_list_post_action(null, $url, $action, $ring_groups);
+
 		header('Location: ring_groups.php'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get order and order by
 	$order_by = $_GET["order_by"] ?? 'ring_group_name';
@@ -182,6 +194,8 @@
 	$sql .= order_by($order_by, $order, null, null, $sort);
 	$sql .= limit_offset($rows_per_page, $offset);
 	$ring_groups = $database->select($sql, $parameters, 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $ring_groups);
 	unset($sql, $parameters);
 
 //create token
@@ -270,6 +284,8 @@
 	if (is_array($ring_groups) && @sizeof($ring_groups) != 0) {
 		$x = 0;
 		foreach ($ring_groups as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
 			if (permission_exists('ring_group_edit')) {
 				$list_row_url = "ring_group_edit.php?id=".urlencode($row['ring_group_uuid']);

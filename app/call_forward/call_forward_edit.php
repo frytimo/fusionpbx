@@ -255,7 +255,7 @@
 			$p->add("extension_edit", "temp");
 
 		//save the data
-			$database->save($array);
+			(new call_forward)->save($array);
 			unset($array);
 
 		//remove the temporary permission

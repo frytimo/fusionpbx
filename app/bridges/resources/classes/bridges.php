@@ -35,39 +35,21 @@ class bridges extends app {
 	const app_uuid = 'a6a7c4c5-340a-43ce-bcbc-2ed9bab8659d';
 
 	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
-	 * Settings object set in the constructor. Must be a settings object and cannot be null.
-	 * @var settings Settings Object
-	 */
-	private $settings;
-
-	/**
-	 * User UUID set in the constructor. This can be passed in through the $settings_array associative array or set in the session global array
-	 * @var string
-	 */
-	private $user_uuid;
-
-	/**
-	 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set in the session global array
-	 * @var string
-	 */
-	private $domain_uuid;
-
-	/**
 	 * declare private variables
 	 */
-	private $permission_prefix;
+	protected $permission_prefix;
 
-	private $list_page;
-	private $table;
-	private $uuid_prefix;
-	private $toggle_field;
-	private $toggle_values;
+	protected $list_page;
+	protected $table;
+	protected $uuid_prefix;
+	protected $toggle_field;
+	protected $toggle_values;
+
+	/**
+	 * App-specific hook interface names for the two-tier hook dispatch system
+	 */
+	protected $edit_hook_interface = 'bridge_edit_hook';
+	protected $list_hook_interface = 'bridge_list_page_hook';
 
 	/**
 	 * Initializes the object with settings and default values.
@@ -85,13 +67,15 @@ class bridges extends app {
 		$this->settings = $setting_array['settings'] ?? new settings(['database' => $this->database, 'domain_uuid' => $this->domain_uuid, 'user_uuid' => $this->user_uuid]);
 
 		// assign private variables
-
 		$this->permission_prefix = 'bridge_';
 		$this->list_page = 'bridges.php';
 		$this->table = 'bridges';
 		$this->uuid_prefix = 'bridge_';
 		$this->toggle_field = 'bridge_enabled';
 		$this->toggle_values = ['true', 'false'];
+
+		// call parent constructor to initialize has_* flags
+		parent::__construct();
 	}
 
 	protected function on_delete(array &$checked) {
@@ -99,6 +83,13 @@ class bridges extends app {
 	}
 
 	public function after_delete() {
+		// clear the destinations session array
+		if (isset($_SESSION['destinations']['array'])) {
+			unset($_SESSION['destinations']['array']);
+		}
+	}
+
+	public function after_save(array $array) {
 		// clear the destinations session array
 		if (isset($_SESSION['destinations']['array'])) {
 			unset($_SESSION['destinations']['array']);

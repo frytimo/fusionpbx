@@ -27,7 +27,7 @@
 /**
  * conference_controls class
  */
-class conference_controls {
+class conference_controls extends app {
 
 	/**
 	 * declare constant variables
@@ -39,11 +39,10 @@ class conference_controls {
 	 * declare private variables
 	 */
 
-	private $database;
 	private $name;
-	private $table;
-	private $toggle_field;
-	private $toggle_values;
+	protected $table;
+	protected $toggle_field;
+	protected $toggle_values;
 	private $description_field;
 	private $location;
 
@@ -63,6 +62,9 @@ class conference_controls {
 	public function __construct(array $setting_array = []) {
 		//set objects
 		$this->database = $setting_array['database'] ?? database::new();
+
+		//initialize the parent class
+		parent::__construct();
 	}
 
 	/**

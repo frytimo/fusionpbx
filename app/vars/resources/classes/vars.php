@@ -25,7 +25,7 @@
 */
 
 //define the vars class
-	class vars {
+	class vars extends app {
 
 		/**
 		 * declare constant variables
@@ -37,13 +37,12 @@
 		 * declare private variables
 		 */
 
-		private $database;
-		private $permission_prefix;
-		private $list_page;
-		private $table;
-		private $uuid_prefix;
-		private $toggle_field;
-		private $toggle_values;
+		protected $permission_prefix;
+		protected $list_page;
+		protected $table;
+		protected $uuid_prefix;
+		protected $toggle_field;
+		protected $toggle_values;
 
 		/**
 		 * Initializes the object with setting array.
@@ -64,6 +63,9 @@
 			$this->uuid_prefix = 'var_';
 			$this->toggle_field = 'var_enabled';
 			$this->toggle_values = ['true','false'];
+
+			//initialize the parent class
+			parent::__construct();
 		}
 
 		/**

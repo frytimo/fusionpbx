@@ -38,6 +38,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //define the variables
 	$action = '';
@@ -52,6 +54,9 @@
 
 //process the http post data by action
 	if (!empty($action)) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $vars);
+
 		switch ($action) {
 			case 'copy':
 				if (permission_exists('var_add')) {
@@ -73,9 +78,16 @@
 				break;
 		}
 
+		//dispatch post-action hook
+		app::dispatch_list_post_action(null, $url, $action, $vars);
+
 		header('Location: vars.php'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get order and order by
 	$order_by = $_GET["order_by"] ?? '';
@@ -134,6 +146,8 @@
 	$sql .= $order_by != '' ? order_by($order_by, $order) : " order by var_category, var_order asc, var_name asc ";
 	$sql .= limit_offset($rows_per_page, $offset);
 	$vars = $database->select($sql, $parameters ?? null, 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $vars);
 	unset($sql);
 
 //create token
@@ -225,6 +239,8 @@
 	if (!empty($vars)) {
 		$previous_category = '';
 		foreach ($vars as $x => $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			//write category and column headings
 			if ($previous_category != $row["var_category"]) {
 				echo "<tr>\n";

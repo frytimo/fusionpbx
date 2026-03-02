@@ -38,6 +38,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //get posted data
 	if (!empty($_POST['gateways'])) {
@@ -62,6 +64,9 @@
 
 //process the http post data by action
 	if (!empty($action) && !empty($gateways)) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $gateways);
+
 		switch ($action) {
 			case 'copy':
 				if (permission_exists('gateway_add')) {
@@ -96,9 +101,16 @@
 				break;
 		}
 
+			//dispatch post-action hook
+			app::dispatch_list_post_action(null, $url, $action, $gateways);
+
 		header('Location: gateways.php'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //connect to event socket
 	$esl = event_socket::create();
@@ -215,6 +227,8 @@
 	$sql .= order_by($order_by, $order, 'gateway', 'asc');
 	$sql .= limit_offset($rows_per_page, $offset);
 	$gateways = $database->select($sql, $parameters ?? [], 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $gateways);
 	unset($sql, $parameters);
 
 //create token
@@ -320,6 +334,8 @@
 	if (!empty($gateways)) {
 		$x = 0;
 		foreach($gateways as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
 			if (permission_exists('gateway_edit')) {
 				$list_row_url = "gateway_edit.php?id=".urlencode($row['gateway_uuid']);

@@ -25,7 +25,7 @@
 */
 
 //define the time conditions class
-class time_conditions {
+class time_conditions extends app {
 
 	/**
 	 * declare constant variables
@@ -34,42 +34,12 @@ class time_conditions {
 	const app_uuid = '4b821450-926b-175a-af93-a03c441818b1';
 
 	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 *
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
-	 * Settings object set in the constructor. Must be a settings object and cannot be null.
-	 *
-	 * @var settings Settings Object
-	 */
-	private $settings;
-
-	/**
-	 * User UUID set in the constructor. This can be passed in through the $settings_array associative array or set in
-	 * the session global array
-	 *
-	 * @var string
-	 */
-	private $user_uuid;
-
-	/**
 	 * Username set in the constructor. This can be passed in through the $settings_array associative array or set in
 	 * the session global array
 	 *
 	 * @var string
 	 */
 	private $username;
-
-	/**
-	 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set
-	 * in the session global array
-	 *
-	 * @var string
-	 */
-	private $domain_uuid;
 
 	/**
 	 * Domain name set in the constructor. This can be passed in through the $settings_array associative array or set
@@ -82,12 +52,12 @@ class time_conditions {
 	/**
 	 * declare public/private properties
 	 */
-	private $permission_prefix;
-	private $list_page;
-	private $table;
-	private $uuid_prefix;
-	private $toggle_field;
-	private $toggle_values;
+	protected $permission_prefix;
+	protected $list_page;
+	protected $table;
+	protected $uuid_prefix;
+	protected $toggle_field;
+	protected $toggle_values;
 	private $dialplan_global;
 
 	/**
@@ -115,6 +85,9 @@ class time_conditions {
 		$this->uuid_prefix       = 'dialplan_';
 		$this->toggle_field      = 'dialplan_enabled';
 		$this->toggle_values     = ['true', 'false'];
+
+		//initialize the parent class
+		parent::__construct();
 	}
 
 	/**

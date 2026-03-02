@@ -39,6 +39,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //drop app uuid from the query if not from specific apps
 	$allowed_app_uuids = [
@@ -79,6 +81,9 @@
 			unset($params);
 
 		//process action
+			//dispatch pre-action hook
+			app::dispatch_list_pre_action(null, $url, $action, $dialplans);
+
 			switch ($action) {
 				case 'copy':
 					if (permission_exists('dialplan_add')) {
@@ -107,9 +112,16 @@
 			}
 
 		//redirect
+		//dispatch post-action hook
+		app::dispatch_list_post_action(null, $url, $action, $dialplans);
+
 			header('Location: '.$list_page);
 			exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get order and order by and sanitize the values
 	$order_by = (!empty($_GET["order_by"])) ? $_GET["order_by"] : '';
@@ -286,6 +298,8 @@
 	}
 	$sql .= limit_offset($rows_per_page, $offset);
 	$dialplans = $database->select($sql, $parameters ?? null, 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $dialplans);
 	unset($sql, $parameters);
 
 //get the list of all dialplan contexts
@@ -563,6 +577,8 @@
 	if (!empty($dialplans)) {
 		$x = 0;
 		foreach ($dialplans as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			//set the dialplan description
 			$dialplan_description = $row['dialplan_description'] ?? $text['description-dialplan_'.$row['dialplan_name']];
 			$dialplan_description = str_replace('${number}', $row['dialplan_number'], $dialplan_description);

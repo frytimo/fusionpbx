@@ -27,7 +27,7 @@
 /**
  * extension_settings class
  */
-class extension_settings {
+class extension_settings extends app {
 
 	/**
 	 * declare constant variables
@@ -41,42 +41,12 @@ class extension_settings {
 	public $extension_uuid;
 
 	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 *
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
-	 * Settings object set in the constructor. Must be a settings object and cannot be null.
-	 *
-	 * @var settings Settings Object
-	 */
-	private $settings;
-
-	/**
-	 * User UUID set in the constructor. This can be passed in through the $settings_array associative array or set in
-	 * the session global array
-	 *
-	 * @var string
-	 */
-	private $user_uuid;
-
-	/**
-	 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set
-	 * in the session global array
-	 *
-	 * @var string
-	 */
-	private $domain_uuid;
-
-	/**
 	 * declare the private variables
 	 */
 	private $name;
-	private $table;
-	private $toggle_field;
-	private $toggle_values;
+	protected $table;
+	protected $toggle_field;
+	protected $toggle_values;
 	private $description_field;
 	private $location;
 
@@ -103,6 +73,9 @@ class extension_settings {
 		$this->toggle_values     = ['true', 'false'];
 		$this->description_field = 'extension_setting_description';
 		$this->location          = 'extension_settings.php';
+
+		//initialize the parent class
+		parent::__construct();
 
 	}
 

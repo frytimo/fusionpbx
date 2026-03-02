@@ -165,14 +165,9 @@
 			$array['bridges'][0]['bridge_enabled'] = $bridge_enabled;
 			$array['bridges'][0]['bridge_description'] = $bridge_description;
 
-		//save to the data
-			$database->save($array);
-			$message = $database->message;
-
-		//clear the destinations session array
-			if (isset($_SESSION['destinations']['array'])) {
-				unset($_SESSION['destinations']['array']);
-			}
+		//save to the data (uses app::save with pre/post hooks)
+			$obj = new bridges;
+			$obj->save($array);
 
 		//redirect the user
 			if (isset($action)) {

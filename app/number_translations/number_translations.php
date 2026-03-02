@@ -38,6 +38,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //set additional variables
 	$search = $_GET["search"] ?? '';
@@ -54,6 +56,9 @@
 
 //process the http post data by action
 	if (!empty($action) && !empty($number_translations)) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $number_translations);
+
 		switch ($action) {
 			case 'copy':
 				if (permission_exists('number_translation_add')) {
@@ -76,9 +81,16 @@
 		}
 
 		//redirect the user
+		//dispatch post-action hook
+		app::dispatch_list_post_action(null, $url, $action, $number_translations);
+
 		header('Location: number_translations.php'.(!empty($search) ? '?search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get order and order by
 	$order_by = $_GET["order_by"] ?? '';
@@ -125,6 +137,8 @@
 	$sql .= order_by($order_by, $order, 'number_translation_name', 'asc');
 	$sql .= limit_offset($rows_per_page, $offset);
 	$number_translations = $database->select($sql, $parameters ?? null, 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $number_translations);
 	unset($sql, $parameters);
 
 //create token
@@ -199,6 +213,8 @@
 	if (!empty($number_translations)) {
 		$x = 0;
 		foreach ($number_translations as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
 			if (permission_exists('number_translation_edit')) {
 				$list_row_url = "number_translation_edit.php?id=".urlencode($row['number_translation_uuid']);

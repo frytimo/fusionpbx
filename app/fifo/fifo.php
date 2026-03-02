@@ -35,6 +35,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //add the settings object
 	$settings = new settings(["domain_uuid" => $_SESSION['domain_uuid'], "user_uuid" => $_SESSION['user_uuid']]);
@@ -61,6 +63,9 @@
 		}
 
 		//send the array to the database class
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $fifos);
+
 		switch ($action) {
 // 			case 'copy':
 // 				if (permission_exists('fifo_add')) {
@@ -83,9 +88,16 @@
 		}
 
 		//redirect the user
+			//dispatch post-action hook
+			app::dispatch_list_post_action(null, $url, $action, $fifos);
+
 		header('Location: fifo.php'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get order and order by
 	$order_by = $_GET["order_by"] ?? null;
@@ -169,6 +181,8 @@
 	$sql .= order_by($order_by, $order, '', '');
 	$sql .= limit_offset($rows_per_page, $offset);
 	$fifo = $database->select($sql, $parameters ?? null, 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $fifo);
 	unset($sql, $parameters);
 
 //create token
@@ -257,6 +271,8 @@
 	if (!empty($fifo) && is_array($fifo) && @sizeof($fifo) != 0) {
 		$x = 0;
 		foreach ($fifo as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			if (permission_exists('fifo_edit')) {
 				$list_row_url = "fifo_edit.php?id=".urlencode($row['fifo_uuid']);
 				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {

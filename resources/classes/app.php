@@ -14,25 +14,25 @@ abstract class app {
 	 * Set in the constructor. Must be a database object and cannot be null.
 	 * @var database Database Object
 	 */
-	private $database;
+	protected $database;
 
 	/**
 	 * Settings object set in the constructor. Must be a settings object and cannot be null.
 	 * @var settings Settings Object
 	 */
-	private $settings;
+	protected $settings;
 
 	/**
 	 * User UUID set in the constructor. This can be passed in through the $settings_array associative array or set in the session global array
 	 * @var string
 	 */
-	private $user_uuid;
+	protected $user_uuid;
 
 	/**
 	 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set in the session global array
 	 * @var string
 	 */
-	private $domain_uuid;
+	protected $domain_uuid;
 
 	protected $has_permission_prefix = false;
 	protected $has_list_page = false;
@@ -43,6 +43,22 @@ abstract class app {
 	protected $has_delete = false;
 	protected $has_add = false;
 	protected $has_edit = false;
+
+	/**
+	 * The app-specific edit hook interface name. When set, the dispatch system will invoke
+	 * hooks implementing this interface in addition to the global page_edit_hook hooks.
+	 * Example: 'bridge_edit_hook' for bridges.
+	 * @var string|null
+	 */
+	protected $edit_hook_interface = null;
+
+	/**
+	 * The app-specific list hook interface name. When set, the dispatch system will invoke
+	 * hooks implementing this interface in addition to the global page_hook/list_page_hook hooks.
+	 * Example: 'bridge_list_page_hook' for bridges.
+	 * @var string|null
+	 */
+	protected $list_hook_interface = null;
 
 	public function __construct() {
 		if (property_exists($this, 'permission_prefix')) {
@@ -76,7 +92,175 @@ abstract class app {
 		}
 	}
 
-	public function delete(array $records, string $table = '', string $uuid_prefix = '') {
+	//
+	// Hook Dispatch Infrastructure
+	//
+
+	/**
+	 * Dispatches a hook method to all classes implementing the given interfaces.
+	 * Uses a two-tier approach:
+	 *  - Global hooks: direct implementers of the generic interface (e.g., page_edit_hook)
+	 *  - App-specific hooks: all implementers (including via child interfaces) of the app-specific interface
+	 *
+	 * @param string      $generic_interface The generic/global interface name (e.g., 'page_edit_hook')
+	 * @param string|null $app_interface     The app-specific interface name (e.g., 'bridge_edit_hook'), or null for global-only
+	 * @param string      $method            The method name to invoke on each hook class
+	 * @param mixed       ...$args           Arguments to pass to the hook method
+	 * @return void
+	 */
+	protected function dispatch_hooks(string $generic_interface, ?string $app_interface, string $method, mixed ...$args): void {
+		self::dispatch_hooks_static($generic_interface, $app_interface, $method, ...$args);
+	}
+
+	/**
+	 * Static version of dispatch_hooks for use from procedural page code (list pages, etc.)
+	 *
+	 * @param string      $generic_interface The generic/global interface name
+	 * @param string|null $app_interface     The app-specific interface name, or null for global-only
+	 * @param string      $method            The method name to invoke
+	 * @param mixed       ...$args           Arguments to pass to the hook method
+	 * @return void
+	 */
+	public static function dispatch_hooks_static(string $generic_interface, ?string $app_interface, string $method, mixed ...$args): void {
+		$autoload = new auto_loader();
+
+		// tier 1: global hooks — only direct implementers of the generic interface
+		$global_hooks = $autoload->get_direct_implementers($generic_interface);
+
+		// tier 2: app-specific hooks — full resolution including child interfaces
+		$app_hooks = [];
+		if (!empty($app_interface)) {
+			$app_hooks = $autoload->get_interface_list($app_interface);
+		}
+
+		// merge and deduplicate
+		$all_hooks = array_unique(array_merge($global_hooks, $app_hooks));
+
+		// invoke the method on each hook class
+		foreach ($all_hooks as $class) {
+			if (method_exists($class, $method)) {
+				$class::$method(...$args);
+			}
+		}
+	}
+
+	/**
+	 * Dispatches an edit hook method (for save operations).
+	 * Combines global page_edit_hook implementers with app-specific edit hook implementers.
+	 *
+	 * @param string $method The method to invoke (e.g., 'on_pre_save', 'on_post_save')
+	 * @param mixed  ...$args Arguments to pass to the hook method
+	 * @return void
+	 */
+	protected function dispatch_edit_hooks(string $method, mixed ...$args): void {
+		$this->dispatch_hooks('page_edit_hook', $this->edit_hook_interface, $method, ...$args);
+	}
+
+	/**
+	 * Dispatches a list page hook method (for list page operations).
+	 * Combines global page_hook implementers with app-specific list hook implementers.
+	 *
+	 * @param string $method The method to invoke (e.g., 'on_pre_action', 'on_post_action')
+	 * @param mixed  ...$args Arguments to pass to the hook method
+	 * @return void
+	 */
+	protected function dispatch_list_hooks(string $method, mixed ...$args): void {
+		$this->dispatch_hooks('page_hook', $this->list_hook_interface, $method, ...$args);
+	}
+
+	//
+	// Static List Page Hook Helpers
+	// These are called from procedural list page code (e.g., bridges.php)
+	//
+
+	/**
+	 * Dispatches the on_pre_action hook for list pages.
+	 *
+	 * @param string|null $app_interface App-specific list hook interface name, or null for global-only
+	 * @param url         $url           The URL object
+	 * @param string      $action        The action being performed (passed by reference)
+	 * @param array       $items         The items array (passed by reference)
+	 * @return void
+	 */
+	public static function dispatch_list_pre_action(?string $app_interface, url $url, string &$action, array &$items): void {
+		self::dispatch_hooks_static('page_hook', $app_interface, 'on_pre_action', $url, $action, $items);
+	}
+
+	/**
+	 * Dispatches the on_post_action hook for list pages.
+	 *
+	 * @param string|null $app_interface App-specific list hook interface name, or null for global-only
+	 * @param url         $url           The URL object
+	 * @param string      $action        The action that was performed
+	 * @param array       $items         The items array
+	 * @return void
+	 */
+	public static function dispatch_list_post_action(?string $app_interface, url $url, string $action, array $items): void {
+		self::dispatch_hooks_static('page_hook', $app_interface, 'on_post_action', $url, $action, $items);
+	}
+
+	/**
+	 * Dispatches the on_pre_query hook for list pages.
+	 *
+	 * @param string|null $app_interface App-specific list hook interface name, or null for global-only
+	 * @param url         $url           The URL object
+	 * @param array       $parameters    Query parameters (passed by reference)
+	 * @return void
+	 */
+	public static function dispatch_list_pre_query(?string $app_interface, url $url, array &$parameters): void {
+		self::dispatch_hooks_static('page_hook', $app_interface, 'on_pre_query', $url, $parameters);
+	}
+
+	/**
+	 * Dispatches the on_post_query hook for list pages.
+	 *
+	 * @param string|null $app_interface App-specific list hook interface name, or null for global-only
+	 * @param url         $url           The URL object
+	 * @param array       $items         The fetched records (passed by reference)
+	 * @return void
+	 */
+	public static function dispatch_list_post_query(?string $app_interface, url $url, array &$items): void {
+		self::dispatch_hooks_static('page_hook', $app_interface, 'on_post_query', $url, $items);
+	}
+
+	/**
+	 * Dispatches the on_pre_render hook for list pages.
+	 *
+	 * @param string|null $app_interface App-specific list hook interface name, or null for global-only
+	 * @param url         $url           The URL object
+	 * @param template    $template      The template object
+	 * @return void
+	 */
+	public static function dispatch_list_pre_render(?string $app_interface, url $url, template $template): void {
+		self::dispatch_hooks_static('page_hook', $app_interface, 'on_pre_render', $url, $template);
+	}
+
+	/**
+	 * Dispatches the on_post_render hook for list pages.
+	 *
+	 * @param string|null $app_interface App-specific list hook interface name, or null for global-only
+	 * @param url         $url           The URL object
+	 * @param string      $html          The HTML output (passed by reference)
+	 * @return void
+	 */
+	public static function dispatch_list_post_render(?string $app_interface, url $url, string &$html): void {
+		self::dispatch_hooks_static('page_hook', $app_interface, 'on_post_render', $url, $html);
+	}
+
+	/**
+	 * Dispatches the on_render_row hook for list pages.
+	 *
+	 * @param string|null $app_interface App-specific list hook interface name, or null for global-only
+	 * @param url         $url           The URL object
+	 * @param array       $row           The row data (passed by reference)
+	 * @param int         $row_index     Zero-based row index
+	 * @return void
+	 */
+	public static function dispatch_list_render_row(?string $app_interface, url $url, array &$row, int $row_index): void {
+		self::dispatch_hooks_static('list_page_hook', $app_interface, 'on_render_row', $url, $row, $row_index);
+	}
+
+	public function delete($records) {
 		if (!$this->has_delete || empty($records)) {
 			return;
 		}
@@ -85,10 +269,15 @@ abstract class app {
 		// build the delete array
 		foreach ($records as $x => $record) {
 			if (!empty($record['checked']) && $record['checked'] == 'true' && is_uuid($record['uuid'])) {
-				$checked[$table][$x][$uuid_prefix . 'uuid'] = $record['uuid'];
-				$checked[$table][$x]['domain_uuid'] = $this->domain_uuid;
+				$checked[$this->table][$x][$this->uuid_prefix . 'uuid'] = $record['uuid'];
+				$checked[$this->table][$x]['domain_uuid'] = $this->domain_uuid;
 			}
 		}
+
+		// dispatch pre-action hooks (action = 'delete')
+		$url = new url($_SERVER['PHP_SELF'] ?? '');
+		$action = 'delete';
+		$this->dispatch_list_hooks('on_pre_action', $url, $action, $checked);
 
 		// always call the before delete method even if there are no checked records to allow for any necessary pre-delete actions to be performed
 		$this->before_delete($checked);
@@ -101,9 +290,12 @@ abstract class app {
 
 		// always call the after delete method even if there are no checked records to allow for any necessary post-delete actions to be performed
 		$this->after_delete($checked);
+
+		// dispatch post-action hooks
+		$this->dispatch_list_hooks('on_post_action', $url, $action, $checked);
 	}
 
-	abstract protected function on_delete(array &$checked);
+	protected function on_delete(array &$checked) {}
 
 	/**
 	 * This method is intended to be overridden by child classes that need to perform actions before records are deleted. It receives an array of the records that are checked for deletion and can be used to perform any necessary pre-delete actions before the delete occurs.
@@ -135,10 +327,25 @@ abstract class app {
 					$uuids[] = "'" . $record['uuid'] . "'";
 				}
 			}
+
+			// dispatch pre-action hooks (action = 'copy')
+			$url = new url($_SERVER['PHP_SELF'] ?? '');
+			$action = 'copy';
+			$this->dispatch_list_hooks('on_pre_action', $url, $action, $uuids);
+
+			// perform any necessary actions before copying in the child class
+			$this->before_copy($uuids);
+
 			$array = $this->on_copy($uuids);
 			if (!empty($array)) {
 				$this->database->save($array);
 			}
+
+			// perform any necessary actions after copying in the child class
+			$this->after_copy();
+
+			// dispatch post-action hooks
+			$this->dispatch_list_hooks('on_post_action', $url, $action, $uuids);
 		}
 	}
 
@@ -148,7 +355,7 @@ abstract class app {
 	 * @param array $uuids An array of UUIDs that are being copied. This array can be modified by the child class to perform any necessary copy actions and should return an array of data to be saved to the database.
 	 * @return array An array of data to be saved to the database after the copy action is performed.
 	 */
-	abstract protected function on_copy(array &$uuids);
+	protected function on_copy(array &$uuids) { return []; }
 
 	/**
 	 * This method is intended to be overridden by child classes that need to perform actions before records are copied.
@@ -180,6 +387,11 @@ abstract class app {
 			}
 		}
 
+		// dispatch pre-action hooks (action = 'toggle')
+		$url = new url($_SERVER['PHP_SELF'] ?? '');
+		$action = 'toggle';
+		$this->dispatch_list_hooks('on_pre_action', $url, $action, $uuids);
+
 		// perform any necessary actions before toggling in the child class
 		$this->before_toggle($uuids);
 
@@ -194,6 +406,9 @@ abstract class app {
 
 		// perform any necessary actions after toggling in the child class
 		$this->after_toggle($uuids);
+
+		// dispatch post-action hooks
+		$this->dispatch_list_hooks('on_post_action', $url, $action, $uuids);
 	}
 
 	/**
@@ -202,7 +417,7 @@ abstract class app {
 	 * @param array $uuids An array of UUIDs that are being toggled. This array can be modified by the child class to perform any necessary toggle actions and should return an array of data to be saved to the database.
 	 * @return array An array of data to be saved to the database after the toggle action is performed.
 	 */
-	abstract protected function on_toggle(array &$checked);
+	protected function on_toggle(array &$checked) { return []; }
 
 	/**
 	 * This method is intended to be overridden by child classes that need to perform actions before records are toggled.
@@ -219,6 +434,58 @@ abstract class app {
 	 * @return void No return value; this method is intended for performing actions after the toggle occurs.
 	 */
 	protected function after_toggle() {}
+
+	/**
+	 * Saves a record to the database with pre/post save hook dispatch.
+	 * Follows the same template method pattern as delete(), copy(), and toggle().
+	 *
+	 * @param array    $array The data array to save (in FusionPBX database->save format)
+	 * @param url|null $url   Optional URL object for hook context. If null, one is created from $_SERVER.
+	 * @return void
+	 */
+	public function save(array &$array, ?url $url = null): void {
+		if (!$this->has_add && !$this->has_edit) {
+			return;
+		}
+
+		// build url context if not provided
+		if ($url === null) {
+			$url = new url($_SERVER['PHP_SELF'] ?? '');
+		}
+
+		// dispatch pre-save hooks
+		$this->dispatch_edit_hooks('on_pre_save', $url, $array);
+
+		// call the before save template method for child class customization
+		$this->before_save($array);
+
+		// execute the save
+		if (!empty($array)) {
+			$this->database->save($array);
+		}
+
+		// call the after save template method for child class customization
+		$this->after_save($array);
+
+		// dispatch post-save hooks
+		$this->dispatch_edit_hooks('on_post_save', $url, $array);
+	}
+
+	/**
+	 * This method is intended to be overridden by child classes that need to perform actions before a record is saved.
+	 *
+	 * @param array $array The data array being saved (passed by reference for modification)
+	 * @return void
+	 */
+	protected function before_save(array &$array) {}
+
+	/**
+	 * This method is intended to be overridden by child classes that need to perform actions after a record is saved.
+	 *
+	 * @param array $array The data array that was saved
+	 * @return void
+	 */
+	protected function after_save(array $array) {}
 
 	/**
 	 * Retrieves the configuration array for a specified application.

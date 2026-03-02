@@ -344,7 +344,7 @@
 			$p->add("dialplan_edit", "temp");
 
 		//save the data
-			$result = $database->save($array);
+			(new fifo)->save($array);
 
 		//remove the temporary permission
 			$p->delete("dialplan_add", "temp");

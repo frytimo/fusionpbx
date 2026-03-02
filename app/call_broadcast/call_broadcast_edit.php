@@ -271,7 +271,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 					$array['call_broadcasts'][0]['broadcast_description'] = $broadcast_description;
 
 				//save changes to the database
-					$database->save($array);
+					(new call_broadcast)->save($array);
 					unset($array);
 
 				//redirect

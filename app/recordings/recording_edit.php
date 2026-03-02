@@ -274,7 +274,7 @@
 				$array['recordings'][0]['recording_description'] = $recording_description;
 
 				//execute update
-				$database->save($array);
+				(new switch_recordings)->save($array);
 				unset($array);
 
 				//set message

@@ -1265,7 +1265,7 @@
 					$p->add("dialplan_detail_edit", 'temp');
 
 				//save the dialplan
-					$response = $database->save($array);
+					(new destinations)->save($array);
 
 				//remove the temporary permission
 					$p->delete("dialplan_add", 'temp');
@@ -1326,8 +1326,7 @@
 					}
 
 				//save the destination
-					$database->save($array);
-					$dialplan_response = $database->message;
+					(new destinations)->save($array);
 					unset($array);
 
 				//clear the destinations session array

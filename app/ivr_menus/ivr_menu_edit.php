@@ -411,9 +411,7 @@
 					}
 
 				//save to the data
-					$database->save($array);
-					$message = $database->message;
-
+						(new ivr_menu)->save($array);
 				//remove the temporary permission
 					$p->delete("dialplan_add", "temp");
 					$p->delete("dialplan_edit", "temp");

@@ -193,8 +193,7 @@
 			$array['streams'][0]['stream_description'] = $stream_description;
 
 		//save to the data
-			$database->save($array);
-			$message = $database->message;
+			(new streams)->save($array);
 
 		//redirect the user
 			if (isset($action)) {

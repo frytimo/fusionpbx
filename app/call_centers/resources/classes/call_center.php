@@ -28,7 +28,7 @@
  * cache class provides an abstracted cache
  */
 //define the call center class
-class call_center {
+class call_center extends app {
 
 	/**
 	 * declare constant variables
@@ -58,21 +58,6 @@ class call_center {
 	public $queue_timeout_action;
 
 	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 *
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
-	 * User UUID set in the constructor. This can be passed in through the $settings_array associative array or set in
-	 * the session global array
-	 *
-	 * @var string
-	 */
-	private $user_uuid;
-
-	/**
 	 * Domain name set in the constructor. This can be passed in through the $settings_array associative array or set
 	 * in the session global array
 	 *
@@ -83,10 +68,10 @@ class call_center {
 	/**
 	 * declare private variables
 	 */
-	private $permission_prefix;
-	private $list_page;
-	private $table;
-	private $uuid_prefix;
+	protected $permission_prefix;
+	protected $list_page;
+	protected $table;
+	protected $uuid_prefix;
 
 	/**
 	 * Initializes the object with provided settings.
@@ -103,6 +88,9 @@ class call_center {
 
 		//set objects
 		$this->database = $setting_array['database'] ?? database::new();
+
+		//initialize the parent class
+		parent::__construct();
 	}
 
 	/**

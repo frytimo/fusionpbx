@@ -25,36 +25,13 @@
 */
 
 //define the conferences class
-class conferences {
+class conferences extends app {
 
 	/**
 	 * declare constant variables
 	 */
 	const app_name = 'conferences';
 	const app_uuid = 'b81412e8-7253-91f4-e48e-42fc2c9a38d9';
-
-	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 *
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
-	 * User UUID set in the constructor. This can be passed in through the $settings_array associative array or set in
-	 * the session global array
-	 *
-	 * @var string
-	 */
-	private $user_uuid;
-
-	/**
-	 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set
-	 * in the session global array
-	 *
-	 * @var string
-	 */
-	private $domain_uuid;
 
 	/**
 	 * Domain name set in the constructor. This can be passed in through the $settings_array associative array or set
@@ -67,12 +44,12 @@ class conferences {
 	/**
 	 * declare private variables
 	 */
-	private $permission_prefix;
-	private $list_page;
-	private $table;
-	private $uuid_prefix;
-	private $toggle_field;
-	private $toggle_values;
+	protected $permission_prefix;
+	protected $list_page;
+	protected $table;
+	protected $uuid_prefix;
+	protected $toggle_field;
+	protected $toggle_values;
 
 	/**
 	 * Initializes the object with setting array.
@@ -98,17 +75,11 @@ class conferences {
 		$this->uuid_prefix       = 'conference_';
 		$this->toggle_field      = 'conference_enabled';
 		$this->toggle_values     = ['true', 'false'];
+
+		//call parent constructor to initialize has_* flags
+		parent::__construct();
 	}
 
-	/**
-	 * Deletes one or more records.
-	 *
-	 * @param array $records An array of record IDs to delete, where each ID is an associative array
-	 *                       containing 'uuid' and 'checked' keys. The 'checked' value indicates
-	 *                       whether the corresponding checkbox was checked for deletion.
-	 *
-	 * @return void No return value; this method modifies the database state and sets a message.
-	 */
 	public function delete($records) {
 		if (permission_exists($this->permission_prefix . 'delete')) {
 

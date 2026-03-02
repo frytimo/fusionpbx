@@ -38,6 +38,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //define defaults
 	$action = '';
@@ -67,6 +69,9 @@
 
 //process the http post data by action
 	if (!empty($action) && is_array($ivr_menus) && @sizeof($ivr_menus) != 0) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $ivr_menus);
+
 		switch ($action) {
 			case 'copy':
 				if (permission_exists('ivr_menu_add')) {
@@ -88,9 +93,16 @@
 				break;
 		}
 
+			//dispatch post-action hook
+			app::dispatch_list_post_action(null, $url, $action, $ivr_menus);
+
 		header('Location: ivr_menus.php'.(!empty($search) ? '?search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get order and order by
 	$order_by = $_GET["order_by"] ?? '';
@@ -163,6 +175,8 @@
 	$sql .= order_by($order_by, $order, 'ivr_menu_name', 'asc', $sort);
 	$sql .= limit_offset($rows_per_page, $offset);
 	$ivr_menus = $database->select($sql, $parameters ?? [], 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $ivr_menus);
 	unset($sql, $parameters);
 
 //create token
@@ -249,6 +263,8 @@
 	if (!empty($ivr_menus)) {
 		$x = 0;
 		foreach($ivr_menus as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
 			if (permission_exists('ivr_menu_edit')) {
 				$list_row_url = "ivr_menu_edit.php?id=".urlencode($row['ivr_menu_uuid']);

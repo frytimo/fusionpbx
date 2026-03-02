@@ -25,43 +25,13 @@
 */
 
 //define the voicemail greetings class
-class voicemail_greetings {
+class voicemail_greetings extends app {
 
 	/**
 	 * declare constant variables
 	 */
 	const app_name = 'voicemail_greetings';
 	const app_uuid = 'e4b4fbee-9e4d-8e46-3810-91ba663db0c2';
-
-	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 *
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
-	 * Settings object set in the constructor. Must be a settings object and cannot be null.
-	 *
-	 * @var settings Settings Object
-	 */
-	private $settings;
-
-	/**
-	 * User UUID set in the constructor. This can be passed in through the $settings_array associative array or set in
-	 * the session global array
-	 *
-	 * @var string
-	 */
-	private $user_uuid;
-
-	/**
-	 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set
-	 * in the session global array
-	 *
-	 * @var string
-	 */
-	private $domain_uuid;
 
 	/**
 	 * Domain name set in the constructor. This can be passed in through the $settings_array associative array or set
@@ -74,10 +44,10 @@ class voicemail_greetings {
 	/**
 	 * declare private variables
 	 */
-	private $permission_prefix;
-	private $list_page;
-	private $table;
-	private $uuid_prefix;
+	protected $permission_prefix;
+	protected $list_page;
+	protected $table;
+	protected $uuid_prefix;
 
 	/**
 	 * declare public variables
@@ -111,6 +81,9 @@ class voicemail_greetings {
 		}
 		$this->table       = 'voicemail_greetings';
 		$this->uuid_prefix = 'voicemail_greeting_';
+
+		//initialize the parent class
+		parent::__construct();
 	}
 
 	/**

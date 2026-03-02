@@ -34,6 +34,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //set the defaults
 	$search = '';
@@ -70,6 +72,9 @@
 		$obj = new extension_settings;
 
 		//send the array to the database class
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $extension_settings);
+
 		switch ($action) {
 			case 'copy':
 				if (permission_exists('extension_setting_add')) {
@@ -90,9 +95,16 @@
 		}
 
 		//redirect the user
+			//dispatch post-action hook
+			app::dispatch_list_post_action(null, $url, $action, $extension_settings);
+
 		header('Location: extension_settings.php?id='.urlencode($extension_uuid).'&'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get order and order by
 	$order_by = $_GET["order_by"] ?? '';
@@ -154,6 +166,8 @@
 	$parameters['extension_uuid'] = $extension_uuid;
 	$parameters['domain_uuid'] = $domain_uuid;
 	$extension_settings = $database->select($sql, $parameters, 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $extension_settings);
 	unset($sql, $parameters);
 
 //create token
@@ -232,6 +246,8 @@
 
 		//show the extension settings
 		foreach ($extension_settings as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			$extension_setting_type = $row['extension_setting_type'];
 			$extension_setting_type = strtolower($extension_setting_type);
 

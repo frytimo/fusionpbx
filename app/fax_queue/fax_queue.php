@@ -48,6 +48,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //get the http post data
 	if (isset($_REQUEST['action'])) {
@@ -66,6 +68,9 @@
 
 //process the http post data by action
 	if (!empty($action) && !empty($fax_queue) && !empty($fax_queue)) {
+
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $fax_queue);
 
 		switch ($action) {
 			case 'copy':
@@ -89,9 +94,16 @@
 		}
 
 		//redirect the user
+		//dispatch post-action hook
+		app::dispatch_list_post_action(null, $url, $action, $fax_queue);
+
 		header('Location: fax_queue.php'.(!empty($search) ? '?search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get order and order by
 	$order_by = $_GET["order_by"] ?? null;
@@ -232,6 +244,8 @@
 	$sql .= limit_offset($rows_per_page, $offset);
 	$parameters['time_zone'] = $time_zone;
 	$fax_queue = $database->select($sql, $parameters, 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $fax_queue);
 	unset ($sql, $parameters);
 
 	//create token
@@ -345,6 +359,8 @@
 	if (!empty($fax_queue)) {
 		$x = 0;
 		foreach ($fax_queue as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
 			if ($permission['fax_queue_edit']) {
 				$list_row_url = "fax_queue_edit.php?id=".urlencode($row['fax_queue_uuid']);

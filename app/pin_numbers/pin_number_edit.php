@@ -112,7 +112,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 					$array['pin_numbers'][0]['enabled'] = $enabled;
 					$array['pin_numbers'][0]['description'] = $description;
 				//save data
-					$database->save($array);
+					(new pin_numbers)->save($array);
 					unset($array);
 				//redirect
 					header("Location: pin_numbers.php");

@@ -27,7 +27,7 @@
 /**
  * sofia_global_settings class
  */
-class sofia_global_settings {
+class sofia_global_settings extends app {
 
 	/**
 	 * declare constant variables
@@ -38,12 +38,11 @@ class sofia_global_settings {
 	/**
 	 * declare the variables
 	 */
-	private $database;
 
 	private $name;
-	private $table;
-	private $toggle_field;
-	private $toggle_values;
+	protected $table;
+	protected $toggle_field;
+	protected $toggle_values;
 	private $description_field;
 	private $location;
 
@@ -66,6 +65,9 @@ class sofia_global_settings {
 		$this->toggle_values     = ['true', 'false'];
 		$this->description_field = 'global_setting_description';
 		$this->location          = 'sofia_global_settings.php';
+
+		//initialize the parent class
+		parent::__construct();
 	}
 
 	/**

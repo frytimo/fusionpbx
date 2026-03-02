@@ -27,7 +27,7 @@
 /**
  * xml_cdr class provides methods for adding cdr records to the database
  */
-class xml_cdr {
+class xml_cdr extends app {
 
 	/**
 	 * declare constant variables
@@ -71,28 +71,6 @@ class xml_cdr {
 	public $file;
 
 	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 *
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
-	 * Internal array structure that is populated from the database
-	 *
-	 * @var settings A settings object loaded from Default Settings
-	 */
-	private $settings;
-
-	/**
-	 * User UUID set in the constructor. This can be passed in through the $settings_array associative array or set in
-	 * the session global array
-	 *
-	 * @var string
-	 */
-	private $user_uuid;
-
-	/**
 	 * Username set in the constructor. This can be passed in through the $settings_array associative array or set in
 	 * the session global array
 	 *
@@ -110,10 +88,10 @@ class xml_cdr {
 	/**
 	 * delete method
 	 */
-	private $permission_prefix;
-	private $list_page;
-	private $table;
-	private $uuid_prefix;
+	protected $permission_prefix;
+	protected $list_page;
+	protected $table;
+	protected $uuid_prefix;
 	private $xml_cdr_dir;
 
 	/**
@@ -152,6 +130,9 @@ class xml_cdr {
 		$this->list_page         = 'xml_cdr.php';
 		$this->table             = 'xml_cdr';
 		$this->uuid_prefix       = 'xml_cdr_';
+
+		//initialize the parent class
+		parent::__construct();
 	}
 
 	/**
@@ -287,7 +268,7 @@ class xml_cdr {
 	 *
 	 * @return void
 	 */
-	public function save() {
+	public function save_record() {
 
 		$this->fields();
 		$field_count = sizeof($this->fields);
@@ -1186,7 +1167,7 @@ class xml_cdr {
 			unset($error);
 
 			//save data to the database
-			$this->save();
+			$this->save_record();
 
 			//debug
 			//GLOBAL $insert_time,$insert_count;

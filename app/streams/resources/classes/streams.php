@@ -25,7 +25,7 @@
 */
 
 //define the streams class
-class streams {
+class streams extends app {
 
 	/**
 	 * declare constant variables
@@ -34,42 +34,12 @@ class streams {
 	const app_uuid = 'ffde6287-aa18-41fc-9a38-076d292e0a38';
 
 	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 *
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
-	 * Settings object set in the constructor. Must be a settings object and cannot be null.
-	 *
-	 * @var settings Settings Object
-	 */
-	private $settings;
-
-	/**
-	 * User UUID set in the constructor. This can be passed in through the $settings_array associative array or set in
-	 * the session global array
-	 *
-	 * @var string
-	 */
-	private $user_uuid;
-
-	/**
 	 * Username set in the constructor. This can be passed in through the $settings_array associative array or set in
 	 * the session global array
 	 *
 	 * @var string
 	 */
 	private $username;
-
-	/**
-	 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set
-	 * in the session global array
-	 *
-	 * @var string
-	 */
-	private $domain_uuid;
 
 	/**
 	 * Domain name set in the constructor. This can be passed in through the $settings_array associative array or set
@@ -82,12 +52,12 @@ class streams {
 	/**
 	 * declare private variables
 	 */
-	private $permission_prefix;
-	private $list_page;
-	private $table;
-	private $uuid_prefix;
-	private $toggle_field;
-	private $toggle_values;
+	protected $permission_prefix;
+	protected $list_page;
+	protected $table;
+	protected $uuid_prefix;
+	protected $toggle_field;
+	protected $toggle_values;
 
 	/**
 	 * Initializes the object with setting array.
@@ -111,6 +81,9 @@ class streams {
 		$this->uuid_prefix       = 'stream_';
 		$this->toggle_field      = 'stream_enabled';
 		$this->toggle_values     = ['true', 'false'];
+
+		//initialize the parent class
+		parent::__construct();
 	}
 
 	/**

@@ -43,6 +43,9 @@
 	$language = new text;
 	$text = $language->get($settings->get('domain', 'language', 'en-us'), 'app/call_forward');
 
+	//create the url object
+	$url = new url();
+
 //get posted data and set defaults
 	$action = $_POST['action'] ?? '';
 	$search = $_POST['search'] ?? '';
@@ -50,6 +53,9 @@
 
 //process the http post data by action
 	if (!empty($action) && count($extensions) > 0) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $call_forwards);
+
 		switch ($action) {
 			case 'toggle_call_forward':
 				if (permission_exists('call_forward')) {
@@ -71,9 +77,16 @@
 				break;
 		}
 
+		//dispatch post-action hook
+		app::dispatch_list_post_action(null, $url, $action, $call_forwards);
+
 		header('Location: call_forward.php' . ($search != '' ? '?search=' . urlencode($search) : null));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get order and order by
 	$order_by = $_GET["order_by"] ?? 'extension';
@@ -187,6 +200,8 @@
 	$sql .= order_by($order_by, $order, 'extension', 'asc', $sort);
 	$sql .= limit_offset($rows_per_page, $offset);
 	$extensions = $database->select($sql, $parameters ?? null, 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $extensions);
 	unset($parameters);
 
 	//if there are no extensions then set to empty array
@@ -300,6 +315,8 @@
 	if (!empty($extensions)) {
 		$x = 0;
 		foreach ($extensions as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = PROJECT_PATH . "/app/call_forward/call_forward_edit.php?id=".$row['extension_uuid'];
 			if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
 				$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';

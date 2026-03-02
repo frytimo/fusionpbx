@@ -266,7 +266,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 			$array['voicemail_greetings'][0]['greeting_description'] = $greeting_description;
 
 			//execute query
-			$database->save($array);
+			(new voicemail_greetings)->save($array);
 			unset($array);
 
 			//set message

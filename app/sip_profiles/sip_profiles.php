@@ -38,6 +38,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //define the variables
 	$action = '';
@@ -53,6 +55,9 @@
 
 //process the http post data by action
 	if (!empty($action) && !empty($sip_profiles) && @sizeof($sip_profiles) != 0) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $sip_profiles);
+
 		switch ($action) {
 			case 'toggle':
 				if (permission_exists('sip_profile_edit')) {
@@ -68,9 +73,16 @@
 				break;
 		}
 
+		//dispatch post-action hook
+		app::dispatch_list_post_action(null, $url, $action, $sip_profiles);
+
 		header('Location: sip_profiles.php'.(!empty($search) ? '?search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //set from session variables
 	$list_row_edit_button = $settings->get('theme', 'list_row_edit_button', false);
@@ -111,6 +123,8 @@
 	$sql .= order_by($order_by, $order);
 	$sql .= limit_offset($rows_per_page, $offset);
 	$sip_profiles = $database->select($sql, $parameters ?? null, 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $sip_profiles);
 	unset($sql, $parameters);
 
 //create token
@@ -183,6 +197,8 @@
 	if (!empty($sip_profiles) && @sizeof($sip_profiles) != 0) {
 		$x = 0;
 		foreach ($sip_profiles as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
 			if (permission_exists('sip_profile_edit')) {
 				$list_row_url = "sip_profile_edit.php?id=".urlencode($row['sip_profile_uuid']);

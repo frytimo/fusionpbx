@@ -25,7 +25,7 @@
 */
 
 //define the voicemail class
-class voicemail {
+class voicemail extends app {
 
 	/**
 	 * declare constant variables
@@ -69,20 +69,6 @@ class voicemail {
 	public $type;
 
 	/**
-	 * Internal array structure that is populated from the database
-	 *
-	 * @var settings A settings object loaded from Default Settings
-	 */
-	private $settings;
-
-	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 *
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
 	 * Username set in the constructor. This can be passed in through the $settings_array associative array or set in
 	 * the session global array
 	 *
@@ -93,12 +79,12 @@ class voicemail {
 	/**
 	 * declare private variables
 	 */
-	private $permission_prefix;
-	private $list_page;
-	private $table;
-	private $uuid_prefix;
-	private $toggle_field;
-	private $toggle_values;
+	protected $permission_prefix;
+	protected $list_page;
+	protected $table;
+	protected $uuid_prefix;
+	protected $toggle_field;
+	protected $toggle_values;
 
 	/**
 	 * Initializes the object with setting array.
@@ -126,6 +112,9 @@ class voicemail {
 		$this->uuid_prefix       = 'voicemail_';
 		$this->toggle_field      = 'voicemail_enabled';
 		$this->toggle_values     = ['true', 'false'];
+
+		//initialize the parent class
+		parent::__construct();
 
 	}
 

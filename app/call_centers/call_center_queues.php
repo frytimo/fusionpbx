@@ -41,6 +41,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //set additional variables
 	$show = $_GET["show"] ?? '';
@@ -72,6 +74,9 @@
 
 //process the http post data by action
 	if (!empty($action) && is_array($call_center_queues) && @sizeof($call_center_queues) != 0) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $call_center_queues);
+
 		switch ($action) {
 			case 'copy':
 				if (permission_exists('call_center_queue_add')) {
@@ -87,9 +92,16 @@
 				break;
 		}
 
+			//dispatch post-action hook
+			app::dispatch_list_post_action(null, $url, $action, $call_center_queues);
+
 		header('Location: call_center_queues.php'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get http variables and set as php variables
 	$order_by = $_GET["order_by"] ?? '';
@@ -135,6 +147,8 @@
 	$sql .= order_by($order_by, $order, 'queue_name', 'asc', $sort);
 	$sql .= limit_offset($rows_per_page, $offset);
 	$result = $database->select($sql, $parameters ?? null, 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $result);
 	unset($sql, $parameters);
 
 //create token
@@ -240,6 +254,8 @@
 	if (!empty($result)) {
 		$x = 0;
 		foreach($result as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
 			if (permission_exists('call_center_queue_edit')) {
 				$list_row_url = "call_center_queue_edit.php?id=".urlencode($row['call_center_queue_uuid']);

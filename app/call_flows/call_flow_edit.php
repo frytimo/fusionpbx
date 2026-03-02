@@ -239,11 +239,7 @@
 			$p->add("dialplan_edit", "temp");
 
 		//save to the data
-			if (!empty($call_flow_uuid)) {
-				$database->uuid($call_flow_uuid);
-			}
-			$database->save($array);
-			$message = $database->message;
+			(new call_flows)->save($array);
 
 		//remove the temporary permission
 			$p->delete("dialplan_add", "temp");

@@ -39,6 +39,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //get order and order by, page, sort
 	$order_by = preg_replace('#[^a-zA-Z0-9_\-]#', '', ($_REQUEST["order_by"] ?? 'extension'));
@@ -55,6 +57,9 @@
 
 //process the http post data by action
 	if (!empty($action) && !empty($extensions) && is_array($extensions) && @sizeof($extensions) != 0) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $extensions);
+
 		switch ($action) {
 			case 'toggle':
 				if (permission_exists('extension_enabled')) {
@@ -74,9 +79,16 @@
 				break;
 		}
 
+		//dispatch post-action hook
+		app::dispatch_list_post_action(null, $url, $action, $extensions);
+
 		header('Location: extensions.php?'.(!empty($order_by) ? '&order_by='.$order_by.'&order='.$order : null).(is_numeric($page) ? '&page='.urlencode($page) : null).($search != '' ? '&search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get total extension count for domain
 	if (!empty($settings->get('limit', 'extensions'))) {
@@ -262,6 +274,8 @@
 	$sql .= order_by($order_by, $order, null, null, $sort);
 	$sql .= limit_offset($rows_per_page, $offset);
 	$extensions = $database->select($sql, $parameters ?? null, 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $extensions);
 	unset($sql, $parameters);
 
 //get the registrations
@@ -414,6 +428,8 @@
 	if (is_array($extensions) && @sizeof($extensions) != 0) {
 		$x = 0;
 		foreach($extensions as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
 			if (permission_exists('extension_edit')) {
 				$list_row_url = "extension_edit.php?id=".urlencode($row['extension_uuid']).(!empty($order_by) ? '&order_by='.$order_by.'&order='.$order : null).(is_numeric($page) ? '&page='.urlencode($page) : null);

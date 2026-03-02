@@ -44,6 +44,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //get the settings
 	$settings = new settings(['database' => $database, 'domain_uuid' => $_SESSION['domain_uuid'] ?? '', 'user_uuid' => $_SESSION['user_uuid'] ?? '']);
@@ -55,6 +57,9 @@
 
 //process the http post data by action
 	if (!empty($action) && !empty($voicemails)) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $voicemails);
+
 		switch ($action) {
 			case 'toggle':
 				if (permission_exists('voicemail_edit')) {
@@ -70,9 +75,16 @@
 				break;
 		}
 
+		//dispatch post-action hook
+		app::dispatch_list_post_action(null, $url, $action, $voicemails);
+
 		header('Location: voicemails.php'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //set the voicemail uuid array
 	if (isset($_SESSION['user']['voicemail'])) {
@@ -190,6 +202,8 @@
 	$sql .= order_by($order_by, $order, null, null, $sort);
 	$sql .= limit_offset($rows_per_page, $offset);
 	$voicemails = $database->select($sql, $parameters, 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $voicemails);
 	unset($sql, $parameters);
 
 //get vm count for each mailbox
@@ -322,6 +336,8 @@
 	if (is_array($voicemails) && sizeof($voicemails) != 0) {
 		$x = 0;
 		foreach ($voicemails as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
 			if (permission_exists('voicemail_edit')) {
 				$list_row_url = "voicemail_edit.php?id=".urlencode($row['voicemail_uuid']);

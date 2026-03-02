@@ -27,7 +27,7 @@
 /**
  * conference_profiles class
  */
-class conference_profiles {
+class conference_profiles extends app {
 
 	/**
 	 * declare constant variables
@@ -40,12 +40,11 @@ class conference_profiles {
 	 */
 
 	private $name;
-	private $table;
-	private $toggle_field;
-	private $toggle_values;
+	protected $table;
+	protected $toggle_field;
+	protected $toggle_values;
 	private $description_field;
 	private $location;
-	private $database;
 
 	/**
 	 * declare public variables
@@ -63,6 +62,9 @@ class conference_profiles {
 	public function __construct(array $setting_array = []) {
 		//set objects
 		$this->database = $setting_array['database'] ?? database::new();
+
+		//initialize the parent class
+		parent::__construct();
 	}
 
 	/**

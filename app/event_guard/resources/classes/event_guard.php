@@ -28,7 +28,7 @@
 /**
  * event_guard_logs class
  */
-class event_guard {
+class event_guard extends app {
 	/**
 	 * declare constant variables
 	 */
@@ -37,43 +37,13 @@ class event_guard {
 	const app_uuid = 'c5b86612-1514-40cb-8e2c-3f01a8f6f637';
 
 	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 *
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
-	 * Settings object set in the constructor. Must be a settings object and cannot be null.
-	 *
-	 * @var settings Settings Object
-	 */
-	private $settings;
-
-	/**
-	 * User UUID set in the constructor. This can be passed in through the $settings_array associative array or set in
-	 * the session global array
-	 *
-	 * @var string
-	 */
-	private $user_uuid;
-
-	/**
-	 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set
-	 * in the session global array
-	 *
-	 * @var string
-	 */
-	private $domain_uuid;
-
-	/**
 	 * declare the variables
 	 */
 	private $name;
 
-	private $table;
-	private $toggle_field;
-	private $toggle_values;
+	protected $table;
+	protected $toggle_field;
+	protected $toggle_values;
 	private $location;
 	private $config;
 
@@ -94,6 +64,9 @@ class event_guard {
 		$this->location = 'event_guard_logs.php';
 		$this->config = config::load();
 		$this->database = database::new(['config' => $this->config]);
+
+		//initialize the parent class
+		parent::__construct();
 	}
 
 	/**

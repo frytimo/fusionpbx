@@ -35,6 +35,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //set additional variables
 	$show = $_GET["show"] ?? '';
@@ -51,6 +53,9 @@
 
 //process the http post data by action
 	if (!empty($action)) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $streams);
+
 		switch ($action) {
 			case 'copy':
 				if (permission_exists('stream_add')) {
@@ -72,9 +77,16 @@
 				break;
 		}
 
+		//dispatch post-action hook
+		app::dispatch_list_post_action(null, $url, $action, $streams);
+
 		header('Location: streams.php'.(!empty($search) ? '?search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get order and order by
 	$order_by = $_GET["order_by"] ?? '';
@@ -150,6 +162,9 @@
 	$sql .= order_by($order_by, $order, 'stream_name', 'asc');
 	$sql .= limit_offset($rows_per_page, $offset);
 	$streams = $database->select($sql, (!empty($parameters) && @sizeof($parameters) != 0 ? $parameters : null), 'all');
+
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $streams);
 	unset($sql, $parameters);
 
 //create token
@@ -246,6 +261,8 @@
 	if (!empty($streams)) {
 		$x = 0;
 		foreach ($streams as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
 			if (permission_exists('stream_edit')) {
 				$list_row_url = "stream_edit.php?id=".urlencode($row['stream_uuid']);

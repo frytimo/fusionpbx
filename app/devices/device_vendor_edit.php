@@ -104,7 +104,7 @@
 					$array['device_vendors'][0]['enabled'] = $enabled;
 					$array['device_vendors'][0]['description'] = $description;
 
-					$database->save($array);
+					(new device)->save($array);
 					unset($array);
 
 					header("Location: device_vendors.php");

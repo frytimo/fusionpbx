@@ -110,7 +110,7 @@
 				}
 
 				if (is_uuid($array['conference_profiles'][0]['conference_profile_uuid'])) {
-					$database->save($array);
+					(new conference_profiles)->save($array);
 					unset($array);
 				}
 

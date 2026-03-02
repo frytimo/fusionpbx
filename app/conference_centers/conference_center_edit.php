@@ -163,7 +163,7 @@
 			$p->add("dialplan_edit", "temp");
 
 		//save to the data
-			$database->save($array);
+			(new conference_centers)->save($array);
 			//$message = $database->message;
 			unset($array);
 

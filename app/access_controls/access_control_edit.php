@@ -229,7 +229,7 @@
 
 		//save the data
 			if (is_array($array)) {
-				$database->save($array);
+				(new access_controls)->save($array);
 			}
 
 		//clear the cache

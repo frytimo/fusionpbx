@@ -38,6 +38,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 //set additional variables
 	$show = $_REQUEST["show"] ?? '';
@@ -62,6 +64,9 @@
 
 //process the http post data by action
 	if (!empty($action) && !empty($conferences)) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $conferences);
+
 		switch ($action) {
 			case 'copy':
 				if (permission_exists('conference_add')) {
@@ -83,9 +88,16 @@
 				break;
 		}
 
+		//dispatch post-action hook
+		app::dispatch_list_post_action(null, $url, $action, $conferences);
+
 		header('Location: conferences.php'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //get variables used to control the order
 	$order_by = $_GET["order_by"] ?? '';
@@ -173,6 +185,8 @@
 	$sql .= order_by($order_by, $order, null, null, $sort);
 	$sql .= limit_offset($rows_per_page, $offset);
 	$conferences = $database->select($sql, $parameters ?? null, 'all');
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $conferences);
 	unset($sql, $parameters);
 
 //create token
@@ -265,6 +279,8 @@
 	if (!empty($conferences)) {
 		$x = 0;
 		foreach($conferences as $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
 			if (permission_exists('conference_edit')) {
 				$list_row_url = "conference_edit.php?id=".urlencode($row['conference_uuid']);

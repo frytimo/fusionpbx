@@ -359,7 +359,7 @@
 						$array['fax'][0]['fax_description'] = $fax_description;
 
 					//execute
-						$database->save($array);
+						(new fax)->save($array);
 						unset($array);
 
 					//revoke temp permissions

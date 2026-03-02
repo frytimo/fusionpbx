@@ -130,7 +130,7 @@
 					$array['modules'][0]['module_enabled'] = $module_enabled;
 					$array['modules'][0]['module_default_enabled'] = $module_default_enabled;
 
-					$database->save($array);
+					(new modules)->save($array);
 					unset($array);
 
 					$module = new modules;

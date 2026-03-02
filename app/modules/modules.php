@@ -38,6 +38,8 @@
 //add multi-lingual support
 	$language = new text;
 	$text = $language->get();
+	//create the url object
+	$url = new url();
 
 
 //define the variables
@@ -61,6 +63,9 @@
 
 //process the http post data by action
 	if ($action != '' && is_array($modules) && @sizeof($modules) != 0) {
+		//dispatch pre-action hook
+		app::dispatch_list_pre_action(null, $url, $action, $modules);
+
 		switch ($action) {
 			case 'start':
 				//start the modules
@@ -90,9 +95,16 @@
 		}
 
 		//redirect to display updates
+		//dispatch post-action hook
+		app::dispatch_list_post_action(null, $url, $action, $modules);
+
 		header('Location: modules.php'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
 	}
+
+//dispatch pre-query hook
+	$query_parameters = [];
+	app::dispatch_list_pre_query(null, $url, $query_parameters);
 
 //connect to event socket
 	$esl = event_socket::create();
@@ -107,6 +119,8 @@
 	$module->dir = $settings->get('switch', 'mod');
 	$module->get_modules();
 	$modules = $module->modules;
+	//dispatch post-query hook
+	app::dispatch_list_post_query(null, $url, $modules);
 	$module_count = count($modules);
 	$module->synch();
 	$module->xml();
@@ -201,6 +215,8 @@
 	if (is_array($modules) && @sizeof($modules) != 0) {
 		$previous_category = '';
 		foreach ($modules as $x => $row) {
+			//dispatch render-row hook
+			app::dispatch_list_render_row(null, $url, $row, $x);
 			//write category and column headings
 			if ($previous_category != $row["module_category"]) {
 				echo "<tr>\n";

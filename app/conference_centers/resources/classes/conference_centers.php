@@ -26,7 +26,7 @@ Luis Daniel Lucio Quiroz <dlucio@okay.com.mx>
 */
 
 //define the conference centers class
-class conference_centers {
+class conference_centers extends app {
 
 	/**
 	 * declare constant variables
@@ -56,28 +56,6 @@ class conference_centers {
 	public $toggle_field;
 
 	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 *
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
-	 * Settings object set in the constructor. Must be a settings object and cannot be null.
-	 *
-	 * @var settings Settings Object
-	 */
-	private $settings;
-
-	/**
-	 * User UUID set in the constructor. This can be passed in through the $settings_array associative array or set in
-	 * the session global array
-	 *
-	 * @var string
-	 */
-	private $user_uuid;
-
-	/**
 	 * Username set in the constructor. This can be passed in through the $settings_array associative array or set in
 	 * the session global array
 	 *
@@ -96,11 +74,11 @@ class conference_centers {
 	/**
 	 * declare private variables
 	 */
-	private $permission_prefix;
-	private $list_page;
-	private $table;
-	private $uuid_prefix;
-	private $toggle_values;
+	protected $permission_prefix;
+	protected $list_page;
+	protected $table;
+	protected $uuid_prefix;
+	protected $toggle_values;
 	private $fields;
 
 	/**
@@ -120,6 +98,9 @@ class conference_centers {
 		//set objects
 		$this->database = $setting_array['database'] ?? database::new();
 		$this->settings = $setting_array['settings'] ?? new settings(['database' => $this->database, 'domain_uuid' => $this->domain_uuid, 'user_uuid' => $this->user_uuid]);
+
+		//initialize the parent class
+		parent::__construct();
 	}
 
 	/**

@@ -24,35 +24,13 @@
  Mark J Crane <markjcrane@fusionpbx.com>
 */
 
-class registrations {
+class registrations extends app {
 
 	/**
 	 * declare constant variables
 	 */
 	const app_name = 'registrations';
 	const app_uuid = '5d9e7cd7-629e-3553-4cf5-f26e39fefa39';
-
-	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 *
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
-	 * Settings object set in the constructor. Must be a settings object and cannot be null.
-	 *
-	 * @var settings Settings Object
-	 */
-	private $settings;
-
-	/**
-	 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set
-	 * in the session global array
-	 *
-	 * @var string
-	 */
-	private $domain_uuid;
 
 	/**
 	 * Domain name set in the constructor. This can be passed in through the $settings_array associative array or set
@@ -72,8 +50,8 @@ class registrations {
 	/**
 	 * declare private variables
 	 */
-	private $permission_prefix;
-	private $list_page;
+	protected $permission_prefix;
+	protected $list_page;
 	public $show;
 
 	/**
@@ -103,6 +81,9 @@ class registrations {
 		$this->permission_prefix = 'registration_';
 		$this->list_page         = 'registrations.php';
 		$this->show              = 'local';
+
+		//initialize the parent class
+		parent::__construct();
 	}
 
 	/**

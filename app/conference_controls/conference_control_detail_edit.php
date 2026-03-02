@@ -120,7 +120,7 @@
 				}
 
 				if (is_uuid($array['conference_control_details'][0]['conference_control_detail_uuid'])) {
-					$database->save($array);
+					(new conference_controls)->save($array);
 					unset($array);
 				}
 

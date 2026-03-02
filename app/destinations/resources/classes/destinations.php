@@ -38,45 +38,21 @@ class destinations extends app {
 	public $destinations;
 
 	/**
-	 * domain_uuid
-	 * @var string must be a valid uuid
-	 */
-	public $domain_uuid;
-
-	/**
-	 * user_uuid
-	 * @var string must be a valid uuid
-	 */
-	public $user_uuid;
-
-	/**
 	 * declare private variables
 	 */
 	private $app_name;
 
 	private $app_uuid;
-	private $permission_prefix;
-	private $list_page;
-	private $table;
-	private $uuid_prefix;
+	protected $permission_prefix;
+	protected $list_page;
+	protected $table;
+	protected $uuid_prefix;
 
 	/**
 	 * Domain name used to filter settings
 	 * @var string
 	 */
 	public $domain_name;
-
-	/**
-	 * Settings object used to fetch database settings once during object creation
-	 * @var settings object
-	 */
-	private $settings;
-
-	/**
-	 * Database object created once during object creation
-	 * @var database
-	 */
-	private $database;
 
 	public $start_stamp_begin;
 	public $start_stamp_end;
@@ -141,13 +117,16 @@ class destinations extends app {
 		$parameters['domain_uuid'] = $this->domain_uuid;
 		$database = $this->database;
 		$this->domain_name = $database->select($sql, $parameters, 'column');
+
+		// call parent constructor to initialize has_* flags
+		parent::__construct();
 	}
 
 	protected function on_delete(array &$checked) {}
 
-	protected function on_copy(array &$uuids) {}
+	protected function on_copy(array &$uuids) { return []; }
 
-	protected function on_toggle(array &$checked) {}
+	protected function on_toggle(array &$checked) { return []; }
 
 	/**
 	 * Schema for the destinations table

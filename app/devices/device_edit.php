@@ -437,7 +437,7 @@
 
 
 				//save the device
-					$database->save($array);
+					(new device)->save($array);
 
 				//remove checked lines
 					if (

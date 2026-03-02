@@ -152,7 +152,7 @@
 						$array['device_vendor_functions'][0]['enabled'] = $enabled;
 						$array['device_vendor_functions'][0]['description'] = $description;
 
-						$database->save($array);
+						(new device)->save($array);
 						unset($array);
 					}
 

@@ -535,6 +535,24 @@ class auto_loader {
 	}
 
 	/**
+	 * Returns only classes that directly implement the given interface,
+	 * without including classes that implement child/extended interfaces.
+	 * This is used for global hook dispatch where only direct implementers
+	 * of a generic interface (e.g., page_edit_hook) should be invoked,
+	 * while app-specific hooks use get_interface_list() for full resolution.
+	 *
+	 * @param string $interface_name The interface to find direct implementers for
+	 *
+	 * @return array List of class names that directly implement the interface
+	 */
+	public function get_direct_implementers(string $interface_name): array {
+		if (empty($this->classes) || empty($this->interfaces)) {
+			return [];
+		}
+		return $this->interfaces[$interface_name] ?? [];
+	}
+
+	/**
 	 * Recursively finds all interfaces that extend the given interface
 	 *
 	 * @param string $interface_name The interface to find children for

@@ -27,7 +27,7 @@
 /**
  * fax_queue class
  */
-class fax_queue {
+class fax_queue extends app {
 
 	/**
 	 * declare constant variables
@@ -36,27 +36,12 @@ class fax_queue {
 	const app_uuid = '3656287f-4b22-4cf1-91f6-00386bf488f4';
 
 	/**
-	 * Set in the constructor. Must be a database object and cannot be null.
-	 *
-	 * @var database Database Object
-	 */
-	private $database;
-
-	/**
-	 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set
-	 * in the session global array
-	 *
-	 * @var string
-	 */
-	private $domain_uuid;
-
-	/**
 	 * declare private variables
 	 */
 	private $name;
-	private $table;
-	private $toggle_field;
-	private $toggle_values;
+	protected $table;
+	protected $toggle_field;
+	protected $toggle_values;
 	private $location;
 
 	/**
@@ -80,6 +65,9 @@ class fax_queue {
 		$this->toggle_field  = '';
 		$this->toggle_values = ['true', 'false'];
 		$this->location      = 'fax_queue.php';
+
+		//initialize the parent class
+		parent::__construct();
 	}
 
 	/**

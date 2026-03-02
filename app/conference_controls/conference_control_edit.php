@@ -105,11 +105,7 @@
 			$array['conference_controls'][0]['control_description'] = $control_description;
 
 		//save to the data
-			if (!empty($conference_control_uuid)) {
-				$database->uuid($conference_control_uuid);
-			}
-			$database->save($array);
-			$message = $database->message;
+			(new conference_controls)->save($array);
 
 		//redirect the user
 			if (isset($action)) {
