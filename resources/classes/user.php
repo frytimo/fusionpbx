@@ -46,9 +46,6 @@ class user {
 		}
 	}
 
-	/*
-	* set_details method sets the user assigned details
-	*/
 	/**
 	 * Sets the user details based on the domain UUID and user UUID.
 	 *
@@ -77,9 +74,6 @@ class user {
 		}
 	}
 
-	/*
-	* get_user_uuid method gets the user_uuid
-	*/
 	/**
 	 * Retrieves the user's UUID.
 	 *
@@ -88,10 +82,6 @@ class user {
 	public function get_user_uuid() {
 		return $this->user_uuid;
 	}
-
-	/*
-	* set_permissions method sets the user assigned permissions
-	*/
 
 	/**
 	 * Retrieves the permissions associated with this entity.
@@ -103,10 +93,6 @@ class user {
 		return $this->permissions->get_permissions();
 	}
 
-	/*
-	* get_permissions method gets the user assigned permissions
-	*/
-
 	/**
 	 * Sets the user's permissions.
 	 *
@@ -117,10 +103,6 @@ class user {
 		$this->permissions = new permissions($this->database, $this->domain_uuid, $this->user_uuid);
 	}
 
-	/*
-	* set_groups method sets the user assigned groups
-	*/
-
 	/**
 	 * Retrieves the user's groups.
 	 *
@@ -129,10 +111,6 @@ class user {
 	public function get_groups() {
 		return $this->groups->get_groups();
 	}
-
-	/*
-	* get_groups method gets the user assigned groups
-	*/
 
 	/**
 	 * Sets the user's group assignments.
