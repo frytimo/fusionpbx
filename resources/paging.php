@@ -197,3 +197,7 @@ function paging($num_rows, $param, $rows_per_page, $mini = false, $result_count 
 	return $array;
 
 }
+
+//create a new instance of the url with paging class
+$url_paging = new url_paging($settings);
+

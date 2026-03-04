@@ -39,9 +39,6 @@
 	$language = new text;
 	$text = $language->get();
 
-//create a new instance of the url with paging class
-	$url_paging = new url_paging($settings);
-
 //set from session variables
 	$list_row_edit_button = $settings->get('theme', 'list_row_edit_button', false);
 
