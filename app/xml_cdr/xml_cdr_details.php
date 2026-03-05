@@ -35,8 +35,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //get variables from the session
 	$domain_uuid = $_SESSION['domain_uuid'];

@@ -36,8 +36,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //set a default line number value (off)
 	if (!isset($_POST['line_number']) || $_POST['line_number'] == '') {

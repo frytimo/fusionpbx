@@ -40,8 +40,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //initialize the variables
 	$prefix_number = '';

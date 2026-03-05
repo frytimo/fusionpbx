@@ -36,8 +36,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //get the http get or post and set it as php variables
 	if (!empty($_REQUEST["c"]) && is_numeric($_REQUEST["c"])) {

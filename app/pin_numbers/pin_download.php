@@ -39,8 +39,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //define available columns
 	$available_columns[] = 'pin_number_uuid';

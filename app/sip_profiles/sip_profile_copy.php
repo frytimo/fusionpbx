@@ -39,8 +39,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //set the http get/post variable(s) to a php variable
 	$sip_profile_uuid = $_REQUEST["id"];

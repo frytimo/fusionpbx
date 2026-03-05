@@ -38,8 +38,7 @@ if (!permission_exists('service_helper_view')) {
 }
 
 // Add multi-lingual support
-$language = new text;
-$text = $language->get();
+$text = new text()->get();
 
 // Add the header
 require_once 'resources/header.php';

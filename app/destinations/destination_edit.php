@@ -34,8 +34,7 @@
 		exit;
 	}
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //initialize the settings object
 	$settings = new settings(['database' => $database, 'domain_uuid' => $domain_uuid]);

@@ -36,8 +36,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //show content
 	$fp = event_socket::create();

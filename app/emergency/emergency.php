@@ -12,8 +12,7 @@ if (!permission_exists('emergency_logs_view')) {
 }
 
 //add multi-lingual support
-$language = new text;
-$text = $language->get();
+$text = new text()->get();
 
 //get the http post data
 if (!empty($_POST['emergency_logs']) && is_array($_POST['emergency_logs'])) {

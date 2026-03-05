@@ -35,8 +35,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //get the variables
 	$order_by = $_GET["order_by"] ?? null;

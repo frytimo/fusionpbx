@@ -46,8 +46,7 @@
 	$permission['fax_queue_edit'] = permission_exists('fax_queue_edit');
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 	//create the url object
 	$url = new url();
 

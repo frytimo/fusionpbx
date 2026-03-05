@@ -38,8 +38,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //get submitted id
 	$fax_uuid = $_GET["id"];

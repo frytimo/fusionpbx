@@ -1,124 +1,627 @@
 <?php
 
 /*
-* user class - used to store user groups, permissions, and other values
-*/
+ * user class - represents a user and provides authentication, authorization, and session management
+ * 
+ * This class reflects the database structure of v_users table and provides
+ * comprehensive user management functionality including authentication,
+ * group membership, permissions, and event handling.
+ */
 
-class user {
+class user implements logout_event, login_event {
 
-	public $domain_uuid;
-	public $domain_name;
-	public $username;
-	public $user_email;
-	public $contact_uuid;
-	private $database;
+	// Database fields from v_users table
 	private $user_uuid;
-	private $permissions;
-	private $groups;
+	private $domain_uuid;
+	private $contact_uuid;
+	private $username;
+	private $password_hash;
+	private $user_email;
+	private $user_status;
+	private $api_key;
+	private $user_totp_secret;
+	private $user_type;
+	private $user_enabled;
+	private $insert_date;
+	private $insert_user;
+	private $update_date;
+	private $update_user;
+
+	// Additional properties for functionality
+	private $database;
+	private $permissions = [];
+	private $groups = [];
+	private $is_logged_in = false;
 
 	/**
-	 * Constructor for the class.
+	 * Constructor for the user class
 	 *
-	 * This method initializes the object with setting_array and session data.
-	 *
-	 * @param array $setting_array An optional array of settings to override default values. Defaults to [].
+	 * @param database $database Database connection instance
+	 * @param string|null $user_uuid Optional user UUID to load specific user
 	 */
-	public function __construct(database $database, $domain_uuid, $user_uuid) {
-
-		//set the database variable
+	public function __construct(database $database, $user_uuid = null) {
 		$this->database = $database;
-
-		//set the domain_uuid
-		if (isset($domain_uuid) && is_uuid($domain_uuid)) {
-			$this->domain_uuid = $domain_uuid;
-		}
-
-		//set the user_uuid
-		if (isset($user_uuid) && is_uuid($user_uuid)) {
-			$this->user_uuid = $user_uuid;
-		}
-
-		//set the user groups, permission, and details
-		if (isset($domain_uuid) && is_uuid($domain_uuid) && isset($user_uuid) && is_uuid($user_uuid)) {
-			$this->set_groups();
-			$this->set_permissions();
-			$this->set_details();
+		
+		if (!empty($user_uuid) && is_uuid($user_uuid)) {
+			$this->load($user_uuid);
 		}
 	}
 
 	/**
-	 * Sets the user details based on the domain UUID and user UUID.
+	 * Load a user from the database by user_uuid
 	 *
-	 * This method queries the database to retrieve the user's details,
-	 * including their domain name, username, email address, and contact UUID.
-	 *
-	 * @access public
-	 *
-	 * @return bool True if the query is successful, false otherwise.
+	 * @param string $user_uuid The UUID of the user to load
+	 * @return bool True if user loaded successfully, false otherwise
 	 */
-	public function set_details() {
-		$sql = "select d.domain_name, u.username, u.user_email, u.contact_uuid ";
-		$sql .= "from v_users as u, v_domains as d ";
-		$sql .= "where u.domain_uuid = :domain_uuid ";
-		$sql .= "and u.user_uuid = :user_uuid ";
-		$sql .= "and u.domain_uuid = d.domain_uuid ";
-		$sql .= "and u.user_setting_enabled = 'true' ";
-		$parameters['domain_uuid'] = $this->domain_uuid;
-		$parameters['user_uuid'] = $this->user_uuid;
+	private function load(string $user_uuid): bool {
+		if (!is_uuid($user_uuid)) {
+			return false;
+		}
+
+		$sql = "SELECT * FROM v_users WHERE user_uuid = :user_uuid AND user_enabled = 'true'";
+		$parameters['user_uuid'] = $user_uuid;
 		$row = $this->database->select($sql, $parameters, 'row');
-		if (is_array($row)) {
-			$this->domain_name = $row['domain_name'];
+
+		if (!empty($row)) {
+			$this->user_uuid = $row['user_uuid'];
+			$this->domain_uuid = $row['domain_uuid'];
+			$this->contact_uuid = $row['contact_uuid'] ?? null;
 			$this->username = $row['username'];
-			$this->user_email = $row['user_email'];
-			$this->contact_uuid = $row['contact_uuid'];
+			$this->password_hash = $row['password'];
+			$this->user_email = $row['user_email'] ?? null;
+			$this->user_status = $row['user_status'] ?? null;
+			$this->api_key = $row['api_key'] ?? null;
+			$this->user_totp_secret = $row['user_totp_secret'] ?? null;
+			$this->user_type = $row['user_type'] ?? null;
+			$this->user_enabled = $row['user_enabled'] ?? 'true';
+			$this->insert_date = $row['insert_date'] ?? null;
+			$this->insert_user = $row['insert_user'] ?? null;
+			$this->update_date = $row['update_date'] ?? null;
+			$this->update_user = $row['update_user'] ?? null;
+
+			// Load groups and permissions
+			$this->load_groups();
+			$this->load_permissions();
+
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Load user groups from the database
+	 *
+	 * @return void
+	 */
+	private function load_groups(): void {
+		if (empty($this->user_uuid)) {
+			return;
+		}
+
+		$sql = "SELECT group_name, group_uuid FROM v_user_groups WHERE user_uuid = :user_uuid";
+		$parameters['user_uuid'] = $this->user_uuid;
+		$rows = $this->database->select($sql, $parameters, 'all');
+
+		$this->groups = [];
+		if (!empty($rows)) {
+			foreach ($rows as $row) {
+				$this->groups[$row['group_name']] = $row['group_uuid'];
+			}
 		}
 	}
 
 	/**
-	 * Retrieves the user's UUID.
+	 * Load user permissions from the database
+	 * Includes both direct permissions and permissions inherited from groups
 	 *
-	 * @return string The user's unique identifier in UUID format.
+	 * @return void
 	 */
-	public function get_user_uuid() {
+	private function load_permissions(): void {
+		if (empty($this->user_uuid)) {
+			return;
+		}
+
+		// Get direct user permissions
+		$sql = "SELECT permission_name FROM v_user_permissions WHERE user_uuid = :user_uuid";
+		$parameters['user_uuid'] = $this->user_uuid;
+		$rows = $this->database->select($sql, $parameters, 'all');
+
+		$this->permissions = [];
+		if (!empty($rows)) {
+			foreach ($rows as $row) {
+				$this->permissions[$row['permission_name']] = true;
+			}
+		}
+
+		// Get group permissions
+		if (!empty($this->groups)) {
+			foreach ($this->groups as $group_name => $group_uuid) {
+				$sql = "SELECT permission_name FROM v_group_permissions WHERE group_uuid = :group_uuid";
+				$parameters['group_uuid'] = $group_uuid;
+				$rows = $this->database->select($sql, $parameters, 'all');
+				
+				if (!empty($rows)) {
+					foreach ($rows as $row) {
+						$this->permissions[$row['permission_name']] = true;
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Authenticate and return a logged-in user object
+	 * 
+	 * This is the primary method for user login. It validates credentials,
+	 * creates a user object, and marks the user as logged in.
+	 *
+	 * @param database $database Database connection instance
+	 * @param string $domain_name Domain name for the login
+	 * @param string $username Username to authenticate
+	 * @param string $password Plain text password to verify
+	 * @return user|null Returns user object on success, null on failure
+	 */
+	public static function login(database $database, string $domain_name, string $username, string $password): ?user {
+		// Query for user with domain check
+		$sql = "SELECT u.user_uuid, u.password 
+				FROM v_users u
+				JOIN v_domains d ON u.domain_uuid = d.domain_uuid
+				WHERE u.username = :username 
+				AND d.domain_name = :domain_name 
+				AND u.user_enabled = 'true'";
+		
+		$parameters = [
+			'username' => $username,
+			'domain_name' => $domain_name
+		];
+		
+		$row = $database->select($sql, $parameters, 'row');
+		
+		if (empty($row)) {
+			// User not found or disabled
+			return null;
+		}
+		
+		// Verify password using PHP's password_verify
+		// This function is secure against timing attacks and handles all password hash types
+		if (!password_verify($password, $row['password'])) {
+			// Password verification failed
+			return null;
+		}
+		
+		// Check if password needs rehashing (e.g., if algorithm has been upgraded)
+		if (password_needs_rehash($row['password'], PASSWORD_DEFAULT)) {
+			// TODO: Update password hash in database with new algorithm
+			// This would be done in a separate update method to keep login focused
+		}
+		
+		// Create and load the user object
+		$user = new user($database, $row['user_uuid']);
+		
+		if (empty($user->user_uuid)) {
+			// Failed to load user data
+			return null;
+		}
+		
+		// Mark user as logged in
+		$user->is_logged_in = true;
+		
+		// Trigger login event hooks
+		// This allows other parts of the system to respond to login events
+		// Examples of what could be implemented:
+		// - Log login attempt to audit log with IP address, timestamp, user agent
+		// - Update last_login_date field in database
+		// - Initialize user preferences and settings
+		// - Load user-specific configurations
+		// - Send login notification email/SMS if configured
+		// - Initialize session variables
+		// - Track concurrent sessions
+		// - Check for account expiration or password expiration
+		// - Apply domain-specific security policies
+		// - Initialize user activity tracking
+		
+		// Call the pre-session create event (if needed by implementing systems)
+		// This would typically be called by the login controller, not here
+		// self::on_login_pre_session_create($settings);
+		
+		return $user;
+	}
+
+	/**
+	 * Check if user has a specific permission
+	 *
+	 * @param string $permission_name Name of the permission to check
+	 * @return bool True if user has permission, false otherwise
+	 */
+	public function has_permission(string $permission_name): bool {
+		return isset($this->permissions[$permission_name]);
+	}
+
+	/**
+	 * Check if user is a member of a specific group
+	 *
+	 * @param string $group_name Name of the group to check
+	 * @return bool True if user is member, false otherwise
+	 */
+	public function is_member_of(string $group_name): bool {
+		return isset($this->groups[$group_name]);
+	}
+
+	/**
+	 * Get the login status of the user
+	 *
+	 * @return bool True if user is logged in, false otherwise
+	 */
+	public function is_logged_in(): bool {
+		return $this->is_logged_in;
+	}
+
+	/**
+	 * Log out the current user
+	 * This clears the logged-in flag and can trigger logout events
+	 *
+	 * @return void
+	 */
+	public function logout(): void {
+		$this->is_logged_in = false;
+
+		// Logout event would typically be triggered by the logout controller
+		// which would call the static event methods defined by the logout_event interface
+	}
+
+	// Getters for all database fields
+
+	public function get_user_uuid(): ?string {
 		return $this->user_uuid;
 	}
 
-	/**
-	 * Retrieves the permissions associated with this entity.
-	 *
-	 * @return array An array of permission objects or identifiers.
-	 * @access public
-	 */
-	public function get_permissions() {
-		return $this->permissions->get_permissions();
+	public function get_domain_uuid(): ?string {
+		return $this->domain_uuid;
+	}
+
+	public function get_contact_uuid(): ?string {
+		return $this->contact_uuid;
+	}
+
+	public function get_username(): ?string {
+		return $this->username;
+	}
+
+	public function get_user_email(): ?string {
+		return $this->user_email;
+	}
+
+	public function get_user_status(): ?string {
+		return $this->user_status;
+	}
+
+	public function get_api_key(): ?string {
+		return $this->api_key;
+	}
+
+	public function get_user_totp_secret(): ?string {
+		return $this->user_totp_secret;
+	}
+
+	public function get_user_type(): ?string {
+		return $this->user_type;
+	}
+
+	public function get_user_enabled(): string {
+		return $this->user_enabled ?? 'true';
+	}
+
+	public function get_insert_date(): ?string {
+		return $this->insert_date;
+	}
+
+	public function get_insert_user(): ?string {
+		return $this->insert_user;
+	}
+
+	public function get_update_date(): ?string {
+		return $this->update_date;
+	}
+
+	public function get_update_user(): ?string {
+		return $this->update_user;
 	}
 
 	/**
-	 * Sets the user's permissions.
+	 * Get all groups the user belongs to
 	 *
-	 * @access public
+	 * @return array Associative array of group_name => group_uuid
+	 */
+	public function get_groups(): array {
+		return $this->groups;
+	}
+
+	/**
+	 * Get all permissions the user has
+	 *
+	 * @return array Array of permission names
+	 */
+	public function get_permissions(): array {
+		return array_keys($this->permissions);
+	}
+
+	/**
+	 * Compare this user with another user object
+	 * Two users are considered equal if they have the same user_uuid
+	 *
+	 * @param user $other_user The user to compare with
+	 * @return bool True if users are the same, false otherwise
+	 */
+	public function equals(user $other_user): bool {
+		return $this->user_uuid === $other_user->get_user_uuid();
+	}
+
+	/**
+	 * Compare two user objects for sorting by username
+	 * Returns negative if $a comes before $b, positive if after, 0 if equal
+	 *
+	 * @param user $a First user
+	 * @param user $b Second user
+	 * @return int Comparison result
+	 */
+	public static function compare_by_username(user $a, user $b): int {
+		return strcasecmp($a->get_username() ?? '', $b->get_username() ?? '');
+	}
+
+	/**
+	 * Compare two user objects for sorting by email
+	 * Returns negative if $a comes before $b, positive if after, 0 if equal
+	 *
+	 * @param user $a First user
+	 * @param user $b Second user
+	 * @return int Comparison result
+	 */
+	public static function compare_by_email(user $a, user $b): int {
+		return strcasecmp($a->get_user_email() ?? '', $b->get_user_email() ?? '');
+	}
+
+	/**
+	 * Sort an array of user objects by username
+	 *
+	 * @param array $users Array of user objects
+	 * @param bool $ascending Sort in ascending order (default true)
+	 * @return array Sorted array of users
+	 */
+	public static function sort_by_username(array $users, bool $ascending = true): array {
+		usort($users, function($a, $b) use ($ascending) {
+			$result = self::compare_by_username($a, $b);
+			return $ascending ? $result : -$result;
+		});
+		return $users;
+	}
+
+	/**
+	 * Sort an array of user objects by email
+	 *
+	 * @param array $users Array of user objects
+	 * @param bool $ascending Sort in ascending order (default true)
+	 * @return array Sorted array of users
+	 */
+	public static function sort_by_email(array $users, bool $ascending = true): array {
+		usort($users, function($a, $b) use ($ascending) {
+			$result = self::compare_by_email($a, $b);
+			return $ascending ? $result : -$result;
+		});
+		return $users;
+	}
+
+	/**
+	 * Implementation of logout_event interface
+	 * Executed before the session is destroyed
+	 * 
+	 * This method is called by the logout controller before destroying the session.
+	 * Implementing this allows various subsystems to perform cleanup operations.
+	 * 
+	 * Implementation examples:
+	 * - Log the logout event to audit trail with timestamp and IP address
+	 * - Update last_logout_date in the database
+	 * - Clean up temporary files or cache associated with the user
+	 * - Invalidate API tokens or session tokens
+	 * - Send logout notifications if configured
+	 * - Clear user-specific temporary data
+	 * - Update user activity status (e.g., set to "offline")
+	 * - Close any open user sessions in realtime systems
+	 * - Clean up any locks held by the user
+	 * - Trigger webhook notifications for logout events
+	 *
+	 * @param settings $settings System settings object
 	 * @return void
 	 */
-	public function set_permissions() {
-		$this->permissions = new permissions($this->database, $this->domain_uuid, $this->user_uuid);
+	public static function on_logout_pre_session_destroy(settings $settings): void {
+		// Implementation would go here
+		// This is typically called by logout.php in the application
+		
+		// Example implementation:
+		// if (isset($_SESSION['user_uuid']) && is_uuid($_SESSION['user_uuid'])) {
+		//     $database = database::new();
+		//     
+		//     // Log the logout event
+		//     $sql = "INSERT INTO v_user_logs (user_log_uuid, user_uuid, log_type, log_date, ip_address)
+		//             VALUES (:user_log_uuid, :user_uuid, 'logout', NOW(), :ip_address)";
+		//     $parameters = [
+		//         'user_log_uuid' => uuid(),
+		//         'user_uuid' => $_SESSION['user_uuid'],
+		//         'ip_address' => $_SERVER['REMOTE_ADDR']
+		//     ];
+		//     $database->execute($sql, $parameters);
+		// }
 	}
 
 	/**
-	 * Retrieves the user's groups.
+	 * Implementation of logout_event interface
+	 * Executed after the session is destroyed
+	 * 
+	 * This method is called by the logout controller after destroying the session.
+	 * At this point, session data is no longer available.
+	 * 
+	 * Implementation examples:
+	 * - Redirect to login page
+	 * - Display logout confirmation message
+	 * - Clear cookies
+	 * - Perform final cleanup that doesn't require session data
+	 * - Send final analytics or tracking events
 	 *
-	 * @return array An array of group objects that the user belongs to.
-	 */
-	public function get_groups() {
-		return $this->groups->get_groups();
-	}
-
-	/**
-	 * Sets the user's group assignments.
-	 *
+	 * @param settings $settings System settings object
 	 * @return void
 	 */
-	public function set_groups() {
-		$this->groups = new groups($this->database, $this->domain_uuid, $this->user_uuid);
+	public static function on_logout_post_session_destroy(settings $settings): void {
+		// Implementation would go here
+		// This is typically called by logout.php in the application
+		
+		// Example implementation:
+		// setcookie('remember_me', '', time() - 3600, '/');
+		// header('Location: /login.php?logout=success');
+		// exit;
+	}
+
+	/**
+	 * Implementation of login_event interface
+	 * Executed before the session is created
+	 * 
+	 * This method is called by the login controller before creating the session.
+	 * This is useful for validation, logging, and preparation tasks.
+	 * 
+	 * Implementation examples:
+	 * - Check if user account is locked due to too many failed attempts
+	 * - Verify that user's account hasn't expired
+	 * - Check if user needs to change password (e.g., password expired)
+	 * - Verify two-factor authentication if enabled
+	 * - Check domain-specific login policies
+	 * - Rate limiting for login attempts
+	 * - Geo-location checking (block logins from unexpected locations)
+	 * - Device fingerprinting and verification
+	 * - Check for concurrent session limits
+	 * - Verify time-based access restrictions
+	 * - Log pre-login audit information
+	 * - Check if maintenance mode should block this login
+	 * - Verify IP whitelist/blacklist
+	 * - Initialize pre-session temporary storage
+	 * - Send login attempt notification (security alert)
+	 * 
+	 * The method should throw an exception or return false to prevent login.
+	 *
+	 * @param settings $settings System settings object
+	 * @return void
+	 */
+	public static function on_login_pre_session_create(settings $settings): void {
+		// Implementation would go here
+		// This is typically called by login.php in the application
+		
+		// Example implementation:
+		// $database = database::new();
+		// $user_uuid = $_POST['user_uuid'] ?? null;
+		// 
+		// if ($user_uuid) {
+		//     // Check failed login attempts
+		//     $sql = "SELECT COUNT(*) as attempt_count 
+		//             FROM v_user_logs 
+		//             WHERE user_uuid = :user_uuid 
+		//             AND log_type = 'login_failed'
+		//             AND log_date > (NOW() - INTERVAL '15 minutes')";
+		//     $parameters = ['user_uuid' => $user_uuid];
+		//     $row = $database->select($sql, $parameters, 'row');
+		//     
+		//     if ($row['attempt_count'] >= 5) {
+		//         throw new Exception('Account temporarily locked due to too many failed login attempts');
+		//     }
+		//     
+		//     // Check for password expiration
+		//     $sql = "SELECT password_updated_date 
+		//             FROM v_users 
+		//             WHERE user_uuid = :user_uuid";
+		//     $row = $database->select($sql, $parameters, 'row');
+		//     
+		//     $password_age = strtotime('now') - strtotime($row['password_updated_date']);
+		//     $max_password_age = 90 * 24 * 3600; // 90 days
+		//     
+		//     if ($password_age > $max_password_age) {
+		//         $_SESSION['password_change_required'] = true;
+		//     }
+		// }
+	}
+
+	/**
+	 * Implementation of login_event interface
+	 * Executed after the session is created
+	 * 
+	 * This method is called by the login controller after creating the session.
+	 * At this point, the user is authenticated and session is established.
+	 * 
+	 * Implementation examples:
+	 * - Log successful login to audit trail with IP, timestamp, user agent
+	 * - Update last_login_date in the database
+	 * - Initialize user preferences in session
+	 * - Load user-specific settings and configurations
+	 * - Set up user-specific cache
+	 * - Send login notification email/SMS if configured
+	 * - Update user activity status (e.g., set to "online")
+	 * - Initialize user session analytics
+	 * - Set session timeout based on user role
+	 * - Load dashboard widgets and preferences
+	 * - Initialize realtime connection tokens
+	 * - Set language preferences
+	 * - Load user's recent activity
+	 * - Redirect to appropriate landing page based on user role
+	 * - Check for system announcements user needs to see
+	 * - Initialize user notification queue
+	 * - Set up user-specific rate limits
+	 * - Generate session token for API access
+	 * - Initialize csrf token
+	 * - Set cookie for "remember me" if requested
+	 *
+	 * @param settings $settings System settings object
+	 * @return void
+	 */
+	public static function on_login_post_session_create(settings $settings): void {
+		// Implementation would go here
+		// This is typically called by login.php in the application
+		
+		// Example implementation:
+		// if (isset($_SESSION['user_uuid']) && is_uuid($_SESSION['user_uuid'])) {
+		//     $database = database::new();
+		//     
+		//     // Log successful login
+		//     $sql = "INSERT INTO v_user_logs (user_log_uuid, user_uuid, log_type, log_date, ip_address, user_agent)
+		//             VALUES (:user_log_uuid, :user_uuid, 'login_success', NOW(), :ip_address, :user_agent)";
+		//     $parameters = [
+		//         'user_log_uuid' => uuid(),
+		//         'user_uuid' => $_SESSION['user_uuid'],
+		//         'ip_address' => $_SERVER['REMOTE_ADDR'],
+		//         'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? ''
+		//     ];
+		//     $database->execute($sql, $parameters);
+		//     
+		//     // Update last login date
+		//     $sql = "UPDATE v_users SET last_login_date = NOW() WHERE user_uuid = :user_uuid";
+		//     $parameters = ['user_uuid' => $_SESSION['user_uuid']];
+		//     $database->execute($sql, $parameters);
+		//     
+		//     // Load user preferences
+		//     $user = new user($database, $_SESSION['user_uuid']);
+		//     $_SESSION['username'] = $user->get_username();
+		//     $_SESSION['user_email'] = $user->get_user_email();
+		//     $_SESSION['groups'] = $user->get_groups();
+		//     $_SESSION['permissions'] = $user->get_permissions();
+		//     
+		//     // Set session timeout based on settings
+		//     ini_set('session.gc_maxlifetime', $settings->get('session', 'timeout', '7200'));
+		//     
+		//     // Redirect to appropriate page
+		//     if (isset($_SESSION['password_change_required'])) {
+		//         header('Location: /core/users/user_password.php');
+		//     } else {
+		//         header('Location: /');
+		//     }
+		//     exit;
+		// }
 	}
 
 }
+
+?>

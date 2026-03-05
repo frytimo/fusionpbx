@@ -35,8 +35,7 @@ if (!permission_exists('default_setting_view')) {
 }
 
 //add multi-lingual support
-$language = new text;
-$text = $language->get();
+$text = new text()->get();
 
 //set the variables
 $search = $_REQUEST['search'] ?? '';

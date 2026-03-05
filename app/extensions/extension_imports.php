@@ -35,8 +35,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //get the http get values and set them as php variables
 	$action = $_POST["action"] ?? null;

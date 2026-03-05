@@ -11,8 +11,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //get the uuid
 	$user_log_uuid = $_GET['id'];

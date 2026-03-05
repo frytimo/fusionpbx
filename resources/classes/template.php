@@ -33,7 +33,26 @@ class template {
 	private $object;
 	private $var_array;
 
-	public function __construct() {
+	private $template_name;
+
+	public function __construct(string $template = '') {
+		if ($template !== '') {
+			$this->template_name = $template;
+			$this->template_dir = dirname($template);
+		} else {
+			$this->template_dir = PROJECT_ROOT . '/resources/views';
+		}
+
+		$this->cache_dir = sys_get_temp_dir();
+
+		// Assume we are using Smarty
+		require_once "resources/templates/engine/smarty/Smarty.class.php";
+		$this->object = new Smarty();
+		$this->object->setTemplateDir($this->template_dir);
+		$this->object->setCompileDir($this->cache_dir);
+		$this->object->setCacheDir($this->cache_dir);
+		$this->object->registerPlugin("modifier", "in_array", "in_array");
+		$this->object->registerPlugin("modifier", "json", "json_encode");
 	}
 
 	/**
@@ -49,6 +68,7 @@ class template {
 			$this->object->setCompileDir($this->cache_dir);
 			$this->object->setCacheDir($this->cache_dir);
 			$this->object->registerPlugin("modifier", "in_array", "in_array");
+			$this->object->registerPlugin("modifier", "json", "json_encode");
 		}
 		if ($this->engine === 'raintpl') {
 			require_once "resources/templates/engine/raintpl/rain.tpl.class.php";
@@ -101,15 +121,27 @@ class template {
 	 *
 	 * @access public
 	 */
-	public function render($name) {
-		if ($this->engine === 'smarty') {
-			return $this->object->fetch($name);
+	public function render($name = '') {
+		if ($name === '' && $this->template_name !== '') {
+			$name = $this->template_name;
 		}
-		if ($this->engine === 'raintpl') {
-			return $this->object->draw($name, 'return_string=true');
+
+		switch ($this->engine) {
+			case 'raintpl':
+				return $this->object->draw($name, 'return_string=true');
+			case 'twig':
+				return $this->object->render($name, $this->var_array);
+			case 'smarty':
+			default:
+				return $this->object->fetch($name);
 		}
-		if ($this->engine === 'twig') {
-			return $this->object->render($name, $this->var_array);
-		}
+	}
+
+	public function display(): void {
+		echo $this->render();
+	}
+
+	public function __toString(): string {
+		return $this->render();
 	}
 }

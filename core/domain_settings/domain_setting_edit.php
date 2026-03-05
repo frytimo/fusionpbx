@@ -35,8 +35,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //retrieve allowed setting categories
 	if (!permission_exists('domain_setting_category_edit')) {

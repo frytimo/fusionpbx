@@ -38,8 +38,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //check for speech app
 	$speech_enabled = $settings->get('speech', 'enabled');

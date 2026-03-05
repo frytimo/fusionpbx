@@ -36,8 +36,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //set the action with add or update
 	if (!empty($_REQUEST["id"]) && is_uuid($_REQUEST["id"])) {

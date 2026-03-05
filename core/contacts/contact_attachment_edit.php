@@ -36,8 +36,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //action add or update
 	$contact_attachment_uuid = $_REQUEST['id'] ?? '';

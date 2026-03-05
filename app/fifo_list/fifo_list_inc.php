@@ -35,8 +35,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //include theme config for button images
 	include_once("themes/".$settings->get('domain', 'template', 'default')."/config.php");

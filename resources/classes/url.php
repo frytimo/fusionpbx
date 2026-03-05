@@ -181,6 +181,16 @@ class url {
 	}
 
 	/**
+	 * Alias of get_host
+	 *
+	 * @return string name of the host in the url
+	 * @see url::get_host()
+	 */
+	public function get_domain_name(): string {
+		return $this->get_host();
+	}
+
+	/**
 	 * Port in the link
 	 * @return int
 	 */
@@ -723,5 +733,11 @@ class url {
 		$this->params = [];
 		$this->fragment = '';
 		return $this;
+	}
+
+	public static function redirect(string $url, int $status_code = 302): void {
+		$location = url::from_string($url)->build_absolute();
+		header("Location: $location", true, $status_code);
+		exit();
 	}
 }

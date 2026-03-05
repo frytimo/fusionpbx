@@ -35,8 +35,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //prepare the email
 	$email_recipient = !empty($_POST['to']) && valid_email($_POST['to']) ? strtolower($_POST['to']) : null;

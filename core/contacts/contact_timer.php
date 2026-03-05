@@ -38,8 +38,7 @@
 	$time_description = '';
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //get contact uuid
 	$domain_uuid = $_REQUEST['domain_uuid'];

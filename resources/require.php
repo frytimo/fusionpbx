@@ -25,13 +25,15 @@
  * Mark J Crane <markjcrane@fusionpbx.com>
  */
 
-if (version_compare(PHP_VERSION, '8.1', '<')) {
-	die('PHP 8.1 or higher is required');
+if (version_compare(PHP_VERSION, '8.4', '<')) {
+	die('PHP 8.4 or higher is required');
 }
 
 if (!defined('STDIN') && (!function_exists('apcu_enabled') || !apcu_enabled())) {
 	die('APCu extension is required and must be enabled');
 }
+
+define('PROJECT_ROOT', dirname(__DIR__));
 
 // class auto loader
 if (!class_exists('auto_loader')) {
@@ -40,55 +42,17 @@ if (!class_exists('auto_loader')) {
 	$autoload = new auto_loader($enable_cache);
 }
 
+global $url;
+$url = new url();
+
 // load config file
 global $config;
 $config = config::load();
 
 // config.conf file not found re-direct the request to the install
 if ($config->is_empty()) {
-	header("Location: /core/install/install.php");
-	exit;
+	$url::redirect('/core/install/install.php');
 }
-
-// compatibility settings - planned to deprecate
-global $conf, $db_type, $db_host, $db_port, $db_name, $db_username, $db_password;
-$conf = $config->configuration();
-$db_type = $config->get('database.0.type');
-$db_host = $config->get('database.0.host');
-$db_port = $config->get('database.0.port');
-$db_name = $config->get('database.0.name');
-$db_username = $config->get('database.0.username');
-$db_password = $config->get('database.0.password');
-
-// set the error reporting
-ini_set('display_errors', '1');
-$error_reporting_scope = $config->get('error.reporting', 'user');
-switch ($error_reporting_scope) {
-	case 'user':
-		error_reporting(E_ALL ^ E_NOTICE ^ E_WARNING ^ E_DEPRECATED);
-		break;
-	case 'dev':
-		error_reporting(E_ALL ^ E_NOTICE);
-		break;
-	case 'all':
-		error_reporting(E_ALL);
-		break;
-	default:
-		error_reporting(E_ALL ^ E_NOTICE ^ E_WARNING ^ E_DEPRECATED);
-}
-
-// get the database connection settings
-// $db_type = $settings['database']['type'];
-// $db_host = $settings['database']['host'];
-// $db_port = $settings['database']['port'];
-// $db_name = $settings['database']['name'];
-// $db_username = $settings['database']['username'];
-// $db_password = $settings['database']['password'];
-
-// debug info
-// echo "Include Path: ".get_include_path()."\n";
-// echo "Document Root: ".dirname(__DIR__, 1)."\n";
-// echo "Project Root: ".dirname(__DIR__, 1)."\n";
 
 // include global functions
 require_once __DIR__ . "/functions.php";
@@ -98,7 +62,7 @@ global $database;
 $database = database::new(['config' => $config]);
 
 // security headers
-if (!defined('STDIN') && session_status() === PHP_SESSION_NONE) {
+if (!is_cli() && session_status() === PHP_SESSION_NONE) {
 	header("X-Frame-Options: SAMEORIGIN");
 	header("Content-Security-Policy: frame-ancestors 'self';");
 	header("X-Content-Type-Options: nosniff");
@@ -108,43 +72,11 @@ if (!defined('STDIN') && session_status() === PHP_SESSION_NONE) {
 
 // start the session if not using the command line
 global $no_session;
-if (!defined('STDIN') && empty($no_session) && session_status() === PHP_SESSION_NONE) {
+if (!is_cli() && empty($no_session) && session_status() === PHP_SESSION_NONE) {
 	ini_set('session.cookie_httponly', !isset($conf['session.cookie_httponly']) ? 'true' : (!empty($config->get('session.cookie_httponly')) ? 'true' : 'false'));
 	ini_set('session.cookie_secure', !isset($conf['session.cookie_secure']) ? 'true' : (!empty($config->get('session.cookie_secure')) ? 'true' : 'false'));
 	ini_set('session.cookie_samesite', $config->get('session.cookie_samesite', 'Lax'));
 	session_start();
-}
-
-// get the domain_name and the domain_uuid
-if (empty($_SESSION['domain_uuid'])) {
-	// get the domain from the url
-	$domain_name = $_SERVER["HTTP_HOST"];
-
-	// get the domain name from the http value
-	if (!empty($_REQUEST["domain_name"])) {
-		$domain_name = $_REQUEST["domain_name"];
-	}
-
-	// remote port number from the domain name
-	$domain_array = explode(":", $domain_name);
-	if (count($domain_array) > 1) {
-		$domain_name = $domain_array[0];
-	}
-
-	// get the domain_uuid from the database
-	$sql = "select domain_uuid from v_domains \n";
-	$sql .= "where domain_name = :domain_name \n";
-	$parameters['domain_name'] = $domain_name;
-	$row = $database->select($sql, $parameters, 'row');
-	$domain_uuid = '';
-	if (is_array($row) && sizeof($row) != 0) {
-		$domain_uuid = $row['domain_uuid'];
-		if (session_status() === PHP_SESSION_ACTIVE) {
-			$_SESSION['domain_uuid'] = $domain_uuid;
-			$_SESSION['domain_name'] = $domain_name;
-		}
-	}
-	unset($parameters, $row);
 }
 
 // load settings
@@ -153,7 +85,7 @@ $settings = new settings(['database' => $database, 'domain_uuid' => $_SESSION['d
 
 // check if the cidr range is valid
 global $no_cidr;
-if (!defined('STDIN') && empty($no_cidr)) {
+if (!is_cli() && empty($no_cidr)) {
 	require_once __DIR__ . '/cidr.php';
 }
 
@@ -163,7 +95,7 @@ if (file_exists(__DIR__ . '/switch.php')) {
 }
 
 // change language on the fly - for translate tool (if available)
-// if (!defined('STDIN') && isset($_REQUEST['view_lang_code']) && ($_REQUEST['view_lang_code']) != '') {
+// if (!is_cli() && isset($_REQUEST['view_lang_code']) && ($_REQUEST['view_lang_code']) != '') {
 //	$_SESSION['domain']['language']['en-us'] = $_REQUEST['view_lang_code'];
 // }
 

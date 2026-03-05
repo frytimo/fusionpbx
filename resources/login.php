@@ -45,12 +45,7 @@
 //get the domains if user has permission for show all
 	$domains = [];
 	if ($has_device_domain_all) {
-		$rows = $database->select("select domain_uuid, domain_name from v_domains");
-		if (!empty($rows)) {
-			foreach ($rows as $row) {
-				$domains[$row['domain_uuid']] = $row['domain_name'];
-			}
-		}
+		$domains = domains::all();
 	}
 
 //send an email with the password reset link

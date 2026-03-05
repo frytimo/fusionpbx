@@ -40,8 +40,7 @@ Con	Portions created by the Initial Developer are Copyright (C) 2008-2025
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //load editor preferences/defaults
 	if (permission_exists("system_view_support")) {

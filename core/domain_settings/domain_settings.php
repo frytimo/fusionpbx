@@ -35,8 +35,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //get the domain_uuid
 	if (!empty($_GET['id']) && is_uuid($_GET['id'])) {

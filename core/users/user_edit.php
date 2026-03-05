@@ -36,8 +36,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //get user uuid
 	if (permission_exists('user_edit') && !empty($_REQUEST["id"]) && is_uuid($_REQUEST["id"])) {

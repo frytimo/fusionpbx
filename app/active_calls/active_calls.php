@@ -62,8 +62,7 @@ $theme_button_icon_back = $settings->get('theme', 'button_icon_back');
 $theme_button_icon_broom = $settings->get('theme', 'button_icon_broom');
 
 //add multi-lingual support
-$language = new text;
-$text = $language->get();
+$text = new text()->get();
 
 $token = (new token())->create($_SERVER['PHP_SELF']);
 

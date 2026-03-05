@@ -36,8 +36,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //set user status
 	if (isset($_REQUEST['status']) && $_REQUEST['status'] != '') {

@@ -36,8 +36,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //get the queue uuid and set it as a variable
 	$queue_uuid = $_GET['queue_name'];

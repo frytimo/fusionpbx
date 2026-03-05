@@ -111,8 +111,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //process the http post data by action
 	if (!empty($action) && !empty($voicemail_messages)) {

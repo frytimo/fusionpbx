@@ -45,8 +45,7 @@
 	$follow_me_ignore_busy = false;
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //define the destination_select function
 	/**

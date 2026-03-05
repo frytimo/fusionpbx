@@ -36,8 +36,7 @@ else {
 }
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //get the html values and set them as variables
 	$uuid = trim($_GET["id"]);

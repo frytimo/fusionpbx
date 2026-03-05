@@ -41,8 +41,7 @@
 	$user_uuid = $_SESSION['user_uuid'] ?? '';
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //get order and order by, page
 	$order_by = preg_replace('#[^a-zA-Z0-9_\-]#', '', ($_REQUEST["order_by"] ?? 'extension'));

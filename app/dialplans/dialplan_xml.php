@@ -211,8 +211,7 @@
 	//$dialplan_xml = mb_convert_encoding($dialplan_xml, 'UTF-8');
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 // load editor preferences/defaults
 	$setting_size = !empty($settings->get('editor', 'font_size')) ? $settings->get('editor', 'font_size') : '12px';

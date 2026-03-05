@@ -34,8 +34,7 @@
 	require_once "resources/paging.php";
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //get the session settings
 	$domain_uuid = $_SESSION['domain_uuid'];

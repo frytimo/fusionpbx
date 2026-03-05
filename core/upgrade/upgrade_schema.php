@@ -55,8 +55,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //get the database schema put it into an array then compare and update the database as needed.
 	$schema = new schema(['database' => $database]);

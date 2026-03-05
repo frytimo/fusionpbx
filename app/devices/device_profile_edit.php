@@ -34,8 +34,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //action add or update
 	if (isset($_REQUEST["id"])) {

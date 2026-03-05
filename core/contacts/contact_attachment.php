@@ -29,8 +29,7 @@
 	require_once "resources/check_auth.php";
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //get attachment uuid
 	$contact_attachment_uuid = $_GET['id'] ?? '';

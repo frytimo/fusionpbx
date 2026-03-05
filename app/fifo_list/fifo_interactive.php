@@ -35,8 +35,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //get the fifo_name from http and set it to a php variable
 	$fifo_name = preg_replace('#[^a-zA-Z0-9\_\@\-./]#', '', $_REQUEST["c"]);

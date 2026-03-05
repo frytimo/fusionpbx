@@ -37,8 +37,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //handle import
 if ($_POST['a'] == 'import') {

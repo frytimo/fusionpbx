@@ -37,8 +37,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //get the http value and set as a php variable
 	if (!empty($_REQUEST["menu_uuid"])) {

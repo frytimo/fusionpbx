@@ -44,8 +44,7 @@
 	$permission['domain_setting_add'] = permission_exists('domain_setting_add');
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //set the variables
 	$search = $_REQUEST['search'] ?? '';

@@ -41,8 +41,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //include the header
 	require_once "resources/header.php";

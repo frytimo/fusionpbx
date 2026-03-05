@@ -35,8 +35,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //authorized referrer
 	if (stristr($_SERVER["HTTP_REFERER"], '/calls_active.php') === false) {

@@ -44,8 +44,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //set a default message_timeout
 	$message_timeout = 4*1000;

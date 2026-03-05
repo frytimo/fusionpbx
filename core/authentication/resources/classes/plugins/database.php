@@ -100,8 +100,7 @@ class plugin_database {
 			//$token = $object->create('login');
 
 			//add multi-lingual support
-			$language = new text;
-			$text     = $language->get(null, '/core/authentication');
+			$text = new text()->get();
 
 			//initialize a template object
 			$view               = new template();

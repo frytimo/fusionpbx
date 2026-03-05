@@ -36,8 +36,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //set the http get/post variable(s) to a php variable
 	$fax_uuid = $_REQUEST["id"];

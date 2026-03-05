@@ -41,8 +41,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //get the http data
 	$action = $_REQUEST['action'] ?? '';

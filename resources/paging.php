@@ -94,8 +94,7 @@ function paging($num_rows, $param, $rows_per_page, $mini = false, $result_count 
 	}
 
 	//add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 	//print the link to access each page
 	$self = htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8');

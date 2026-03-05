@@ -33,8 +33,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //get the settings and save as variables
 	$list_row_edit_button = $settings->get('theme', 'list_row_edit_button', false);

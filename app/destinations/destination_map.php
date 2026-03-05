@@ -45,8 +45,7 @@ $array = $destinations->get('dialplan');
 $domain_language = $settings->get('domain', 'language');
 
 //add multi-lingual support
-$language = new text;
-$text = $language->get();
+$text = new text()->get();
 
 //add multi-lingual support
 $language2 = new text;

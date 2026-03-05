@@ -94,8 +94,7 @@
 	$permission['xml_cdr_call_center_queues'] = permission_exists('xml_cdr_call_center_queues');
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //set defaults
 	$archive_request = false;

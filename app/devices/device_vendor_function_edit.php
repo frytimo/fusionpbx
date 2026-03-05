@@ -35,8 +35,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //set the defaults
 	$device_vendor_function_uuid = '';
@@ -51,8 +50,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //set the parent uuid
 	if (is_uuid($_GET["device_vendor_uuid"])) {

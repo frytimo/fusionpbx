@@ -48,8 +48,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //retrieve current user's assigned groups (uuids)
 	foreach ($_SESSION['groups'] as $group_data) {

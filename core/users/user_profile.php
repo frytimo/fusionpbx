@@ -29,8 +29,7 @@
 	require_once "resources/check_auth.php";
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //get the user uuid
 	$user_uuid = $_SESSION['user_uuid'];

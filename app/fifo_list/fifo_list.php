@@ -34,8 +34,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 require_once "resources/header.php";
 $document['title'] = $text['title-active_queues'];

@@ -157,8 +157,7 @@ if (empty($user_uuid)) {
 }
 
 // add multi-lingual support
-$language = new text;
-$text = $language->get();
+$text = new text()->get();
 
 // ensure we have a database object
 $database = database::new();

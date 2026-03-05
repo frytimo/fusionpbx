@@ -35,8 +35,7 @@
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //move down more than one level at a time
 //update v_menu_items set menu_item_order = (menu_item_order+1) where menu_item_order > 2 or menu_item_order = 2

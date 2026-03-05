@@ -35,8 +35,7 @@ Mark J Crane <markjcrane@fusionpbx.com>
 	}
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 // retrieve software uuid
 	$sql = "select software_uuid, software_url, software_version from v_software";

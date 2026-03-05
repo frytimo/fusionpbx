@@ -39,8 +39,7 @@ exit;
 */
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 
 $_SESSION['contact_auth']['source'] = ($_SESSION['contact_auth']['source'] == '') ? $_REQUEST['source'] : $_SESSION['contact_auth']['source'];

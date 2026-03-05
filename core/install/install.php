@@ -50,8 +50,7 @@
 	session_start();
 
 //add multi-lingual support
-	$language = new text;
-	$text = $language->get();
+	$text = new text()->get();
 
 //set debug to true or false
 	$debug = false;
