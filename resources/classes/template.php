@@ -101,14 +101,12 @@ class template {
 	 * @return void
 	 */
 	public function assign($key, $value) {
-		if ($this->engine === 'smarty') {
-			$this->object->assign($key, $value);
-		}
 		if ($this->engine === 'raintpl') {
 			$this->object->assign($key, $value);
-		}
-		if ($this->engine === 'twig') {
+		} elseif ($this->engine === 'twig') {
 			$this->var_array[$key] = $value;
+		} else {
+			$this->object->assign($key, $value);
 		}
 	}
 
