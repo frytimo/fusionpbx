@@ -28,9 +28,6 @@
 // includes files
 require_once __DIR__ . "/resources/require.php";
 
-// initialize a template view
-$view = new template(PROJECT_ROOT . '/core/authentication/resources/views/login.tpl');
-
 /** @var url $url */
 global $database, $settings, $user, $url;
 
@@ -39,6 +36,26 @@ $domain_name = $url->get_domain_name();
 
 // add multi-lingual support
 $text = new text()->get(null, '/core/authentication');
+
+// initialize a template view
+$view = new template(PROJECT_ROOT . '/core/authentication/resources/views/login.tpl');
+
+//pre-process some settings
+$theme_favicon                = $settings->get('theme', 'favicon', PROJECT_PATH . '/themes/default/favicon.ico');
+$theme_logo                   = $settings->get('theme', 'logo', PROJECT_PATH . '/themes/default/images/logo_login.png');
+$theme_login_type             = $settings->get('theme', 'login_brand_type', 'image');
+$theme_login_image            = $settings->get('theme', 'login_brand_image', '');
+$theme_login_text             = $settings->get('theme', 'login_brand_text', '');
+$theme_login_logo_width       = $settings->get('theme', 'login_logo_width', 'auto; max-width: 300px');
+$theme_login_logo_height      = $settings->get('theme', 'login_logo_height', 'auto; max-height: 300px');
+$theme_message_delay          = 1000 * (float)$settings->get('theme', 'message_delay', 3000);
+$background_videos            = $settings->get('theme', 'background_video', []);
+$theme_background_video       = (isset($background_videos[0])) ? $background_videos[0] : '';
+$login_domain_name_visible    = $settings->get('login', 'domain_name_visible', false);
+$login_domain_name            = $settings->get('login', 'domain_name');
+$login_destination            = $settings->get('login', 'destination');
+$users_unique                 = $settings->get('users', 'unique', '');
+$login_password_reset_enabled = $settings->get('login', 'password_reset_enabled', false);
 
 // add translations
 $view->assign("login_title", $text['button-login']);
