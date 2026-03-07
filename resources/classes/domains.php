@@ -124,9 +124,9 @@ class domains {
 		$domains = [];
 
 		//get the domains from the database
-		$sql = "select * from v_domains ";
-		$sql .= "where domain_enabled = true ";
-		$sql .= "order by domain_name asc; ";
+		$sql = "select * from v_domains";
+		$sql .= " where domain_enabled = true";
+		$sql .= " order by domain_name asc";
 		$result = $database->select($sql, null, 'all');
 		if (!empty($result)) {
 			foreach ($result as $row) {
@@ -152,9 +152,9 @@ class domains {
 		$domains = [];
 
 		//get the domains from the database
-		$sql = "select * from v_domains ";
-		$sql .= "where domain_enabled = false ";
-		$sql .= "order by domain_name asc; ";
+		$sql = "select * from v_domains";
+		$sql .= " where domain_enabled = false";
+		$sql .= " order by domain_name asc";
 		$result = $database->select($sql, null, 'all');
 		if (!empty($result)) {
 			foreach ($result as $row) {
@@ -400,7 +400,7 @@ class domains {
 		require dirname(__DIR__, 2) . "/resources/require.php";
 
 		//get an array of the default settings UUIDs
-		$sql = "select * from v_default_settings ";
+		$sql = "select * from v_default_settings";
 		$result = $this->database->select($sql, null, 'all');
 		foreach ($result as $row) {
 			$setting[$row['default_setting_uuid']] = 1;
@@ -479,16 +479,16 @@ class domains {
 						$id = $record['uuid'];
 
 						//get the domain using the id
-						$sql = "select domain_name from v_domains ";
-						$sql .= "where domain_uuid = :domain_uuid ";
+						$sql = "select domain_name from v_domains";
+						$sql .= " where domain_uuid = :domain_uuid";
 						$parameters['domain_uuid'] = $id;
 						$domain_name = $this->database->select($sql, $parameters, 'column');
 						unset($sql, $parameters);
 
 						//get the domain settings
-						$sql = "select * from v_domain_settings ";
-						$sql .= "where domain_uuid = :domain_uuid ";
-						$sql .= "and domain_setting_enabled = 'true' ";
+						$sql = "select * from v_domain_settings";
+						$sql .= " where domain_uuid = :domain_uuid";
+						$sql .= " and domain_setting_enabled = 'true'";
 						$parameters['domain_uuid'] = $id;
 						$result = $this->database->select($sql, $parameters, 'all');
 						unset($sql, $parameters);
@@ -672,10 +672,10 @@ class domains {
 
 		//get previous domain settings
 		if (isset($_SESSION["previous_domain_uuid"])) {
-			$sql = "select * from v_domain_settings ";
-			$sql .= "where domain_uuid = :previous_domain_uuid ";
-			$sql .= "and domain_setting_enabled = 'true' ";
-			$sql .= " order by domain_setting_order asc ";
+			$sql = "select * from v_domain_settings";
+			$sql .= " where domain_uuid = :previous_domain_uuid";
+			$sql .= " and domain_setting_enabled = 'true'";
+			$sql .= " order by domain_setting_order asc";
 			$parameters['previous_domain_uuid'] = $_SESSION["previous_domain_uuid"];
 			$result = $this->database->select($sql, $parameters, 'all');
 			unset($sql, $parameters);
@@ -690,8 +690,8 @@ class domains {
 		}
 
 		//get the default settings
-		$sql = "select * from v_default_settings ";
-		$sql .= "order by default_setting_order asc ";
+		$sql = "select * from v_default_settings";
+		$sql .= " order by default_setting_order asc";
 		$result = $this->database->select($sql, null, 'all');
 		unset($sql, $parameters);
 
@@ -729,10 +729,10 @@ class domains {
 		if (!empty($_SESSION["domain_uuid"]) && is_uuid($_SESSION["domain_uuid"])) {
 
 			//get settings from the database
-			$sql = "select * from v_domain_settings ";
-			$sql .= "where domain_uuid = :domain_uuid ";
-			$sql .= "and domain_setting_enabled = 'true' ";
-			$sql .= " order by domain_setting_order asc ";
+			$sql = "select * from v_domain_settings";
+			$sql .= " where domain_uuid = :domain_uuid";
+			$sql .= " and domain_setting_enabled = 'true'";
+			$sql .= " order by domain_setting_order asc";
 			$parameters['domain_uuid'] = $_SESSION["domain_uuid"];
 			$result = $this->database->select($sql, $parameters, 'all');
 			unset($sql, $parameters);
@@ -774,10 +774,10 @@ class domains {
 
 		//get the user settings
 		if (array_key_exists("domain_uuid", $_SESSION) && array_key_exists("user_uuid", $_SESSION) && is_uuid($_SESSION["domain_uuid"])) {
-			$sql = "select * from v_user_settings ";
-			$sql .= "where domain_uuid = :domain_uuid ";
-			$sql .= "and user_uuid = :user_uuid ";
-			$sql .= " order by user_setting_order asc ";
+			$sql = "select * from v_user_settings";
+			$sql .= " where domain_uuid = :domain_uuid";
+			$sql .= " and user_uuid = :user_uuid";
+			$sql .= " order by user_setting_order asc";
 			$parameters['domain_uuid'] = $_SESSION["domain_uuid"];
 			$parameters['user_uuid'] = $_SESSION["user_uuid"];
 			$result = $this->database->select($sql, $parameters, 'all');
@@ -869,8 +869,8 @@ class domains {
 		$domains = [];
 
 		//get the domains from the database
-		$sql = "select * from v_domains ";
-		$sql .= "order by domain_name asc; ";
+		$sql = "select * from v_domains";
+		$sql .= " order by domain_name asc";
 		$result = $database->select($sql, null, 'all');
 		if (!empty($result)) {
 			foreach ($result as $row) {
@@ -880,6 +880,42 @@ class domains {
 
 		//return the domains array
 		return $domains;
+	}
+	/**
+	 * Retrieves a list of all domains from the database.
+	 *
+	 * @return array An array of domain data, where each key is a unique domain UUID and each value is an associative
+	 *               array containing the domain's details.
+	 */
+	public static function enabled($database) {
+
+		//define default return value
+		$domains = [];
+
+		//get the domains from the database
+		$sql = "select * from v_domains";
+		$sql .= " where domain_enabled = true";
+		$sql .= " order by domain_name asc";
+		$result = $database->select($sql, null, 'all');
+		if (!empty($result)) {
+			foreach ($result as $row) {
+				$domains[$row['domain_uuid']] = $row;
+			}
+		}
+
+		//return the domains array
+		return $domains;
+	}
+
+	public static function fetch_domain_uuid(database $database, string $domain_name): string {
+		$sql = "select domain_uuid from v_domains";
+		$sql .= " where domain_name = :domain_name";
+		$parameters['domain_name'] = $domain_name;
+		$result = $database->select($sql, $parameters, 'column');
+		if ($result !== false) {
+			return $result;
+		}
+		return '';
 	}
 
 }

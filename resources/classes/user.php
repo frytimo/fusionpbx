@@ -2,14 +2,13 @@
 
 /*
  * user class - represents a user and provides authentication, authorization, and session management
- * 
+ *
  * This class reflects the database structure of v_users table and provides
  * comprehensive user management functionality including authentication,
  * group membership, permissions, and event handling.
  */
 
 class user implements logout_event, login_event {
-
 	// Database fields from v_users table
 	private $user_uuid;
 	private $domain_uuid;
@@ -26,7 +25,6 @@ class user implements logout_event, login_event {
 	private $insert_user;
 	private $update_date;
 	private $update_user;
-
 	// Additional properties for functionality
 	private $database;
 	private $permissions = [];
@@ -41,7 +39,7 @@ class user implements logout_event, login_event {
 	 */
 	public function __construct(database $database, $user_uuid = null) {
 		$this->database = $database;
-		
+
 		if (!empty($user_uuid) && is_uuid($user_uuid)) {
 			$this->load($user_uuid);
 		}
@@ -140,7 +138,7 @@ class user implements logout_event, login_event {
 				$sql = "SELECT permission_name FROM v_group_permissions WHERE group_uuid = :group_uuid";
 				$parameters['group_uuid'] = $group_uuid;
 				$rows = $this->database->select($sql, $parameters, 'all');
-				
+
 				if (!empty($rows)) {
 					foreach ($rows as $row) {
 						$this->permissions[$row['permission_name']] = true;
@@ -152,7 +150,7 @@ class user implements logout_event, login_event {
 
 	/**
 	 * Authenticate and return a logged-in user object
-	 * 
+	 *
 	 * This is the primary method for user login. It validates credentials,
 	 * creates a user object, and marks the user as logged in.
 	 *
@@ -162,51 +160,51 @@ class user implements logout_event, login_event {
 	 * @param string $password Plain text password to verify
 	 * @return user|null Returns user object on success, null on failure
 	 */
-	public static function login(database $database, string $domain_name, string $username, string $password): ?user {
+	public static function login(database $database, string $domain_uuid, string $username, string $password): ?user {
 		// Query for user with domain check
-		$sql = "SELECT u.user_uuid, u.password 
+		$sql = "SELECT u.user_uuid, u.password
 				FROM v_users u
-				JOIN v_domains d ON u.domain_uuid = d.domain_uuid
-				WHERE u.username = :username 
-				AND d.domain_name = :domain_name 
-				AND u.user_enabled = 'true'";
-		
+				WHERE u.username = :username
+				AND u.domain_uuid = :domain_uuid
+				AND u.user_enabled = 'true'
+		";
+
 		$parameters = [
 			'username' => $username,
-			'domain_name' => $domain_name
+			'domain_uuid' => $domain_uuid
 		];
-		
+
 		$row = $database->select($sql, $parameters, 'row');
-		
+
 		if (empty($row)) {
 			// User not found or disabled
 			return null;
 		}
-		
+
 		// Verify password using PHP's password_verify
 		// This function is secure against timing attacks and handles all password hash types
 		if (!password_verify($password, $row['password'])) {
 			// Password verification failed
 			return null;
 		}
-		
+
 		// Check if password needs rehashing (e.g., if algorithm has been upgraded)
 		if (password_needs_rehash($row['password'], PASSWORD_DEFAULT)) {
 			// TODO: Update password hash in database with new algorithm
 			// This would be done in a separate update method to keep login focused
 		}
-		
+
 		// Create and load the user object
 		$user = new user($database, $row['user_uuid']);
-		
+
 		if (empty($user->user_uuid)) {
 			// Failed to load user data
 			return null;
 		}
-		
+
 		// Mark user as logged in
 		$user->is_logged_in = true;
-		
+
 		// Trigger login event hooks
 		// This allows other parts of the system to respond to login events
 		// Examples of what could be implemented:
@@ -220,11 +218,11 @@ class user implements logout_event, login_event {
 		// - Check for account expiration or password expiration
 		// - Apply domain-specific security policies
 		// - Initialize user activity tracking
-		
+
 		// Call the pre-session create event (if needed by implementing systems)
 		// This would typically be called by the login controller, not here
 		// self::on_login_pre_session_create($settings);
-		
+
 		return $user;
 	}
 
@@ -389,10 +387,12 @@ class user implements logout_event, login_event {
 	 * @return array Sorted array of users
 	 */
 	public static function sort_by_username(array $users, bool $ascending = true): array {
-		usort($users, function($a, $b) use ($ascending) {
+		usort($users, function ($a, $b) use ($ascending) {
 			$result = self::compare_by_username($a, $b);
+
 			return $ascending ? $result : -$result;
 		});
+
 		return $users;
 	}
 
@@ -404,20 +404,22 @@ class user implements logout_event, login_event {
 	 * @return array Sorted array of users
 	 */
 	public static function sort_by_email(array $users, bool $ascending = true): array {
-		usort($users, function($a, $b) use ($ascending) {
+		usort($users, function ($a, $b) use ($ascending) {
 			$result = self::compare_by_email($a, $b);
+
 			return $ascending ? $result : -$result;
 		});
+
 		return $users;
 	}
 
 	/**
 	 * Implementation of logout_event interface
 	 * Executed before the session is destroyed
-	 * 
+	 *
 	 * This method is called by the logout controller before destroying the session.
 	 * Implementing this allows various subsystems to perform cleanup operations.
-	 * 
+	 *
 	 * Implementation examples:
 	 * - Log the logout event to audit trail with timestamp and IP address
 	 * - Update last_logout_date in the database
@@ -436,11 +438,11 @@ class user implements logout_event, login_event {
 	public static function on_logout_pre_session_destroy(settings $settings): void {
 		// Implementation would go here
 		// This is typically called by logout.php in the application
-		
+
 		// Example implementation:
 		// if (isset($_SESSION['user_uuid']) && is_uuid($_SESSION['user_uuid'])) {
 		//     $database = database::new();
-		//     
+		//
 		//     // Log the logout event
 		//     $sql = "INSERT INTO v_user_logs (user_log_uuid, user_uuid, log_type, log_date, ip_address)
 		//             VALUES (:user_log_uuid, :user_uuid, 'logout', NOW(), :ip_address)";
@@ -456,10 +458,10 @@ class user implements logout_event, login_event {
 	/**
 	 * Implementation of logout_event interface
 	 * Executed after the session is destroyed
-	 * 
+	 *
 	 * This method is called by the logout controller after destroying the session.
 	 * At this point, session data is no longer available.
-	 * 
+	 *
 	 * Implementation examples:
 	 * - Redirect to login page
 	 * - Display logout confirmation message
@@ -473,7 +475,7 @@ class user implements logout_event, login_event {
 	public static function on_logout_post_session_destroy(settings $settings): void {
 		// Implementation would go here
 		// This is typically called by logout.php in the application
-		
+
 		// Example implementation:
 		// setcookie('remember_me', '', time() - 3600, '/');
 		// header('Location: /login.php?logout=success');
@@ -483,10 +485,10 @@ class user implements logout_event, login_event {
 	/**
 	 * Implementation of login_event interface
 	 * Executed before the session is created
-	 * 
+	 *
 	 * This method is called by the login controller before creating the session.
 	 * This is useful for validation, logging, and preparation tasks.
-	 * 
+	 *
 	 * Implementation examples:
 	 * - Check if user account is locked due to too many failed attempts
 	 * - Verify that user's account hasn't expired
@@ -503,7 +505,7 @@ class user implements logout_event, login_event {
 	 * - Verify IP whitelist/blacklist
 	 * - Initialize pre-session temporary storage
 	 * - Send login attempt notification (security alert)
-	 * 
+	 *
 	 * The method should throw an exception or return false to prevent login.
 	 *
 	 * @param settings $settings System settings object
@@ -512,34 +514,34 @@ class user implements logout_event, login_event {
 	public static function on_login_pre_session_create(settings $settings): void {
 		// Implementation would go here
 		// This is typically called by login.php in the application
-		
+
 		// Example implementation:
 		// $database = database::new();
 		// $user_uuid = $_POST['user_uuid'] ?? null;
-		// 
+		//
 		// if ($user_uuid) {
 		//     // Check failed login attempts
-		//     $sql = "SELECT COUNT(*) as attempt_count 
-		//             FROM v_user_logs 
-		//             WHERE user_uuid = :user_uuid 
+		//     $sql = "SELECT COUNT(*) as attempt_count
+		//             FROM v_user_logs
+		//             WHERE user_uuid = :user_uuid
 		//             AND log_type = 'login_failed'
 		//             AND log_date > (NOW() - INTERVAL '15 minutes')";
 		//     $parameters = ['user_uuid' => $user_uuid];
 		//     $row = $database->select($sql, $parameters, 'row');
-		//     
+		//
 		//     if ($row['attempt_count'] >= 5) {
 		//         throw new Exception('Account temporarily locked due to too many failed login attempts');
 		//     }
-		//     
+		//
 		//     // Check for password expiration
-		//     $sql = "SELECT password_updated_date 
-		//             FROM v_users 
+		//     $sql = "SELECT password_updated_date
+		//             FROM v_users
 		//             WHERE user_uuid = :user_uuid";
 		//     $row = $database->select($sql, $parameters, 'row');
-		//     
+		//
 		//     $password_age = strtotime('now') - strtotime($row['password_updated_date']);
 		//     $max_password_age = 90 * 24 * 3600; // 90 days
-		//     
+		//
 		//     if ($password_age > $max_password_age) {
 		//         $_SESSION['password_change_required'] = true;
 		//     }
@@ -549,10 +551,10 @@ class user implements logout_event, login_event {
 	/**
 	 * Implementation of login_event interface
 	 * Executed after the session is created
-	 * 
+	 *
 	 * This method is called by the login controller after creating the session.
 	 * At this point, the user is authenticated and session is established.
-	 * 
+	 *
 	 * Implementation examples:
 	 * - Log successful login to audit trail with IP, timestamp, user agent
 	 * - Update last_login_date in the database
@@ -581,11 +583,11 @@ class user implements logout_event, login_event {
 	public static function on_login_post_session_create(settings $settings): void {
 		// Implementation would go here
 		// This is typically called by login.php in the application
-		
+
 		// Example implementation:
 		// if (isset($_SESSION['user_uuid']) && is_uuid($_SESSION['user_uuid'])) {
 		//     $database = database::new();
-		//     
+		//
 		//     // Log successful login
 		//     $sql = "INSERT INTO v_user_logs (user_log_uuid, user_uuid, log_type, log_date, ip_address, user_agent)
 		//             VALUES (:user_log_uuid, :user_uuid, 'login_success', NOW(), :ip_address, :user_agent)";
@@ -596,22 +598,22 @@ class user implements logout_event, login_event {
 		//         'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? ''
 		//     ];
 		//     $database->execute($sql, $parameters);
-		//     
+		//
 		//     // Update last login date
 		//     $sql = "UPDATE v_users SET last_login_date = NOW() WHERE user_uuid = :user_uuid";
 		//     $parameters = ['user_uuid' => $_SESSION['user_uuid']];
 		//     $database->execute($sql, $parameters);
-		//     
+		//
 		//     // Load user preferences
 		//     $user = new user($database, $_SESSION['user_uuid']);
 		//     $_SESSION['username'] = $user->get_username();
 		//     $_SESSION['user_email'] = $user->get_user_email();
 		//     $_SESSION['groups'] = $user->get_groups();
 		//     $_SESSION['permissions'] = $user->get_permissions();
-		//     
+		//
 		//     // Set session timeout based on settings
 		//     ini_set('session.gc_maxlifetime', $settings->get('session', 'timeout', '7200'));
-		//     
+		//
 		//     // Redirect to appropriate page
 		//     if (isset($_SESSION['password_change_required'])) {
 		//         header('Location: /core/users/user_password.php');
@@ -622,6 +624,47 @@ class user implements logout_event, login_event {
 		// }
 	}
 
-}
+	/**
+	 * Parse a username to extract the domain if it is in the format username@domain
+	 *
+	 * The POST data has priority over the URL data, but if the username is in the
+	 * format of username@domain, it will attempt to extract the domain from the
+	 * username. If the domain is not provided in the POST data, it will attempt
+	 * to get it from the URL. This allows for flexible login formats while
+	 * maintaining security by validating the domain format.
+	 *
+	 * @param url $url URL object to get the domain name if not provided
+	 *
+	 * @return array The extracted username, password, and domain name
+	 * @throws Exception If the username format is invalid
+	 */
+	public static function from_post_and_url(url $url): array {
+		$username = $_POST['username'] ?? $url->get_username() ?? '';
+		$password = $_POST['password'] ?? $url->get_password() ?? '';
+		$domain_name = $_POST['domain_name'] ?? $url->get_domain_name() ?? '';
+		if (strpos($username, '@') !== false) {
+			$pieces = explode('@', $username);
+			$domain_name = $pieces[1];
+			$username = $pieces[0];
+		}
 
-?>
+		// Validate the domain part to prevent injection or invalid formats
+		if (preg_match('/^[a-zA-Z0-9-]+$/', $domain_name) !== 1) {
+			// Invalid domain format, do not attempt to use it
+			return [];
+		}
+
+		// Validate the username to prevent injection or invalid formats
+		if (preg_match('/^[a-zA-Z0-9._-]+$/', $username) !== 1) {
+			// Invalid username format, do not attempt to use it
+			return [];
+		}
+
+		// Prohibit empty password
+		if (empty($password)) {
+			return [];
+		}
+
+		return [$username, $password, $domain_name];
+	}
+}

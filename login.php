@@ -37,6 +37,34 @@ $domain_name = $url->get_domain_name();
 // add multi-lingual support
 $text = new text()->get(null, '/core/authentication');
 
+// if the post is not empty then process the login
+if (!empty($_POST)) {
+
+	// Parse the username, password, and domain name from the POST data and URL
+	$parts = user::from_post_and_url($url);
+	$username = $parts[0] ?? '';
+	$password = $parts[1] ?? '';
+	$domain_name = $parts[2] ?? '';
+
+	$domain_uuid = domains::fetch_domain_uuid($database, $domain_name);
+
+	if (!empty($username) && !empty($password) && !empty($domain_uuid)) {
+		// Attempt to log in the user
+		$user = user::login($database, $domain_uuid, $username, $password);
+	} else {
+		$user = new user($database);
+	}
+
+	if (!$user->is_logged_in()) {
+		message::add($text['message-invalid_credentials'], 'negative');
+	}
+}
+
+// if the user is already authenticated then redirect them to the default page
+if ($user->is_authenticated()) {
+	$url->redirect(PROJECT_PATH . "/core/dashboard/dashboard.php");
+}
+
 // initialize a template view
 $view = new template(PROJECT_ROOT . '/core/authentication/resources/views/login.tpl');
 
