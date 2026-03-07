@@ -665,8 +665,11 @@ abstract class app {
 		// Isolates the apps array to prevent unintended side effects from including app_config.php files.
 		self::$applications = [];
 
-		// get the list of installed apps from the core and mod directories
-		$config_list = glob(dirname(__DIR__, 2) . "/*/*/app_config.php");
+		// get the list of installed apps from the app and core directories
+		$config_list = array_merge(
+			(array) glob(dirname(__DIR__, 2) . "/app/*/app_config.php"),
+			(array) glob(dirname(__DIR__, 2) . "/core/*/app_config.php")
+		);
 
 		//
 		// $x is used for compatibility with the old code to build a global array of "$apps"
@@ -699,7 +702,9 @@ abstract class app {
 					syslog(LOG_ERR, "Failed to include file $config_path");
 				} else {
 					// Successful include so assign the individual $apps array from the included file to the applications array
-					self::$applications[] = $apps[0];
+					if (!empty($apps[0]) && is_array($apps[0])) {
+						self::$applications[] = $apps[0];
+					}
 				}
 			} catch (Throwable $e) {
 				// Exception thrown while trying to include the file. Log the error message and skip loading that file.

@@ -39,7 +39,17 @@ class pgsql_db implements database_provider {
 
 	public function fetch_row(string $sql, ?array $parameters = []): array {
 		$prep_statement = $this->db->prepare($sql);
-		$prep_statement->execute($parameters);
+		try {
+			$prep_statement->execute($parameters);
+		} catch (PDOException $e) {
+			if ($e->getCode() === '25P02' && $this->db->inTransaction()) {
+				$this->db->rollBack();
+				$prep_statement = $this->db->prepare($sql);
+				$prep_statement->execute($parameters);
+			} else {
+				throw $e;
+			}
+		}
 
 		$result = $prep_statement->fetch(PDO::FETCH_ASSOC);
 		if ($result === false) {
@@ -50,14 +60,34 @@ class pgsql_db implements database_provider {
 
 	public function fetch_all(string $sql, ?array $parameters = []): array {
 		$prep_statement = $this->db->prepare($sql);
-		$prep_statement->execute($parameters);
+		try {
+			$prep_statement->execute($parameters);
+		} catch (PDOException $e) {
+			if ($e->getCode() === '25P02' && $this->db->inTransaction()) {
+				$this->db->rollBack();
+				$prep_statement = $this->db->prepare($sql);
+				$prep_statement->execute($parameters);
+			} else {
+				throw $e;
+			}
+		}
 
 		return $prep_statement->fetchAll(PDO::FETCH_ASSOC);
 	}
 
 	public function fetch_column(string $sql, ?array $parameters = []): string {
 		$prep_statement = $this->db->prepare($sql);
-		$prep_statement->execute($parameters);
+		try {
+			$prep_statement->execute($parameters);
+		} catch (PDOException $e) {
+			if ($e->getCode() === '25P02' && $this->db->inTransaction()) {
+				$this->db->rollBack();
+				$prep_statement = $this->db->prepare($sql);
+				$prep_statement->execute($parameters);
+			} else {
+				throw $e;
+			}
+		}
 
 		return $prep_statement->fetchColumn();
 	}

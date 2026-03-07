@@ -37,8 +37,8 @@ class schema {
 	private $db_name;
 	private $schema_info;
 
-	// define private static variables
-	private static $applications = null;
+	// define private variables
+	private $applications = [];
 
 	/**
 	 * Constructor for the class.
@@ -57,16 +57,18 @@ class schema {
 		// open a database connection
 		$this->database = $setting_array['database'] ?? database::new();
 
-		$this->applications = is_array($apps) ? $apps : [];
+		// build the applications list from app_config providers
+		$this->applications = app::list();
 
-		// set the db_type
-		$this->db_type = $db_type;
+		// set the db_type with fallbacks for CLI/upgrade contexts
+		$this->db_type = $setting_array['db_type'] ?? $db_type ?? $this->database->type ?? $this->database->driver ?? 'pgsql';
 
-		// set the db_name
-		$this->db_name = $db_name;
+		// set the db_name with fallback to active database connection
+		$this->db_name = $setting_array['db_name'] ?? $db_name ?? $this->database->db_name ?? null;
 
 		// get the table info
 		if ($this->db_type == "pgsql") {
+			$catalog_name = $this->db_name ?? $db_name ?? '';
 			$sql = "SELECT *, ordinal_position, ";
 			$sql .= "table_name, ";
 			$sql .= "column_name, ";
@@ -76,11 +78,11 @@ class schema {
 			$sql .= "character_maximum_length, ";
 			$sql .= "numeric_precision ";
 			$sql .= "FROM information_schema.columns ";
-			$sql .= "WHERE table_catalog = '" . $db_name . "' ";
+			$sql .= "WHERE table_catalog = :table_catalog ";
 			$sql .= "and table_schema not in ('pg_catalog', 'information_schema') ";
 			$sql .= "ORDER BY ordinal_position; ";
-			$schema = $this->database->select($sql, null, 'all');
-			foreach ($schema as $row) {
+			$schema = $this->database->select($sql, ['table_catalog' => $catalog_name], 'all');
+			foreach (($schema ?? []) as $row) {
 				$this->schema_info[$row['table_name']][] = $row;
 			}
 		}
@@ -97,12 +99,16 @@ class schema {
 	public function sql() {
 		$sql = '';
 		$sql_schema = '';
+		$create_prefix = 'CREATE TABLE ';
+		if (in_array($this->db_type, ['pgsql', 'mysql', 'sqlite'])) {
+			$create_prefix = 'CREATE TABLE IF NOT EXISTS ';
+		}
 		foreach ($this->applications as $app) {
 			if (isset($app['db']) && count($app['db'])) {
 				foreach ($app['db'] as $row) {
 					// create the sql string
 					$table_name = $row['table']['name'];
-					$sql = "CREATE TABLE " . $row['table']['name'] . " (\n";
+					$sql = $create_prefix . $row['table']['name'] . " (\n";
 					$field_count = 0;
 					foreach ($row['fields'] as $field) {
 						if (!empty($field['deprecated']) and ($field['deprecated'] == "true")) {
@@ -117,7 +123,7 @@ class schema {
 								$sql .= $field['name'] . " ";
 							}
 							if (is_array($field['type'])) {
-								$sql .= $field['type'][$this->db_type];
+								$sql .= $field['type'][$this->db_type] ?? reset($field['type']) ?? '';
 							} else {
 								$sql .= $field['type'];
 							}
@@ -337,7 +343,7 @@ class schema {
 								} else {
 									// get the data type
 									if (is_array($field['type'])) {
-										$field_type = $field['type'][$this->db_type];
+										$field_type = $field['type'][$this->db_type] ?? reset($field['type']) ?? '';
 									} else {
 										$field_type = $field['type'];
 									}
@@ -545,7 +551,7 @@ class schema {
 											$field_name = $field['name'];
 										}
 										if (is_array($field['type'])) {
-											$field_type = $field['type'][$this->db_type];
+											$field_type = $field['type'][$this->db_type] ?? reset($field['type']) ?? '';
 										} else {
 											$field_type = $field['type'];
 										}
@@ -631,6 +637,15 @@ class schema {
 
 		// update database foreign key indexes
 		$this->database->update_indexes();
+
+		// guard against any leaked aborted transaction state before the next upgrade stage
+		if ($this->db_type === 'pgsql') {
+			try {
+				$this->database->execute('ROLLBACK;');
+			} catch (Throwable $e) {
+				// ignore: no active transaction or non-fatal rollback warning
+			}
+		}
 
 		// handle response
 		return $response;
@@ -839,6 +854,10 @@ class schema {
 	 * @return string|null The SQL statement to create the table, or null if no match is found.
 	 */
 	public function create_table($table) {
+		$create_prefix = 'CREATE TABLE ';
+		if (in_array($this->db_type, ['pgsql', 'mysql', 'sqlite'])) {
+			$create_prefix = 'CREATE TABLE IF NOT EXISTS ';
+		}
 		if (is_array($this->applications)) {
 			foreach ($this->applications as $x => $app) {
 				if (!empty($app['db']) && is_array($app['db'])) {
@@ -849,7 +868,7 @@ class schema {
 							$table_name = $row['table']['name'];
 						}
 						if ($table_name == $table) {
-							$sql = "CREATE TABLE " . $table_name . " (\n";
+							$sql = $create_prefix . $table_name . " (\n";
 							(int) $field_count = 0;
 							if (!empty($row['fields']) && is_array($row['fields'])) {
 								foreach ($row['fields'] as $field) {
@@ -865,7 +884,8 @@ class schema {
 											$sql .= $field['name'] . " ";
 										}
 										if (!empty($field['type']) && is_array($field['type'])) {
-											$sql .= $field['type'][$this->db_type];
+											$field_type = $field['type'][$this->db_type] ?? reset($field['type']) ?? '';
+											$sql .= $field_type;
 										} else {
 											$sql .= $field['type'];
 										}
@@ -1025,17 +1045,14 @@ class schema {
 	 * @param string $name
 	 *
 	 * @return boolean <b>true</b> on success and <b>false</b> on failure
-	 * @see  database::get_apps()
-	 * @uses self::$apps directly
+	 * @see  app::list()
 	 */
 	public static function domain_uuid_exists($name) {
-		// get the $apps array from the installed apps from the core and mod directories
-		if (count(self::$apps) == 0) {
-			self::get_apps();
-		}
+		// get the app list from configured app providers
+		$apps = app::list();
 
 		// search through all fields to see if domain_uuid exists
-		foreach (self::$apps as $x => &$app) {
+		foreach ($apps as $x => &$app) {
 			if (is_array($app['db'])) {
 				foreach ($app['db'] as $y => $row) {
 					if (is_array($row['table']['name'])) {

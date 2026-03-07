@@ -724,7 +724,12 @@ class database {
 	 * @return boolean Returns <i>true</i> if the table exists and <i>false</i> if it does not.
 	 * @depends connect()
 	 */
-	public function table_exists(string $table_name) {
+	public function table_exists(string $table_name, ?string $legacy_db_name = null, ?string $legacy_table_name = null) {
+		// Backward compatibility for legacy calls: table_exists($db_type, $db_name, $table_name)
+		if ($legacy_table_name !== null) {
+			$table_name = $legacy_table_name;
+		}
+
 		if (self::sanitize($table_name) != $table_name) {
 			trigger_error('Table Name must be sanitized', E_USER_WARNING);
 
@@ -2982,6 +2987,7 @@ class database {
 	 * @return array shows list of views, list of views that were updated
 	 */
 	public function views(string $action) {
+		$drop_if_exists = ($this->type === 'pgsql') ? 'DROP VIEW IF EXISTS ' : 'DROP VIEW ';
 		$files = glob(dirname(__DIR__, 2) . '/*/*/resources/database/views/*.php');
 		foreach ($files as $id => $file) {
 			$view = [];
@@ -3012,7 +3018,7 @@ class database {
 					// $view_version = $row['version'];
 					// $view_description = $row['description'];
 
-					$sql = 'DROP VIEW ' . $view_name . "\n";
+					$sql = $drop_if_exists . $view_name . ";\n";
 					$this->execute($sql);
 
 					// create and run the view sql
@@ -3042,7 +3048,7 @@ class database {
 					$view_name = $row['name'];
 
 					// create and run the view sql
-					$sql = 'DROP VIEW ' . $view_name . ';';
+					$sql = $drop_if_exists . $view_name . ';';
 					$this->execute($sql);
 
 					// build the return array

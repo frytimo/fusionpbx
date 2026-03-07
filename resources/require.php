@@ -33,7 +33,9 @@ if (!defined('STDIN') && (!function_exists('apcu_enabled') || !apcu_enabled())) 
 	die('APCu extension is required and must be enabled');
 }
 
-define('PROJECT_ROOT', dirname(__DIR__));
+if (!defined('PROJECT_ROOT')) {
+	define('PROJECT_ROOT', dirname(__DIR__));
+}
 
 // class auto loader
 if (!class_exists('auto_loader')) {

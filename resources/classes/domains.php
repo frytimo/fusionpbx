@@ -335,15 +335,21 @@ class domains {
 		//save the database object to be used by app_defaults.php
 		$database = $this->database;
 
+		// legacy variables expected by some app_defaults.php scripts
+		$db_type = $database->type ?? $database->driver ?? '';
+		$db_name = $database->db_name ?? '';
+
 		//get the variables
 		$config = new config;
 		$config_path = $config->config_file;
 
-		//get the list of installed apps from the core and app directories (note: GLOB_BRACE doesn't work on some systems)
-		$config_list_1 = glob(dirname(__DIR__, 2) . "/*/*/app_config.php");
-		$config_list_2 = glob(dirname(__DIR__, 2) . "/*/*/app_menu.php");
-		$config_list = array_merge((array)$config_list_1, (array)$config_list_2);
-		unset($config_list_1, $config_list_2);
+		//get the list of installed apps from the app and core directories
+		$config_list_1 = glob(dirname(__DIR__, 2) . "/app/*/app_config.php");
+		$config_list_2 = glob(dirname(__DIR__, 2) . "/core/*/app_config.php");
+		$config_list_3 = glob(dirname(__DIR__, 2) . "/app/*/app_menu.php");
+		$config_list_4 = glob(dirname(__DIR__, 2) . "/core/*/app_menu.php");
+		$config_list = array_merge((array)$config_list_1, (array)$config_list_2, (array)$config_list_3, (array)$config_list_4);
+		unset($config_list_1, $config_list_2, $config_list_3, $config_list_4);
 		$x = 0;
 		foreach ($config_list as $config_path) {
 			$app_path = dirname($config_path);
@@ -408,7 +414,10 @@ class domains {
 		unset($sql);
 
 		//get the list of default settings
-		$config_list = glob(dirname(__DIR__, 2) . "/*/*/app_config.php");
+		$config_list = array_merge(
+			(array) glob(dirname(__DIR__, 2) . "/app/*/app_config.php"),
+			(array) glob(dirname(__DIR__, 2) . "/core/*/app_config.php")
+		);
 		$x = 0;
 		foreach ($config_list as $config_path) {
 			include($config_path);
@@ -516,8 +525,11 @@ class domains {
 						}
 						unset($result, $row);
 
-						//get the $apps array from the installed apps from the core and mod directories
-						$config_list = glob(dirname(__DIR__, 2) . "/*/*/app_config.php");
+						//get the $apps array from the installed apps from the app and core directories
+						$config_list = array_merge(
+							(array) glob(dirname(__DIR__, 2) . "/app/*/app_config.php"),
+							(array) glob(dirname(__DIR__, 2) . "/core/*/app_config.php")
+						);
 						$x = 0;
 						if (isset($config_list)) foreach ($config_list as $config_path) {
 							include($config_path);
