@@ -46,7 +46,7 @@ $app_uuid = $_REQUEST['app_uuid'] ?? '';
 $dialplan_xml = $_REQUEST['dialplan_xml'] ?? '';
 
 // check the dialplan_uuid is a uuid
-if (!empty($dialplan_uuid) && !is_uuid($dialplan_uuid)) {
+if (!is_uuid($dialplan_uuid)) {
 	echo "invalid dialplan uuid";
 	exit;
 }
@@ -225,7 +225,7 @@ $setting_numbering = $settings->get('editor', 'line_numbers', 'true');
 
 // set the button back link
 if (is_array($dialplan_uuid)) {
-	$button_back_link = 'dialplan_edit.php?id=' . urlencode($dialplan_uuid) . (!empty($app_uuid) && is_uuid($app_uuid) ? "&app_uuid=" . urlencode($app_uuid) : null);
+	$button_back_link = 'dialplan_edit.php?id=' . urlencode($dialplan_uuid[0]) . (!empty($app_uuid) && is_uuid($app_uuid) ? "&app_uuid=" . urlencode($app_uuid) : null);
 } else {
 	$button_back_link = 'dialplans.php';
 }
