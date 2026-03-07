@@ -92,6 +92,28 @@ abstract class app {
 		}
 	}
 
+	public function set_domain_uuid(string $domain_uuid): void {
+		if (empty($domain_uuid) || !is_uuid($domain_uuid)) {
+			throw new InvalidArgumentException("Invalid domain UUID: $domain_uuid");
+		}
+		$this->domain_uuid = $domain_uuid;
+	}
+
+	public function get_domain_uuid(): ?string {
+		return $this->domain_uuid;
+	}
+
+	public function set_user_uuid(string $user_uuid): void {
+		if (empty($user_uuid) || !is_uuid($user_uuid)) {
+			throw new InvalidArgumentException("Invalid user UUID: $user_uuid");
+		}
+		$this->user_uuid = $user_uuid;
+	}
+
+	public function get_user_uuid(): ?string {
+		return $this->user_uuid;
+	}
+
 	//
 	// Hook Dispatch Infrastructure
 	//
