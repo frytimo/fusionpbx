@@ -42,6 +42,7 @@ if (!class_exists('auto_loader')) {
 	$autoload = new auto_loader($enable_cache);
 }
 
+// Use a global url instance that parses all requests and provides utility functions for working with URLs.
 global $url;
 $url = new url();
 
