@@ -881,32 +881,6 @@ class domains {
 		//return the domains array
 		return $domains;
 	}
-	/**
-	 * Retrieves a list of all domains from the database.
-	 *
-	 * @return array An array of domain data, where each key is a unique domain UUID and each value is an associative
-	 *               array containing the domain's details.
-	 */
-	public static function enabled($database) {
-
-		//define default return value
-		$domains = [];
-
-		//get the domains from the database
-		$sql = "select * from v_domains";
-		$sql .= " where domain_enabled = true";
-		$sql .= " order by domain_name asc";
-		$result = $database->select($sql, null, 'all');
-		if (!empty($result)) {
-			foreach ($result as $row) {
-				$domains[$row['domain_uuid']] = $row;
-			}
-		}
-
-		//return the domains array
-		return $domains;
-	}
-
 	public static function fetch_domain_uuid(database $database, string $domain_name): string {
 		$sql = "select domain_uuid from v_domains";
 		$sql .= " where domain_name = :domain_name";

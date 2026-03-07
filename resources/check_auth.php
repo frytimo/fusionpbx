@@ -39,11 +39,43 @@ if (function_exists('session_start')) {
 	}
 }
 
-$user = new user($database);
-
-// check the authentication
-if (!$user->is_logged_in()) {
-	// redirect to the login page
+// check the authentication and required session context
+if (empty($_SESSION['authorized']) || empty($_SESSION['user_uuid']) || empty($_SESSION['domain_uuid'])) {
 	$url->redirect('/login.php');
+	exit;
+// set the domains session if not already set
+if (!isset($_SESSION['domains'])) {
+	$domain = new domains();
+	$domain->session();
+	$domain->set();
+}
+
+}
+
+// build the session server array to validate the session fingerprint
+global $conf;
+if (!isset($conf['session.validate'])) {
+	$conf['session.validate'][] = 'HTTP_USER_AGENT';
+} elseif (!is_array($conf['session.validate'])) {
+	$conf['session.validate'] = [$conf['session.validate']];
+}
+
+$server_array = [];
+foreach ($conf['session.validate'] as $name) {
+	$server_array[$name] = $_SERVER[$name] ?? '';
+}
+
+$calculated_hash = hash('sha256', implode($server_array));
+
+// destroy and redirect when the session fingerprint no longer matches
+if (empty($_SESSION['user_hash']) || !hash_equals((string) $_SESSION['user_hash'], $calculated_hash)) {
+	error_log(
+		"FusionPBX session validation failed for user " . ($_SESSION['user']['username'] ?? 'unknown') .
+		" on domain " . ($_SESSION['domain_name'] ?? 'unknown') .
+		" using keys [" . implode(',', $conf['session.validate']) . "]"
+	);
+	session_unset();
+	session_destroy();
+	$url->redirect('/login.php?login_error=session_validation_failed');
 	exit;
 }

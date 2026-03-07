@@ -81,7 +81,8 @@ if (!is_cli() && empty($no_session) && session_status() === PHP_SESSION_NONE) {
 
 // load settings
 global $settings;
-$settings = new settings(['database' => $database, 'domain_uuid' => $_SESSION['domain_uuid'] ?? $domain_uuid, 'user_uuid' => $_SESSION['user_uuid'] ?? '']);
+$session_domain_uuid = $_SESSION['domain_uuid'] ?? '';
+$settings = new settings(['database' => $database, 'domain_uuid' => $session_domain_uuid, 'user_uuid' => $_SESSION['user_uuid'] ?? '']);
 
 // check if the cidr range is valid
 global $no_cidr;

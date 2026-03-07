@@ -101,6 +101,11 @@ class authentication {
 		// check if contacts app exists
 		$contacts_exists = file_exists(dirname(__DIR__, 4) . '/core/contacts/');
 
+		// ensure plugin container exists
+		if (!isset($_SESSION['authentication']['plugin']) || !is_array($_SESSION['authentication']['plugin'])) {
+			$_SESSION['authentication']['plugin'] = [];
+		}
+
 		// use the authentication plugins
 		foreach ($_SESSION['authentication']['methods'] as $name) {
 			// already processed the plugin move to the next plugin
@@ -156,7 +161,7 @@ class authentication {
 				}
 
 				// plugin authorized false
-				if (!$result['authorized']) {
+				if (!is_array($result) || empty($result['authorized'])) {
 					break;
 				}
 			}
@@ -167,11 +172,11 @@ class authentication {
 			foreach ($_SESSION['authentication']['methods'] as $name) {
 				if (!isset($_SESSION['authentication']['plugin'][$name]['authorized'])) {
 					$_SESSION['authentication']['plugin'][$name]['plugin'] = $name;
-					$_SESSION['authentication']['plugin'][$name]['domain_name'] = $_SESSION['domain_name'];
-					$_SESSION['authentication']['plugin'][$name]['domain_uuid'] = $_SESSION['domain_uuid'];
-					$_SESSION['authentication']['plugin'][$name]['username'] = $_SESSION['username'];
-					$_SESSION['authentication']['plugin'][$name]['user_uuid'] = $_SESSION['user_uuid'];
-					$_SESSION['authentication']['plugin'][$name]['user_email'] = $_SESSION['user_email'];
+					$_SESSION['authentication']['plugin'][$name]['domain_name'] = $_SESSION['domain_name'] ?? null;
+					$_SESSION['authentication']['plugin'][$name]['domain_uuid'] = $_SESSION['domain_uuid'] ?? null;
+					$_SESSION['authentication']['plugin'][$name]['username'] = $_SESSION['username'] ?? null;
+					$_SESSION['authentication']['plugin'][$name]['user_uuid'] = $_SESSION['user_uuid'] ?? null;
+					$_SESSION['authentication']['plugin'][$name]['user_email'] = $_SESSION['user_email'] ?? null;
 					$_SESSION['authentication']['plugin'][$name]['authorized'] = false;
 				}
 			}
@@ -185,8 +190,8 @@ class authentication {
 		$plugin_name = '';
 		if (is_array($_SESSION['authentication']['plugin'])) {
 			foreach ($_SESSION['authentication']['plugin'] as $row) {
-				$plugin_name = $row['plugin'];
-				if ($row["authorized"]) {
+				$plugin_name = $row['plugin'] ?? '';
+				if (!empty($row["authorized"])) {
 					$authorized = true;
 				} else {
 					$authorized = false;
@@ -215,8 +220,27 @@ class authentication {
 		// set a session variable to indicate whether or not we are authorized
 		$_SESSION['authorized'] = $authorized;
 
+		// add a concise server log entry for denied login attempts to aid troubleshooting
+		if (!$authorized) {
+			error_log(
+				"FusionPBX login denied"
+				. " username=" . ($_REQUEST['username'] ?? $_SESSION['username'] ?? 'unknown')
+				. " domain=" . ($this->domain_name ?? $_SESSION['domain_name'] ?? 'unknown')
+				. " plugin=" . ($plugin_name ?: 'unknown')
+				. " reason=" . ($failed_login_message ?? 'not_authorized')
+			);
+		}
+
 		// log the attempt
-		user_logs::add($_SESSION['authentication']['plugin'][$name], $failed_login_message);
+		$log_row = $_SESSION['authentication']['plugin'][$name] ?? [
+			'plugin' => $name ?? 'unknown',
+			'domain_name' => $_SESSION['domain_name'] ?? null,
+			'domain_uuid' => $_SESSION['domain_uuid'] ?? null,
+			'username' => $_SESSION['username'] ?? null,
+			'user_uuid' => $_SESSION['user_uuid'] ?? null,
+			'authorized' => $authorized,
+		];
+		user_logs::add($log_row, $failed_login_message);
 
 		// return the result
 		return $result ?? false;
@@ -278,13 +302,9 @@ class authentication {
 				$class::on_login_pre_session_create($settings);
 			}
 		} catch (Exception $e) {
-			// Messages are not available without a session so just return to the login page with no message.
-			// TODO: solve adding the error message to the login page when the session is not created.
-			//   1. Create a temporary session just for the message and then clear it on the login page after displaying the message.
-			//   2. Add the message to the URL as a parameter and then display it on the login page.
-			//   3. Create a cookie with the message and then clear it on the login page after displaying the message.
-			//   4. Create a temporary file with the message and then delete it after displaying the message on the login page.
-			header("Location: login.php");
+			// Log the failing listener and message because this path previously failed silently.
+			error_log("FusionPBX login pre-session denied by " . ($class ?? 'unknown_listener') . ": " . $e->getMessage());
+			header("Location: " . PROJECT_PATH . "/login.php?login_error=pre_session_denied");
 			exit();
 		}
 
@@ -321,7 +341,7 @@ class authentication {
 				$conf['session.validate'] = [$conf['session.validate']];
 			}
 			foreach ($conf['session.validate'] as $name) {
-				$server_array[$name] = $_SERVER[$name];
+				$server_array[$name] = $_SERVER[$name] ?? '';
 			}
 
 			// Save the user hash to be used in check_auth
@@ -504,6 +524,12 @@ class authentication {
 
 		// set a default value for unqiue
 		$_SESSION["users"]["unique"]["text"] = $this->settings->get('users', 'unique', '');
+
+		// ensure domains are available during authentication before looping over them
+		if (!isset($_SESSION['domains']) || !is_array($_SESSION['domains'])) {
+			$domain = new domains(['database' => $this->database]);
+			$domain->session();
+		}
 
 		// get the domain name from the username
 		if (!empty($_SESSION['username']) && $this->settings->get('users', 'unique', '') != "global") {

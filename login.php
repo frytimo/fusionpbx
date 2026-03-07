@@ -39,30 +39,26 @@ $text = new text()->get(null, '/core/authentication');
 
 // if the post is not empty then process the login
 if (!empty($_POST)) {
-
-	// Parse the username, password, and domain name from the POST data and URL
-	$parts = user::from_post_and_url($url);
-	$username = $parts[0] ?? '';
-	$password = $parts[1] ?? '';
-	$domain_name = $parts[2] ?? '';
-
-	$domain_uuid = domains::fetch_domain_uuid($database, $domain_name);
-
-	if (!empty($username) && !empty($password) && !empty($domain_uuid)) {
-		// Attempt to log in the user
-		$user = user::login($database, $domain_uuid, $username, $password);
-	} else {
-		$user = new user($database);
+	$classes = $autoload->get_interface_list('login_event');
+	foreach ($classes as $class) {
+		if (method_exists($class, 'pre_process')) {
+			$class::pre_process($url, $settings);
+		}
 	}
 
-	if (!$user->is_logged_in()) {
-		message::add($text['message-invalid_credentials'], 'negative');
+	// Run the authentication pipeline to validate credentials and create session.
+	$authentication = new authentication(['database' => $database, 'settings' => $settings]);
+	$authentication->validate();
+
+	// Surface failed authentication attempts as a user-visible message.
+	if (empty($_SESSION['authorized'])) {
+		message::add('Login failed. Check username, password, and domain.', 'negative');
 	}
 }
 
 // if the user is already authenticated then redirect them to the default page
-if ($user->is_authenticated()) {
-	$url->redirect(PROJECT_PATH . "/core/dashboard/dashboard.php");
+if (!empty($_SESSION['authorized']) && !empty($_SESSION['user_uuid']) && !empty($_SESSION['domain_uuid'])) {
+	$url->redirect(PROJECT_PATH . "/core/dashboard/index.php");
 }
 
 // initialize a template view
@@ -133,7 +129,19 @@ if (!empty($_SESSION['username'])) {
 }
 
 // messages
-$view->assign('messages', message::html(true, '		'));
+$messages = message::html(true, '		');
+
+$login_error = $_GET['login_error'] ?? '';
+$login_error_messages = [
+	'pre_session_denied' => 'Login denied by security policy.',
+	'session_validation_failed' => 'Your session could not be validated. Please sign in again.',
+];
+if (isset($login_error_messages[$login_error])) {
+	$encoded_message = json_encode($login_error_messages[$login_error], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+	$messages .= "\t\t" . "display_message(" . $encoded_message . ", 'negative', '" . $theme_message_delay . "');\n";
+}
+
+$view->assign('messages', $messages);
 
 // show the view
 echo $view;
