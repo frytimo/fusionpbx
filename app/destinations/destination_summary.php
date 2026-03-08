@@ -60,17 +60,17 @@
 	}
 
 //get the summary
-	$destination = new destinations;
-	$destination->domain_uuid = $_SESSION['domain_uuid'];
+	$destinations = new destinations;
+	$destinations->set_domain_uuid($_SESSION['domain_uuid']);
 	if (!empty($quick_select)) {
-		$destination->quick_select = $quick_select;
+		$destinations->quick_select = $quick_select;
 	}
 	else {
-		$destination->start_stamp_begin = $start_stamp_begin_formatted ?? '';
-		$destination->start_stamp_end = $start_stamp_end_formatted ?? '';
+		$destinations->start_stamp_begin = $start_stamp_begin_formatted ?? '';
+		$destinations->start_stamp_end = $start_stamp_end_formatted ?? '';
 	}
 	//$destination->include_internal = $include_internal ?? null;
-	$summary = $destination->destination_summary();
+	$summary = $destinations->destination_summary();
 
 //set the http header
 	if (!empty($_REQUEST['type']) && $_REQUEST['type'] == "csv") {

@@ -26,8 +26,8 @@
 
 //includes files
 	require_once dirname(__DIR__, 2) . "/resources/require.php";
-	require_once "resources/check_auth.php";
-	require_once "xml_cdr_statistics_inc.php";
+	require_once dirname(__DIR__, 2) . "/resources/check_auth.php";
+	require_once __DIR__ . "/xml_cdr_statistics_inc.php";
 
 //check permissions
 	if (!permission_exists('xml_cdr_statistics')) {

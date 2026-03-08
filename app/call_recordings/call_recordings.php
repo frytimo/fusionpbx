@@ -94,8 +94,9 @@
 
 //prepare some of the paging values
 	$rows_per_page = $settings->get('domain', 'paging', 50);
-	$page = $_GET['page'] ?? '';
-	if (empty($page)) { $page = 0; $_GET['page'] = 0; }
+	$page = filter_input(INPUT_GET, 'page', FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+	if ($page === false || $page === null) { $page = 0; }
+	$_GET['page'] = $page;
 	$offset = $rows_per_page * $page;
 
 //set the time zone
@@ -109,6 +110,47 @@
 		$time_format = 'HH12:MI:SS am';
 	}
 
+//build the where clause (shared between count and list queries)
+	$sql_where = "where true ";
+	if ($show != "all" || !permission_exists('call_recording_all')) {
+		$sql_where .= "and r.domain_uuid = :domain_uuid ";
+		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
+	}
+	$sql_where .= "and r.domain_uuid = d.domain_uuid ";
+	if (!empty($search)) {
+		$sql_where .= "and (";
+		$sql_where .= "	lower(r.call_direction) like :search ";
+		$sql_where .= "	or lower(r.caller_id_name) like :search ";
+		$sql_where .= "	or lower(r.caller_id_number) like :search ";
+		$sql_where .= "	or lower(r.caller_destination) like :search ";
+		$sql_where .= "	or lower(r.destination_number) like :search ";
+		$sql_where .= "	or lower(r.call_recording_name) like :search ";
+		$sql_where .= "	or lower(r.call_recording_path) like :search ";
+		$sql_where .= ") ";
+		$parameters['search'] = '%'.$search.'%';
+	}
+
+//count the total number of records
+	$sql = "select count(*) from view_call_recordings as r, v_domains as d ";
+	$sql .= $sql_where;
+	$num_rows = $database->select($sql, $parameters ?? null, 'column');
+	unset($sql);
+
+//limit the number of results
+	if (!empty($settings->get('cdr', 'limit')) && $settings->get('cdr', 'limit') > 0) {
+		$num_rows = min($num_rows, $settings->get('cdr', 'limit'));
+	}
+
+//clamp page to last valid page to prevent out-of-bounds offset
+	if ($num_rows > 0) {
+		$max_page = (int)ceil($num_rows / $rows_per_page) - 1;
+		if ($page > $max_page) {
+			$page = $max_page;
+			$_GET['page'] = $page;
+			$offset = $rows_per_page * $page;
+		}
+	}
+
 //get the list
 	$sql = "select r.domain_uuid, d.domain_name, r.call_recording_uuid, r.call_direction, ";
 	$sql .= "r.call_recording_name, r.call_recording_path, r.call_recording_transcription, r.call_recording_length, ";
@@ -117,29 +159,15 @@
 	$sql .= "to_char(timezone(:time_zone, r.call_recording_date), '".$time_format."') as call_recording_time_formatted \n";
 	$sql .= "from view_call_recordings as r, v_domains as d ";
 	//$sql .= "from v_call_recordings as r, v_domains as d ";
-	$sql .= "where true ";
-	if ($show != "all" || !permission_exists('call_recording_all')) {
-		$sql .= "and r.domain_uuid = :domain_uuid ";
-		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-	}
-	$sql .= "and r.domain_uuid = d.domain_uuid ";
-	if (!empty($search)) {
-		$sql .= "and (";
-		$sql .= "	lower(r.call_direction) like :search ";
-		$sql .= "	or lower(r.caller_id_name) like :search ";
-		$sql .= "	or lower(r.caller_id_number) like :search ";
-		$sql .= "	or lower(r.caller_destination) like :search ";
-		$sql .= "	or lower(r.destination_number) like :search ";
-		$sql .= "	or lower(r.call_recording_name) like :search ";
-		$sql .= "	or lower(r.call_recording_path) like :search ";
-		$sql .= ") ";
-		$parameters['search'] = '%'.$search.'%';
-	}
+	$sql .= $sql_where;
 	$sql .= order_by($order_by, $order, 'r.call_recording_date', 'desc');
 	$sql .= limit_offset($rows_per_page, $offset);
 	$parameters['time_zone'] = $time_zone;
 	$call_recordings = $database->select($sql, $parameters ?? null, 'all');
-	unset($sql, $parameters);
+	unset($sql, $parameters, $sql_where);
+
+//set the result count for paging
+	$result_count = is_array($call_recordings) ? sizeof($call_recordings) : 0;
 
 //detect if any transcriptions available
 	if ($transcribe_enabled && !empty($transcribe_engine) && !empty($call_recordings) && is_array($call_recordings)) {
@@ -147,11 +175,6 @@
 		foreach ($call_recordings as $row) {
 //			if (!empty($row['call_recording_transcription'])) { $transcriptions_exists = true; }
 		}
-	}
-
-//limit the number of results
-	if (!empty($settings->get('cdr', 'limit')) && $settings->get('cdr', 'limit') > 0) {
-		$num_rows = $settings->get('cdr', 'limit');
 	}
 
 //prepare to page the results

@@ -328,7 +328,7 @@
 
 //get the greetings list
 	if (!empty($settings->get('voicemail', 'storage_type')) && $settings->get('voicemail', 'storage_type') == 'base64') {
-		switch ($db_type) {
+		switch ($database->type) {
 			case 'pgsql': $sql_file_size = ", length(decode(greeting_base64,'base64')) as greeting_size "; break;
 			case 'mysql': $sql_file_size = ", length(from_base64(greeting_base64)) as greeting_size "; break;
 		}

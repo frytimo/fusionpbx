@@ -332,7 +332,7 @@
 
 //get the file size
 	if ($recording_storage_type == 'base64') {
-		switch ($db_type) {
+		switch ($database->type) {
 			case 'pgsql': $sql_file_size = "length(decode(recording_base64,'base64')) as recording_size, "; break;
 			case 'mysql': $sql_file_size = "length(from_base64(recording_base64)) as recording_size, "; break;
 		}

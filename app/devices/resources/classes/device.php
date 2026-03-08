@@ -103,7 +103,7 @@ class device extends app {
 	 *
 	 * @return string The domain UUID.
 	 */
-	public function get_domain_uuid() {
+	public function get_domain_uuid(): ?string {
 		return $this->domain_uuid;
 	}
 

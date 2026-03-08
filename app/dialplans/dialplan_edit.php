@@ -72,7 +72,7 @@ if (!empty($dialplan_uuid_check) && is_uuid($dialplan_uuid_check)) {
 	// check if this dialplan uses unified editor
 	$sql = "SELECT dialplan_editor_version FROM v_dialplans WHERE dialplan_uuid = :dialplan_uuid";
 	$parameters['dialplan_uuid'] = $dialplan_uuid_check;
-	$dialplan_editor_version = $database->select($sql, $parameters, 'column');
+	$dialplan_editor_version = $database->select($sql, $parameters, 'column') ?: '';
 	unset($sql, $parameters);
 }
 

@@ -80,9 +80,6 @@ echo "	<div class='actions'>\n";
 echo 		"<form id='form_search' class='inline' method='get'>\n";
 echo 		"<input type='text' class='txt list-search' name='search' id='search' value=\"".escape($search)."\" placeholder=\"".$text['label-search']."\" onkeydown=''>";
 echo button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
-if ($paging_controls_mini != '') {
-	echo 	"<span style='margin-left: 15px;'>".$paging_controls_mini."</span>";
-}
 echo "		</form>\n";
 echo "	</div>\n";
 echo "	<div style='clear: both;'>".$text['description-destination_map']."</div>\n";
@@ -108,6 +105,7 @@ if (!empty($destination_array)) {
 		echo "<div class=\"card\">\n";
 
 		echo "	<table class='list'>\n";
+		$list_row_url = '';
 		echo "	<tr class='list-row' href='".$list_row_url."'>\n";
 		echo "		<th>".$text['label-label']."</th>\n";
 		echo "		<th>".$text['label-extension']."</th>\n";

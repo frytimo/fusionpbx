@@ -611,7 +611,7 @@
 	$sql .= "when 'expansion-5' then 9 ";
 	$sql .= "when 'expansion-6' then 10 ";
 	$sql .= "else 100 end, ";
-	$sql .= $db_type == "mysql" ? "device_key_id asc " : "cast(device_key_id as numeric) asc ";
+	$sql .= $database->type == "mysql" ? "device_key_id asc " : "cast(device_key_id as numeric) asc ";
 	$parameters['device_uuid'] = $device_uuid ?? null;
 	$device_keys = $database->select($sql, $parameters, 'all');
 	unset($sql, $parameters);

@@ -341,7 +341,7 @@
 		$sql .= "when 'programmable' then 3 ";
 		$sql .= "when 'expansion' then 4 ";
 		$sql .= "else 100 end, ";
-		$sql .= $db_type == "mysql" ? "device_key_id asc " : "cast(device_key_id as numeric) asc, ";
+				$sql .= $database->type == "mysql" ? "device_key_id asc " : "cast(device_key_id as numeric) asc, ";
 		$sql .= "case when device_uuid is null then 0 else 1 end asc ";
 		$parameters['device_uuid'] = $device_uuid;
 		$keys = $database->select($sql, $parameters, 'all');

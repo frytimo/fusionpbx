@@ -343,7 +343,7 @@
 			}
 
 		//db connections
-			switch ($db_type) {
+			switch ($database->type) {
 				case 'pgsql':
 					$sql_current = "SELECT count(*) FROM pg_stat_activity";
 					$sql_max = "SHOW max_connections";
@@ -367,8 +367,8 @@
 				$current_connections = $database->select($sql_current, null, 'column');
 
 				// Get max connections (handles both PostgreSQL & MySQL)
-				$max_result = $database->select($sql_max, null, ($db_type == 'pgsql') ? 'column' : 'row');
-				$max_connections = ($db_type == 'mysql') ? $max_result['Value'] : $max_result;
+				$max_result = $database->select($sql_max, null, ($database->type == 'pgsql') ? 'column' : 'row');
+				$max_connections = ($database->type == 'mysql') ? $max_result['Value'] : $max_result;
 
 				// Format as "current/max"
 				$connections = ($current_connections !== false && $max_connections !== false)

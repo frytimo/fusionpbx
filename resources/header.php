@@ -74,6 +74,7 @@
 	$sql = "select menu_item_parent_uuid from v_menu_items ";
 	$sql .= "where menu_uuid = :menu_uuid ";
 	$sql .= "and menu_item_link = :menu_item_link ";
+	$parameters = [];
 	$parameters['menu_uuid'] = $settings->get('domain', 'menu');
 	$parameters['menu_item_link'] = $_SERVER["SCRIPT_NAME"];
 	$_SESSION["menu_item_parent_uuid"] = $database->select($sql, $parameters, 'column');

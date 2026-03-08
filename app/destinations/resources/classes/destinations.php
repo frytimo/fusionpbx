@@ -256,8 +256,8 @@ class destinations extends app {
 	 * @return string
 	 */
 	public function select(string $destination_type, string $destination_name, string $destination_value, array $filter_applications = []) {
-		// set the global variables
-		global $db_type;
+		// set the db type
+		$db_type = $this->database->type;
 
 		// set defaults
 		$select_style = '';
@@ -611,11 +611,9 @@ class destinations extends app {
 	 * @var string $destination_type can be ivr, dialplan, call_center_contact or bridge
 	 */
 	public function all($destination_type) {
-		// set the global variables
-		global $db_type;
-
 		// connect to the database
 		$database = $this->database;
+		$db_type = $database->type;
 
 		// set default values
 		$destination_name = '';
@@ -801,11 +799,9 @@ class destinations extends app {
 	 * @var string $destination_type can be ivr, dialplan, call_center_contact or bridge
 	 */
 	public function get($destination_type) {
-		// set the global variables
-		global $db_type;
-
 		// connect to the database
 		$database = $this->database;
+		$db_type = $database->type;
 
 		// get the destinations
 		if (count($this->destinations) === 0) {

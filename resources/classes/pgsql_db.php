@@ -75,7 +75,7 @@ class pgsql_db implements database_provider {
 		return $prep_statement->fetchAll(PDO::FETCH_ASSOC);
 	}
 
-	public function fetch_column(string $sql, ?array $parameters = []): string {
+	public function fetch_column(string $sql, ?array $parameters = []): string|false {
 		$prep_statement = $this->db->prepare($sql);
 		try {
 			$prep_statement->execute($parameters);
