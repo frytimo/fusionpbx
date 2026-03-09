@@ -34,7 +34,6 @@
 		echo "access denied";
 		exit;
 	}
-	$has_call_recording_view       = permission_exists('call_recording_view');
 	$has_call_recording_all        = permission_exists('call_recording_all');
 	$has_call_recording_download   = permission_exists('call_recording_download');
 	$has_call_recording_play       = permission_exists('call_recording_play');
