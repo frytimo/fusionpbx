@@ -30,6 +30,12 @@
 		echo "access denied";
 		exit;
 	}
+	$has_dashboard_update              = permission_exists('dashboard_update');
+	$has_dashboard_widget_add          = permission_exists('dashboard_widget_add');
+	$has_dashboard_widget_delete       = permission_exists('dashboard_widget_delete');
+	$has_dashboard_widget_group_add    = permission_exists('dashboard_widget_group_add');
+	$has_dashboard_widget_group_delete = permission_exists('dashboard_widget_group_delete');
+	$has_dashboard_widget_parent_uuid  = permission_exists('dashboard_widget_parent_uuid');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -151,7 +157,7 @@
 	}
 
 //delete the group from the sub table
-	if (!empty($_POST["action"]) && $_POST["action"] === "delete" && permission_exists("dashboard_widget_group_delete") && is_uuid($_POST["dashboard_widget_group_uuid"]) && is_uuid($_POST["dashboard_widget_uuid"])) {
+	if (!empty($_POST["action"]) && $_POST["action"] === "delete" && $has_dashboard_widget_group_delete && is_uuid($_POST["dashboard_widget_group_uuid"]) && is_uuid($_POST["dashboard_widget_uuid"])) {
 		//get the uuid
 			$widget_group_uuid = $_POST['dashboard_widget_group_uuid'];
 
@@ -191,17 +197,17 @@
 				//send the array to the database class
 				switch ($_POST['action']) {
 					case 'copy':
-						if (permission_exists('dashboard_widget_add')) {
+						if ($has_dashboard_widget_add) {
 							$database->copy($array);
 						}
 						break;
 					case 'delete':
-						if (permission_exists('dashboard_widget_delete')) {
+						if ($has_dashboard_widget_delete) {
 							$database->delete($array);
 						}
 						break;
 					case 'toggle':
-						if (permission_exists('dashboard_update')) {
+						if ($has_dashboard_update) {
 							$database->toggle($array);
 						}
 						break;
@@ -789,10 +795,10 @@ document.addEventListener('DOMContentLoaded', function() {
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','collapse'=>'hide-xs','style'=>'margin-right: 15px;','link'=>'dashboard_edit.php?id='.urlencode($dashboard_uuid)]);
 	if ($action == 'update') {
-		if (permission_exists('dashboard_widget_group_add')) {
+		if ($has_dashboard_widget_group_add) {
 			echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 		}
-		if (permission_exists('dashboard_widget_group_delete')) {
+		if ($has_dashboard_widget_group_delete) {
 			echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none; margin-right: 15px;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 		}
 	}
@@ -804,10 +810,10 @@ document.addEventListener('DOMContentLoaded', function() {
 	//echo "<br /><br />\n";
 
 	if (!empty($action) && $action == 'update') {
-		if (permission_exists('dashboard_widget_add')) {
+		if ($has_dashboard_widget_add) {
 			echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'copy','onclick'=>"modal_close();"])]);
 		}
-		if (permission_exists('dashboard_widget_delete')) {
+		if ($has_dashboard_widget_delete) {
 			echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 		}
 	}
@@ -999,7 +1005,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	echo "<td class='vtable' style='position: relative;' align='left'>\n";
 	if (is_array($widget_groups) && sizeof($widget_groups) != 0) {
 		echo "<table cellpadding='0' cellspacing='0' border='0'>\n";
-		if (permission_exists('dashboard_widget_group_delete')) {
+		if ($has_dashboard_widget_group_delete) {
 			echo "	<input type='hidden' id='action' name='action' value=''>\n";
 			echo "	<input type='hidden' id='dashboard_widget_group_uuid' name='dashboard_widget_group_uuid' value=''>\n";
 		}
@@ -1010,7 +1016,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				echo "	<td class='vtable' style='white-space: nowrap; padding-right: 30px;' nowrap='nowrap'>\n";
 				echo $field['group_name'].((!empty($field['domain_uuid'])) ? "@".$_SESSION['domains'][$field['domain_uuid']]['domain_name'] : null);
 				echo "	</td>\n";
-				if (permission_exists('dashboard_widget_group_delete')) {
+				if ($has_dashboard_widget_group_delete) {
 					echo "	<td class='list_control_icons' style='width: 25px;'>\n";
 					echo button::create(['type'=>'button','icon'=>'fas fa-minus','id'=>'btn_delete','class'=>'default list_control_icon','name'=>'btn_delete','onclick'=>"modal_open('modal-delete-group-$x','btn_delete');"]);
 					echo modal::create(['id'=>'modal-delete-group-'.$x,'type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); document.getElementById('dashboard_widget_group_uuid').value = '".escape($field['dashboard_widget_group_uuid'])."'; list_form_submit('frm');"])]);
@@ -1352,7 +1358,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('dashboard_widget_parent_uuid')) {
+	if ($has_dashboard_widget_parent_uuid) {
 		echo "	<tr id='tr_widget_parent_uuid' ".(!in_array('widget_parent_uuid', $widget_settings) ? "style='display: none;'" : null).">\n";
 		echo "		<td class='vncell'>".$text['label-dashboard_widget_parent_uuid']."</td>\n";
 		echo "		<td class='vtable'>\n";

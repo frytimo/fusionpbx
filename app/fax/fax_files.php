@@ -34,6 +34,13 @@
 		echo "access denied";
 		exit;
 	}
+	$has_fax_download_view         = permission_exists('fax_download_view');
+	$has_fax_extension_view_domain = permission_exists('fax_extension_view_domain');
+	$has_fax_file_delete           = permission_exists('fax_file_delete');
+	$has_fax_file_edit             = permission_exists('fax_file_edit');
+	$has_fax_inbox_view            = permission_exists('fax_inbox_view');
+	$has_fax_sent_recipient        = permission_exists('fax_sent_recipient');
+	$has_fax_sent_view             = permission_exists('fax_sent_view');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -54,7 +61,7 @@
 	if (!empty($action) && !empty($fax_files) && is_array($fax_files) && @sizeof($fax_files) != 0) {
 		switch ($action) {
 			case 'toggle':
-				if (permission_exists('fax_file_edit')) {
+				if ($has_fax_file_edit) {
 					$fax = new fax;
 					$fax->domain_uuid = $_SESSION['domain_uuid'];
 					$fax_files_toggled = $fax->fax_file_toggle($fax_files);
@@ -66,7 +73,7 @@
 				}
 				break;
 			case 'delete':
-				if (permission_exists('fax_file_delete')) {
+				if ($has_fax_file_delete) {
 					$obj = new fax;
 					$obj->fax_uuid = $fax_uuid;
 					$obj->box = $box;
@@ -82,7 +89,7 @@
 //get fax extension
 	if (!empty($_GET["id"]) && is_uuid($_GET["id"])) {
 		$fax_uuid = $_GET["id"];
-		if (permission_exists('fax_extension_view_domain')) {
+		if ($has_fax_extension_view_domain) {
 			//show all fax extensions
 			$sql = "select fax_name, fax_extension ";
 			$sql .= "from v_fax ";
@@ -110,7 +117,7 @@
 				$fax_extension = $row["fax_extension"];
 		}
 		else {
-			if (!permission_exists('fax_extension_view_domain')) {
+			if (!$has_fax_extension_view_domain) {
 				echo "access denied";
 				exit;
 			}
@@ -281,10 +288,10 @@
 	$token = $object->create($_SERVER['PHP_SELF']);
 
 //include the header
-	if ($_REQUEST['box'] == 'inbox' && permission_exists('fax_inbox_view')) {
+	if ($_REQUEST['box'] == 'inbox' && $has_fax_inbox_view) {
 		$document['title'] = escape($fax_name)." [".escape($fax_extension)."]: ".$text['title-inbox'];
 	}
-	if ($_REQUEST['box'] == 'sent' && permission_exists('fax_sent_view')) {
+	if ($_REQUEST['box'] == 'sent' && $has_fax_sent_view) {
 		$document['title'] = escape($fax_name)." [".escape($fax_extension)."]: ".$text['title-sent_faxes'];
 	}
 	require_once "resources/header.php";
@@ -340,10 +347,10 @@
 //show the content
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'>";
-	if ($_REQUEST['box'] == 'inbox' && permission_exists('fax_inbox_view')) {
+	if ($_REQUEST['box'] == 'inbox' && $has_fax_inbox_view) {
 		echo "<b>".escape($fax_name)." [".escape($fax_extension)."]: ".$text['header-inbox']."</b><div class='count'>".number_format($num_rows)."</div>";
 	}
-	if ($_REQUEST['box'] == 'sent' && permission_exists('fax_sent_view')) {
+	if ($_REQUEST['box'] == 'sent' && $has_fax_sent_view) {
 		echo "<b>".escape($fax_name)." [".escape($fax_extension)."]: ".$text['header-sent_faxes']."</b><div class='count'>".number_format($num_rows)."</div>";
 	}
 	echo "	</div>\n";
@@ -351,11 +358,11 @@
 
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','link'=>'fax.php']);
 	$margin_left = false;
-	if (permission_exists('fax_file_edit') && $_REQUEST['box'] == 'inbox' && $fax_files) {
+	if ($has_fax_file_edit && $_REQUEST['box'] == 'inbox' && $fax_files) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','collapse'=>'hide-xs','style'=>'display: none; margin-left: 15px;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 		$margin_left = true;
 	}
-	if (permission_exists('fax_file_delete') && $fax_files) {
+	if ($has_fax_file_delete && $fax_files) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none; '.(!$margin_left ? 'margin-left: 15px;' : null),'onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	if ($paging_controls_mini != '') {
@@ -365,10 +372,10 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('fax_file_edit') && $_REQUEST['box'] == 'inbox' && $fax_files) {
+	if ($has_fax_file_edit && $_REQUEST['box'] == 'inbox' && $fax_files) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('fax_file_delete') && $fax_files) {
+	if ($has_fax_file_delete && $fax_files) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -380,7 +387,7 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('fax_file_delete') || permission_exists('fax_file_edit')) {
+	if ($has_fax_file_delete || $has_fax_file_edit) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(empty($fax_files) ? "style='visibility: hidden;'" : null).">\n";
 		echo "	</th>\n";
@@ -388,12 +395,12 @@
 	echo th_order_by('fax_caller_id_name', $text['label-fax_caller_id_name'], $order_by, $order, "&id=".$fax_uuid."&box=".$_GET['box']."&page=".$page);
 	echo th_order_by('fax_caller_id_number', $text['label-fax_caller_id_number'], $order_by, $order, "&id=".$fax_uuid."&box=".$_GET['box']."&page=".$page);
 	if ($_REQUEST['box'] == 'sent') {
-		if (permission_exists('fax_sent_recipient')) {
+		if ($has_fax_sent_recipient) {
 			echo th_order_by('fax_recipient', $text['label-fax_recipient'], $order_by, $order, "&id=".$fax_uuid."&box=".$_GET['box']."&page=".$page);
 		}
 		echo th_order_by('fax_destination', $text['label-fax_destination'], $order_by, $order, "&id=".$fax_uuid."&box=".$_GET['box']."&page=".$page);
 	}
-	if (permission_exists('fax_download_view')) {
+	if ($has_fax_download_view) {
 		echo "<th>".$text['table-file']."</th>\n";
 	}
 	echo "<th width='10%'>".$text['table-view']."</th>\n";
@@ -411,12 +418,12 @@
 
 			//decode the base64
 			if (!empty($row['fax_base64'])) {
-				if ($_REQUEST['box'] == 'inbox' && permission_exists('fax_inbox_view')) {
+				if ($_REQUEST['box'] == 'inbox' && $has_fax_inbox_view) {
 					if (!file_exists($dir_fax_inbox.'/'.$file)) {
 						file_put_contents($dir_fax_inbox.'/'.$file, base64_decode($row['fax_base64']));
 					}
 				}
-				if ($_REQUEST['box'] == 'sent' && permission_exists('fax_sent_view')) {
+				if ($_REQUEST['box'] == 'sent' && $has_fax_sent_view) {
 					if (!file_exists($dir_fax_sent.'/'.$file)) {
 						//decode the base64
 						file_put_contents($dir_fax_sent.'/'.$file, base64_decode($row['fax_base64']));
@@ -426,12 +433,12 @@
 
 			//convert the tif to pdf
 			unset($dir_fax);
-			if ($_REQUEST['box'] == 'inbox' && permission_exists('fax_inbox_view')) {
+			if ($_REQUEST['box'] == 'inbox' && $has_fax_inbox_view) {
 				if (!file_exists($dir_fax_inbox.'/'.$file_name.".pdf")) {
 					$dir_fax = $dir_fax_inbox;
 				}
 			}
-			if ($_REQUEST['box'] == 'sent' && permission_exists('fax_sent_view')) {
+			if ($_REQUEST['box'] == 'sent' && $has_fax_sent_view) {
 				if (!file_exists($dir_fax_sent.'/'.$file_name.".pdf")) {
 					$dir_fax = $dir_fax_sent;
 				}
@@ -489,7 +496,7 @@
 			$bold = $_REQUEST['box'] == 'inbox' && empty($row['read_date_formatted']) ? 'font-weight: bold;' : null;
 
 			$list_row_url = null;
-			if (permission_exists('fax_inbox_view') || permission_exists('fax_sent_view')) {
+			if ($has_fax_inbox_view || $has_fax_sent_view) {
 				$list_row_url = "fax_files.php?id=".urlencode($fax_uuid);
 				$list_row_url .= "&fax_file_uuid=".urlencode($row['fax_file_uuid']);
 				$list_row_url .= "&a=download";
@@ -504,7 +511,7 @@
 			}
 
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('fax_file_delete') || permission_exists('fax_file_edit')) {
+			if ($has_fax_file_delete || $has_fax_file_edit) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='fax_files[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"if (!this.checked) { document.getElementById('checkbox_all').checked = false; } checkbox_on_change(this);\">\n";
 				echo "		<input type='hidden' name='fax_files[$x][uuid]' value='".escape($row['fax_file_uuid'])."' />\n";
@@ -513,12 +520,12 @@
 			echo "	<td style='".$bold."'>".escape($row['fax_caller_id_name'])."&nbsp;</td>\n";
 			echo "	<td style='".$bold."'>".escape(format_phone($row['fax_caller_id_number']))."&nbsp;</td>\n";
 			if ($_REQUEST['box'] == 'sent') {
-				if (permission_exists('fax_sent_recipient')) {
+				if ($has_fax_sent_recipient) {
 					echo "	<td>".escape($row['fax_recipient'])."&nbsp;</td>\n";
 				}
 				echo "	<td>".escape(format_phone($row['fax_destination']))."&nbsp;</td>\n";
 			}
-			if (permission_exists('fax_download_view')) {
+			if ($has_fax_download_view) {
 				echo "  <td style='".$bold."'>\n";
 				echo "		<a href='".$list_row_url."'>".$file_name."</a>";
 				echo "	</td>\n";
@@ -530,7 +537,7 @@
 			if ($_REQUEST['box'] == 'sent') {
 				$dir_fax = $dir_fax_sent;
 			}
-			if ((permission_exists('fax_inbox_view') || permission_exists('fax_sent_view')) && file_exists($dir_fax.'/'.$file_name.".pdf")) {
+			if (($has_fax_inbox_view || $has_fax_sent_view) && file_exists($dir_fax.'/'.$file_name.".pdf")) {
 				echo "		<a href=\"javascript:void(0);\" onclick=\"fade_in('pdf-container', '".substr(str_replace("&t=bin", "", $list_row_url), 0, -4).".pdf');\">View</a>\n";
 				echo "		&nbsp;&nbsp;\n";
 				echo "		<a href=\"".substr($list_row_url, 0, -4).".pdf\">PDF</a>\n";

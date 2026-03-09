@@ -34,6 +34,10 @@
 		echo "access denied";
 		exit;
 	}
+	$has_group_add    = permission_exists('group_add');
+	$has_group_all    = permission_exists('group_all');
+	$has_group_delete = permission_exists('group_delete');
+	$has_group_edit   = permission_exists('group_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -48,19 +52,19 @@
 	if ($action != '' && is_array($groups) && @sizeof($groups) != 0) {
 		switch ($action) {
 			case 'copy':
-				if (permission_exists('group_add')) {
+				if ($has_group_add) {
 					$obj = new groups;
 					$obj->copy($groups);
 				}
 				break;
 			case 'toggle':
-				if (permission_exists('group_edit')) {
+				if ($has_group_edit) {
 					$obj = new groups;
 					$obj->toggle($groups);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('group_delete')) {
+				if ($has_group_delete) {
 					$obj = new groups;
 					$obj->delete($groups);
 				}
@@ -86,7 +90,7 @@
 //get the count
 	$sql = "select count(*) from view_groups \n";
 	$sql .= "where true \n";
-	if ($show == 'all' && permission_exists('group_all')) {
+	if ($show == 'all' && $has_group_all) {
 		$sql .= "and (domain_uuid is not null or domain_uuid is null) ";
 	}
 	else {
@@ -105,7 +109,7 @@
 //prepare to page the results
 	$rows_per_page = $settings->get('domain', 'paging', 50);
 	$param = $search ? "&search=".$search : null;
-	$param = ($show == 'all' && permission_exists('group_all')) ? "&show=all" : null;
+	$param = ($show == 'all' && $has_group_all) ? "&show=all" : null;
 	$page = !empty($_GET['page']) ? $_GET['page'] : 0;
 	list($paging_controls, $rows_per_page) = paging($num_rows, $param, $rows_per_page);
 	list($paging_controls_mini, $rows_per_page) = paging($num_rows, $param, $rows_per_page, true);
@@ -124,7 +128,7 @@
 	$sql .= "group_description ";
 	$sql .= "from view_groups ";
 	$sql .= "where true \n";
-	if ($show == 'all' && permission_exists('group_all')) {
+	if ($show == 'all' && $has_group_all) {
 		$sql .= "and (domain_uuid is not null or domain_uuid is null) ";
 	}
 	else {
@@ -157,20 +161,20 @@
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-users'],'icon'=>$settings->get('theme', 'button_icon_users'),'onclick'=>"window.location='../users/users.php'"]);
 	echo button::create(['type'=>'button','label'=>$text['button-restore_default'],'icon'=>$settings->get('theme', 'button_icon_sync'),'style'=>'margin-right: 15px;','link'=>'permissions_default.php']);
-	if (permission_exists('group_add')) {
+	if ($has_group_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'group_edit.php']);
 	}
-	if (permission_exists('group_add') && $groups) {
+	if ($has_group_add && $groups) {
 		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 	}
-	if (permission_exists('group_edit') && $groups) {
+	if ($has_group_edit && $groups) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
-	if (permission_exists('group_delete') && $groups) {
+	if ($has_group_delete && $groups) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if (permission_exists('group_all')) {
+	if ($has_group_all) {
 		if ($show == 'all') {
 			echo "		<input type='hidden' name='show' value='all'>\n";
 		}
@@ -189,13 +193,13 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('group_add') && $groups) {
+	if ($has_group_add && $groups) {
 		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('group_edit') && $groups) {
+	if ($has_group_edit && $groups) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('group_delete') && $groups) {
+	if ($has_group_delete && $groups) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -209,12 +213,12 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('group_add') || permission_exists('group_edit') || permission_exists('group_delete')) {
+	if ($has_group_add || $has_group_edit || $has_group_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($groups) ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
 	}
-	if ($show == 'all' && permission_exists('group_all')) {
+	if ($show == 'all' && $has_group_all) {
 		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order);
 	}
 	echo th_order_by('group_name', $text['label-group_name'], $order_by, $order);
@@ -222,7 +226,7 @@
 	echo th_order_by('group_level', $text['label-group_level'], $order_by, $order, null, "class='center'");
 	echo th_order_by('group_protected', $text['label-group_protected'], $order_by, $order, null, "class='center'");
 	echo "	<th class='pct-30 hide-sm-dn'>".$text['label-group_description']."</th>\n";
-	if (permission_exists('group_edit') && $list_row_edit_button) {
+	if ($has_group_edit && $list_row_edit_button) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -230,22 +234,22 @@
 	if (is_array($groups) && @sizeof($groups) != 0) {
 		$x = 0;
 		foreach ($groups as $row) {
-			if (permission_exists('group_edit')) {
+			if ($has_group_edit) {
 				$list_row_url = "group_edit.php?id=".urlencode($row['group_uuid']);
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('group_add') || permission_exists('group_edit') || permission_exists('group_delete')) {
+			if ($has_group_add || $has_group_edit || $has_group_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='groups[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='groups[$x][uuid]' value='".escape($row['group_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if ($show == 'all' && permission_exists('group_all')) {
+			if ($show == 'all' && $has_group_all) {
 				$domain = $row['domain_name'] ?? $text['label-global'];
 				echo "	<td>".escape($domain)."</td>\n";
 			}
 			echo "	<td>\n";
-			if (permission_exists('group_edit')) {
+			if ($has_group_edit) {
 				echo "	<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['group_name'])."</a>\n";
 			}
 			else {
@@ -255,7 +259,7 @@
 			echo "	<td class='no-link no-wrap pr-15'><a href='group_permissions.php?group_uuid=".urlencode($row['group_uuid'])."'>".$text['label-group_permissions']." (".$row['group_permissions'].")</a></td>\n";
 			echo "	<td class='no-link no-wrap'><a href='group_members.php?group_uuid=".urlencode($row['group_uuid'])."'>".$text['label-group_members']." (".$row['group_members'].")</a></td>\n";
 			echo "	<td class='center'>".escape($row['group_level'])."</td>\n";
-			if (permission_exists('group_edit')) {
+			if ($has_group_edit) {
 				echo "	<td class='no-link center'>\n";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['group_protected']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
 			}
@@ -265,7 +269,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td class='description overflow hide-sm-dn'>".escape($row['group_description'])."</td>\n";
-			if (permission_exists('group_edit') && $list_row_edit_button) {
+			if ($has_group_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>\n";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

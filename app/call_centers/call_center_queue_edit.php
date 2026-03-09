@@ -34,6 +34,19 @@
 		echo "access denied";
 		exit;
 	}
+	$has_call_center_announce_frequency        = permission_exists('call_center_announce_frequency');
+	$has_call_center_announce_position         = permission_exists('call_center_announce_position');
+	$has_call_center_announce_sound            = permission_exists('call_center_announce_sound');
+	$has_call_center_email_address             = permission_exists('call_center_email_address');
+	$has_call_center_outbound_caller_id_name   = permission_exists('call_center_outbound_caller_id_name');
+	$has_call_center_outbound_caller_id_number = permission_exists('call_center_outbound_caller_id_number');
+	$has_call_center_queue_context             = permission_exists('call_center_queue_context');
+	$has_call_center_queue_domain              = permission_exists('call_center_queue_domain');
+	$has_call_center_tier_delete               = permission_exists('call_center_tier_delete');
+	$has_call_center_tier_view                 = permission_exists('call_center_tier_view');
+	$has_call_center_wallboard                 = permission_exists('call_center_wallboard');
+	$has_recording_download                    = permission_exists('recording_download');
+	$has_recording_play                        = permission_exists('recording_play');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -133,7 +146,7 @@
 			$queue_description = $_POST["queue_description"];
 
 		//set the context for users that do not have the permission
-			if (permission_exists('call_center_queue_context')) {
+			if ($has_call_center_queue_context) {
 				$queue_context = $_POST["queue_context"];
 			}
 			else if ($action == 'add') {
@@ -155,7 +168,7 @@
 	}
 
 //delete the tier (agent from the queue)
-	if (!empty($_REQUEST["a"]) && $_REQUEST["a"] == "delete" && is_uuid($_REQUEST["id"]) && permission_exists("call_center_tier_delete")) {
+	if (!empty($_REQUEST["a"]) && $_REQUEST["a"] == "delete" && is_uuid($_REQUEST["id"]) && $has_call_center_tier_delete) {
 		//set the variables
 			$call_center_queue_uuid = $_REQUEST["id"];
 			$call_center_tier_uuid = $_REQUEST["call_center_tier_uuid"];
@@ -222,10 +235,10 @@
 				$parameters['call_center_queue_uuid'] = $call_center_queue_uuid;
 				$row = $database->select($sql, $parameters, 'row');
 				if (!empty($row)) {
-					//if (!permission_exists('call_center_queue_domain')) {
+					//if (!$has_call_center_queue_domain) {
 					//	$domain_uuid = $row["domain_uuid"];
 					//}
-					if (!permission_exists('call_center_queue_context')) {
+					if (!$has_call_center_queue_context) {
 						$queue_context = $row["queue_context"];
 					}
 				}
@@ -355,21 +368,21 @@
 			$array['call_center_queues'][0]['queue_discard_abandoned_after'] = $queue_discard_abandoned_after;
 			$array['call_center_queues'][0]['queue_abandoned_resume_allowed'] = $queue_abandoned_resume_allowed;
 			$array['call_center_queues'][0]['queue_cid_prefix'] = $queue_cid_prefix;
-			if (permission_exists('call_center_outbound_caller_id_name')) {
+			if ($has_call_center_outbound_caller_id_name) {
 				$array['call_center_queues'][0]['queue_outbound_caller_id_name'] = $queue_outbound_caller_id_name;
 			}
-			if (permission_exists('call_center_outbound_caller_id_number')) {
+			if ($has_call_center_outbound_caller_id_number) {
 				$array['call_center_queues'][0]['queue_outbound_caller_id_number'] = $queue_outbound_caller_id_number;
 			}
 			$array['call_center_queues'][0]['queue_announce_position'] = $queue_announce_position;
-			if (permission_exists('call_center_announce_sound')) {
+			if ($has_call_center_announce_sound) {
 				$array['call_center_queues'][0]['queue_announce_sound'] = $queue_announce_sound;
 			}
-			if (permission_exists('call_center_announce_frequency')) {
+			if ($has_call_center_announce_frequency) {
 				$array['call_center_queues'][0]['queue_announce_frequency'] = $queue_announce_frequency;
 			}
 			$array['call_center_queues'][0]['queue_cc_exit_keys'] = $queue_cc_exit_keys;
-			if (permission_exists('call_center_email_address')) {
+			if ($has_call_center_email_address) {
 				$array['call_center_queues'][0]['queue_email_address'] = $queue_email_address;
 			}
 			$array['call_center_queues'][0]['queue_context'] = $queue_context;
@@ -690,7 +703,7 @@
 	unset($sounds);
 
 //get the list of sounds
-	if (permission_exists('call_center_announce_sound')) {
+	if ($has_call_center_announce_sound) {
 		$sounds = new sounds;
 		$sounds->sound_types = ['recordings'];
 		$sounds->full_path = ['recordings'];
@@ -735,7 +748,7 @@
 	}
 
 //show the content
-	if (permission_exists('recording_play') || permission_exists('recording_download')) {
+	if ($has_recording_play || $has_recording_download) {
 		echo "<script type='text/javascript' language='JavaScript'>\n";
 		echo "	function set_playable(id, audio_selected, audio_type) {\n";
 		echo "		file_ext = audio_selected.split('.').pop();\n";
@@ -820,7 +833,7 @@
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme','button_icon_back', ''),'id'=>'btn_back','style'=>'margin-right: 15px;','link'=>'call_center_queues.php']);
 
 	if ($action == "update") {
-		if (permission_exists('call_center_wallboard')) {
+		if ($has_call_center_wallboard) {
 			echo button::create(['type'=>'button','label'=>$text['button-wallboard'],'icon'=>'th','link'=>PROJECT_PATH.'/app/call_center_wallboard/call_center_wallboard.php?queue_name='.urlencode($call_center_queue_uuid)]);
 		}
 		//echo button::create(['type'=>'button','label'=>$text['button-stop'],'icon'=>$settings->get('theme', 'button_icon_stop'),'link'=>'cmd.php?cmd=unload&id='.urlencode($call_center_queue_uuid)]);
@@ -868,7 +881,7 @@
 	echo "</tr>\n";
 	echo "<tr>\n";
 	echo "<td class='vtable' align='left'>\n";
-	echo "<select name='".$instance_id."' id='".$instance_id."' class='formfld' ".(permission_exists('recording_play') || permission_exists('recording_download') ? "onchange=\"recording_reset('".$instance_id."'); set_playable('".$instance_id."', this.value, this.options[this.selectedIndex].parentNode.getAttribute('data-type'));\"" : null).">\n";
+	echo "<select name='".$instance_id."' id='".$instance_id."' class='formfld' ".($has_recording_play || $has_recording_download ? "onchange=\"recording_reset('".$instance_id."'); set_playable('".$instance_id."', this.value, this.options[this.selectedIndex].parentNode.getAttribute('data-type'));\"" : null).">\n";
 	echo "	<option value=''></option>\n";
 	$found = $playable = false;
 	if (!empty($audio_files[0]) && is_array($audio_files[0]) && @sizeof($audio_files[0]) != 0) {
@@ -915,7 +928,7 @@
 	if (if_group("superadmin")) {
 		echo "<input type='button' id='btn_select_to_input_".$instance_id."' class='btn' name='' alt='back' onclick='toggle_select_input(document.getElementById(\"".$instance_id."\"), \"".$instance_id."\"); this.style.visibility=\"hidden\";' value='&#9665;'>";
 	}
-	if ((permission_exists('recording_play') || permission_exists('recording_download')) && (!empty($playable) || empty($instance_value))) {
+	if (($has_recording_play || $has_recording_download) && (!empty($playable) || empty($instance_value))) {
 		switch (pathinfo($playable, PATHINFO_EXTENSION)) {
 			case 'wav' : $mime_type = 'audio/wav'; break;
 			case 'mp3' : $mime_type = 'audio/mpeg'; break;
@@ -1025,7 +1038,7 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('call_center_tier_view') && !empty($agents) && is_array($agents)) {
+	if ($has_call_center_tier_view && !empty($agents) && is_array($agents)) {
 		echo "<tr>";
 		echo "	<td class='vncell' valign='top'>".$text['label-agents']."</td>";
 		echo "	<td class='vtable' align='left'>";
@@ -1078,7 +1091,7 @@
 				echo "				</select>\n";
 				echo "		</td>\n";
 				echo "		<td class=''>";
-				if (permission_exists('call_center_tier_delete')) {
+				if ($has_call_center_tier_delete) {
 					echo "			<a href=\"call_center_queue_edit.php?id=".escape($call_center_queue_uuid)."&call_center_tier_uuid=".escape($field['call_center_tier_uuid'])."&a=delete\" alt=\"".$text['button-delete']."\" onclick=\"return confirm('".$text['confirm-delete']."');\">$v_link_label_delete</a>";
 				}
 				echo "		</td>\n";
@@ -1338,7 +1351,7 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('call_center_outbound_caller_id_name')) {
+	if ($has_call_center_outbound_caller_id_name) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap>\n";
 		echo "	".$text['label-outbound_caller_id_name']."\n";
@@ -1351,7 +1364,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('call_center_outbound_caller_id_number')) {
+	if ($has_call_center_outbound_caller_id_number) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap>\n";
 		echo "	".$text['label-outbound_caller_id_number']."\n";
@@ -1364,7 +1377,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('call_center_announce_position')) {
+	if ($has_call_center_announce_position) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap>\n";
 		echo "  ".$text['label-queue_announce_position']."\n";
@@ -1380,7 +1393,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('call_center_announce_sound')) {
+	if ($has_call_center_announce_sound) {
 		$instance_id = 'queue_announce_sound';
 		$instance_label = 'caller_announce_sound';
 		$instance_value = $queue_announce_sound;
@@ -1392,7 +1405,7 @@
 		echo "</tr>\n";
 		echo "<tr>\n";
 		echo "<td class='vtable' align='left'>\n";
-		echo "<select name='".$instance_id."' id='".$instance_id."' class='formfld' ".(permission_exists('recording_play') || permission_exists('recording_download') ? "onchange=\"recording_reset('".$instance_id."'); set_playable('".$instance_id."', this.value, this.options[this.selectedIndex].parentNode.getAttribute('data-type'));\"" : null).">\n";
+		echo "<select name='".$instance_id."' id='".$instance_id."' class='formfld' ".($has_recording_play || $has_recording_download ? "onchange=\"recording_reset('".$instance_id."'); set_playable('".$instance_id."', this.value, this.options[this.selectedIndex].parentNode.getAttribute('data-type'));\"" : null).">\n";
 		echo "	<option value=''></option>\n";
 		$found = $playable = false;
 		if (!empty($audio_files[1]) && is_array($audio_files[1]) && @sizeof($audio_files[1]) != 0) {
@@ -1439,7 +1452,7 @@
 		if (if_group("superadmin")) {
 			echo "<input type='button' id='btn_select_to_input_".$instance_id."' class='btn' name='' alt='back' onclick='toggle_select_input(document.getElementById(\"".$instance_id."\"), \"".$instance_id."\"); this.style.visibility=\"hidden\";' value='&#9665;'>";
 		}
-		if ((permission_exists('recording_play') || permission_exists('recording_download')) && (!empty($playable) || empty($instance_value))) {
+		if (($has_recording_play || $has_recording_download) && (!empty($playable) || empty($instance_value))) {
 			switch (pathinfo($playable, PATHINFO_EXTENSION)) {
 				case 'wav' : $mime_type = 'audio/wav'; break;
 				case 'mp3' : $mime_type = 'audio/mpeg'; break;
@@ -1455,7 +1468,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('call_center_announce_frequency')) {
+	if ($has_call_center_announce_frequency) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap>\n";
 		echo "  ".$text['label-caller_announce_frequency']."\n";
@@ -1479,7 +1492,7 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('call_center_email_address')) {
+	if ($has_call_center_email_address) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap>\n";
 		echo "	".$text['label-queue_email_address']."\n";
@@ -1492,7 +1505,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('call_center_queue_context')) {
+	if ($has_call_center_queue_context) {
 		echo "<tr>\n";
 		echo "<td class='vncellreq' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-context']."\n";

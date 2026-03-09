@@ -34,6 +34,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_log_download = permission_exists('log_download');
+	$has_log_view     = permission_exists('log_view');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -74,7 +76,7 @@
 	}
 
 //download the log
-	if (permission_exists('log_download')) {
+	if ($has_log_download) {
 		if (isset($_GET['n'])) {
 			if (isset($filename)) { unset($filename); }
 			$approved_files = glob($settings->get('switch', 'log').'/freeswitch.log*');
@@ -142,7 +144,7 @@
 	echo 		"</select> ";
 	echo 		$text['label-size'];
 	echo button::create(['type'=>'submit','label'=>$text['button-update'],'icon'=>$settings->get('theme', 'button_icon_save'),'style'=>'margin-left: 15px;','name'=>'submit']);
-	if (permission_exists('log_download')) {
+	if ($has_log_download) {
 		echo button::create(['type'=>'button','label'=>$text['button-download'],'icon'=>$settings->get('theme', 'button_icon_download'),'style'=>'margin-left: 15px;','link'=>'log_viewer.php?a=download&n='.basename($log_file)]);
 	}
 	echo 		"</form>\n";
@@ -154,7 +156,7 @@
 	echo "	<tr>\n";
 	echo "		<td style='background-color: #1c1c1c; padding: 8px; text-align: left; overflow-wrap: break-word;'>";
 
-	if (permission_exists('log_view')) {
+	if ($has_log_view) {
 
 		$MAXEL = 3; //pattern2, pattern3|color2, color3 etc...
 

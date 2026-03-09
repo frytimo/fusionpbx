@@ -30,6 +30,11 @@
 		echo "access denied";
 		exit;
 	}
+	$has_number_translation_add           = permission_exists('number_translation_add');
+	$has_number_translation_delete        = permission_exists('number_translation_delete');
+	$has_number_translation_detail_add    = permission_exists('number_translation_detail_add');
+	$has_number_translation_detail_delete = permission_exists('number_translation_detail_delete');
+	$has_number_translation_update        = permission_exists('number_translation_update');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -85,17 +90,17 @@
 				//send the array to the database class
 				switch ($_POST['action']) {
 					case 'copy':
-						if (permission_exists('number_translation_add')) {
+						if ($has_number_translation_add) {
 							$database->copy($array);
 						}
 						break;
 					case 'delete':
-						if (permission_exists('number_translation_delete')) {
+						if ($has_number_translation_delete) {
 							$database->delete($array);
 						}
 						break;
 					case 'toggle':
-						if (permission_exists('number_translation_update')) {
+						if ($has_number_translation_update) {
 							$database->toggle($array);
 						}
 						break;
@@ -226,10 +231,10 @@
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','collapse'=>'hide-xs','style'=>'margin-right: 15px;','link'=>'number_translations.php']);
 	if ($action == 'update') {
-		if (permission_exists('number_translation_detail_add')) {
+		if ($has_number_translation_detail_add) {
 			echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 		}
-		if (permission_exists('number_translation_detail_delete')) {
+		if ($has_number_translation_detail_delete) {
 			echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none; margin-right: 15px;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 		}
 	}
@@ -242,10 +247,10 @@
 	echo "<br /><br />\n";
 
 	if ($action == 'update') {
-		if (permission_exists('number_translation_add')) {
+		if ($has_number_translation_add) {
 			echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'copy','onclick'=>"modal_close();"])]);
 		}
-		if (permission_exists('number_translation_delete')) {
+		if ($has_number_translation_delete) {
 			echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 		}
 	}
@@ -274,7 +279,7 @@
 	echo "			<th class='vtablereq'>".$text['label-number_translation_detail_regex']."</th>\n";
 	echo "			<th class='vtablereq'>".$text['label-number_translation_detail_replace']."</th>\n";
 	echo "			<th class='vtablereq'>".$text['label-number_translation_detail_order']."</th>\n";
-	if (!empty($number_translation_details) && @sizeof($number_translation_details) > 1 && permission_exists('number_translation_detail_delete')) {
+	if (!empty($number_translation_details) && @sizeof($number_translation_details) > 1 && $has_number_translation_detail_delete) {
 		echo "			<td class='vtable edit_delete_checkbox_all' onmouseover=\"swap_display('delete_label_details', 'delete_toggle_details');\" onmouseout=\"swap_display('delete_label_details', 'delete_toggle_details');\">\n";
 		echo "				<span id='delete_label_details'>".$text['label-action']."</span>\n";
 		echo "				<span id='delete_toggle_details'><input type='checkbox' id='checkbox_all_details' name='checkbox_all' onclick=\"edit_all_toggle('details'); checkbox_on_change(this);\"></span>\n";
@@ -310,7 +315,7 @@
 		}
 		echo "				</select>\n";
 		echo "			</td>\n";
-		if (is_array($number_translation_details) && @sizeof($number_translation_details) > 1 && permission_exists('number_translation_detail_delete')) {
+		if (is_array($number_translation_details) && @sizeof($number_translation_details) > 1 && $has_number_translation_detail_delete) {
 			if (is_uuid($row['number_translation_detail_uuid'])) {
 				echo "		<td class='vtable' style='text-align: center; padding-bottom: 3px;'>\n";
 				echo "			<input type='checkbox' name='number_translation_details[".$x."][checked]' value='true' class='chk_delete checkbox_details' onclick=\"checkbox_on_change(this);\">\n";

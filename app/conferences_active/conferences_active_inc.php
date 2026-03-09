@@ -34,6 +34,7 @@
 		echo "access denied";
 		exit;
 	}
+	$has_conference_interactive_view = permission_exists('conference_interactive_view');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -69,7 +70,7 @@
 		echo "	<th>".$text['label-extension']."</th>\n";
 		echo "	<th>".$text['label-participant-pin']."</th>\n";
 		echo "	<th class='center'>".$text['label-member-count']."</th>\n";
-		if (permission_exists('conference_interactive_view')) {
+		if ($has_conference_interactive_view) {
 			echo "	<td class='action-button'>&nbsp;</td>\n";
 		}
 		echo "</tr>\n";
@@ -122,13 +123,13 @@
 						unset ($parameters, $sql);
 					}
 
-					if (permission_exists('conference_interactive_view')) {
+					if ($has_conference_interactive_view) {
 						$list_row_url = 'conference_interactive.php?c='.urlencode($conference_uuid);
 					}
 
 					echo "<tr class='list-row' href='".$list_row_url."'>\n";
 					echo "	<td>";
-					if (permission_exists('conference_interactive_view')) {
+					if ($has_conference_interactive_view) {
 						echo "	<a href='".$list_row_url."'>".escape($conference_name)."</a>";
 					}
 					else {
@@ -138,7 +139,7 @@
 					echo "	<td>".escape($conference_extension)."</td>\n";
 					echo "	<td>".escape($participant_pin)."</td>\n";
 					echo "	<td class='center'>".escape($member_count)."</td>\n";
-					if (permission_exists('conference_interactive_view') && $settings->get('theme', 'list_row_edit_button', false)) {
+					if ($has_conference_interactive_view && $settings->get('theme', 'list_row_edit_button', false)) {
 						echo "	<td class='action-button'>";
 						echo button::create(['type'=>'button','title'=>$text['button-view'],'icon'=>$settings->get('theme', 'button_icon_view'),'link'=>$list_row_url]);
 						echo "	</td>\n";

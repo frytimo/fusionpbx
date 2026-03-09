@@ -104,6 +104,11 @@
 		echo "access denied";
 		exit;
 	}
+	$has_domain_add          = permission_exists('domain_add');
+	$has_domain_all          = permission_exists('domain_all');
+	$has_domain_delete       = permission_exists('domain_delete');
+	$has_domain_edit         = permission_exists('domain_edit');
+	$has_domain_setting_view = permission_exists('domain_setting_view');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -119,19 +124,19 @@
 	if (!empty($action) && !empty($domains)) {
 		switch ($action) {
 			case 'copy':
-				if (permission_exists('domain_add')) {
+				if ($has_domain_add) {
 					$obj = new domains;
 					$obj->copy($domains);
 				}
 				break;
 			case 'toggle':
-				if (permission_exists('domain_edit')) {
+				if ($has_domain_edit) {
 					$obj = new domains;
 					$obj->toggle($domains);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('domain_delete')) {
+				if ($has_domain_delete) {
 					$obj = new domains;
 					$obj->delete($domains);
 				}
@@ -201,13 +206,13 @@
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['title-domains']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('domain_add')) {
+	if ($has_domain_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'domain_edit.php']);
 	}
-	if (permission_exists('domain_edit') && $domains) {
+	if ($has_domain_edit && $domains) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_display_selected('modal-toggle'); modal_open('modal-toggle','btn_toggle');"]);
 	}
- 	if (permission_exists('domain_delete') && $domains) {
+ 	if ($has_domain_delete && $domains) {
  		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_display_selected('modal-delete'); modal_open('modal-delete','btn_delete_domain');"]);
  	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
@@ -222,10 +227,10 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('domain_edit') && !empty($domains)) {
+	if ($has_domain_edit && !empty($domains)) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'general','message'=>$text['confirm-toggle_domains'],'actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
- 	if (permission_exists('domain_delete') && !empty($domains)) {
+ 	if ($has_domain_delete && !empty($domains)) {
 		echo modal::create(['id'=>'modal-delete','type'=>'general','message'=>$text['confirm-delete_domains'],'actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
  	}
 
@@ -239,19 +244,19 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('domain_edit') || permission_exists('domain_delete')) {
+	if ($has_domain_edit || $has_domain_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($domains) ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
 	}
-	if ($show == 'all' && permission_exists('domain_all')) {
+	if ($show == 'all' && $has_domain_all) {
 		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order);
 	}
 	echo th_order_by('domain_name', $text['label-domain_name'], $order_by, $order);
 	echo "<th class='center'>".$text['label-tools']."</th>";
 	echo th_order_by('domain_enabled', $text['label-domain_enabled'], $order_by, $order, null, "class='center'");
 	echo "	<th class='hide-sm-dn'>".$text['label-domain_description']."</th>\n";
-	if (permission_exists('domain_edit') && $list_row_edit_button) {
+	if ($has_domain_edit && $list_row_edit_button) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -260,21 +265,21 @@
 		$x = 0;
 		foreach ($domains as $row) {
 			$list_row_url = '';
-			if (permission_exists('domain_edit')) {
+			if ($has_domain_edit) {
 				$list_row_url = "domain_edit.php?id=".urlencode($row['domain_uuid']);
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('domain_edit') || permission_exists('domain_delete')) {
+			if ($has_domain_edit || $has_domain_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='domains[$x][checked]' id='checkbox_".$x."' value='true' data-item-name='".escape($row['domain_name'])."' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='domains[$x][uuid]' value='".escape($row['domain_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if ($show == 'all' && permission_exists('domain_all')) {
+			if ($show == 'all' && $has_domain_all) {
 				echo "	<td>".escape($_SESSION['domains'][$row['domain_uuid']]['domain_name'])."</td>\n";
 			}
 			echo "	<td>\n";
-			if (permission_exists('domain_edit')) {
+			if ($has_domain_edit) {
 				echo "	<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['domain_name'])."</a>\n";
 			}
 			else {
@@ -283,12 +288,12 @@
 			echo "	</td>\n";
 			echo "	<td class='no-link center'>\n";
 			echo "		<a href='".PROJECT_PATH."/core/domains/domains.php?domain_uuid=".escape($row['domain_uuid'])."&domain_change=true'>".$text['label-manage']."</a>";
-			if (permission_exists('domain_setting_view')) {
+			if ($has_domain_setting_view) {
 				$list_setting_url = PROJECT_PATH."/core/domain_settings/domain_settings.php?id=".urlencode($row['domain_uuid']);
 				echo "&nbsp;&nbsp; <a href='".$list_setting_url."'\">".$text['button-settings'];
 			}
 			echo "	</td>\n";
-			if (permission_exists('domain_edit')) {
+			if ($has_domain_edit) {
 				echo "	<td class='no-link center'>\n";
 				echo button::create(['type'=>'button','class'=>'link','label'=>$text['label-'.$row['domain_enabled']],'title'=>$text['button-toggle'],'id'=>'btn_toggle_enabled','name'=>'btn_toggle_enabled','onclick'=>"list_self_check('checkbox_".$x."'); modal_open('modal-toggle_enabled','btn_toggle_enabled');"]);
 				echo modal::create(['id'=>'modal-toggle_enabled','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle_enabled','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
@@ -300,7 +305,7 @@
 				echo "	</td>\n";
 			}
 			echo "	<td class='description overflow hide-sm-dn'>".escape($row['domain_description'])."</td>\n";
-			if (permission_exists('domain_edit') && $list_row_edit_button) {
+			if ($has_domain_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>\n";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

@@ -34,6 +34,15 @@
 		echo "access denied";
 		exit;
 	}
+	$has_conference_active_view      = permission_exists('conference_active_view');
+	$has_conference_add              = permission_exists('conference_add');
+	$has_conference_all              = permission_exists('conference_all');
+	$has_conference_cdr_view         = permission_exists('conference_cdr_view');
+	$has_conference_delete           = permission_exists('conference_delete');
+	$has_conference_edit             = permission_exists('conference_edit');
+	$has_conference_interactive_view = permission_exists('conference_interactive_view');
+	$has_conference_view             = permission_exists('conference_view');
+	$has_domain_select               = permission_exists('domain_select');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -68,19 +77,19 @@
 
 		switch ($action) {
 			case 'copy':
-				if (permission_exists('conference_add')) {
+				if ($has_conference_add) {
 					$obj = new conferences;
 					$obj->copy($conferences);
 				}
 				break;
 			case 'toggle':
-				if (permission_exists('conference_edit')) {
+				if ($has_conference_edit) {
 					$obj = new conferences;
 					$obj->toggle($conferences);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('conference_delete')) {
+				if ($has_conference_delete) {
 					$obj = new conferences;
 					$obj->delete($conferences);
 				}
@@ -116,11 +125,11 @@
 	}
 
 //prepare to page the results
-	if (permission_exists('conference_view')) {
+	if ($has_conference_view) {
 		//show all extensions
 		$sql = "select count(*) from v_conferences ";
 		$sql .= "where true ";
-		if ($show != "all" || !permission_exists('conference_all')) {
+		if ($show != "all" || !$has_conference_all) {
 			$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 			$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		}
@@ -139,7 +148,7 @@
 //prepare to page the results
 	$rows_per_page = $settings->get('domain', 'paging', 50);
 	$param = "&search=".urlencode($search);
-	if ($show == "all" && permission_exists('conference_all')) {
+	if ($show == "all" && $has_conference_all) {
 		$param .= "&show=all";
 	}
 	$page = $_GET['page'] ?? '';
@@ -164,11 +173,11 @@
 	$sql .= "conference_description, ";
 	$sql .= "conference_context, ";
 	$sql .= "cast(conference_enabled as text) ";
-	if (permission_exists('conference_view')) {
+	if ($has_conference_view) {
 		//show all extensions
 		$sql .= "from v_conferences as c ";
 		$sql .= "where true ";
-		if ($show != "all" || !permission_exists('conference_all')) {
+		if ($show != "all" || !$has_conference_all) {
 			$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 			$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		}
@@ -200,23 +209,23 @@
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['title-conferences']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('conference_active_view')) {
+	if ($has_conference_active_view) {
 		echo button::create(['type'=>'button','label'=>$text['button-view_active'],'icon'=>'comments','style'=>'margin-right: 15px;','link'=>PROJECT_PATH.$conference_view_page]);
 	}
-	if (permission_exists('conference_add')) {
+	if ($has_conference_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'conference_edit.php']);
 	}
-	if (permission_exists('conference_add') && $conferences) {
+	if ($has_conference_add && $conferences) {
 		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 	}
-	if (permission_exists('conference_edit') && $conferences) {
+	if ($has_conference_edit && $conferences) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
-	if (permission_exists('conference_delete') && $conferences) {
+	if ($has_conference_delete && $conferences) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if (permission_exists('conference_all')) {
+	if ($has_conference_all) {
 		if ($show == 'all') {
 			echo "		<input type='hidden' name='show' value='all'>";
 		}
@@ -235,13 +244,13 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('conference_add') && $conferences) {
+	if ($has_conference_add && $conferences) {
 		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('conference_edit') && $conferences) {
+	if ($has_conference_edit && $conferences) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('conference_delete') && $conferences) {
+	if ($has_conference_delete && $conferences) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -255,12 +264,12 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('conference_add') || permission_exists('conference_edit') || permission_exists('conference_delete')) {
+	if ($has_conference_add || $has_conference_edit || $has_conference_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($conferences) ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
 	}
-	if ($show == "all" && permission_exists('conference_all')) {
+	if ($show == "all" && $has_conference_all) {
 		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param, "class='shrink'");
 	}
 	echo th_order_by('conference_name', $text['table-name'], $order_by, $order);
@@ -270,7 +279,7 @@
 	echo "<th style='text-align: center;'>".$text['label-tools']."</th>\n";
 	echo th_order_by('conference_enabled', $text['table-enabled'], $order_by, $order, null, "class='center'");
 	echo th_order_by('conference_description', $text['table-description'], $order_by, $order, null, "class='hide-sm-dn'");
-	if (permission_exists('conference_edit') && $list_row_edit_button) {
+	if ($has_conference_edit && $list_row_edit_button) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -281,20 +290,20 @@
 			//dispatch render-row hook
 			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
-			if (permission_exists('conference_edit')) {
+			if ($has_conference_edit) {
 				$list_row_url = "conference_edit.php?id=".urlencode($row['conference_uuid']);
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('conference_add') || permission_exists('conference_edit') || permission_exists('conference_delete')) {
+			if ($has_conference_add || $has_conference_edit || $has_conference_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='conferences[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='conferences[$x][uuid]' value='".escape($row['conference_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if ($show == "all" && permission_exists('conference_all')) {
+			if ($show == "all" && $has_conference_all) {
 				if (!empty($_SESSION['domains'][$row['domain_uuid']]['domain_name'])) {
 					$domain = $_SESSION['domains'][$row['domain_uuid']]['domain_name'];
 				}
@@ -308,20 +317,20 @@
 			echo "	<td>".escape($row['conference_profile'])."&nbsp;</td>\n";
 			echo "	<td class='center'>".escape($row['conference_order'])."&nbsp;</td>\n";
 			echo "	<td class='no-link center'>\n";
-			if (permission_exists('conference_interactive_view')) {
+			if ($has_conference_interactive_view) {
 				echo "		<a href='".PROJECT_PATH."$conference_view_page?c=".urlencode($row['conference_extension'])."'>".$text['label-view']."</a>\n";
 			}
-			else if (permission_exists('conference_active_view')) {
+			else if ($has_conference_active_view) {
 				echo "		<a href='".PROJECT_PATH."$conference_view_page'>".$text['label-view']."</a>\n";
 			}
 			else {
 				echo "		&nsbp;\n";
 			}
-			if (permission_exists('conference_cdr_view')) {
+			if ($has_conference_cdr_view) {
 				echo "		<a href='".PROJECT_PATH.'/app/conference_cdr/conference_cdr.php?id='.urlencode($row['conference_uuid'])."'>".$text['label-cdr']."</a>\n";
 			}
 			echo "	</td>\n";
-			if (permission_exists('conference_edit')) {
+			if ($has_conference_edit) {
 				echo "	<td class='no-link center'>";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['conference_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
 			}
@@ -330,7 +339,7 @@
 				echo $text['label-'.$row['conference_enabled']];
 			}
 			echo "	<td class='description overflow hide-sm-dn'>".escape($row['conference_description'])."&nbsp;</td>\n";
-			if (permission_exists('conference_edit') && $list_row_edit_button) {
+			if ($has_conference_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

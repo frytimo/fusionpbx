@@ -33,6 +33,13 @@ if (!permission_exists('operator_panel_view')) {
 	echo "access denied";
 	exit;
 }
+	$has_operator_panel_call_details = permission_exists('operator_panel_call_details');
+	$has_operator_panel_eavesdrop    = permission_exists('operator_panel_eavesdrop');
+	$has_operator_panel_hangup       = permission_exists('operator_panel_hangup');
+	$has_operator_panel_manage       = permission_exists('operator_panel_manage');
+	$has_operator_panel_on_demand    = permission_exists('operator_panel_on_demand');
+	$has_operator_panel_record       = permission_exists('operator_panel_record');
+	$has_user_setting_edit           = permission_exists('user_setting_edit');
 
 //add multi-lingual support
 $language = new text;
@@ -120,12 +127,12 @@ echo "			<b>".$text['title-operator_panel']."</b>\n";
 echo "		</td>\n";
 echo "		<td valign='top' align='center' nowrap>\n";
 
-if (permission_exists("user_setting_edit") && sizeof($_SESSION['user']['extensions']) > 0) {
+if ($has_user_setting_edit && sizeof($_SESSION['user']['extensions']) > 0) {
 	$status_options[1]['status'] = "Available";
 	$status_options[1]['label'] = $text['label-status_available'];
 	$status_options[1]['style'] = "op_btn_status_available";
 
-	if (permission_exists('operator_panel_on_demand')) {
+	if ($has_operator_panel_on_demand) {
 		$status_options[2]['status'] = "Available (On Demand)";
 		$status_options[2]['label'] = $text['label-status_on_demand'];
 		$status_options[2]['style'] = "op_btn_status_available_on_demand";
@@ -155,7 +162,7 @@ echo "					<td valign='middle' nowrap='nowrap' style='padding-right: 15px'>\n";
 echo "						<span id='refresh_state'>".button::create(['type'=>'button','title'=>$text['label-refresh_pause'],'icon'=>'sync-alt fa-spin','onclick'=>'refresh_stop()'])."</span>";
 echo "					</td>\n";
 
-if (permission_exists('operator_panel_eavesdrop')) {
+if ($has_operator_panel_eavesdrop) {
 	echo "				<td valign='top' nowrap='nowrap'>\n";
 	if (sizeof($_SESSION['user']['extensions']) > 1) {
 		echo "				<input type='hidden' id='eavesdrop_dest' value=\"".(($_REQUEST['eavesdrop_dest'] == '') ? $_SESSION['user']['extension'][0]['destination'] : escape($_REQUEST['eavesdrop_dest']))."\">\n";
@@ -376,7 +383,7 @@ if (is_array($activity)) {
 		}
 
 		//determine extension draggable state
-		if (permission_exists('operator_panel_manage')) {
+		if ($has_operator_panel_manage) {
 			if (!in_array($extension, $_SESSION['user']['extensions'])) {
 				//other extension
 				if (!empty($ext_state) && $ext_state == "ringing") {
@@ -470,7 +477,7 @@ if (is_array($activity)) {
 			$block .= "				<span class='op_call_info'>".escape($ext['call_length'])."</span><br>\n";
 			$block .= "				<span class='call_control'>\n";
 			//record
-			if (permission_exists('operator_panel_record') && $ext_state == 'active') {
+			if ($has_operator_panel_record && $ext_state == 'active') {
 				$call_identifier_record = $ext['call_uuid'];
 				$rec_file = $settings->get('switch', 'recordings')."/".$_SESSION['domain_name']."/archive/".date("Y")."/".date("M")."/".date("d")."/".escape($call_identifier_record).".wav";
 				if (file_exists($rec_file)) {
@@ -481,11 +488,11 @@ if (is_array($activity)) {
 				}
 			}
 			//eavesdrop
-			if (permission_exists('operator_panel_eavesdrop') && $ext_state == 'active' && sizeof($_SESSION['user']['extensions']) > 0 && !in_array($extension, $_SESSION['user']['extensions'])) {
+			if ($has_operator_panel_eavesdrop && $ext_state == 'active' && sizeof($_SESSION['user']['extensions']) > 0 && !in_array($extension, $_SESSION['user']['extensions'])) {
 				$block .= 			"<img src='resources/images/eavesdrop.png' style='width: 12px; height: 12px; border: none; margin: 4px 0px 0px 5px; cursor: pointer;' title='".$text['label-eavesdrop']."' onclick=\"eavesdrop_call('".escape($ext['destination'])."','".escape($call_identifier)."');\" ".$onhover_pause_refresh.">\n";
 			}
 			//hangup
-			if (permission_exists('operator_panel_hangup') || in_array($extension, $_SESSION['user']['extensions'])) {
+			if ($has_operator_panel_hangup || in_array($extension, $_SESSION['user']['extensions'])) {
 				if (empty($ext['variable_bridge_uuid']) && $ext_state == 'ringing') {
 					$call_identifier_hangup_uuid = $ext['uuid'];
 				}
@@ -503,7 +510,7 @@ if (is_array($activity)) {
 				$block .= 			"<img id='destination_control_".escape($extension)."_transfer' class='destination_control' src='resources/images/keypad_transfer.png' style='width: 12px; height: 12px; border: none; margin: 4px 0px 0px 5px; cursor: pointer;' onclick=\"toggle_destination('".escape($extension)."', 'transfer');\" ".$onhover_pause_refresh.">\n";
 			}
 			$block .= "			</td></tr></table>\n";
-			if (permission_exists('operator_panel_call_details')) {
+			if ($has_operator_panel_call_details) {
 				$block .= "			<span id='op_caller_details_".escape($extension)."'><strong>".escape($call_name)."</strong><br>".escape($call_number)."</span>\n";
 			}
 			$block .= "		</span>\n";
@@ -602,7 +609,7 @@ if (sizeof($user_extensions) > 0) {
 				//	$valet_block .= 			"<img id='destination_control_".escape($extension)."_transfer' class='destination_control' src='resources/images/keypad_transfer.png' style='width: 12px; height: 12px; border: none; margin: 4px 0px 0px 5px; cursor: pointer;' onclick=\"toggle_destination('".escape($extension)."', 'transfer');\" ".$onhover_pause_refresh.">";
 				//}
 				$valet_block .= "			</td></tr></table>\n";
-				if (permission_exists('operator_panel_call_details')) {
+				if ($has_operator_panel_call_details) {
 					$valet_block .= "			<span id='op_caller_details_".escape($extension)."'><strong>".escape($row['caller_id_name'])."</strong><br>".escape($row['caller_id_number'])."</span>\n";
 				}
 				$valet_block .= "		</span>\n";

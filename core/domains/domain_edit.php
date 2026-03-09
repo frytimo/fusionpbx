@@ -34,6 +34,14 @@
 		echo "access denied";
 		exit;
 	}
+	$has_domain_add          = permission_exists('domain_add');
+	$has_domain_all          = permission_exists('domain_all');
+	$has_domain_delete       = permission_exists('domain_delete');
+	$has_domain_edit         = permission_exists('domain_edit');
+	$has_domain_export       = permission_exists('domain_export');
+	$has_domain_select       = permission_exists('domain_select');
+	$has_domain_setting_add  = permission_exists('domain_setting_add');
+	$has_domain_setting_view = permission_exists('domain_setting_view');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -43,7 +51,7 @@
 	$domain_description = '';
 
 //action add or update
-	if (!permission_exists('domain_add') || (file_exists(dirname(__DIR__, 2)."/app/domains/") && !permission_exists('domain_all'))) {
+	if (!$has_domain_add || (file_exists(dirname(__DIR__, 2)."/app/domains/") && !$has_domain_all)) {
 		//admin editing own domain/settings
 		$domain_uuid = $_SESSION['domain_uuid'];
 		$action = "update";
@@ -74,7 +82,7 @@
 			}
 
 		//delete the domain
-			if (permission_exists('domain_delete') && !empty($_POST['action']) && $_POST['action'] == 'delete' && is_uuid($domain_uuid)) {
+			if ($has_domain_delete && !empty($_POST['action']) && $_POST['action'] == 'delete' && is_uuid($domain_uuid)) {
 				//prepare
 				$array[0]['checked'] = 'true';
 				$array[0]['uuid'] = $domain_uuid;
@@ -135,7 +143,7 @@
 			if (empty($_POST["persistformvar"])) {
 
 				//add a domain to the database
-				if ($action == "add" && permission_exists('domain_add')) {
+				if ($action == "add" && $has_domain_add) {
 					$sql = "select count(domain_uuid) from v_domains ";
 					$sql .= "where lower(domain_name) = :domain_name ";
 					$parameters['domain_name'] = $domain_name;
@@ -198,7 +206,7 @@
 				}
 
 				//update the domain
-				if ($action == "update" && permission_exists('domain_edit')) {
+				if ($action == "update" && $has_domain_edit) {
 
 					//get original domain name
 						$sql = "select domain_name from v_domains ";
@@ -512,7 +520,7 @@
 			//redirect the browser
 				if ($action == "update") {
 					message::add($text['message-update']);
-					if (!permission_exists('domain_add')) { //admin, updating own domain
+					if (!$has_domain_add) { //admin, updating own domain
 						header("Location: domain_edit.php");
 					}
 					else {
@@ -528,7 +536,7 @@
 	}
 
 //pre-populate the form (admin won't have domain_add permissions, but domain_uuid will already be set above)
-	if ((!empty($_GET) || (!permission_exists('domain_add') && !empty($domain_uuid))) && empty($_POST["persistformvar"])) {
+	if ((!empty($_GET) || (!$has_domain_add && !empty($domain_uuid))) && empty($_POST["persistformvar"])) {
 		$sql = "select ";
 		$sql .= "domain_uuid, ";
 		$sql .= "domain_name, ";
@@ -563,7 +571,7 @@
 	}
 
 //copy settings javascript
-	if (permission_exists("domain_select") && permission_exists("domain_setting_add") && !empty($_SESSION['domains']) && count($_SESSION['domains']) > 1) {
+	if ($has_domain_select && $has_domain_setting_add && !empty($_SESSION['domains']) && count($_SESSION['domains']) > 1) {
 		echo "<script language='javascript' type='text/javascript'>\n";
 		echo "	var fade_speed = 400;\n";
 		echo "	function show_domains() {\n";
@@ -617,16 +625,16 @@
 	echo "	</div>\n";
 	echo "	<div class='actions'>\n";
 
-	if (permission_exists('domain_add')) {
+	if ($has_domain_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','style'=>'margin-right: 15px;','link'=>'domains.php']);
 	}
-	if ($action == "update" && permission_exists('domain_setting_view')) {
+	if ($action == "update" && $has_domain_setting_view) {
 		echo button::create(['type'=>'button','label'=>$text['button-settings'],'icon'=>$settings->get('theme', 'button_icon_settings'),'id'=>'btn_back','style'=>'margin-right: 2px;','link'=>PROJECT_PATH.'/core/domain_settings/domain_settings.php?id='.urlencode($domain_uuid)]);
 	}
-	if (permission_exists('domain_delete') && is_array($_SESSION['domains']) && @sizeof($_SESSION['domains']) > 1 && $domain_uuid != $_SESSION['domain_uuid']) {
+	if ($has_domain_delete && is_array($_SESSION['domains']) && @sizeof($_SESSION['domains']) > 1 && $domain_uuid != $_SESSION['domain_uuid']) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'onclick'=>"modal_open('modal-delete-domain','btn_delete_domain');"]);
 	}
-	if (permission_exists("domain_select") && is_array($_SESSION['domains']) && @sizeof($_SESSION['domains']) > 1) {
+	if ($has_domain_select && is_array($_SESSION['domains']) && @sizeof($_SESSION['domains']) > 1) {
 		echo "<select id='domains' class='formfld' style='width: auto;' onchange=\"window.location.href='?id=' + document.getElementById('domains').options[document.getElementById('domains').selectedIndex].value;\">\n";
 		foreach ($_SESSION['domains'] as $domain) {
 			$selected = $domain["domain_uuid"] == $domain_uuid ? "selected='selected'" : null;
@@ -634,7 +642,7 @@
 		}
 		echo "</select>";
 	}
-	if (permission_exists('domain_export')) {
+	if ($has_domain_export) {
 		echo button::create(['type'=>'button','label'=>$text['button-export'],'icon'=>$settings->get('theme', 'button_icon_export'),'link'=>PROJECT_PATH."/app/domain_export/index.php?id=".urlencode($domain_uuid)]);
 	}
 	echo button::create(['type'=>'submit','label'=>$text['button-save'],'icon'=>$settings->get('theme', 'button_icon_save'),'id'=>'btn_save','style'=>'margin-left: 3px;']);
@@ -642,7 +650,7 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('domain_delete') && is_array($_SESSION['domains']) && @sizeof($_SESSION['domains']) > 1 && $domain_uuid != $_SESSION['domain_uuid']) {
+	if ($has_domain_delete && is_array($_SESSION['domains']) && @sizeof($_SESSION['domains']) > 1 && $domain_uuid != $_SESSION['domain_uuid']) {
 		echo modal::create(['id'=>'modal-delete-domain','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete_domain','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 	}
 

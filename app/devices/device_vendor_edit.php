@@ -33,6 +33,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_device_vendor_add  = permission_exists('device_vendor_add');
+	$has_device_vendor_edit = permission_exists('device_vendor_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -88,12 +90,12 @@
 
 		//add or update the database
 			if (empty($_POST["persistformvar"]) || $_POST["persistformvar"] != "true") {
-				if ($action == "add" && permission_exists('device_vendor_add')) {
+				if ($action == "add" && $has_device_vendor_add) {
 					$array['device_vendors'][0]['device_vendor_uuid'] = uuid();
 					message::add($text['message-add']);
 				}
 
-				if ($action == "update" && permission_exists('device_vendor_edit')) {
+				if ($action == "update" && $has_device_vendor_edit) {
 					$array['device_vendors'][0]['device_vendor_uuid'] = $device_vendor_uuid;
 					message::add($text['message-update']);
 				}

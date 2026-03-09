@@ -34,6 +34,9 @@
 		echo "access denied";
 		exit;
 	}
+	$has_var_add    = permission_exists('var_add');
+	$has_var_delete = permission_exists('var_delete');
+	$has_var_edit   = permission_exists('var_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -58,19 +61,19 @@
 
 		switch ($action) {
 			case 'copy':
-				if (permission_exists('var_add')) {
+				if ($has_var_add) {
 					$obj = new vars;
 					$obj->copy($vars);
 				}
 				break;
 			case 'toggle':
-				if (permission_exists('var_edit')) {
+				if ($has_var_edit) {
 					$obj = new vars;
 					$obj->toggle($vars);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('var_delete')) {
+				if ($has_var_delete) {
 					$obj = new vars;
 					$obj->delete($vars);
 				}
@@ -161,16 +164,16 @@
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['header-variables']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('var_add')) {
+	if ($has_var_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'var_edit.php']);
 	}
-	if (permission_exists('var_add') && $vars) {
+	if ($has_var_add && $vars) {
 		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 	}
-	if (permission_exists('var_edit') && $vars) {
+	if ($has_var_edit && $vars) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
-	if (permission_exists('var_delete') && $vars) {
+	if ($has_var_delete && $vars) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
@@ -185,13 +188,13 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('var_add') && $vars) {
+	if ($has_var_add && $vars) {
 		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('var_edit') && $vars) {
+	if ($has_var_edit && $vars) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('var_delete') && $vars) {
+	if ($has_var_delete && $vars) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -220,7 +223,7 @@
 		$modifier = strtolower(trim($modifier));
 		echo "\n";
 		echo "<tr class='list-header'>\n";
-		if (permission_exists('var_edit') || permission_exists('var_delete')) {
+		if ($has_var_edit || $has_var_delete) {
 			echo "	<th class='checkbox'>\n";
 			echo "		<input type='checkbox' id='checkbox_all_".$modifier."' name='checkbox_all' onclick=\"list_all_toggle('".$modifier."'); checkbox_on_change(this);\" ".(!empty($vars) ?: "style='visibility: hidden;'").">\n";
 			echo "	</th>\n";
@@ -230,7 +233,7 @@
 		echo th_order_by('var_hostname', $text['label-hostname'], $order_by, $order, null, "class='hide-sm-dn'");
 		echo th_order_by('var_enabled', $text['label-enabled'], $order_by, $order, null, "class='center'");
 		echo "<th class='hide-sm-dn'>".$text['label-description']."</th>\n";
-		if (permission_exists('var_edit') && $list_row_edit_button) {
+		if ($has_var_edit && $list_row_edit_button) {
 			echo "<td class='action-button'>&nbsp;</td>\n";
 		}
 		echo "</tr>\n";
@@ -251,11 +254,11 @@
 			}
 
 			$list_row_url = '';
-			if (permission_exists('var_edit')) {
+			if ($has_var_edit) {
 				$list_row_url = "var_edit.php?id=".urlencode($row['var_uuid']);
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('var_add') || permission_exists('var_edit') || permission_exists('var_delete')) {
+			if ($has_var_add || $has_var_edit || $has_var_delete) {
 				$modifier = strtolower(trim($row["var_category"]));
 				$modifier = str_replace('/', '', $modifier);
 				$modifier = str_replace('  ', ' ', $modifier);
@@ -267,7 +270,7 @@
 				echo "	</td>\n";
 			}
 			echo "   <td class='overflow'>";
-			if (permission_exists('var_edit')) {
+			if ($has_var_edit) {
 				echo "<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['var_name'])."</a>";
 			}
 			else {
@@ -276,7 +279,7 @@
 			echo "	</td>\n";
 			echo "	<td class='overflow'>".$row['var_value']."</td>\n";
 			echo "	<td class='hide-sm-dn'>".$row['var_hostname']."&nbsp;</td>\n";
-			if (permission_exists('var_edit')) {
+			if ($has_var_edit) {
 				echo "	<td class='no-link center'>\n";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['var_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
 			}
@@ -286,7 +289,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td class='description overflow hide-sm-dn'>".escape($row['var_description'] ?? '')."</td>\n";
-			if (permission_exists('var_edit') && $list_row_edit_button) {
+			if ($has_var_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>\n";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

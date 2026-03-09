@@ -34,6 +34,11 @@
 		echo "access denied";
 		exit;
 	}
+	$has_user_add            = permission_exists('user_add');
+	$has_user_edit           = permission_exists('user_edit');
+	$has_user_setting_add    = permission_exists('user_setting_add');
+	$has_user_setting_delete = permission_exists('user_setting_delete');
+	$has_user_setting_edit   = permission_exists('user_setting_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -58,14 +63,14 @@
 			if (!empty($user_settings)) {
 				switch ($action) {
 					case 'toggle':
-						if (permission_exists('user_setting_edit')) {
+						if ($has_user_setting_edit) {
 							$obj = new user_settings;
 							$obj->user_uuid = $user_uuid;
 							$obj->toggle($user_settings);
 						}
 						break;
 					case 'delete':
-						if (permission_exists('user_setting_delete')) {
+						if ($has_user_setting_delete) {
 							$obj = new user_settings;
 							$obj->user_uuid = $user_uuid;
 							$obj->delete($user_settings);
@@ -177,27 +182,27 @@
 	echo "<div class='action_bar' id='action_bar_sub'>\n";
 	echo "	<div class='heading'><b id='heading_sub'>".$text['title-user_settings']."</b></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('user_add') || permission_exists('user_edit')) {
+	if ($has_user_add || $has_user_edit) {
 		echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','link'=>'/core/users/user_edit.php?id='.$user_uuid]);
 	}
 	echo button::create(['type'=>'button','id'=>'action_bar_sub_button_back','label'=>$text['button-back'],'icon'=>$button_icon_back,'style'=>'margin-right: 15px; display: none;','link'=>'users.php']);
-	if (permission_exists('user_setting_add')) {
+	if ($has_user_setting_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$button_icon_add,'id'=>'btn_add','link'=>PROJECT_PATH.'/core/user_settings/user_setting_edit.php?user_uuid='.urlencode($_GET['id'])]);
 	}
-	if (permission_exists('user_setting_edit') && $user_settings) {
+	if ($has_user_setting_edit && $user_settings) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$button_icon_toggle,'name'=>'btn_toggle','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
-	if (permission_exists('user_setting_delete') && $user_settings) {
+	if ($has_user_setting_delete && $user_settings) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$button_icon_delete,'name'=>'btn_delete','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo "	</div>\n";
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('user_setting_edit') && $user_settings) {
+	if ($has_user_setting_edit && $user_settings) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('user_setting_delete') && $user_settings) {
+	if ($has_user_setting_delete && $user_settings) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -240,7 +245,7 @@
 				echo "<div class='card'>\n";
 				echo "<table class='list'>\n";
 				echo "<tr class='list-header'>\n";
-				if (permission_exists('user_setting_add') || permission_exists('user_setting_edit') || permission_exists('user_setting_delete')) {
+				if ($has_user_setting_add || $has_user_setting_edit || $has_user_setting_delete) {
 					echo "	<th class='checkbox'>\n";
 					echo "		<input type='checkbox' id='checkbox_all_".$user_setting_category."' name='checkbox_all' onclick=\"list_all_toggle('".$user_setting_category."');\">\n";
 					echo "	</th>\n";
@@ -250,23 +255,23 @@
 				echo "<th class='pct-30'>".$text['label-value']."</th>";
 				echo "<th class='center'>".$text['label-enabled']."</th>";
 				echo "<th class='pct-25 hide-sm-dn'>".$text['label-description']."</th>";
-				if (permission_exists('user_setting_edit') && $list_row_edit_button) {
+				if ($has_user_setting_edit && $list_row_edit_button) {
 					echo "	<td class='action-button'>&nbsp;</td>\n";
 				}
 				echo "</tr>\n";
 			}
-			if (permission_exists('user_setting_edit')) {
+			if ($has_user_setting_edit) {
 				$list_row_url = PROJECT_PATH."/core/user_settings/user_setting_edit.php?user_uuid=".$row['user_uuid']."&id=".$row['user_setting_uuid'];
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('user_setting_add') || permission_exists('user_setting_edit') || permission_exists('user_setting_delete')) {
+			if ($has_user_setting_add || $has_user_setting_edit || $has_user_setting_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='user_settings[$x][checked]' id='checkbox_".$x."' class='checkbox_".$user_setting_category."' value='true' onclick=\"if (!this.checked) { document.getElementById('checkbox_all_".$user_setting_category."').checked = false; }\">\n";
 				echo "		<input type='hidden' name='user_settings[$x][uuid]' value='".escape($row['user_setting_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
 			echo "	<td class='overflow no-wrap'>";
-			if (permission_exists('user_setting_edit')) {
+			if ($has_user_setting_edit) {
 				echo "	<a href='".$list_row_url."'>".escape($row['user_setting_subcategory'])."</a>";
 			}
 			else {
@@ -368,7 +373,7 @@
 				}
 			}
 			echo "	</td>\n";
-			if (permission_exists('user_setting_edit')) {
+			if ($has_user_setting_edit) {
 				echo "	<td class='no-link center'>\n";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['user_setting_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
 			}
@@ -378,7 +383,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td class='description overflow hide-sm-dn' title=\"".escape($row['user_setting_description'])."\">".escape($row['user_setting_description'])."&nbsp;</td>\n";
-			if (permission_exists('user_setting_edit') && $list_row_edit_button) {
+			if ($has_user_setting_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>\n";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$button_icon_edit,'link'=>$list_row_url]);
 				echo "	</td>\n";

@@ -34,6 +34,11 @@
 		echo "access denied";
 		exit;
 	}
+	$has_device_vendor_add     = permission_exists('device_vendor_add');
+	$has_device_vendor_delete  = permission_exists('device_vendor_delete');
+	$has_device_vendor_edit    = permission_exists('device_vendor_edit');
+	$has_device_vendor_restore = permission_exists('device_vendor_restore');
+	$has_domain_select         = permission_exists('domain_select');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -54,13 +59,13 @@
 
 		switch ($action) {
 			case 'toggle':
-				if (permission_exists('device_vendor_edit')) {
+				if ($has_device_vendor_edit) {
 					$obj = new device;
 					$obj->toggle_vendors($vendors);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('device_vendor_delete')) {
+				if ($has_device_vendor_delete) {
 					$obj = new device;
 					$obj->delete_vendors($vendors);
 				}
@@ -141,16 +146,16 @@
 	echo "	<div class='heading'><b>".$text['title-device_vendors']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','style'=>'margin-right: 15px;','link'=>'devices.php']);
-	if (permission_exists('device_vendor_restore')) {
+	if ($has_device_vendor_restore) {
 		echo button::create(['type'=>'button','label'=>$text['button-restore'],'icon'=>$settings->get('theme', 'button_icon_reset'),'style'=>'margin-right: 15px;','link'=>'device_vendor_restore.php']);
 	}
-	if (permission_exists('device_vendor_add')) {
+	if ($has_device_vendor_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'device_vendor_edit.php']);
 	}
-	if (permission_exists('device_vendor_edit') && $result) {
+	if ($has_device_vendor_edit && $result) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
-	if (permission_exists('device_vendor_delete') && $result) {
+	if ($has_device_vendor_delete && $result) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
@@ -165,10 +170,10 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('device_vendor_edit') && $result) {
+	if ($has_device_vendor_edit && $result) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('device_vendor_delete') && $result) {
+	if ($has_device_vendor_delete && $result) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -182,7 +187,7 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('device_vendor_edit') || permission_exists('device_vendor_delete')) {
+	if ($has_device_vendor_edit || $has_device_vendor_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(empty($result) ? "style='visibility: hidden;'" : null).">\n";
 		echo "	</th>\n";
@@ -190,7 +195,7 @@
 	echo th_order_by('name', $text['label-name'], $order_by, $order);
 	echo th_order_by('enabled', $text['label-enabled'], $order_by, $order, null, "class='center'");
 	echo th_order_by('description', $text['label-description'], $order_by, $order, null, "class='hide-xs'");
-	if (permission_exists('device_vendor_edit') && $settings->get('theme', 'list_row_edit_button', false)) {
+	if ($has_device_vendor_edit && $settings->get('theme', 'list_row_edit_button', false)) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -201,21 +206,21 @@
 			//dispatch render-row hook
 			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
-			if (permission_exists('device_vendor_edit')) {
+			if ($has_device_vendor_edit) {
 				$list_row_url = "device_vendor_edit.php?id=".urlencode($row['device_vendor_uuid']);
-				if (!empty($row['domain_uuid']) && $row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+				if (!empty($row['domain_uuid']) && $row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('device_vendor_edit') || permission_exists('device_vendor_delete')) {
+			if ($has_device_vendor_edit || $has_device_vendor_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='vendors[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='vendors[$x][uuid]' value='".escape($row['device_vendor_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
 			echo "	<td><a href='".$list_row_url."'>".escape($row['name'])."</a>&nbsp;</td>\n";
-			if (permission_exists('device_vendor_edit')) {
+			if ($has_device_vendor_edit) {
 				echo "	<td class='no-link center'>";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
 			}
@@ -224,7 +229,7 @@
 				echo $text['label-'.$row['enabled']];
 			}
 			echo "	<td class='description overflow hide-xs'>".escape($row['description'])."&nbsp;</td>\n";
-			if (permission_exists('device_vendor_edit') && $settings->get('theme', 'list_row_edit_button', false)) {
+			if ($has_device_vendor_edit && $settings->get('theme', 'list_row_edit_button', false)) {
 				echo "	<td class='action-button'>";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

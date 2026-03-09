@@ -38,6 +38,12 @@
 		echo "access denied";
 		exit;
 	}
+	$has_call_forward     = permission_exists('call_forward');
+	$has_call_forward_all = permission_exists('call_forward_all');
+	$has_do_not_disturb   = permission_exists('do_not_disturb');
+	$has_domain_select    = permission_exists('domain_select');
+	$has_extension_edit   = permission_exists('extension_edit');
+	$has_follow_me        = permission_exists('follow_me');
 
 //add multi-lingual support
 	$language = new text;
@@ -58,19 +64,19 @@
 
 		switch ($action) {
 			case 'toggle_call_forward':
-				if (permission_exists('call_forward')) {
+				if ($has_call_forward) {
 					$obj = new call_forward;
 					$obj->toggle($extensions);
 				}
 				break;
 			case 'toggle_follow_me':
-				if (permission_exists('follow_me')) {
+				if ($has_follow_me) {
 					$obj = new follow_me;
 					$obj->toggle($extensions);
 				}
 				break;
 			case 'toggle_do_not_disturb':
-				if (permission_exists('do_not_disturb')) {
+				if ($has_do_not_disturb) {
 					$obj = new do_not_disturb;
 					$obj->toggle($extensions);
 				}
@@ -101,7 +107,7 @@
 
 //define select count query
 	$sql = "select count(*) from v_extensions ";
-	if ($show === "all" && permission_exists('call_forward_all')) {
+	if ($show === "all" && $has_call_forward_all) {
 		$sql .= "where true ";
 	}
 	else {
@@ -116,7 +122,7 @@
 		$parameters['search'] = '%' . $search . '%';
 	}
 	$sql .= "and enabled = 'true' ";
-	if (!permission_exists('extension_edit')) {
+	if (!$has_extension_edit) {
 		if (!empty($_SESSION['user']['extension']) && count($_SESSION['user']['extension']) > 0) {
 			$sql .= "and (";
 			$x = 0;
@@ -148,7 +154,7 @@
 	if ($order) {
 		$params[] = "order=" . $order;
 	}
-	if ($show == "all" && permission_exists('call_forward_all')) {
+	if ($show == "all" && $has_call_forward_all) {
 		$params[] = "show=all";
 	}
 	$param = !empty($params) ? implode('&', $params) : '';
@@ -164,7 +170,7 @@
 
 //get the list
 	$sql = "select * from v_extensions ";
-	if ($show == "all" && permission_exists('call_forward_all')) {
+	if ($show == "all" && $has_call_forward_all) {
 		$sql .= "where true ";
 	}
 	else {
@@ -179,7 +185,7 @@
 		$parameters['search'] = '%' . $search . '%';
 	}
 	$sql .= "and enabled = 'true' ";
-	if (!permission_exists('extension_edit')) {
+	if (!$has_extension_edit) {
 		if (!empty($_SESSION['user']['extension']) && count($_SESSION['user']['extension']) > 0) {
 			$sql .= "and (";
 			$x = 0;
@@ -240,21 +246,21 @@
 		echo "	<div class='actions'>\n";
 
 		if (count($extensions) > 0) {
-			if (permission_exists('call_forward')) {
+			if ($has_call_forward) {
 				echo button::create(['type' => 'button', 'label' => $text['label-call_forward'], 'icon' => $settings->get('theme', 'button_icon_toggle'), 'collapse' => false, 'name' => 'btn_toggle_cfwd', 'onclick' => "list_action_set('toggle_call_forward'); modal_open('modal-toggle','btn_toggle');"]);
 			}
-			if (permission_exists('follow_me')) {
+			if ($has_follow_me) {
 				echo button::create(['type' => 'button', 'label' => $text['label-follow_me'], 'icon' => $settings->get('theme', 'button_icon_toggle'), 'collapse' => false, 'name' => 'btn_toggle_follow', 'onclick' => "list_action_set('toggle_follow_me'); modal_open('modal-toggle','btn_toggle');"]);
 			}
-			if (permission_exists('do_not_disturb')) {
+			if ($has_do_not_disturb) {
 				echo button::create(['type' => 'button', 'label' => $text['label-dnd'], 'icon' => $settings->get('theme', 'button_icon_toggle'), 'collapse' => false, 'name' => 'btn_toggle_dnd', 'onclick' => "list_action_set('toggle_do_not_disturb'); modal_open('modal-toggle','btn_toggle');"]);
 			}
 		}
-		if ($show !== 'all' && permission_exists('call_forward_all')) {
+		if ($show !== 'all' && $has_call_forward_all) {
 			echo button::create(['type' => 'button', 'label' => $text['button-show_all'], 'icon' => $settings->get('theme', 'button_icon_all'), 'link' => '?show=all' . (!empty($params) ? '&'.implode('&', $params) : null)]);
 		}
 		echo "<form id='form_search' class='inline' method='get'>\n";
-		if ($show == 'all' && permission_exists('call_forward_all')) {
+		if ($show == 'all' && $has_call_forward_all) {
 			echo "		<input type='hidden' name='show' value='all'>";
 		}
 		echo "<input type='text' class='txt list-search' name='search' id='search' value=\"" . escape($search) . "\" placeholder=\"" . $text['label-search'] . "\" onkeydown=''>";
@@ -276,7 +282,7 @@
 		echo "<br /><br />\n";
 
 		echo "<form id='form_list' method='post'>\n";
-		if ($show == 'all' && permission_exists('call_forward_all')) {
+		if ($show == 'all' && $has_call_forward_all) {
 			echo "		<input type='hidden' name='show' value='all'>";
 		}
 		echo "<input type='hidden' id='action' name='action' value=''>\n";
@@ -290,19 +296,19 @@
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle();' " . (empty($extensions) ?: "style='visibility: hidden;'") . ">\n";
 		echo "	</th>\n";
-		if ($show == "all" && permission_exists('call_forward_all')) {
+		if ($show == "all" && $has_call_forward_all) {
 			echo "<th>" . $text['label-domain'] . "</th>\n";
 		}
 	}
 	echo th_order_by('extension', $text['label-extension'], $order_by, $order);
 // 	echo "	<th>" . $text['label-extension'] . "</th>\n";
-	if (permission_exists('call_forward')) {
+	if ($has_call_forward) {
 		echo "	<th>" . $text['label-call_forward'] . "</th>\n";
 	}
-	if (permission_exists('follow_me')) {
+	if ($has_follow_me) {
 		echo "	<th>" . $text['label-follow_me'] . "</th>\n";
 	}
-	if (permission_exists('do_not_disturb')) {
+	if ($has_do_not_disturb) {
 		echo "	<th>" . $text['label-dnd'] . "</th>\n";
 	}
 	echo "	<th class='" . ($is_included ? 'hide-md-dn' : 'hide-sm-dn') . "'>" . $text['label-description'] . "</th>\n";
@@ -318,7 +324,7 @@
 			//dispatch render-row hook
 			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = PROJECT_PATH . "/app/call_forward/call_forward_edit.php?id=".$row['extension_uuid'];
-			if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+			if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 				$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 			}
 			echo "<tr class='list-row' href='" . $list_row_url . "'>\n";
@@ -328,7 +334,7 @@
 				echo "		<input type='hidden' name='extensions[$x][uuid]' value='" . escape($row['extension_uuid']) . "' />\n";
 				echo "	</td>\n";
 
-				if ($show == "all" && permission_exists('call_forward_all')) {
+				if ($show == "all" && $has_call_forward_all) {
 					if (!empty($_SESSION['domains'][$row['domain_uuid']]['domain_name'])) {
 						$domain = $_SESSION['domains'][$row['domain_uuid']]['domain_name'];
 					} else {
@@ -338,7 +344,7 @@
 				}
 			}
 			echo "	<td><a href='" . $list_row_url . "' title=\"" . $text['button-edit'] . "\">" . escape($row['extension']) . "</a></td>\n";
-			if (permission_exists('call_forward')) {
+			if ($has_call_forward) {
 				//-- inline toggle -----------------
 				//$button_label = $row['forward_all_enabled'] == 'true' ? ($row['forward_all_destination'] != '' ? escape(format_phone($row['forward_all_destination'])) : '('.$text['label-invalid'].')') : null;
 				//if (!$is_included) {
@@ -356,7 +362,7 @@
 				echo $row['forward_all_enabled'] == true ? escape(format_phone($row['forward_all_destination'])) : '&nbsp;';
 				echo "	</td>\n";
 			}
-			if (permission_exists('follow_me')) {
+			if ($has_follow_me) {
 				//-- inline toggle -----------------
 				//get destination count
 				//if ($row['follow_me_enabled'] == true && is_uuid($row['follow_me_uuid'])) {
@@ -394,7 +400,7 @@
 				echo $follow_me_destination_count ? $text['label-enabled'] . ' (' . $follow_me_destination_count . ')' : '&nbsp;';
 				echo "	</td>\n";
 			}
-			if (permission_exists('do_not_disturb')) {
+			if ($has_do_not_disturb) {
 				//-- inline toggle -----------------
 				//$button_label = $row['do_not_disturb'] == 'true' ? $text['label-enabled'] : null;
 				//if (!$is_included) {

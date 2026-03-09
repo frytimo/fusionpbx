@@ -33,6 +33,7 @@
 		echo "access denied";
 		exit;
 	}
+	$has_domain_select = permission_exists('domain_select');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -122,7 +123,7 @@
 		$x = 0;
 		foreach($call_center_queues as $row) {
 			$list_row_url = PROJECT_PATH."/app/call_center_active/call_center_active.php?queue_name=".escape($row['call_center_queue_uuid'])."&name=".urlencode(escape($row['queue_name']));
-			if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+			if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 				$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";

@@ -33,12 +33,17 @@
 		echo "access denied";
 		exit;
 	}
+	$has_xml_cdr_all            = permission_exists('xml_cdr_all');
+	$has_xml_cdr_b_leg          = permission_exists('xml_cdr_b_leg');
+	$has_xml_cdr_domain         = permission_exists('xml_cdr_domain');
+	$has_xml_cdr_enterprise_leg = permission_exists('xml_cdr_enterprise_leg');
+	$has_xml_cdr_lose_race      = permission_exists('xml_cdr_lose_race');
 
 // assign default value for show all
 	$showall = false;
 
 //show all call detail records to admin and superadmin. for everyone else show only the call details for extensions assigned to them
-	if (!permission_exists('xml_cdr_domain')) {
+	if (!$has_xml_cdr_domain) {
 		// select caller_id_number, destination_number from v_xml_cdr where domain_uuid = ''
 		// and (caller_id_number = '1001' or destination_number = '1001' or destination_number = '*991001')
 
@@ -61,7 +66,7 @@
 	}
 	else {
 		//superadmin or admin
-		if (isset($_GET['showall']) && $_GET['showall'] === 'true' && permission_exists('xml_cdr_all')) {
+		if (isset($_GET['showall']) && $_GET['showall'] === 'true' && $has_xml_cdr_all) {
 			$sql_where = '';
 		} else {
 			$sql_where = "c.domain_uuid = '".$_SESSION['domain_uuid']."' ";
@@ -135,18 +140,18 @@
 		}
 		//$mos_comparison = $_REQUEST["mos_comparison"];
 		$mos_score = $_REQUEST["mos_score"] ?? '';
-		if (permission_exists('xml_cdr_b_leg')) {
+		if ($has_xml_cdr_b_leg) {
 			$leg = $_REQUEST["leg"] ?? '';
 		}
-		$show_all = permission_exists('xml_cdr_all') && (isset($_REQUEST['show']) && $_REQUEST['show'] === 'all');
+		$show_all = $has_xml_cdr_all && (isset($_REQUEST['show']) && $_REQUEST['show'] === 'all');
 	}
 	else {
-		$show_all = permission_exists('xml_cdr_all') && ($_GET['showall'] === 'true');
+		$show_all = $has_xml_cdr_all && ($_GET['showall'] === 'true');
 		//$direction = 'inbound';
 	}
 
 //if we do not see b-leg then use only a-leg to generate statistics
-	if (!permission_exists('xml_cdr_b_leg')) {
+	if (!$has_xml_cdr_b_leg) {
 		$leg = 'a';
 	}
 
@@ -307,16 +312,16 @@
 		$parameters['leg'] = $leg;
 	}
 	//Exclude enterprise ring group legs
-	if (!permission_exists('xml_cdr_enterprise_leg')) {
+	if (!$has_xml_cdr_enterprise_leg) {
 		$sql_where_ands[] = "c.originating_leg_uuid IS NULL";
 	}
 	//If you can't see lose_race, don't run stats on it
-	elseif (!permission_exists('xml_cdr_lose_race')) {
+	elseif (!$has_xml_cdr_lose_race) {
 		$sql_where_ands[] = "c.hangup_cause != 'LOSE_RACE'";
 	}
 
 	//if not admin or superadmin, only show own calls
-	if (!permission_exists('xml_cdr_domain')) {
+	if (!$has_xml_cdr_domain) {
 		if (is_array($_SESSION['user']['extension']) && count($_SESSION['user']['extension']) > 0) { // extensions are assigned to this user
 			// create simple user extension array
 			foreach ($_SESSION['user']['extension'] as $row) {
@@ -588,11 +593,11 @@
 	}
 
 	//exclude enterprise ring group and follow me originated legs
-	if (!permission_exists('xml_cdr_enterprise_leg')) {
+	if (!$has_xml_cdr_enterprise_leg) {
 		$sql .= "and c.originating_leg_uuid IS NULL \n";
 	}
 	//if you can't see lose_race, don't run stats on it
-	if (!permission_exists('xml_cdr_lose_race')) {
+	if (!$has_xml_cdr_lose_race) {
 		$sql .= "and c.hangup_cause != 'LOSE_RACE' \n";
 	}
 	*/

@@ -33,6 +33,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_group_domain = permission_exists('group_domain');
+	$has_user_import  = permission_exists('user_import');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -53,7 +55,7 @@
 
 //copy the csv file
 	//$_POST['submit'] == "Upload" &&
-	if (!empty($_FILES['ulfile']['tmp_name']) && is_uploaded_file($_FILES['ulfile']['tmp_name']) && permission_exists('user_import')) {
+	if (!empty($_FILES['ulfile']['tmp_name']) && is_uploaded_file($_FILES['ulfile']['tmp_name']) && $has_user_import) {
 		if (!empty($_POST['type']) && $_POST['type'] == 'csv') {
 			$file = $settings->get('server', 'temp').'/users-'.$_SESSION['domain_name'].'.csv';
 			if (move_uploaded_file($_FILES['ulfile']['tmp_name'], $file)) {
@@ -317,7 +319,7 @@
 
 												//remove superadmin if not the correct permission
 												if ($group_name == 'superadmin') {
-													if (!permission_exists('group_domain')) {
+													if (!$has_group_domain) {
 														unset($array['user_groups'][$row_id]);
 													}
 												}

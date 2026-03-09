@@ -34,6 +34,12 @@
 		echo "access denied";
 		exit;
 	}
+	$has_call_flow_add     = permission_exists('call_flow_add');
+	$has_call_flow_all     = permission_exists('call_flow_all');
+	$has_call_flow_context = permission_exists('call_flow_context');
+	$has_call_flow_delete  = permission_exists('call_flow_delete');
+	$has_call_flow_edit    = permission_exists('call_flow_edit');
+	$has_domain_select     = permission_exists('domain_select');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -63,20 +69,20 @@
 
 		switch ($action) {
 			case 'copy':
-				if (permission_exists('call_flow_add')) {
+				if ($has_call_flow_add) {
 					$obj = new call_flows;
 					$obj->copy($call_flows);
 				}
 				break;
 			case 'toggle':
-				if (permission_exists('call_flow_edit')) {
+				if ($has_call_flow_edit) {
 					$obj = new call_flows;
 					$obj->toggle_field = $toggle_field;
 					$obj->toggle($call_flows);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('call_flow_delete')) {
+				if ($has_call_flow_delete) {
 					$obj = new call_flows;
 					$obj->delete($call_flows);
 				}
@@ -118,7 +124,7 @@
 //prepare to page the results
 	$sql = "select count(*) from v_call_flows ";
 	$sql .= "where true ";
-	if ($show != "all" || !permission_exists('call_flow_all')) {
+	if ($show != "all" || !$has_call_flow_all) {
 		$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	}
@@ -128,7 +134,7 @@
 //prepare to page the results
 	$rows_per_page = $settings->get('domain', 'paging', 50);
 	$param = "&search=".urlencode($search);
-	if ($show == "all" && permission_exists('call_flow_all')) {
+	if ($show == "all" && $has_call_flow_all) {
 		$param .= "&show=all";
 	}
 	$page = $_GET['page'] ?? '';
@@ -160,7 +166,7 @@
 	$sql .= "call_flow_description ";
 	$sql .= "from v_call_flows ";
 	$sql .= "where true ";
-	if ($show != "all" || !permission_exists('call_flow_all')) {
+	if ($show != "all" || !$has_call_flow_all) {
 		$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	}
@@ -194,13 +200,13 @@
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['title-call_flows']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('call_flow_add')) {
+	if ($has_call_flow_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'call_flow_edit.php']);
 	}
-	if (permission_exists('call_flow_add') && $call_flows) {
+	if ($has_call_flow_add && $call_flows) {
 		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 	}
-	if (permission_exists('call_flow_edit') && $call_flows) {
+	if ($has_call_flow_edit && $call_flows) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"toggle_select(); this.blur();"]);
 		echo 		"<select class='formfld' style='display: none; width: auto;' id='call_flow_feature' onchange=\"if (this.selectedIndex != 0) { modal_open('modal-toggle','btn_toggle'); }\">";
 		echo "			<option value='' selected='selected'>".$text['label-select']."</option>";
@@ -208,11 +214,11 @@
 		echo "			<option value='call_flow_enabled'>".$text['label-enabled']."</option>";
 		echo "		</select>";
 	}
-	if (permission_exists('call_flow_delete') && $call_flows) {
+	if ($has_call_flow_delete && $call_flows) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if (permission_exists('call_flow_all')) {
+	if ($has_call_flow_all) {
 		if ($show == 'all') {
 			echo "		<input type='hidden' name='show' value='all'>";
 		}
@@ -231,13 +237,13 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('call_flow_add') && $call_flows) {
+	if ($has_call_flow_add && $call_flows) {
 		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('call_flow_edit') && $call_flows) {
+	if ($has_call_flow_edit && $call_flows) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); document.getElementById('toggle_field').value = document.getElementById('call_flow_feature').options[document.getElementById('call_flow_feature').selectedIndex].value; list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('call_flow_delete') && $call_flows) {
+	if ($has_call_flow_delete && $call_flows) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -252,24 +258,24 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('call_flow_add') || permission_exists('call_flow_edit') || permission_exists('call_flow_delete')) {
+	if ($has_call_flow_add || $has_call_flow_edit || $has_call_flow_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($call_flows) ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
 	}
-	if ($show == "all" && permission_exists('call_flow_all')) {
+	if ($show == "all" && $has_call_flow_all) {
 		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param, "class='shrink'");
 	}
 	echo th_order_by('call_flow_name', $text['label-call_flow_name'], $order_by, $order);
 	echo th_order_by('call_flow_extension', $text['label-call_flow_extension'], $order_by, $order);
 	echo th_order_by('call_flow_feature_code', $text['label-call_flow_feature_code'], $order_by, $order);
 	echo th_order_by('call_flow_status', $text['label-call_flow_status'], $order_by, $order);
-	if (permission_exists('call_flow_context')) {
+	if ($has_call_flow_context) {
 		echo th_order_by('call_flow_context', $text['label-call_flow_context'], $order_by, $order);
 	}
 	echo th_order_by('call_flow_enabled', $text['label-enabled'], $order_by, $order, null, "class='center'");
 	echo th_order_by('call_flow_description', $text['label-call_flow_description'], $order_by, $order, null, "class='hide-sm-dn'");
-	if (permission_exists('call_flow_edit') && $list_row_edit_button) {
+	if ($has_call_flow_edit && $list_row_edit_button) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -280,20 +286,20 @@
 			//dispatch render-row hook
 			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
-			if (permission_exists('call_flow_edit')) {
+			if ($has_call_flow_edit) {
 				$list_row_url = "call_flow_edit.php?id=".urlencode($row['call_flow_uuid']);
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('call_flow_add') || permission_exists('call_flow_edit') || permission_exists('call_flow_delete')) {
+			if ($has_call_flow_add || $has_call_flow_edit || $has_call_flow_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='call_flows[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='call_flows[$x][uuid]' value='".escape($row['call_flow_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if ($show == "all" && permission_exists('call_flow_all')) {
+			if ($show == "all" && $has_call_flow_all) {
 				if (!empty($_SESSION['domains'][$row['domain_uuid']]['domain_name'])) {
 					$domain = $_SESSION['domains'][$row['domain_uuid']]['domain_name'];
 				}
@@ -306,7 +312,7 @@
 			echo "	<td>".escape($row['call_flow_extension'])."&nbsp;</td>\n";
 			echo "	<td>".escape($row['call_flow_feature_code'])."&nbsp;</td>\n";
 			$status_label = $row['call_flow_status'] != 'false' ? $row['call_flow_label'] : $row['call_flow_alternate_label'];
-			if (permission_exists('call_flow_edit')) {
+			if ($has_call_flow_edit) {
 				echo "	<td class='no-link'>";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>escape($status_label),'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); document.getElementById('toggle_field').value = 'call_flow_status'; list_form_submit('form_list')"]);
 			}
@@ -315,10 +321,10 @@
 				echo escape($status_label);
 			}
 			echo "	</td>\n";
-			if (permission_exists('call_flow_context')) {
+			if ($has_call_flow_context) {
 				echo "	<td>".escape($row['call_flow_context'])."&nbsp;</td>\n";
 			}
-			if (permission_exists('call_flow_edit')) {
+			if ($has_call_flow_edit) {
 				echo "	<td class='no-link center'>";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.($row['call_flow_enabled'] == "true" ? 'true' : 'false')],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); document.getElementById('toggle_field').value = 'call_flow_enabled'; list_form_submit('form_list')"]);
 			}
@@ -327,7 +333,7 @@
 				echo escape($row['call_flow_enabled']);
 			}
 			echo "	<td class='description overflow hide-sm-dn'>".escape($row['call_flow_description'])."&nbsp;</td>\n";
-			if (permission_exists('call_flow_edit') && $list_row_edit_button) {
+			if ($has_call_flow_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

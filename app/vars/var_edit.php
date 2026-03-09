@@ -33,6 +33,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_var_add  = permission_exists('var_add');
+	$has_var_edit = permission_exists('var_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -110,7 +112,7 @@
 
 		//add or update the database
 			if (empty($_POST["persistformvar"]) || $_POST["persistformvar"] != "true") {
-				if ($action == "add" && permission_exists('var_add')) {
+				if ($action == "add" && $has_var_add) {
 					//begin insert array
 						$var_uuid = uuid();
 						$array['vars'][0]['var_uuid'] = $var_uuid;
@@ -118,7 +120,7 @@
 						message::add($text['message-add']);
 				}
 
-				if ($action == "update" && permission_exists('var_edit')) {
+				if ($action == "update" && $has_var_edit) {
 					//begin update array
 						$array['vars'][0]['var_uuid'] = $var_uuid;
 					//set message

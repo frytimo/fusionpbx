@@ -33,6 +33,7 @@
 		echo "access denied";
 		exit;
 	}
+	$has_default_setting_edit = permission_exists('default_setting_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -121,7 +122,7 @@
 			echo "<tr>\n";
 			if ($type == 'uuid') { $uuid = $value; continue; }
 			if ($name == 'smtp_password') { $value = str_repeat('*', strlen($value)); }
-			if (permission_exists('default_setting_edit')) {
+			if ($has_default_setting_edit) {
 				echo "<td style='padding-right: 30px;'><a href='../../core/default_settings/default_setting_edit.php?id=".$uuid."' target='_blank'>".$name."</a></td>\n";
 				echo "<td style='padding-right: 30px;'>".$value."</td>\n";
 			}

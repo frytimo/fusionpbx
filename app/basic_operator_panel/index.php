@@ -34,6 +34,7 @@
 		echo "access denied";
 		exit;
 	}
+	$has_user_setting_edit = permission_exists('user_setting_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -59,7 +60,7 @@
 			}
 
 		//update the status
-			if (permission_exists("user_setting_edit")) {
+			if ($has_user_setting_edit) {
 				//add the user_edit permission
 				$p = permissions::new();
 				$p->add("user_edit", "temp");

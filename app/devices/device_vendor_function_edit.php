@@ -33,6 +33,9 @@
 		echo "access denied";
 		exit;
 	}
+	$has_device_vendor_function_add          = permission_exists('device_vendor_function_add');
+	$has_device_vendor_function_edit         = permission_exists('device_vendor_function_edit');
+	$has_device_vendor_function_group_delete = permission_exists('device_vendor_function_group_delete');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -68,7 +71,7 @@
 	}
 
 //delete the group from the sub table
-	if (!empty($_POST["action"]) && $_POST["action"] === "delete" && permission_exists("device_vendor_function_group_delete") && is_uuid($_POST["device_vendor_function_group_uuid"])) {
+	if (!empty($_POST["action"]) && $_POST["action"] === "delete" && $has_device_vendor_function_group_delete && is_uuid($_POST["device_vendor_function_group_uuid"])) {
 		//get the uuid
 			$device_vendor_function_group_uuid = $_POST["device_vendor_function_group_uuid"];
 
@@ -130,13 +133,13 @@
 			if (empty($_POST["persistformvar"]) || $_POST["persistformvar"] != "true") {
 
 				//add vendor functions
-					if ($action == "add" && permission_exists('device_vendor_function_add')) {
+					if ($action == "add" && $has_device_vendor_function_add) {
 						$device_vendor_function_uuid = uuid();
 						$array['device_vendor_functions'][0]['device_vendor_function_uuid'] = $device_vendor_function_uuid;
 					}
 
 				//update vendor functions
-					if ($action == "update" && permission_exists('device_vendor_function_edit')) {
+					if ($action == "update" && $has_device_vendor_function_edit) {
 						$array['device_vendor_functions'][0]['device_vendor_function_uuid'] = $device_vendor_function_uuid;
 					}
 
@@ -155,7 +158,7 @@
 					}
 
 				//add a group to the menu
-					if (permission_exists('device_vendor_function_add') && $_REQUEST["group_uuid_name"] != '') {
+					if ($has_device_vendor_function_add && $_REQUEST["group_uuid_name"] != '') {
 
 						//get the group uuid and group_name
 							$group_data = explode('|', $_REQUEST["group_uuid_name"]);
@@ -327,7 +330,7 @@
 	echo "		<td class='vtable'>";
 	if (is_array($function_groups) && @sizeof($function_groups) != 0) {
 		echo "<table cellpadding='0' cellspacing='0' border='0'>\n";
-		if (permission_exists('device_vendor_function_group_delete')) {
+		if ($has_device_vendor_function_group_delete) {
 			echo "	<input type='hidden' id='action' name='action' value=''>\n";
 			echo "	<input type='hidden' id='device_vendor_function_group_uuid' name='device_vendor_function_group_uuid' value=''>\n";
 		}
@@ -338,7 +341,7 @@
 				echo "	<td class='vtable' style='white-space: nowrap; padding-right: 30px;' nowrap='nowrap'>";
 				echo $field['group_name'].(($field['group_domain_uuid'] != '') ? "@".$_SESSION['domains'][$field['group_domain_uuid']]['domain_name'] : null);
 				echo "	</td>\n";
-				if (permission_exists('device_vendor_function_group_delete')) {
+				if ($has_device_vendor_function_group_delete) {
 					echo "	<td class='list_control_icons' style='width: 25px;'>";
 					echo button::create(['type'=>'button','icon'=>'fas fa-minus','id'=>'btn_delete','class'=>'default list_control_icon','name'=>'btn_delete','onclick'=>"modal_open('modal-delete-group-$x','btn_delete');"]);
 					echo modal::create(['id'=>'modal-delete-group-'.$x,'type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); document.getElementById('device_vendor_function_group_uuid').value = '".escape($field['device_vendor_function_group_uuid'])."'; list_form_submit('frm');"])]);

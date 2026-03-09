@@ -38,6 +38,22 @@
 		echo "access denied";
 		exit;
 	}
+	$has_recording_download            = permission_exists('recording_download');
+	$has_recording_play                = permission_exists('recording_play');
+	$has_ring_group_add                = permission_exists('ring_group_add');
+	$has_ring_group_all                = permission_exists('ring_group_all');
+	$has_ring_group_caller_id_name     = permission_exists('ring_group_caller_id_name');
+	$has_ring_group_caller_id_number   = permission_exists('ring_group_caller_id_number');
+	$has_ring_group_cid_name_prefix    = permission_exists('ring_group_cid_name_prefix');
+	$has_ring_group_cid_number_prefix  = permission_exists('ring_group_cid_number_prefix');
+	$has_ring_group_context            = permission_exists('ring_group_context');
+	$has_ring_group_delete             = permission_exists('ring_group_delete');
+	$has_ring_group_destination_delete = permission_exists('ring_group_destination_delete');
+	$has_ring_group_edit               = permission_exists('ring_group_edit');
+	$has_ring_group_forward            = permission_exists('ring_group_forward');
+	$has_ring_group_forward_toll_allow = permission_exists('ring_group_forward_toll_allow');
+	$has_ring_group_missed_call        = permission_exists('ring_group_missed_call');
+	$has_ring_group_prompt             = permission_exists('ring_group_prompt');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -89,7 +105,7 @@ if (!($settings instanceof settings)) {
 		}
 
 		//get the domain_uuid
-		if (is_uuid($ring_group_uuid) && permission_exists('ring_group_all')) {
+		if (is_uuid($ring_group_uuid) && $has_ring_group_all) {
 			$sql = "select domain_uuid from v_ring_groups ";
 			$sql .= "where ring_group_uuid = :ring_group_uuid ";
 			$parameters['ring_group_uuid'] = $ring_group_uuid;
@@ -109,7 +125,7 @@ if (!($settings instanceof settings)) {
 	if (
 		(!empty($_GET["a"])) == "delete"
 		&& is_uuid($_REQUEST["user_uuid"])
-		&& permission_exists("ring_group_edit")
+		&& $has_ring_group_edit
 		) {
 		//set the variables
 			$user_uuid = $_REQUEST["user_uuid"];
@@ -159,13 +175,13 @@ if (!($settings instanceof settings)) {
 
 				switch ($_POST['action']) {
 					case 'copy':
-						if (permission_exists('ring_group_add')) {
+						if ($has_ring_group_add) {
 							$obj = new ring_groups;
 							$obj->copy($array);
 						}
 						break;
 					case 'delete':
-						if (permission_exists('ring_group_delete')) {
+						if ($has_ring_group_delete) {
 							$obj = new ring_groups;
 							$obj->delete($array);
 						}
@@ -214,7 +230,7 @@ if (!($settings instanceof settings)) {
 			$ring_group_destinations_delete = $_POST["ring_group_destinations_delete"] ?? null;
 
 		//set the context for users that do not have the permission
-			if (permission_exists('ring_group_context')) {
+			if ($has_ring_group_context) {
 				$ring_group_context = $_POST["ring_group_context"];
 			}
 			else if ($action == 'add') {
@@ -224,7 +240,7 @@ if (!($settings instanceof settings)) {
 	}
 
 //assign the user to the ring group
-	if (!empty($_REQUEST["user_uuid"]) && is_uuid($_REQUEST["id"]) && $_GET["a"] != "delete" && permission_exists("ring_group_edit")) {
+	if (!empty($_REQUEST["user_uuid"]) && is_uuid($_REQUEST["id"]) && $_GET["a"] != "delete" && $has_ring_group_edit) {
 		//set the variables
 			$user_uuid = $_REQUEST["user_uuid"];
 		//build array
@@ -341,27 +357,27 @@ if (!($settings instanceof settings)) {
 			$array['ring_groups'][0]["ring_group_greeting"] = $ring_group_greeting;
 			$array['ring_groups'][0]["ring_group_strategy"] = $ring_group_strategy;
 			$array["ring_groups"][0]["ring_group_call_timeout"] = $ring_group_call_timeout;
-			if (permission_exists('ring_group_caller_id_name')) {
+			if ($has_ring_group_caller_id_name) {
 				$array["ring_groups"][0]["ring_group_caller_id_name"] = $ring_group_caller_id_name;
 			}
-			if (permission_exists('ring_group_caller_id_number')) {
+			if ($has_ring_group_caller_id_number) {
 				$array["ring_groups"][0]["ring_group_caller_id_number"] = $ring_group_caller_id_number;
 			}
-			if (permission_exists('ring_group_cid_name_prefix')) {
+			if ($has_ring_group_cid_name_prefix) {
 				$array["ring_groups"][0]["ring_group_cid_name_prefix"] = $ring_group_cid_name_prefix;
 			}
-			if (permission_exists('ring_group_cid_number_prefix')) {
+			if ($has_ring_group_cid_number_prefix) {
 				$array["ring_groups"][0]["ring_group_cid_number_prefix"] = $ring_group_cid_number_prefix;
 			}
 			$array["ring_groups"][0]["ring_group_distinctive_ring"] = $ring_group_distinctive_ring;
 			$array["ring_groups"][0]["ring_group_ringback"] = $ring_group_ringback;
 			$array["ring_groups"][0]["ring_group_call_forward_enabled"] = $ring_group_call_forward_enabled;
 			$array["ring_groups"][0]["ring_group_follow_me_enabled"] = $ring_group_follow_me_enabled;
-			if (permission_exists('ring_group_missed_call')) {
+			if ($has_ring_group_missed_call) {
 				$array["ring_groups"][0]["ring_group_missed_call_app"] = $ring_group_missed_call_app ?? null;
 				$array["ring_groups"][0]["ring_group_missed_call_data"] = $ring_group_missed_call_data ?? null;
 			}
-			if (permission_exists('ring_group_forward')) {
+			if ($has_ring_group_forward) {
 				$array["ring_groups"][0]["ring_group_forward_enabled"] = $ring_group_forward_enabled;
 				$array["ring_groups"][0]["ring_group_forward_destination"] = $ring_group_forward_destination;
 			}
@@ -478,7 +494,7 @@ if (!($settings instanceof settings)) {
 		//remove checked destinations
 			if (
 				$action == 'update'
-				&& permission_exists('ring_group_destination_delete')
+				&& $has_ring_group_destination_delete
 				&& is_array($ring_group_destinations_delete)
 				&& @sizeof($ring_group_destinations_delete) != 0
 				) {
@@ -648,7 +664,7 @@ if (!($settings instanceof settings)) {
 	require_once "resources/header.php";
 
 //show the content
-	if (permission_exists('recording_play') || permission_exists('recording_download')) {
+	if ($has_recording_play || $has_recording_download) {
 		echo "<script type='text/javascript' language='JavaScript'>\n";
 		echo "	function set_playable(id, audio_selected, audio_type) {\n";
 		echo "		file_ext = audio_selected.split('.').pop();\n";
@@ -723,11 +739,11 @@ if (!($settings instanceof settings)) {
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$_SESSION['theme']['button_icon_back'],'id'=>'btn_back','link'=>'ring_groups.php']);
 	if ($action == 'update') {
 		$button_margin = 'margin-left: 15px;';
-		if (permission_exists('ring_group_add') && (!isset($_SESSION['limit']['ring_groups']['numeric']) || ($total_ring_groups < $_SESSION['limit']['ring_groups']['numeric']))) {
+		if ($has_ring_group_add && (!isset($_SESSION['limit']['ring_groups']['numeric']) || ($total_ring_groups < $_SESSION['limit']['ring_groups']['numeric']))) {
 			echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$_SESSION['theme']['button_icon_copy'],'name'=>'btn_copy','style'=>$button_margin,'onclick'=>"modal_open('modal-copy','btn_copy');"]);
 			unset($button_margin);
 		}
-		if (permission_exists('ring_group_delete') || permission_exists('ring_group_destination_delete')) {
+		if ($has_ring_group_delete || $has_ring_group_destination_delete) {
 			echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$_SESSION['theme']['button_icon_delete'],'name'=>'btn_delete','style'=>$button_margin ?? '','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 			unset($button_margin);
 		}
@@ -738,10 +754,10 @@ if (!($settings instanceof settings)) {
 	echo "</div>\n";
 
 	if ($action == "update") {
-		if (permission_exists('ring_group_add') && (!isset($_SESSION['limit']['ring_groups']['numeric']) || ($total_ring_groups < $_SESSION['limit']['ring_groups']['numeric']))) {
+		if ($has_ring_group_add && (!isset($_SESSION['limit']['ring_groups']['numeric']) || ($total_ring_groups < $_SESSION['limit']['ring_groups']['numeric']))) {
 			echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'copy','onclick'=>"modal_close();"])]);
 		}
-		if (permission_exists('ring_group_delete') || permission_exists('ring_group_destination_delete')) {
+		if ($has_ring_group_delete || $has_ring_group_destination_delete) {
 			echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 		}
 	}
@@ -784,7 +800,7 @@ if (!($settings instanceof settings)) {
 	echo "</tr>\n";
 	echo "<tr>\n";
 	echo "<td class='vtable' align='left'>\n";
-	echo "<select name='".$instance_id."' id='".$instance_id."' class='formfld' ".(permission_exists('recording_play') || permission_exists('recording_download') ? "onchange=\"recording_reset('".$instance_id."'); set_playable('".$instance_id."', this.value, this.options[this.selectedIndex].parentNode.getAttribute('data-type'));\"" : null).">\n";
+	echo "<select name='".$instance_id."' id='".$instance_id."' class='formfld' ".($has_recording_play || $has_recording_download ? "onchange=\"recording_reset('".$instance_id."'); set_playable('".$instance_id."', this.value, this.options[this.selectedIndex].parentNode.getAttribute('data-type'));\"" : null).">\n";
 	echo "	<option value=''></option>\n";
 	$found = $playable = false;
 	if (!empty($audio_files) && is_array($audio_files) && @sizeof($audio_files) != 0) {
@@ -831,7 +847,7 @@ if (!($settings instanceof settings)) {
 	if (if_group("superadmin")) {
 		echo "<input type='button' id='btn_select_to_input_".$instance_id."' class='btn' name='' alt='back' onclick='toggle_select_input(document.getElementById(\"".$instance_id."\"), \"".$instance_id."\"); this.style.visibility=\"hidden\";' value='&#9665;'>";
 	}
-	if ((permission_exists('recording_play') || permission_exists('recording_download')) && (!empty($playable) || empty($instance_value))) {
+	if (($has_recording_play || $has_recording_download) && (!empty($playable) || empty($instance_value))) {
 		switch (pathinfo($playable, PATHINFO_EXTENSION)) {
 			case 'wav' : $mime_type = 'audio/wav'; break;
 			case 'mp3' : $mime_type = 'audio/mpeg'; break;
@@ -875,12 +891,12 @@ if (!($settings instanceof settings)) {
 	echo 						($ring_group_strategy == 'sequence' || $ring_group_strategy == 'rollover') ? $text['label-destination_order'] : $text['label-destination_delay'];
 	echo "					</td>\n";
 	echo "					<td class='vtable'>".$text['label-destination_timeout']."</td>\n";
-	if (permission_exists('ring_group_prompt')) {
+	if ($has_ring_group_prompt) {
 		echo "				<td class='vtable'>".$text['label-destination_prompt']."</td>\n";
 	}
 	echo "					<td class='vtable'>".$text['label-destination_description']."</td>\n";
 	echo "					<td class='vtable'>".$text['label-destination_enabled']."</td>\n";
-	if ($show_destination_delete && permission_exists('ring_group_destination_delete')) {
+	if ($show_destination_delete && $has_ring_group_destination_delete) {
 		echo "					<td class='vtable edit_delete_checkbox_all' onmouseover=\"swap_display('delete_label_destinations', 'delete_toggle_destinations');\" onmouseout=\"swap_display('delete_label_destinations', 'delete_toggle_destinations');\">\n";
 		echo "						<span id='delete_label_destinations'>".$text['label-delete']."</span>\n";
 		echo "						<span id='delete_toggle_destinations'><input type='checkbox' id='checkbox_all_destinations' name='checkbox_all' onclick=\"edit_all_toggle('destinations');\"></span>\n";
@@ -954,7 +970,7 @@ if (!($settings instanceof settings)) {
 		}
 		echo "					</select>\n";
 		echo "				</td>\n";
-		if (permission_exists('ring_group_prompt')) {
+		if ($has_ring_group_prompt) {
 			echo "			<td class='formfld'>\n";
 			echo "				<select class='formfld' style='width: 90px;' name='ring_group_destinations[".$x."][destination_prompt]'>\n";
 			echo "					<option value=''></option>\n";
@@ -982,7 +998,7 @@ if (!($settings instanceof settings)) {
 			echo "				</select>\n";
 		}
 		echo "				</td>\n";
-		if ($show_destination_delete && permission_exists('ring_group_destination_delete')) {
+		if ($show_destination_delete && $has_ring_group_destination_delete) {
 			if (!empty($row['ring_group_destination_uuid']) && is_uuid($row['ring_group_destination_uuid'])) {
 				echo "			<td class='vtable' style='text-align: center; padding-bottom: 3px;'>";
 				echo "				<input type='checkbox' name='ring_group_destinations_delete[".$x."][checked]' value='true' class='chk_delete checkbox_destinations' onclick=\"edit_delete_action('destinations');\">\n";
@@ -1024,7 +1040,7 @@ if (!($settings instanceof settings)) {
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('ring_group_caller_id_name')) {
+	if ($has_ring_group_caller_id_name) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-caller_id_name']."\n";
@@ -1037,7 +1053,7 @@ if (!($settings instanceof settings)) {
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('ring_group_caller_id_number')) {
+	if ($has_ring_group_caller_id_number) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-caller_id_number']."\n";
@@ -1050,7 +1066,7 @@ if (!($settings instanceof settings)) {
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('ring_group_cid_name_prefix')) {
+	if ($has_ring_group_cid_name_prefix) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-cid-name-prefix']."\n";
@@ -1063,7 +1079,7 @@ if (!($settings instanceof settings)) {
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('ring_group_cid_number_prefix')) {
+	if ($has_ring_group_cid_number_prefix) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-cid-number-prefix']."\n";
@@ -1184,7 +1200,7 @@ if (!($settings instanceof settings)) {
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('ring_group_missed_call')) {
+	if ($has_ring_group_missed_call) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-missed_call']."\n";
@@ -1204,7 +1220,7 @@ if (!($settings instanceof settings)) {
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('ring_group_forward')) {
+	if ($has_ring_group_forward) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-ring_group_forward']."\n";
@@ -1221,7 +1237,7 @@ if (!($settings instanceof settings)) {
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('ring_group_forward_toll_allow')) {
+	if ($has_ring_group_forward_toll_allow) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-ring_group_forward_toll_allow']."\n";
@@ -1234,7 +1250,7 @@ if (!($settings instanceof settings)) {
 		echo "</tr>\n";
 	}
 
-	if (permission_exists("ring_group_context")) {
+	if ($has_ring_group_context) {
 		echo "<tr>\n";
 		echo "<td class='vncellreq' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-context']."\n";

@@ -54,6 +54,10 @@
 			echo "access denied";
 			exit;
 		}
+		$has_fax_extension_view_domain = permission_exists('fax_extension_view_domain');
+		$has_fax_footer                = permission_exists('fax_footer');
+		$has_fax_message               = permission_exists('fax_message');
+		$has_fax_subject               = permission_exists('fax_subject');
 
 	//set the domain_uuid and domain_name
 		$domain_uuid = $_SESSION['domain_uuid'];
@@ -74,7 +78,7 @@
 	//pre-populate the form
 		if (!empty($_REQUEST['id']) && is_uuid($_REQUEST['id']) && (empty($_POST["persistformvar"]) || $_POST["persistformvar"] != "true")) {
 			$fax_uuid = $_REQUEST["id"];
-			if (permission_exists('fax_extension_view_domain')) {
+			if ($has_fax_extension_view_domain) {
 				//show all fax extensions
 				$sql = "select fax_uuid, fax_extension, fax_caller_id_name, fax_caller_id_number, ";
 				$sql .= "fax_toll_allow, accountcode ";
@@ -108,7 +112,7 @@
 				$fax_accountcode = $row["accountcode"];
 			}
 			else {
-				if (!permission_exists('fax_extension_view_domain')) {
+				if (!$has_fax_extension_view_domain) {
 					echo "access denied";
 					exit;
 				}
@@ -1040,7 +1044,7 @@ if (!defined('STDIN')) {
 		echo "	</div>\n";
 		echo "	<div style='clear: both;'></div>\n";
 		echo "</div>\n";
-		echo $text['description-2']." ".(permission_exists('fax_extension_view_domain') ? $text['description-3'] : null)."\n";
+		echo $text['description-2']." ".($has_fax_extension_view_domain ? $text['description-3'] : null)."\n";
 		echo "<br /><br />\n";
 
 		if (!$domain_enabled) {
@@ -1164,7 +1168,7 @@ if (!defined('STDIN')) {
 		echo "</td>\n";
 		echo "</tr>\n";
 
-		if (permission_exists('fax_subject')) {
+		if ($has_fax_subject) {
 			$cover_subject_required = $settings->get('fax','cover_subject_required') ?? '';
 			$class = ($cover_subject_required == 'true') ? 'vncellreq' : 'vncell';
 			$required = ($cover_subject_required == 'true') ? 'required' : '';
@@ -1180,7 +1184,7 @@ if (!defined('STDIN')) {
 			echo "</tr>\n";
 		}
 
-		if (permission_exists('fax_message')) {
+		if ($has_fax_message) {
 			$cover_message_required = $settings->get('fax','cover_message_required') ?? '';
 			$class = ($cover_message_required == 'true') ? 'vncellreq' : 'vncell';
 			$required = ($cover_message_required == 'true') ? 'required' : '';
@@ -1196,7 +1200,7 @@ if (!defined('STDIN')) {
 			echo "</tr>\n";
 		}
 
-		if (permission_exists('fax_footer')) {
+		if ($has_fax_footer) {
 			echo "<tr>\n";
 			echo "<td class='vncell' valign='top' align='left' nowrap>\n";
 			echo "	".$text['label-fax-footer']."\n";

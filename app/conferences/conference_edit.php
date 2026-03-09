@@ -33,6 +33,15 @@
 		echo "access denied";
 		exit;
 	}
+	$has_conference_account_code     = permission_exists('conference_account_code');
+	$has_conference_active_view      = permission_exists('conference_active_view');
+	$has_conference_cdr_view         = permission_exists('conference_cdr_view');
+	$has_conference_context          = permission_exists('conference_context');
+	$has_conference_delete           = permission_exists('conference_delete');
+	$has_conference_email_address    = permission_exists('conference_email_address');
+	$has_conference_interactive_view = permission_exists('conference_interactive_view');
+	$has_conference_user_add         = permission_exists('conference_user_add');
+	$has_conference_user_edit        = permission_exists('conference_user_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -69,7 +78,7 @@
 		$conference_enabled = $_POST["conference_enabled"];
 
 		//set the context for users that do not have the permission
-		if (permission_exists('conference_context')) {
+		if ($has_conference_context) {
 			$conference_context = $_POST["conference_context"];
 		}
 		else if ($action == 'add') {
@@ -82,7 +91,7 @@
 	}
 
 //delete the user from the v_conference_users
-	if (!empty($_GET["a"]) && $_GET["a"] == "delete" && permission_exists("conference_delete")) {
+	if (!empty($_GET["a"]) && $_GET["a"] == "delete" && $has_conference_delete) {
 
 		$user_uuid = $_REQUEST["user_uuid"];
 		$conference_uuid = $_REQUEST["id"];
@@ -189,10 +198,10 @@
 					$array['conferences'][0]['conference_pin_number'] = $conference_pin_number;
 					$array['conferences'][0]['conference_profile'] = $conference_profile;
 					$array['conferences'][0]['conference_flags'] = $conference_flags;
-					if (permission_exists('conference_email_address')) {
+					if ($has_conference_email_address) {
 						$array['conferences'][0]['conference_email_address'] = $conference_email_address;
 					}
-					if (permission_exists('conference_account_code')) {
+					if ($has_conference_account_code) {
 						$array['conferences'][0]['conference_account_code'] = $conference_account_code;
 					}
 					$array['conferences'][0]['conference_order'] = $conference_order;
@@ -361,13 +370,13 @@
 
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','style'=>'margin-right: 15px;','link'=>'conferences.php']);
 	if ($action == 'update') {
-		if (permission_exists('conference_cdr_view')) {
+		if ($has_conference_cdr_view) {
 			echo button::create(['type'=>'button','label'=>$text['button-cdr'],'icon'=>'list','link'=>PROJECT_PATH.'/app/conference_cdr/conference_cdr.php?id='.urlencode($conference_uuid)]);
 		}
-		if (permission_exists('conference_interactive_view')) {
+		if ($has_conference_interactive_view) {
 			echo button::create(['type'=>'button','label'=>$text['button-view'],'icon'=>$settings->get('theme', 'button_icon_view'),'style'=>'','link'=>'../conferences_active/conference_interactive.php?c='.urlencode($conference_extension)]);
 		}
-		else if (permission_exists('conference_active_view')) {
+		else if ($has_conference_active_view) {
 			echo button::create(['type'=>'button','label'=>$text['button-view'],'icon'=>$settings->get('theme', 'button_icon_view'),'style'=>'','link'=>'../conferences_active/conferences_active.php']);
 		}
 	}
@@ -415,7 +424,7 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('conference_user_add') || permission_exists('conference_user_edit')) {
+	if ($has_conference_user_add || $has_conference_user_edit) {
 		if ($action == "update") {
 			echo "	<tr>";
 			echo "		<td class='vncell' valign='top'>".$text['label-user_list']."</td>";
@@ -482,7 +491,7 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('conference_email_address')) {
+	if ($has_conference_email_address) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-email_address']."\n";
@@ -495,7 +504,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('conference_account_code')) {
+	if ($has_conference_account_code) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-account_code']."\n";
@@ -530,7 +539,7 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('conference_context')) {
+	if ($has_conference_context) {
 		echo "<tr>\n";
 		echo "<td class='vncellreq' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-context']."\n";

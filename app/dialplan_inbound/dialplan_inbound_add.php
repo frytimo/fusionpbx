@@ -36,6 +36,8 @@
 		echo $text['label-access-denied'];
 		exit;
 	}
+	$has_inbound_route_advanced = permission_exists('inbound_route_advanced');
+	$has_inbound_route_edit     = permission_exists('inbound_route_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -106,7 +108,7 @@
 			unset($sql, $parameters, $row);
 		}
 
-		if (permission_exists("inbound_route_advanced") && $action == "advanced") {
+		if ($has_inbound_route_advanced && $action == "advanced") {
 			//allow users with group advanced control, not always superadmin. You may change this in group permissions
 		}
 		else {
@@ -477,8 +479,8 @@
 	echo "	<div class='heading'><b>".$text['title-dialplan-inbound-add']."</b></div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','link'=>PROJECT_PATH.'/app/dialplans/dialplans.php?app_uuid=c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4']);
-	if (permission_exists("inbound_route_advanced")) {
-		if (permission_exists("inbound_route_edit") && $action == "advanced") {
+	if ($has_inbound_route_advanced) {
+		if ($has_inbound_route_edit && $action == "advanced") {
 			echo button::create(['type'=>'button','label'=>$text['button-basic'],'icon'=>'hammer','style'=>'margin-left: 15px;','link'=>'dialplan_inbound_add.php?action=basic']);
 		}
 		else {
@@ -506,7 +508,7 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists("inbound_route_edit") && $action == "advanced" && permission_exists("inbound_route_advanced")) {
+	if ($has_inbound_route_edit && $action == "advanced" && $has_inbound_route_advanced) {
 		echo "<tr>\n";
 		echo "<td class='vncellreq' valign='top' align='left' nowrap>\n";
 		echo "	".$text['label-condition_1']."\n";
@@ -697,7 +699,7 @@
 
 	echo "<tr>\n";
 	echo "<td class='vncellreq' valign='top' align='left' nowrap>\n";
-	if (permission_exists("inbound_route_edit") && $action=="advanced") {
+	if ($has_inbound_route_edit && $action=="advanced") {
 		echo "    ".$text['label-action_1']."\n";
 	}
 	else {
@@ -712,7 +714,7 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists("inbound_route_edit") && $action=="advanced") {
+	if ($has_inbound_route_edit && $action=="advanced") {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap>\n";
 		echo "    ".$text['label-action_2']."\n";
@@ -799,7 +801,7 @@
 	echo "</div>\n";
 	echo "<br><br>";
 
-	if ($action == "update" && permission_exists("inbound_route_edit")) {
+	if ($action == "update" && $has_inbound_route_edit) {
 		echo "	<input type='hidden' name='dialplan_uuid' value='".escape($dialplan_uuid)."'>\n";
 	}
 	echo "<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";

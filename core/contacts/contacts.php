@@ -34,6 +34,13 @@
 		echo "access denied";
 		exit;
 	}
+	$has_contact_add         = permission_exists('contact_add');
+	$has_contact_all         = permission_exists('contact_all');
+	$has_contact_delete      = permission_exists('contact_delete');
+	$has_contact_domain_view = permission_exists('contact_domain_view');
+	$has_contact_email_view  = permission_exists('contact_email_view');
+	$has_contact_note_view   = permission_exists('contact_note_view');
+	$has_domain_select       = permission_exists('domain_select');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -55,7 +62,7 @@
 	if (!empty($action) && !empty($contacts)) {
 		switch ($action) {
 			case 'delete':
-				if (permission_exists('contact_delete')) {
+				if ($has_contact_delete) {
 					$obj = new contacts;
 					$obj->delete($contacts);
 				}
@@ -83,7 +90,7 @@
 	$sql .= "and contact_setting_name = 'array' ";
 	$sql .= "and contact_setting_value <> '' ";
 	$sql .= "and contact_setting_value is not null ";
-	if (!permission_exists('contact_domain_view')) {
+	if (!$has_contact_domain_view) {
 		$sql .= "and ( "; //only contacts assigned to current user's group(s) and those not assigned to any group
 		$sql .= "	contact_uuid in ( ";
 		$sql .= "		select contact_uuid from v_contact_groups ";
@@ -163,7 +170,7 @@
 			$sql_search .= ") ";
 
 			//search contact emails
-			if (permission_exists('contact_email_view')) {
+			if ($has_contact_email_view) {
 				$sql_search .= "or contact_uuid in ( ";
 				$sql_search .= "	select contact_uuid from v_contact_emails ";
 				$sql_search .= "	where domain_uuid = :domain_uuid ";
@@ -175,7 +182,7 @@
 			}
 
 			//search contact notes
-			if (permission_exists('contact_note_view')) {
+			if ($has_contact_note_view) {
 				$sql_search .= "or contact_uuid in ( ";
 				$sql_search .= "	select contact_uuid from v_contact_notes ";
 				$sql_search .= "	where domain_uuid = :domain_uuid ";
@@ -193,11 +200,11 @@
 	$sql = "select count(*) ";
 	$sql .= "from v_contacts as c ";
 	$sql .= "where true ";
-	if ($show != "all" || !permission_exists('contact_all')) {
+	if ($show != "all" || !$has_contact_all) {
 		$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	}
-	if (!permission_exists('contact_domain_view')) {
+	if (!$has_contact_domain_view) {
 		$sql .= "and ( "; //only contacts assigned to current user's group(s) and those not assigned to any group
 		$sql .= "	contact_uuid in ( ";
 		$sql .= "		select contact_uuid from v_contact_groups ";
@@ -231,7 +238,7 @@
 //prepare to page the results
 	$rows_per_page = $settings->get('domain', 'paging', 50);
 	$param = "&search=".urlencode($search);
-	if ($show == "all" && permission_exists('contact_all')) {
+	if ($show == "all" && $has_contact_all) {
 		$param .= "&show=all";
 	}
 	$page = $_GET['page'] ?? '';
@@ -245,11 +252,11 @@
 	$sql .= "(select a.contact_attachment_uuid from v_contact_attachments as a where a.contact_uuid = c.contact_uuid and a.attachment_primary = true limit 1) as contact_attachment_uuid ";
 	$sql .= "from v_contacts as c ";
 	$sql .= "where true ";
-	if ($show != "all" || !permission_exists('contact_all')) {
+	if ($show != "all" || !$has_contact_all) {
 		$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	}
-	if (!permission_exists('contact_domain_view')) {
+	if (!$has_contact_domain_view) {
 		$sql .= "and ( "; //only contacts assigned to current user's group(s) and those not assigned to any group
 		$sql .= "	contact_uuid in ( ";
 		$sql .= "		select contact_uuid from v_contact_groups ";
@@ -322,17 +329,17 @@
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['header-contacts']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('contact_add')) {
+	if ($has_contact_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-import'],'icon'=>$settings->get('theme', 'button_icon_import'),'collapse'=>'hide-sm-dn','style'=>'margin-right: 15px;','link'=>'contact_import.php']);
 	}
-	if (permission_exists('contact_add')) {
+	if ($has_contact_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','collapse'=>'hide-sm-dn','link'=>'contact_edit.php']);
 	}
-	if (permission_exists('contact_delete') && $contacts) {
+	if ($has_contact_delete && $contacts) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','collapse'=>'hide-sm-dn','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if (permission_exists('contact_all')) {
+	if ($has_contact_all) {
 		if ($show == 'all') {
 			echo "		<input type='hidden' name='show' value='all'>";
 		}
@@ -351,7 +358,7 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('contact_delete') && $contacts) {
+	if ($has_contact_delete && $contacts) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -365,12 +372,12 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('contact_delete')) {
+	if ($has_contact_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($contacts) ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
 	}
-	if ($show == "all" && permission_exists('contact_all')) {
+	if ($show == "all" && $has_contact_all) {
 		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param, "class='shrink'");
 	}
 	echo th_order_by('contact_type', $text['label-contact_type'], $order_by, $order);
@@ -391,17 +398,17 @@
 		$x = 0;
 		foreach($contacts as $row) {
 			$list_row_url = "contact_view.php?id=".urlencode($row['contact_uuid'])."&query_string=".urlencode($_SERVER["QUERY_STRING"]);
-			if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+			if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 				$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('contact_delete')) {
+			if ($has_contact_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='contacts[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='contacts[$x][uuid]' value='".escape($row['contact_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if ($show == "all" && permission_exists('contact_all')) {
+			if ($show == "all" && $has_contact_all) {
 				if (!empty($_SESSION['domains'][$row['domain_uuid']]['domain_name'])) {
 					$domain = $_SESSION['domains'][$row['domain_uuid']]['domain_name'];
 				}

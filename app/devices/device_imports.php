@@ -33,6 +33,7 @@
 		echo "access denied";
 		exit;
 	}
+	$has_device_import = permission_exists('device_import');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -56,7 +57,7 @@
 
 //copy the csv file
 	//$_POST['submit'] == "Upload" &&
-	if (!empty($_FILES['ulfile']['tmp_name']) && is_uploaded_file($_FILES['ulfile']['tmp_name']) && permission_exists('device_import')) {
+	if (!empty($_FILES['ulfile']['tmp_name']) && is_uploaded_file($_FILES['ulfile']['tmp_name']) && $has_device_import) {
 		if ($_POST['type'] == 'csv') {
 			$file = $settings->get('server', 'temp')."/devices-".$_SESSION['domain_name'].".csv";
 			if (move_uploaded_file($_FILES['ulfile']['tmp_name'], $file)) {

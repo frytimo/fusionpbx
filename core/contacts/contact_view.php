@@ -33,6 +33,40 @@
 		echo "access denied";
 		exit;
 	}
+	$has_contact_address_add       = permission_exists('contact_address_add');
+	$has_contact_address_delete    = permission_exists('contact_address_delete');
+	$has_contact_address_view      = permission_exists('contact_address_view');
+	$has_contact_attachment_add    = permission_exists('contact_attachment_add');
+	$has_contact_attachment_delete = permission_exists('contact_attachment_delete');
+	$has_contact_attachment_view   = permission_exists('contact_attachment_view');
+	$has_contact_delete            = permission_exists('contact_delete');
+	$has_contact_edit              = permission_exists('contact_edit');
+	$has_contact_email_add         = permission_exists('contact_email_add');
+	$has_contact_email_delete      = permission_exists('contact_email_delete');
+	$has_contact_email_view        = permission_exists('contact_email_view');
+	$has_contact_extension_view    = permission_exists('contact_extension_view');
+	$has_contact_group_delete      = permission_exists('contact_group_delete');
+	$has_contact_group_view        = permission_exists('contact_group_view');
+	$has_contact_note_add          = permission_exists('contact_note_add');
+	$has_contact_note_delete       = permission_exists('contact_note_delete');
+	$has_contact_note_view         = permission_exists('contact_note_view');
+	$has_contact_phone_add         = permission_exists('contact_phone_add');
+	$has_contact_phone_delete      = permission_exists('contact_phone_delete');
+	$has_contact_phone_view        = permission_exists('contact_phone_view');
+	$has_contact_relation_add      = permission_exists('contact_relation_add');
+	$has_contact_relation_delete   = permission_exists('contact_relation_delete');
+	$has_contact_relation_view     = permission_exists('contact_relation_view');
+	$has_contact_setting_add       = permission_exists('contact_setting_add');
+	$has_contact_setting_delete    = permission_exists('contact_setting_delete');
+	$has_contact_time_add          = permission_exists('contact_time_add');
+	$has_contact_time_delete       = permission_exists('contact_time_delete');
+	$has_contact_time_view         = permission_exists('contact_time_view');
+	$has_contact_url_add           = permission_exists('contact_url_add');
+	$has_contact_url_delete        = permission_exists('contact_url_delete');
+	$has_contact_url_view          = permission_exists('contact_url_view');
+	$has_contact_user_delete       = permission_exists('contact_user_delete');
+	$has_contact_user_view         = permission_exists('contact_user_view');
+	$has_user_edit                 = permission_exists('user_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -232,7 +266,7 @@
 	echo "	<div class='heading'><b>".($contact_name ? $contact_name : $text['header-contact-edit'])."</b></div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','collapse'=>'hide-sm-dn','style'=>'margin-right: 15px;','link'=>'contacts.php']);
-	if (permission_exists('contact_time_add')) {
+	if ($has_contact_time_add) {
 		//detect timer state (and start time)
 		$sql = "select ";
 		$sql .= "time_start ";
@@ -258,34 +292,34 @@
 	if (is_dir(dirname(__DIR__, 2).'/app/certificates')) {
 		echo button::create(['type'=>'button','label'=>$text['button-certificate'],'icon'=>'certificate','collapse'=>'hide-sm-dn','link'=>'../certificates/index.php?name='.urlencode($contact_name_given." ".$contact_name_family)]);
 	}
-	if (!empty($contact_user_uuid) && permission_exists('user_edit') && is_uuid($contact_user_uuid)) {
+	if (!empty($contact_user_uuid) && $has_user_edit && is_uuid($contact_user_uuid)) {
 		echo button::create(['type'=>'button','label'=>$text['button-user'],'icon'=>'user','collapse'=>'hide-sm-dn','link'=>'../../core/users/user_edit.php?id='.urlencode($contact_user_uuid)]);
 	}
 	if (
-		permission_exists('contact_phone_add') ||
-		permission_exists('contact_address_add') ||
-		permission_exists('contact_email_add') ||
-		permission_exists('contact_url_add') ||
-		permission_exists('contact_relation_add') ||
-		permission_exists('contact_note_add') ||
-		permission_exists('contact_time_add') ||
-		permission_exists('contact_setting_add') ||
-		permission_exists('contact_attachment_add')
+		$has_contact_phone_add ||
+		$has_contact_address_add ||
+		$has_contact_email_add ||
+		$has_contact_url_add ||
+		$has_contact_relation_add ||
+		$has_contact_note_add ||
+		$has_contact_time_add ||
+		$has_contact_setting_add ||
+		$has_contact_attachment_add
 		) {
 		echo 		"<select class='formfld' style='width: auto; margin-left: 15px;' id='select_add' onchange=\"document.location.href='contact_' + (this.options[this.selectedIndex].value) + '_edit.php?contact_uuid=".urlencode($contact_uuid)."';\">\n";
 		echo "			<option value=''>".$text['button-add']."...</option>\n";
-		if (permission_exists('contact_phone_add')) { echo "<option value='phone'>".$text['label-phone_number']."</option>\n"; }
-		if (permission_exists('contact_address_add')) { echo "<option value='address'>".$text['label-address_address']."</option>\n"; }
-		if (permission_exists('contact_email_add')) { echo "<option value='email'>".$text['label-email']."</option>\n"; }
-		if (permission_exists('contact_url_add')) { echo "<option value='url'>".$text['label-url']."</option>\n"; }
-		if (permission_exists('contact_relation_add')) { echo "<option value='relation'>".$text['label-contact_relation_label']."</option>\n"; }
-		if (permission_exists('contact_note_add')) { echo "<option value='note'>".$text['label-contact_note']."</option>\n"; }
-		if (permission_exists('contact_time_add')) { echo "<option value='time'>".$text['label-time_time']."</option>\n"; }
-		if (permission_exists('contact_setting_add')) { echo "<option value='setting'>".$text['label-setting']."</option>\n"; }
-		if (permission_exists('contact_attachment_add')) { echo "<option value='attachment'>".$text['label-attachment']."</option>\n"; }
+		if ($has_contact_phone_add) { echo "<option value='phone'>".$text['label-phone_number']."</option>\n"; }
+		if ($has_contact_address_add) { echo "<option value='address'>".$text['label-address_address']."</option>\n"; }
+		if ($has_contact_email_add) { echo "<option value='email'>".$text['label-email']."</option>\n"; }
+		if ($has_contact_url_add) { echo "<option value='url'>".$text['label-url']."</option>\n"; }
+		if ($has_contact_relation_add) { echo "<option value='relation'>".$text['label-contact_relation_label']."</option>\n"; }
+		if ($has_contact_note_add) { echo "<option value='note'>".$text['label-contact_note']."</option>\n"; }
+		if ($has_contact_time_add) { echo "<option value='time'>".$text['label-time_time']."</option>\n"; }
+		if ($has_contact_setting_add) { echo "<option value='setting'>".$text['label-setting']."</option>\n"; }
+		if ($has_contact_attachment_add) { echo "<option value='attachment'>".$text['label-attachment']."</option>\n"; }
 		echo "		</select>";
 	}
-	if (permission_exists('contact_edit')) {
+	if ($has_contact_edit) {
 		echo button::create(['type'=>'button','label'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'id'=>'btn_edit','style'=>'margin-left: 15px;','collapse'=>'hide-sm-dn','link'=>'contact_edit.php?id='.urlencode($contact_uuid)]);
 	}
 	echo "	</div>\n";
@@ -295,18 +329,18 @@
 	if (
 		!empty($action) &&
 		$action == "update" && (
-		permission_exists('contact_delete') ||
-		permission_exists('contact_user_delete') ||
-		permission_exists('contact_group_delete') ||
-		permission_exists('contact_phone_delete') ||
-		permission_exists('contact_address_delete') ||
-		permission_exists('contact_email_delete') ||
-		permission_exists('contact_url_delete') ||
-		permission_exists('contact_relation_delete') ||
-		permission_exists('contact_note_delete') ||
-		permission_exists('contact_time_delete') ||
-		permission_exists('contact_setting_delete') ||
-		permission_exists('contact_attachment_delete')
+		$has_contact_delete ||
+		$has_contact_user_delete ||
+		$has_contact_group_delete ||
+		$has_contact_phone_delete ||
+		$has_contact_address_delete ||
+		$has_contact_email_delete ||
+		$has_contact_url_delete ||
+		$has_contact_relation_delete ||
+		$has_contact_note_delete ||
+		$has_contact_time_delete ||
+		$has_contact_setting_delete ||
+		$has_contact_attachment_delete
 		)) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 	}
@@ -401,7 +435,7 @@
 				echo "</div>\n";
 			}
 		//users (viewing contact)
-			if (permission_exists('contact_user_view') && !empty($contact_users_assigned)) {
+			if ($has_contact_user_view && !empty($contact_users_assigned)) {
 				echo "<div class='box contact-details-label'>".$text['label-users']."</div>\n";
 				echo "<div class='box'>";
 				foreach ($contact_users_assigned as $field) {
@@ -410,7 +444,7 @@
 				echo "</div>\n";
 			}
 		//groups (viewing contact)
-			if (permission_exists('contact_group_view') && !empty($contact_groups_assigned)) {
+			if ($has_contact_group_view && !empty($contact_groups_assigned)) {
 				echo "<div class='box contact-details-label'>".$text['label-groups']."</div>\n";
 				echo "<div class='box'>";
 				foreach ($contact_groups_assigned as $field) {
@@ -424,7 +458,7 @@
 	echo "	</div>\n";
 
 //numbers
-	if (permission_exists('contact_phone_view')) {
+	if ($has_contact_phone_view) {
 		echo "	<div class='box contact-details'>\n";
 		echo "		<div class='grid contact-details'>\n";
 		echo "			<div class='box' title=\"".$text['label-phone_numbers']."\"><b class='fas fa-hashtag fa-fw fa-lg'></b></div>\n";
@@ -436,7 +470,7 @@
 	}
 
 //emails
-	if (permission_exists('contact_email_view')) {
+	if ($has_contact_email_view) {
 		echo "	<div class='box contact-details'>\n";
 		echo "		<div class='grid contact-details'>\n";
 		echo "			<div class='box' title=\"".$text['label-emails']."\"><b class='fas fa-envelope fa-fw fa-lg'></b></div>\n";
@@ -448,7 +482,7 @@
 	}
 
 //addresses
-	if (permission_exists('contact_address_view')) {
+	if ($has_contact_address_view) {
 		echo "	<div class='box contact-details'>\n";
 		echo "		<div class='grid contact-details'>\n";
 		echo "			<div class='box' title=\"".$text['label-addresses']."\"><b class='fas fa-map-marker-alt fa-fw fa-lg'></b></div>\n";
@@ -460,7 +494,7 @@
 	}
 
 //urls
-	if (permission_exists('contact_url_view')) {
+	if ($has_contact_url_view) {
 		echo "	<div class='box contact-details'>\n";
 		echo "		<div class='grid contact-details'>\n";
 		echo "			<div class='box' title=\"".$text['label-urls']."\"><b class='fas fa-link fa-fw fa-lg'></b></div>\n";
@@ -472,7 +506,7 @@
 	}
 
 //relations
-	if (permission_exists('contact_relation_view')) {
+	if ($has_contact_relation_view) {
 		echo "	<div class='box contact-details'>\n";
 		echo "		<div class='grid contact-details'>\n";
 		echo "			<div class='box' title=\"".$text['header-contact_relations']."\"><b class='fas fa-diagram-project fa-fw fa-lg'></b></div>\n";
@@ -484,7 +518,7 @@
 	}
 
 //attachments
-	if (permission_exists('contact_attachment_view')) {
+	if ($has_contact_attachment_view) {
 		echo "	<div class='box contact-details'>\n";
 		echo "		<div class='grid contact-details'>\n";
 		echo "			<div class='box' title=\"".$text['label-attachments']."\"><b class='fas fa-paperclip fa-fw fa-lg'></b></div>\n";
@@ -496,7 +530,7 @@
 	}
 
 //times
-	if (permission_exists('contact_time_view')) {
+	if ($has_contact_time_view) {
 		echo "	<div class='box contact-details'>\n";
 		echo "		<div class='grid contact-details'>\n";
 		echo "			<div class='box' title=\"".$text['header_contact_times']."\"><b class='fas fa-clock fa-fw fa-lg'></b></div>\n";
@@ -508,7 +542,7 @@
 	}
 
 //extensions
-	if (permission_exists('contact_extension_view')) {
+	if ($has_contact_extension_view) {
 		echo "	<div class='box contact-details'>\n";
 		echo "		<div class='grid contact-details'>\n";
 		echo "			<div class='box' title=\"".$text['label-contact_extensions']."\"><b class='fas fa-fax fa-fw fa-lg'></b></div>\n";
@@ -523,7 +557,7 @@
 	echo "<div class='grid' style='margin-top: 15px; grid-template-columns: auto;'>\n";
 
 //notes
-	if (permission_exists('contact_note_view')) {
+	if ($has_contact_note_view) {
 		echo "	<div class='box contact-details'>\n";
 		echo "		<div class='grid contact-details'>\n";
 		echo "			<div class='box' title=\"".$text['label-contact_notes']."\"><b class='fas fa-sticky-note fa-fw fa-lg'></b></div>\n";

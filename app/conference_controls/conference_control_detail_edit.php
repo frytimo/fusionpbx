@@ -33,6 +33,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_conference_control_detail_add  = permission_exists('conference_control_detail_add');
+	$has_conference_control_detail_edit = permission_exists('conference_control_detail_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -108,12 +110,12 @@
 				$array['conference_control_details'][0]['control_data'] = $control_data;
 				$array['conference_control_details'][0]['control_enabled'] = $control_enabled;
 
-				if ($action == "add" && permission_exists('conference_control_detail_add')) {
+				if ($action == "add" && $has_conference_control_detail_add) {
 					$array['conference_control_details'][0]['conference_control_detail_uuid'] = uuid();
 					message::add($text['message-add']);
 				}
 
-				if ($action == "update" && permission_exists('conference_control_detail_edit')) {
+				if ($action == "update" && $has_conference_control_detail_edit) {
 					$array['conference_control_details'][0]['conference_control_detail_uuid'] = $conference_control_detail_uuid;
 					message::add($text['message-update']);
 				}

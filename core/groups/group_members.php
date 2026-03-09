@@ -33,6 +33,10 @@
 		echo "access denied";
 		return;
 	}
+	$has_group_member_add      = permission_exists('group_member_add');
+	$has_group_member_delete   = permission_exists('group_member_delete');
+	$has_group_permission_view = permission_exists('group_permission_view');
+	$has_user_all              = permission_exists('user_all');
 
 //requires a superadmin to view members of the superadmin group
 	if (!if_group("superadmin") && $_GET["group_name"] == "superadmin") {
@@ -57,7 +61,7 @@
 	if (!empty($action) && !empty($group_members)) {
 		switch ($action) {
 			case 'delete':
-				if (permission_exists('group_member_delete') && is_uuid($group_uuid)) {
+				if ($has_group_member_delete && is_uuid($group_uuid)) {
 					$obj = new groups;
 					$obj->group_uuid = $group_uuid;
 					$obj->delete_members($group_members);
@@ -81,7 +85,7 @@
 	unset($sql, $parameters, $row);
 
 //get the the users array
-	if (permission_exists('group_member_add')) {
+	if ($has_group_member_add) {
 		$sql = "select * from v_users where ";
 		$sql .= "domain_uuid = :domain_uuid ";
 		$sql .= "order by username ";
@@ -99,7 +103,7 @@
 		$sql .= "and ug.domain_uuid = :domain_uuid_ug ";
 		$parameters['domain_uuid_ug'] = $domain_uuid;
 	}
-	if (!permission_exists('user_all')) {
+	if (!$has_user_all) {
 		$sql .= "and u.domain_uuid = :domain_uuid_u ";
 		$parameters['domain_uuid_u'] = $_SESSION['domain_uuid'];
 	}
@@ -138,11 +142,11 @@
 	echo "	<div class='heading'><b>".$text['header-group_members']."</b><div class='count'>".$group_name.": ".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','collapse'=>'hide-xs','style'=>'margin-right: 15px;','link'=>'groups.php']);
-	if (permission_exists('group_permission_view')) {
+	if ($has_group_permission_view) {
 		echo button::create(['type'=>'button','label'=>$text['button-permissions'],'icon'=>'key','style'=>'margin-right: 15px;','link'=>'group_permissions.php?group_uuid='.urlencode($group_uuid)]);
 	}
 
-	if (permission_exists('group_member_add')) {
+	if ($has_group_member_add) {
 		echo 	"<form class='inline' method='post' action='group_member_add.php'>\n";
 		echo "	<select name='user_uuid' class='formfld'>\n";
 		echo "		<option value=''>".$text['label-select']."...</option>\n";
@@ -159,14 +163,14 @@
 		echo button::create(['type'=>'submit','label'=>$text['button-add_member'],'icon'=>$settings->get('theme', 'button_icon_add'),'collapse'=>'hide-xs']);
 		echo "	</form>\n";
 	}
-	if (permission_exists('group_member_delete') && $user_groups) {
+	if ($has_group_member_delete && $user_groups) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'name'=>'btn_delete','collapse'=>'hide-xs','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo "	</div>\n";
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('group_member_delete') && $user_groups) {
+	if ($has_group_member_delete && $user_groups) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -177,12 +181,12 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('group_member_delete')) {
+	if ($has_group_member_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle();' ".(!empty($user_groups) ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
 	}
-	if (permission_exists('user_all')) {
+	if ($has_user_all) {
 		echo "<th class='pct-30'>".$text['label-domain']."</th>\n";
 	}
 	echo "	<th>".$text['label-username']."</th>\n";
@@ -192,13 +196,13 @@
 		$x = 0;
 		foreach ($user_groups as $row) {
 			echo "<tr class='list-row' href='".$list_row_url."'>";
-			if (permission_exists('group_member_delete')) {
+			if ($has_group_member_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='group_members[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='group_members[$x][uuid]' value='".escape($row['user_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if (permission_exists('user_all')) {
+			if ($has_user_all) {
 				echo "<td class='no-wrap' onclick=\"if (document.getElementById('checkbox_".$x."').checked) { document.getElementById('checkbox_".$x."').checked = false; document.getElementById('checkbox_all').checked = false; } else { document.getElementById('checkbox_".$x."').checked = true; }\">".$_SESSION['domains'][$row["domain_uuid"]]['domain_name']."</td>\n";
 			}
 			echo "<td class='no-wrap' onclick=\"if (document.getElementById('checkbox_".$x."').checked) { document.getElementById('checkbox_".$x."').checked = false; document.getElementById('checkbox_all').checked = false; } else { document.getElementById('checkbox_".$x."').checked = true; }\">".$row["username"]."</td>\n";

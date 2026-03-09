@@ -34,6 +34,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_log_download = permission_exists('log_download');
+	$has_xml_cdr_all  = permission_exists('xml_cdr_all');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -44,7 +46,7 @@
 
 //get the cdr json from the database
 	$sql = "select * from v_xml_cdr_logs ";
-	if (permission_exists('xml_cdr_all')) {
+	if ($has_xml_cdr_all) {
 		$sql .= "where xml_cdr_uuid  = :xml_cdr_uuid ";
 	}
 	else {
@@ -63,7 +65,7 @@
 	$byte_count = strlen($log_content);
 
 //download the log
-	if (permission_exists('log_download')) {
+	if ($has_log_download) {
 		$file_name = 'call_log.txt';
 		if (isset($file_name) && $action == 'download' && isset($log_content)) {
 			header("Content-Type: binary/octet-stream");
@@ -131,7 +133,7 @@
 	echo "	<div class='heading'><b>".$text['label-call_log']."</b></div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'style'=>'margin-left: 15px;','link'=>'xml_cdr_details.php?id='.$xml_cdr_uuid]);
-	if (permission_exists('log_download')) {
+	if ($has_log_download) {
 		echo button::create(['type'=>'button','label'=>$text['button-download'],'icon'=>$settings->get('theme', 'button_icon_download'),'style'=>'margin-left: 15px;','link'=>'xml_cdr_log.php?id='.$xml_cdr_uuid.'&a=download']);
 	}
 	echo "	</div>\n";

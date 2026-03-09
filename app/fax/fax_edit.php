@@ -33,6 +33,23 @@
 		echo "access denied";
 		exit;
 	}
+	$has_fax_accountcode        = permission_exists('fax_accountcode');
+	$has_fax_caller_id_name     = permission_exists('fax_caller_id_name');
+	$has_fax_caller_id_number   = permission_exists('fax_caller_id_number');
+	$has_fax_destination_number = permission_exists('fax_destination_number');
+	$has_fax_email              = permission_exists('fax_email');
+	$has_fax_email_confirmation = permission_exists('fax_email_confirmation');
+	$has_fax_extension          = permission_exists('fax_extension');
+	$has_fax_extension_add      = permission_exists('fax_extension_add');
+	$has_fax_extension_advanced = permission_exists('fax_extension_advanced');
+	$has_fax_extension_copy     = permission_exists('fax_extension_copy');
+	$has_fax_extension_delete   = permission_exists('fax_extension_delete');
+	$has_fax_extension_edit     = permission_exists('fax_extension_edit');
+	$has_fax_forward_number     = permission_exists('fax_forward_number');
+	$has_fax_prefix             = permission_exists('fax_prefix');
+	$has_fax_send_channels      = permission_exists('fax_send_channels');
+	$has_fax_toll_allow         = permission_exists('fax_toll_allow');
+	$has_fax_user_view          = permission_exists('fax_user_view');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -94,13 +111,13 @@
 
 				switch ($_POST['action']) {
 					case 'copy':
-						if (permission_exists('fax_extension_copy')) {
+						if ($has_fax_extension_copy) {
 							$obj = new fax;
 							$obj->copy($array);
 						}
 						break;
 					case 'delete':
-						if (permission_exists('fax_extension_delete')) {
+						if ($has_fax_extension_delete) {
 							$obj = new fax;
 							$obj->delete($array);
 						}
@@ -164,7 +181,7 @@
 	}
 
 //delete the user from the fax users
-	if (!empty($_REQUEST["user_uuid"]) && is_uuid($_REQUEST["user_uuid"]) && is_uuid($_REQUEST["id"]) && !empty($_GET["a"]) && $_GET["a"] == "delete" && permission_exists("fax_extension_delete")) {
+	if (!empty($_REQUEST["user_uuid"]) && is_uuid($_REQUEST["user_uuid"]) && is_uuid($_REQUEST["id"]) && !empty($_GET["a"]) && $_GET["a"] == "delete" && $has_fax_extension_delete) {
 		//set the variables
 			$user_uuid = $_REQUEST["user_uuid"];
 			$fax_uuid = $_REQUEST["id"];
@@ -220,7 +237,7 @@
 	if (!empty($_POST) && empty($_POST["persistformvar"])) {
 
 		//get the fax_uuid
-		if ($action == "update" && is_uuid($_POST["fax_uuid"]) && permission_exists('fax_extension_edit')) {
+		if ($action == "update" && is_uuid($_POST["fax_uuid"]) && $has_fax_extension_edit) {
 			$fax_uuid = $_POST["fax_uuid"];
 		}
 
@@ -234,7 +251,7 @@
 
 		//check for all required data
 			$msg = '';
-			if (permission_exists('fax_extension') && empty($fax_extension)) { $msg .= "".$text['confirm-ext']."<br>\n"; }
+			if ($has_fax_extension && empty($fax_extension)) { $msg .= "".$text['confirm-ext']."<br>\n"; }
 			if (empty($fax_name)) { $msg .= "".$text['confirm-fax']."<br>\n"; }
 			if (!empty($msg) && empty($_POST["persistformvar"])) {
 				require_once "resources/header.php";
@@ -286,7 +303,7 @@
 						$fax_email_outbound_authorized_senders = strtolower(implode(',', $fax_email_outbound_authorized_senders));
 					}
 
-				if ($action == "add" && permission_exists('fax_extension_add')) {
+				if ($action == "add" && $has_fax_extension_add) {
 					//prepare the unique identifiers
 						$fax_uuid = uuid();
 						$dialplan_uuid = uuid();
@@ -303,7 +320,7 @@
 						$dialplan_type = "add";
 				}
 
-				if ($action == "update" && permission_exists('fax_extension_edit')) {
+				if ($action == "update" && $has_fax_extension_edit) {
 					//begin update array
 						$array['fax'][0]['fax_uuid'] = $fax_uuid;
 
@@ -315,36 +332,36 @@
 				if (is_array($array) && @sizeof($array) != 0) {
 					//add common columns to array
 						$array['fax'][0]['domain_uuid'] = $_SESSION['domain_uuid'];
-						if (permission_exists('fax_extension')) {
+						if ($has_fax_extension) {
 							$array['fax'][0]['fax_extension'] = $fax_extension;
 						}
-						if (permission_exists('fax_accountcode')) {
+						if ($has_fax_accountcode) {
 							$array['fax'][0]['accountcode'] = $fax_accountcode;
 						}
-						if (permission_exists('fax_destination_number')) {
+						if ($has_fax_destination_number) {
 							$array['fax'][0]['fax_destination_number'] = $fax_destination_number;
 						}
-						if (permission_exists('fax_prefix')) {
+						if ($has_fax_prefix) {
 							$array['fax'][0]['fax_prefix'] = $fax_prefix;
 						}
 						$array['fax'][0]['fax_name'] = $fax_name;
-						if (permission_exists('fax_email')) {
+						if ($has_fax_email) {
 							$array['fax'][0]['fax_email'] = $fax_email;
 							$array['fax'][0]['fax_file'] = $fax_file;
 						}
-						if (permission_exists('fax_email_confirmation')) {
+						if ($has_fax_email_confirmation) {
 							$array['fax'][0]['fax_email_confirmation'] = $fax_email_confirmation;
 						}
-						if (permission_exists('fax_caller_id_name')) {
+						if ($has_fax_caller_id_name) {
 							$array['fax'][0]['fax_caller_id_name'] = $fax_caller_id_name;
 						}
-						if (permission_exists('fax_caller_id_number')) {
+						if ($has_fax_caller_id_number) {
 							$array['fax'][0]['fax_caller_id_number'] = $fax_caller_id_number;
 						}
-						if (permission_exists('fax_toll_allow')) {
+						if ($has_fax_toll_allow) {
 							$array['fax'][0]['fax_toll_allow'] = $fax_toll_allow;
 						}
-						if (permission_exists('fax_forward_number')) {
+						if ($has_fax_forward_number) {
 							if ($action == "add" && !empty($fax_forward_number)) {
 								$array['fax'][0]['fax_forward_number'] = $fax_forward_number;
 							}
@@ -352,7 +369,7 @@
 								$array['fax'][0]['fax_forward_number'] = !empty($fax_forward_number) ? $fax_forward_number : null;
 							}
 						}
-						if (permission_exists('fax_send_channels')) {
+						if ($has_fax_send_channels) {
 							$array['fax'][0]['fax_send_channels'] = strlen($fax_send_channels) != 0 ? $fax_send_channels : null;
 						}
 						$array['fax'][0]['fax_description'] = $fax_description;
@@ -394,10 +411,10 @@
 					$a = $c->dialplan();
 
 				//redirect the browser
-					if ($action == "update" && permission_exists('fax_extension_edit')) {
+					if ($action == "update" && $has_fax_extension_edit) {
 						message::add($text['confirm-update']);
 					}
-					if ($action == "add" && permission_exists('fax_extension_add')) {
+					if ($action == "add" && $has_fax_extension_add) {
 						message::add($text['confirm-add']);
 					}
 					header("Location: fax.php");
@@ -498,18 +515,18 @@
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','link'=>'fax.php']);
 	if ($action == "update") {
 		$button_margin = 'margin-left: 15px;';
-		if (permission_exists('fax_extension_advanced')) {
+		if ($has_fax_extension_advanced) {
 			$button_margin = 'margin-left: 15px;';
 			if (function_exists("imap_open") && file_exists("fax_files_remote.php")) {
 				echo button::create(['type'=>'button','label'=>$text['button-advanced'],'icon'=>'tools','style'=>($button_margin ?? ''),'link'=>'fax_advanced.php?id='.urlencode($fax_uuid)]);
 			}
 			unset($button_margin);
 		}
-		if (permission_exists('fax_extension_copy')) {
+		if ($has_fax_extension_copy) {
 			echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'name'=>'btn_copy','style'=>($button_margin ?? null),'onclick'=>"modal_open('modal-copy','btn_copy');"]);
 			unset($button_margin);
 		}
-		if (permission_exists('fax_extension_delete')) {
+		if ($has_fax_extension_delete) {
 			echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'name'=>'btn_delete','style'=>($button_margin ?? null),'onclick'=>"modal_open('modal-delete','btn_delete');"]);
 			unset($button_margin);
 		}
@@ -521,10 +538,10 @@
 	echo "</div>\n";
 
 	if ($action == 'update') {
-		if (permission_exists('fax_extension_copy')) {
+		if ($has_fax_extension_copy) {
 			echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'copy','onclick'=>"modal_close();"])]);
 		}
-		if (permission_exists('fax_extension_delete')) {
+		if ($has_fax_extension_delete) {
 			echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 		}
 	}
@@ -542,7 +559,7 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('fax_extension')) {
+	if ($has_fax_extension) {
 		echo "<tr>\n";
 		echo "<td class='vncellreq' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-extension']."\n";
@@ -555,7 +572,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('fax_accountcode')) {
+	if ($has_fax_accountcode) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-accountcode']."\n";
@@ -569,7 +586,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('fax_destination_number')) {
+	if ($has_fax_destination_number) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-destination_number']."\n";
@@ -582,7 +599,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('fax_prefix')) {
+	if ($has_fax_prefix) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-fax_prefix']."\n";
@@ -595,7 +612,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('fax_email')) {
+	if ($has_fax_email) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-email']."\n";
@@ -627,7 +644,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('fax_email_confirmation')) {
+	if ($has_fax_email_confirmation) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-email_confirmation']."\n";
@@ -645,7 +662,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('fax_caller_id_name')) {
+	if ($has_fax_caller_id_name) {
 		echo "<tr>\n";
 		echo "<td width='30%' class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-caller_id_name']."\n";
@@ -658,7 +675,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('fax_caller_id_number')) {
+	if ($has_fax_caller_id_number) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-caller_id_number']."\n";
@@ -671,7 +688,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('fax_forward_number')) {
+	if ($has_fax_forward_number) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-forward']."\n";
@@ -684,7 +701,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('fax_toll_allow')) {
+	if ($has_fax_toll_allow) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-toll_allow']."\n";
@@ -697,7 +714,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('fax_user_view')) {
+	if ($has_fax_user_view) {
 		if ($action == "update") {
 			echo "	<tr>";
 			echo "		<td class='vncell' valign='top'>".$text['label-user-list']."</td>";
@@ -735,7 +752,7 @@
 		}
 	}
 
-	if (permission_exists('fax_send_channels')) {
+	if ($has_fax_send_channels) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-fax_send_channels']."\n";

@@ -36,6 +36,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_fax_extension_view = permission_exists('fax_extension_view');
+	$has_fax_inbox_delete   = permission_exists('fax_inbox_delete');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -46,7 +48,7 @@
 //get fax server uuid, set connection parameters
 	if (is_uuid($fax_uuid)) {
 
-		if (permission_exists('fax_extension_view')) {
+		if ($has_fax_extension_view) {
 			//show all fax extensions
 			$sql = "select * from v_fax ";
 			$sql .= "where domain_uuid = :domain_uuid ";
@@ -80,7 +82,7 @@
 			$fax_email_inbound_subject_tag = $row["fax_email_inbound_subject_tag"];
 		}
 		else {
-			if (!permission_exists('fax_extension_view')) {
+			if (!$has_fax_extension_view) {
 				echo "access denied";
 				exit;
 			}
@@ -142,7 +144,7 @@
 		}
 
 		//delete email
-		if (isset($_GET['delete']) && permission_exists('fax_inbox_delete')) {
+		if (isset($_GET['delete']) && $has_fax_inbox_delete) {
 			$message = parse_message($connection, $email_id, FT_UID);
 			$attachment = $message['attachments'][0];
 			if (imap_delete($connection, $email_id, FT_UID)) {
@@ -205,7 +207,7 @@
 	echo "		<th>".$text['table-file']."</th>\n";
 	echo "		<th>".$text['label-email_size']."</th>\n";
 	echo "		<th>".$text['label-email_received']."</th>\n";
-	if (permission_exists('fax_inbox_delete')) {
+	if ($has_fax_inbox_delete) {
 		echo "		<td style='width: 25px;' class='list_control_icons'>&nbsp;</td>\n";
 	}
 	echo "	</tr>";
@@ -225,7 +227,7 @@
 			echo "		<td valign='top' class='".$row_style[$c]."'><a href='?id=".$fax_uuid."&email_id=".$email_id."&download'>".$file_name."</a></td>\n";
 			echo "		<td valign='top' class='".$row_style[$c]."'>".byte_convert($attachment['size'])."</td>\n";
 			echo "		<td valign='top' class='".$row_style[$c]."'>".$metadata[0]['date']."</td>\n";
-			if (permission_exists('fax_inbox_delete')) {
+			if ($has_fax_inbox_delete) {
 				echo "		<td style='width: 25px;' class='list_control_icons'><a href='?id=".$fax_uuid."&email_id=".$email_id."&delete' onclick=\"return confirm('".$text['confirm-delete']."')\">".$v_link_label_delete."</a></td>\n";
 			}
 			echo "	</tr>\n";

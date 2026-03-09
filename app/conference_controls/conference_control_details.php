@@ -34,6 +34,9 @@
 		echo "access denied";
 		exit;
 	}
+	$has_conference_control_detail_add    = permission_exists('conference_control_detail_add');
+	$has_conference_control_detail_delete = permission_exists('conference_control_detail_delete');
+	$has_conference_control_detail_edit   = permission_exists('conference_control_detail_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -57,14 +60,14 @@
 
 		switch ($action) {
 			case 'toggle':
-				if (permission_exists('conference_control_detail_edit')) {
+				if ($has_conference_control_detail_edit) {
 					$obj = new conference_controls;
 					$obj->conference_control_uuid = $conference_control_uuid;
 					$obj->toggle_details($conference_control_details);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('conference_control_detail_delete')) {
+				if ($has_conference_control_detail_delete) {
 					$obj = new conference_controls;
 					$obj->conference_control_uuid = $conference_control_uuid;
 					$obj->delete_details($conference_control_details);
@@ -143,23 +146,23 @@
 	echo "	<div class='heading'><b id='heading_sub'>".$text['title-conference_control_details']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','id'=>'action_bar_sub_button_back','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'collapse'=>'hide-xs','style'=>'margin-right: 15px; display: none;','link'=>'conference_controls.php']);
-	if (permission_exists('conference_control_detail_add')) {
+	if ($has_conference_control_detail_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'name'=>'btn_add','collapse'=>'hide-xs','link'=>'conference_control_detail_edit.php?conference_control_uuid='.urlencode($_GET['id'] ?? '')]);
 	}
-	if (permission_exists('conference_control_detail_edit') && $result) {
+	if ($has_conference_control_detail_edit && $result) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'name'=>'btn_toggle','collapse'=>'hide-xs','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
-	if (permission_exists('conference_control_detail_delete') && $result) {
+	if ($has_conference_control_detail_delete && $result) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'name'=>'btn_delete','collapse'=>'hide-xs','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 	"</div>\n";
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('conference_control_detail_edit') && $result) {
+	if ($has_conference_control_detail_edit && $result) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('conference_control_detail_delete') && $result) {
+	if ($has_conference_control_detail_delete && $result) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -170,7 +173,7 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('conference_control_detail_edit') || permission_exists('conference_control_detail_delete')) {
+	if ($has_conference_control_detail_edit || $has_conference_control_detail_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle();' ".(!empty($result) ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
@@ -179,7 +182,7 @@
 	echo th_order_by('control_action', $text['label-control_action'], $order_by, $order, null, null, $param);
 	echo th_order_by('control_data', $text['label-control_data'], $order_by, $order, null, "class='pct-50 hide-xs'", $param);
 	echo th_order_by('control_enabled', $text['label-control_enabled'], $order_by, $order, null, "class='center'", $param);
-	if (permission_exists('conference_control_detail_edit') && $list_row_edit_button) {
+	if ($has_conference_control_detail_edit && $list_row_edit_button) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -189,11 +192,11 @@
 		foreach ($result as $row) {
 			//dispatch render-row hook
 			app::dispatch_list_render_row(null, $url, $row, $x);
-			if (permission_exists('conference_control_detail_edit')) {
+			if ($has_conference_control_detail_edit) {
 				$list_row_url = 'conference_control_detail_edit.php?conference_control_uuid='.urlencode($row['conference_control_uuid']).'&id='.urlencode($row['conference_control_detail_uuid']);
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('conference_control_detail_edit') || permission_exists('conference_control_detail_delete')) {
+			if ($has_conference_control_detail_edit || $has_conference_control_detail_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='conference_control_details[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='conference_control_details[$x][uuid]' value='".escape($row['conference_control_detail_uuid'])."' />\n";
@@ -201,7 +204,7 @@
 			}
 			echo "	<td class='center'>".escape($row['control_digits'])."&nbsp;</td>\n";
 			echo "	<td>\n";
-			if (permission_exists('conference_control_detail_edit')) {
+			if ($has_conference_control_detail_edit) {
 				echo "	<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['control_action'])."</a>\n";
 			}
 			else {
@@ -209,7 +212,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td class='overflow hide-xs'>".escape($row['control_data'])."&nbsp;</td>\n";
-			if (permission_exists('conference_control_detail_edit')) {
+			if ($has_conference_control_detail_edit) {
 				echo "	<td class='no-link center'>\n";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['control_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
 			}
@@ -218,7 +221,7 @@
 				echo $text['label-'.$row['control_enabled']];
 			}
 			echo "	</td>\n";
-			if (permission_exists('conference_control_detail_edit') && $list_row_edit_button) {
+			if ($has_conference_control_detail_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>\n";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

@@ -33,6 +33,7 @@
 		echo "access denied";
 		exit;
 	}
+	$has_user_all = permission_exists('user_all');
 
 //get order and order by
 	$order_by = $_GET["order_by"];
@@ -75,7 +76,7 @@
 		$sql .= ") ";
 		$parameters['search'] = '%'.$search.'%';
 	}
-	if ($_GET['show'] == "all" && permission_exists('user_all')) {
+	if ($_GET['show'] == "all" && $has_user_all) {
 
 	}
 	else {

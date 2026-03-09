@@ -34,6 +34,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_database_transaction_edit = permission_exists('database_transaction_edit');
+	$has_domain_select             = permission_exists('domain_select');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -180,7 +182,7 @@
 	echo th_order_by('transaction_address', $text['label-transaction_address'], $order_by, $order);
 	echo th_order_by('transaction_type', $text['label-transaction_type'], $order_by, $order);
 	echo th_order_by('transaction_date', $text['label-transaction_date'], $order_by, $order);
-	if (permission_exists('database_transaction_edit') && $list_row_edit_button) {
+	if ($has_database_transaction_edit && $list_row_edit_button) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -189,9 +191,9 @@
 		foreach($transactions as $row) {
 			if (empty($row['domain_name'])) { $row['domain_name'] = $text['label-global']; }
 			$list_row_url = '';
-			if (permission_exists('database_transaction_edit')) {
+			if ($has_database_transaction_edit) {
 				$list_row_url = "database_transaction_edit.php?id=".urlencode($row['database_transaction_uuid']).(!empty($page) ? "&page=".urlencode($page) : null).(!empty($search) ? "&search=".urlencode($search) : null);
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid'] ?? '').'&domain_change=true';
 				}
 			}
@@ -203,7 +205,7 @@
 			echo "	<td>".escape($row['transaction_address'])."&nbsp;</td>\n";
 			echo "	<td>".escape($row['transaction_type'])."&nbsp;</td>\n";
 			echo "	<td>".escape($row['transaction_date'])."&nbsp;</td>\n";
-			if (permission_exists('database_transaction_edit') && $list_row_edit_button) {
+			if ($has_database_transaction_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>\n";
 				echo button::create(['type'=>'button','title'=>$text['button-view'],'icon'=>$settings->get('theme', 'button_icon_view'),'link'=>$list_row_url]);
 				echo "	</td>\n";

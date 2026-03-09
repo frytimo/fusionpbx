@@ -31,6 +31,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_user_log_all    = permission_exists('user_log_all');
+	$has_user_log_delete = permission_exists('user_log_delete');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -78,7 +80,7 @@
 		}
 
 		//send the array to the database class
-		if (!empty($action) && $action == 'delete' && permission_exists('user_log_delete')) {
+		if (!empty($action) && $action == 'delete' && $has_user_log_delete) {
 			$database->delete($array);
 		}
 
@@ -114,7 +116,7 @@
 //get the count
 	$sql = "select count(user_log_uuid) ";
 	$sql .= "from v_user_logs ";
-	if (permission_exists('user_log_all') && $show == 'all') {
+	if ($has_user_log_all && $show == 'all') {
 		$sql .= "where true ";
 	}
 	else {
@@ -137,7 +139,7 @@
 //prepare to page the results
 	$rows_per_page = $settings->get('domain', 'paging', 50);
 	$param = !empty($search) ? "&search=".$search : null;
-	$param .= (!empty($_GET['page']) && $show == 'all' && permission_exists('user_log_all')) ? "&show=all" : null;
+	$param .= (!empty($_GET['page']) && $show == 'all' && $has_user_log_all) ? "&show=all" : null;
 	$page = !empty($_GET['page']) && is_numeric($_GET['page']) ? $_GET['page'] : 0;
 	list($paging_controls, $rows_per_page) = paging($num_rows, $param, $rows_per_page);
 	list($paging_controls_mini, $rows_per_page) = paging($num_rows, $param, $rows_per_page, true);
@@ -173,7 +175,7 @@
 	}
 	$sql .= "session_id ";
 	$sql .= "from v_user_logs as u, v_domains as d ";
-	if (permission_exists('user_log_all') && $show == 'all') {
+	if ($has_user_log_all && $show == 'all') {
 		$sql .= "where true ";
 	}
 	else {
@@ -209,11 +211,11 @@
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['title-user_logs']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('user_log_delete') && $user_logs) {
+	if ($has_user_log_delete && $user_logs) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display:none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if (permission_exists('user_log_all')) {
+	if ($has_user_log_all) {
 		if ($show == 'all') {
 			echo "		<input type='hidden' name='show' value='all'>\n";
 		}
@@ -231,7 +233,7 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('user_log_delete') && $user_logs) {
+	if ($has_user_log_delete && $user_logs) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -245,12 +247,12 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('user_log_delete')) {
+	if ($has_user_log_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".empty($user_logs ? "style='visibility: hidden;'" : null).">\n";
 		echo "	</th>\n";
 	}
-	if ($show == 'all' && permission_exists('user_log_all')) {
+	if ($show == 'all' && $has_user_log_all) {
 		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order);
 	}
 	echo "<th class='left'>".$text['label-date']."</th>\n";
@@ -280,13 +282,13 @@
 			}
 
 			echo "<tr class='list-row'>\n";
-			if (permission_exists('user_log_delete')) {
+			if ($has_user_log_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='user_logs[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='user_logs[$x][user_log_uuid]' value='".escape($row['user_log_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if ($show == 'all' && permission_exists('user_log_all')) {
+			if ($show == 'all' && $has_user_log_all) {
 				echo "	<td>".escape($row['domain_name'])."</td>\n";
 			}
 			echo "	<td>".escape($row['date_formatted'])."</td>\n";

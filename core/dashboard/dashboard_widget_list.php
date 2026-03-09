@@ -30,6 +30,10 @@
 		echo "access denied";
 		exit;
 	}
+	$has_dashboard_widget_add    = permission_exists('dashboard_widget_add');
+	$has_dashboard_widget_delete = permission_exists('dashboard_widget_delete');
+	$has_dashboard_widget_edit   = permission_exists('dashboard_widget_edit');
+	$has_domain_select           = permission_exists('domain_select');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -46,25 +50,25 @@
 	if (!empty($action) && !empty($dashboard_widgets)) {
 		switch ($action) {
 			case 'toggle':
-				if (permission_exists('dashboard_widget_edit')) {
+				if ($has_dashboard_widget_edit) {
 					$obj = new dashboard;
 					$obj->toggle_widgets($dashboard_widgets);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('dashboard_widget_delete')) {
+				if ($has_dashboard_widget_delete) {
 					$obj = new dashboard;
 					$obj->delete_widgets($dashboard_widgets);
 				}
 				break;
 			case 'group_widgets_add':
-				if (permission_exists('dashboard_widget_edit')) {
+				if ($has_dashboard_widget_edit) {
 					$obj = new dashboard;
 					$obj->assign_widgets($dashboard_widgets, $dashboard_uuid, $group_uuid);
 				}
 				break;
 			case 'group_widgets_delete':
-				if (permission_exists('dashboard_widget_delete')) {
+				if ($has_dashboard_widget_delete) {
 					$obj = new dashboard;
 					$obj->unassign_widgets($dashboard_widgets, $dashboard_uuid, $group_uuid);
 				}
@@ -168,23 +172,23 @@
 	}
 	echo "	</select>\n";
 
-	if (permission_exists('dashboard_widget_add') && !empty($widgets)) {
+	if ($has_dashboard_widget_add && !empty($widgets)) {
 		echo button::create(['type'=>'button','label'=>$text['button-assign'],'icon'=>$_SESSION['theme']['button_icon_save'],'id'=>'btn_group_widgets_add','class' => 'btn btn-default revealed','collapse'=>'hide-xs','style'=>'display: none;','onclick'=>"list_action_set('group_widgets_add'); list_form_submit('form_list');"]);
 	}
-	if (permission_exists('dashboard_widget_delete') && !empty($widgets)) {
+	if ($has_dashboard_widget_delete && !empty($widgets)) {
 		echo button::create(['type'=>'button','label'=>$text['button-unassign'],'icon'=>$_SESSION['theme']['button_icon_cancel'],'name'=>'btn_group_widgets_delete','class' => 'btn btn-default revealed','style'=>'display: none; margin-right: 35px;','collapse'=>'hide-xs','onclick'=>"modal_open('modal-delete-groups','btn_group_widgets_delete');"]);
 	}
-	if (permission_exists('dashboard_widget_delete') && !empty($widgets)) {
+	if ($has_dashboard_widget_delete && !empty($widgets)) {
 		echo modal::create(['id'=>'modal-delete-groups','type'=>'unassign', 'actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_group_widgets_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('group_widgets_delete'); list_form_submit('form_list');"])]);
 	}
 	echo button::create(['type'=>'button','id'=>'action_bar_sub_button_back','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'collapse'=>'hide-xs','style'=>'margin-right: 15px; display: none;','link'=>'dashboard.php']);
-	if (permission_exists('dashboard_widget_add')) {
+	if ($has_dashboard_widget_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','name'=>'btn_add','link'=>'dashboard_widget_edit.php?id='.escape($dashboard_uuid).'&widget_uuid='.escape($widget_uuid ?? null)]);
 	}
-	if (permission_exists('dashboard_widget_edit') && !empty($widgets)) {
+	if ($has_dashboard_widget_edit && !empty($widgets)) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
-	if (permission_exists('dashboard_widget_delete') && !empty($widgets)) {
+	if ($has_dashboard_widget_delete && !empty($widgets)) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	if (!empty($paging_controls_mini)) {
@@ -194,17 +198,17 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('dashboard_widget_edit') && !empty($widgets)) {
+	if ($has_dashboard_widget_edit && !empty($widgets)) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('dashboard_widget_delete') && !empty($widgets)) {
+	if ($has_dashboard_widget_delete && !empty($widgets)) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('dashboard_widget_add') || permission_exists('dashboard_widget_edit') || permission_exists('dashboard_widget_delete')) {
+	if ($has_dashboard_widget_add || $has_dashboard_widget_edit || $has_dashboard_widget_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($widgets) ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
@@ -215,7 +219,7 @@
 	echo th_order_by('widget_order', $text['label-widget_order'], $order_by, $order);
 	echo th_order_by('widget_enabled', $text['label-widget_enabled'], $order_by, $order, null, "class='center'");
 	echo "	<th class='hide-sm-dn'>".$text['label-widget_description']."</th>\n";
-	if (permission_exists('dashboard_widget_edit') && $settings->get('theme', 'list_row_edit_button', false)) {
+	if ($has_dashboard_widget_edit && $settings->get('theme', 'list_row_edit_button', false)) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -224,14 +228,14 @@
 		$x = 0;
 		foreach ($widgets as $row) {
 			$list_row_url = '';
-			if (permission_exists('dashboard_widget_edit')) {
+			if ($has_dashboard_widget_edit) {
 				$list_row_url = "dashboard_widget_edit.php?id=".urlencode($dashboard_uuid)."&widget_uuid=".urlencode($row['dashboard_widget_uuid']);
-				if (!empty($row['domain_uuid']) && $row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+				if (!empty($row['domain_uuid']) && $row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('dashboard_widget_add') || permission_exists('dashboard_widget_edit') || permission_exists('dashboard_widget_delete')) {
+			if ($has_dashboard_widget_add || $has_dashboard_widget_edit || $has_dashboard_widget_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='dashboard_widgets[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='dashboard_widgets[$x][dashboard_widget_uuid]' value='".escape($row['dashboard_widget_uuid'])."' />\n";
@@ -239,7 +243,7 @@
 			}
 			$widget_icon = (!empty($row['widget_icon']) ? "<i class='fas ".$row['widget_icon']."' style='margin-left: 7px; margin-top: 2px; text-indent: initial; ".(!empty($row['widget_icon_color']) ? "color: ".$row['widget_icon_color'].";" : "opacity: 0.4;")."'></i>\n" : null);
 			echo "	<td ".(!empty($row['dashboard_widget_parent_uuid']) && in_array($row['dashboard_widget_parent_uuid'], $widget_uuid_list) ? "style='text-indent: 1rem;'" : null).">\n";//indent child widgets
-			if (permission_exists('dashboard_widget_edit')) {
+			if ($has_dashboard_widget_edit) {
 				echo "	<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['widget_name'])."</a>\n";
 				echo $widget_icon;
 			}
@@ -251,7 +255,7 @@
 			echo "	<td>".escape($row['dashboard_widget_groups'])."</td>\n";
 			//echo "	<td>".escape($row['widget_icon'])."</td>\n";
 			echo "	<td>".escape($row['widget_order'])."</td>\n";
-			if (permission_exists('dashboard_widget_edit')) {
+			if ($has_dashboard_widget_edit) {
 				echo "	<td class='no-link center'>\n";
 				echo "		<input type='hidden' name='dashboard_widgets[$x][widget_enabled]' value='".escape($row['widget_enabled'])."' />\n";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.($row['widget_enabled']?:'false')],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
@@ -262,7 +266,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td class='description overflow hide-sm-dn'>".escape($row['widget_description'])."</td>\n";
-			if (permission_exists('dashboard_widget_edit') && $settings->get('theme', 'list_row_edit_button', false)) {
+			if ($has_dashboard_widget_edit && $settings->get('theme', 'list_row_edit_button', false)) {
 				echo "	<td class='action-button'>\n";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

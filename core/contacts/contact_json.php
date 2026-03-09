@@ -33,6 +33,10 @@
 		echo "access denied";
 		exit;
 	}
+	$has_contact_all         = permission_exists('contact_all');
+	$has_contact_domain_view = permission_exists('contact_domain_view');
+	$has_contact_email_view  = permission_exists('contact_email_view');
+	$has_contact_note_view   = permission_exists('contact_note_view');
 
 //set additional variables
 	$show = $_GET["show"] ?? '';
@@ -58,11 +62,11 @@
 	$sql .= ") as contact_attachment_uuid ";
 	$sql .= "from v_contacts as c ";
 	$sql .= "where true ";
-	if ($show != "all" || !permission_exists('contact_all')) {
+	if ($show != "all" || !$has_contact_all) {
 		$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	}
-	if (!permission_exists('contact_domain_view')) {
+	if (!$has_contact_domain_view) {
 		$sql .= "and ( "; //only contacts assigned to current user's group(s) and those not assigned to any group
 		$sql .= "	contact_uuid in ( ";
 		$sql .= "		select contact_uuid from v_contact_groups ";
@@ -119,7 +123,7 @@
 				$sql .= "	) ";
 				$sql .= ") ";
 			//search contact emails
-				if (permission_exists('contact_email_view')) {
+				if ($has_contact_email_view) {
 					$sql .= "or contact_uuid in ( ";
 					$sql .= "	select contact_uuid from v_contact_emails ";
 					$sql .= "	where domain_uuid = :domain_uuid ";
@@ -130,7 +134,7 @@
 					$sql .= ") ";
 				}
 			//search contact notes
-				if (permission_exists('contact_note_view')) {
+				if ($has_contact_note_view) {
 					$sql .= "or contact_uuid in ( ";
 					$sql .= "	select contact_uuid from v_contact_notes ";
 					$sql .= "	where domain_uuid = :domain_uuid ";

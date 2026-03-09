@@ -33,6 +33,17 @@
 		echo "access denied";
 		exit;
 	}
+	$has_xml_cdr_all                = permission_exists('xml_cdr_all');
+	$has_xml_cdr_application_log    = permission_exists('xml_cdr_application_log');
+	$has_xml_cdr_call_disposition   = permission_exists('xml_cdr_call_disposition');
+	$has_xml_cdr_call_log           = permission_exists('xml_cdr_call_log');
+	$has_xml_cdr_call_stats         = permission_exists('xml_cdr_call_stats');
+	$has_xml_cdr_channel_data       = permission_exists('xml_cdr_channel_data');
+	$has_xml_cdr_hangup_cause       = permission_exists('xml_cdr_hangup_cause');
+	$has_xml_cdr_recording          = permission_exists('xml_cdr_recording');
+	$has_xml_cdr_recording_download = permission_exists('xml_cdr_recording_download');
+	$has_xml_cdr_recording_play     = permission_exists('xml_cdr_recording_play');
+	$has_xml_cdr_variables          = permission_exists('xml_cdr_variables');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -55,7 +66,7 @@
 
 //get the cdr string from the database
 	$sql = "select * from v_xml_cdr ";
-	if (permission_exists('xml_cdr_all')) {
+	if ($has_xml_cdr_all) {
 		$sql .= "where xml_cdr_uuid  = :xml_cdr_uuid ";
 	}
 	else {
@@ -134,7 +145,7 @@
 //get the cdr json from the database
 	if (empty($json_string)) {
 		$sql = "select * from v_xml_cdr_json ";
-		if (permission_exists('xml_cdr_all')) {
+		if ($has_xml_cdr_all) {
 			$sql .= "where xml_cdr_uuid  = :xml_cdr_uuid ";
 		}
 		else {
@@ -153,7 +164,7 @@
 //get the cdr flow from the database
 	if (empty($call_flow)) {
 		$sql = "select * from v_xml_cdr_flow ";
-		if (permission_exists('xml_cdr_all')) {
+		if ($has_xml_cdr_all) {
 			$sql .= "where xml_cdr_uuid  = :xml_cdr_uuid ";
 		}
 		else {
@@ -170,9 +181,9 @@
 	}
 
 //get the cdr log from the database
-	if (permission_exists('xml_cdr_call_log') && $call_log_enabled) {
+	if ($has_xml_cdr_call_log && $call_log_enabled) {
 		$sql = "select * from v_xml_cdr_logs ";
-		if (permission_exists('xml_cdr_all')) {
+		if ($has_xml_cdr_all) {
 			$sql .= "where xml_cdr_uuid  = :xml_cdr_uuid ";
 		}
 		else {
@@ -191,7 +202,7 @@
 //get the transcript from the database
 	if ($transcribe_enabled) {
 		$sql = "select * from v_xml_cdr_transcripts ";
-		if (permission_exists('xml_cdr_all')) {
+		if ($has_xml_cdr_all) {
 			$sql .= "where xml_cdr_uuid  = :xml_cdr_uuid ";
 		}
 		else {
@@ -404,13 +415,13 @@
 	$summary_array['start'] = escape($start_stamp);
 	$summary_array['end'] = escape($end_stamp);
 	$summary_array['duration'] = escape(gmdate("G:i:s", (int)$duration));
-	if (permission_exists('xml_cdr_call_disposition')) {
+	if ($has_xml_cdr_call_disposition) {
 		$summary_array['call_disposition'] = escape($call_disposition);
 	}
 	if (isset($status)) {
 		$summary_array['status'] = escape($status);
 	}
-	if (permission_exists('xml_cdr_hangup_cause')) {
+	if ($has_xml_cdr_hangup_cause) {
 		$summary_array['hangup_cause'] = escape($hangup_cause);
 	}
 
@@ -448,7 +459,7 @@
 	echo "<td width='30%' align='left' valign='top' nowrap='nowrap'><b>".$text['title2']."</b><br><br></td>\n";
 	echo "<td width='70%' align='right' valign='top'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'link'=>'xml_cdr.php'.(!empty($_SESSION['xml_cdr']['last_query']) ? '?'.urlencode($_SESSION['xml_cdr']['last_query']) : null)]);
-	if (permission_exists('xml_cdr_call_log') && $call_log_enabled && isset($log_content) && !empty($log_content)) {
+	if ($has_xml_cdr_call_log && $call_log_enabled && isset($log_content) && !empty($log_content)) {
 		echo button::create(['type'=>'button','label'=>$text['button-call_log'],'icon'=>$settings->get('theme', 'button_icon_search'),'style'=>'margin-left: 15px;','link'=>'xml_cdr_log.php?id='.$uuid]);
 	}
 	if ($transcribe_enabled && !empty($transcribe_engine) && !empty($record_path) && !empty($record_name) && file_exists($record_path.'/'.$record_name)) {
@@ -507,7 +518,7 @@
 		echo "<th>".$text['label-destination']."</th>\n";
 		echo "<th>".$text['label-start']."</th>\n";
 		echo "<th>".$text['label-end']."</th>\n";
-		if (permission_exists('xml_cdr_hangup_cause')) {
+		if ($has_xml_cdr_hangup_cause) {
 			echo "<th>".$text['label-hangup_cause']."</th>\n";
 		}
 		echo "<th>".$text['label-duration']."</th>\n";
@@ -554,7 +565,7 @@
 		echo "	<td valign='top' class='".$row_style[$c]."'>".escape($destination_number)."</td>\n";
 		echo "	<td valign='top' class='".$row_style[$c]."'>".escape($start_time)."</td>\n";
 		echo "	<td valign='top' class='".$row_style[$c]."'>".escape($end_time)."</td>\n";
-		if (permission_exists('xml_cdr_hangup_cause')) {
+		if ($has_xml_cdr_hangup_cause) {
 			echo "	<td valign='top' class='".$row_style[$c]."'>".escape($hangup_cause)."</td>\n";
 		}
 		echo "	<td valign='top' class='".$row_style[$c]."'>".escape(gmdate("G:i:s", (int)$duration))."</td>\n";
@@ -614,9 +625,9 @@
 	echo "<br /><br />\n";
 
 //call recording
-	if (permission_exists('xml_cdr_recording') && !empty($record_path)) {
+	if ($has_xml_cdr_recording && !empty($record_path)) {
 		//recording properties
-		if (!empty($record_name) && permission_exists('xml_cdr_recording') && (permission_exists('xml_cdr_recording_play') || permission_exists('xml_cdr_recording_download'))) {
+		if (!empty($record_name) && $has_xml_cdr_recording && ($has_xml_cdr_recording_play || $has_xml_cdr_recording_download)) {
 			$record_extension = pathinfo($record_name, PATHINFO_EXTENSION);
 			switch ($record_extension) {
 				case "wav" : $record_type = "audio/wav"; break;
@@ -633,7 +644,7 @@
 		if (!empty($record_path) || !empty($record_name)) {
 			echo "<audio id='recording_audio_".escape($xml_cdr_uuid)."' style='display: none;' preload='none' ontimeupdate=\"update_progress('".escape($xml_cdr_uuid)."')\" onended=\"recording_reset('".escape($xml_cdr_uuid)."');\" src=\"download.php?id=".escape($xml_cdr_uuid)."\" type='".escape($record_type)."'></audio>";
 			echo button::create(['type'=>'button','title'=>$text['label-play'].' / '.$text['label-pause'],'icon'=>$settings->get('theme', 'button_icon_play'),'label'=>$text['label-play'],'id'=>'recording_button_'.escape($xml_cdr_uuid),'onclick'=>"recording_play('".escape($xml_cdr_uuid)."', null, null, 'true')",'style'=>'margin-bottom: 8px; margin-top: -8px;']);
-			if (permission_exists('xml_cdr_recording_download')) {
+			if ($has_xml_cdr_recording_download) {
 				echo button::create(['type'=>'button','title'=>$text['label-download'],'icon'=>$settings->get('theme', 'button_icon_download'),'label'=>$text['label-download'],'onclick'=>"window.location.href='download.php?id=".urlencode($xml_cdr_uuid)."&t=bin';",'style'=>'margin-bottom: 8px; margin-top: -8px;']);
 			}
 		}
@@ -706,7 +717,7 @@
 	}
 
 //call stats
-	if (permission_exists('xml_cdr_call_stats')) {
+	if ($has_xml_cdr_call_stats) {
 		$c = 0;
 		$row_style["0"] = "row_style0";
 		$row_style["1"] = "row_style1";
@@ -770,7 +781,7 @@
 	}
 
 //channel data loop
-	if (permission_exists('xml_cdr_channel_data')) {
+	if ($has_xml_cdr_channel_data) {
 		$c = 0;
 		$row_style["0"] = "row_style0";
 		$row_style["1"] = "row_style1";
@@ -804,7 +815,7 @@
 	}
 
 //variable loop
-	if (permission_exists('xml_cdr_variables')) {
+	if ($has_xml_cdr_variables) {
 		$c = 0;
 		$row_style["0"] = "row_style0";
 		$row_style["1"] = "row_style1";
@@ -870,7 +881,7 @@
 	}
 
 //application log
-	if (permission_exists('xml_cdr_application_log')) {
+	if ($has_xml_cdr_application_log) {
 		$c = 0;
 		$row_style["0"] = "row_style0";
 		$row_style["1"] = "row_style1";

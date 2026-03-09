@@ -34,6 +34,15 @@
 		echo "access denied";
 		exit;
 	}
+	$has_ivr_menu_add           = permission_exists('ivr_menu_add');
+	$has_ivr_menu_audio_edit    = permission_exists('ivr_menu_audio_edit');
+	$has_ivr_menu_context       = permission_exists('ivr_menu_context');
+	$has_ivr_menu_delete        = permission_exists('ivr_menu_delete');
+	$has_ivr_menu_domain        = permission_exists('ivr_menu_domain');
+	$has_ivr_menu_edit          = permission_exists('ivr_menu_edit');
+	$has_ivr_menu_option_delete = permission_exists('ivr_menu_option_delete');
+	$has_recording_download     = permission_exists('recording_download');
+	$has_recording_play         = permission_exists('recording_play');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -101,13 +110,13 @@
 
 				switch ($_POST['action']) {
 					case 'copy':
-						if (permission_exists('ivr_menu_add')) {
+						if ($has_ivr_menu_add) {
 							$obj = new ivr_menu;
 							$obj->copy($array);
 						}
 						break;
 					case 'delete':
-						if (permission_exists('ivr_menu_delete')) {
+						if ($has_ivr_menu_delete) {
 							$obj = new ivr_menu;
 							$obj->delete($array);
 						}
@@ -148,7 +157,7 @@
 			$dialplan_uuid = $_POST["dialplan_uuid"] ?? null;
 
 		//set the context for users that do not have the permission
-			if (permission_exists('ivr_menu_context')) {
+			if ($has_ivr_menu_context) {
 				$ivr_menu_context = $_POST["ivr_menu_context"];
 			}
 			else if ($action == 'add') {
@@ -172,7 +181,7 @@
 	if (!empty($_POST) && empty($_POST["persistformvar"])) {
 
 		//set the domain_uuid
-			if (permission_exists('ivr_menu_domain')) {
+			if ($has_ivr_menu_domain) {
 				$domain_uuid = $_POST["domain_uuid"];
 			}
 			else {
@@ -188,10 +197,10 @@
 				$parameters['ivr_menu_uuid'] = $ivr_menu_uuid;
 				$row = $database->select($sql, $parameters, 'row');
 				if (!empty($row)) {
-					if (!permission_exists('ivr_menu_domain')) {
+					if (!$has_ivr_menu_domain) {
 						$domain_uuid = $row["domain_uuid"];
 					}
-					if (!permission_exists('ivr_menu_context')) {
+					if (!$has_ivr_menu_context) {
 						$ivr_menu_context = $row["ivr_menu_context"];
 					}
 				}
@@ -418,7 +427,7 @@
 				//remove checked options
 					if (
 						$action == 'update'
-						&& permission_exists('ivr_menu_option_delete')
+						&& $has_ivr_menu_option_delete
 						&& !empty($ivr_menu_options_delete)
 						) {
 						$obj = new ivr_menu;
@@ -452,12 +461,12 @@
 						}
 					}
 				//set the add message
-					if ($action == "add" && permission_exists('ivr_menu_add')) {
+					if ($action == "add" && $has_ivr_menu_add) {
 						message::add($text['message-add']);
 					}
 
 				//set the update message
-					if ($action == "update" && permission_exists('ivr_menu_edit')) {
+					if ($action == "update" && $has_ivr_menu_edit) {
 						message::add($text['message-update']);
 					}
 
@@ -650,7 +659,7 @@
 	echo "	}\n";
 	echo "</script>\n";
 
-	if (permission_exists('recording_play') || permission_exists('recording_download')) {
+	if ($has_recording_play || $has_recording_download) {
 		echo "<script type='text/javascript' language='JavaScript'>\n";
 		echo "	function set_playable(id, audio_selected, audio_type) {\n";
 		echo "		file_ext = audio_selected.split('.').pop();\n";
@@ -681,7 +690,7 @@
 		echo "</script>\n";
 	}
 
-	if (permission_exists('ivr_menu_audio_edit')) {
+	if ($has_ivr_menu_audio_edit) {
 		echo "<script type='text/javascript' language='JavaScript'>\n";
 		echo "	var objs;\n";
 		echo "	function toggle_select_input(obj, instance_id){\n";
@@ -728,11 +737,11 @@
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','link'=>'ivr_menus.php']);
 	if ($action == "update") {
-		if (permission_exists('ivr_menu_add') && (empty($settings->get('limit', 'ivr_menus')) || $total_ivr_menus < $settings->get('limit', 'ivr_menus'))) {
+		if ($has_ivr_menu_add && (empty($settings->get('limit', 'ivr_menus')) || $total_ivr_menus < $settings->get('limit', 'ivr_menus'))) {
 			$button_margin = 'margin-left: 15px;';
 			echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'name'=>'btn_copy','style'=>$button_margin,'onclick'=>"modal_open('modal-copy','btn_copy');"]);
 		}
-		if (permission_exists('ivr_menu_delete') || permission_exists('ivr_menu_option_delete')) {
+		if ($has_ivr_menu_delete || $has_ivr_menu_option_delete) {
 			$button_margin = 'margin-left: 0px;';
 			echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'name'=>'btn_delete','style'=>$button_margin,'onclick'=>"modal_open('modal-delete','btn_delete');"]);
 		}
@@ -743,10 +752,10 @@
 	echo "</div>\n";
 
 	if ($action == "update") {
-		if (permission_exists('ivr_menu_add') && (empty($settings->get('limit', 'ivr_menus')) || $total_ivr_menus < $settings->get('limit', 'ivr_menus'))) {
+		if ($has_ivr_menu_add && (empty($settings->get('limit', 'ivr_menus')) || $total_ivr_menus < $settings->get('limit', 'ivr_menus'))) {
 			echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'copy','onclick'=>"modal_close();"])]);
 		}
-		if (permission_exists('ivr_menu_delete') || permission_exists('ivr_menu_option_delete')) {
+		if ($has_ivr_menu_delete || $has_ivr_menu_option_delete) {
 			echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 		}
 	}
@@ -838,7 +847,7 @@
 	echo "</tr>\n";
 	echo "<tr>\n";
 	echo "<td class='vtable' align='left'>\n";
-	echo "<select name='".$instance_id."' id='".$instance_id."' class='formfld' ".(permission_exists('recording_play') || permission_exists('recording_download') ? "onchange=\"recording_reset('".$instance_id."'); set_playable('".$instance_id."', this.value, this.options[this.selectedIndex].parentNode.getAttribute('data-type'));\"" : null).">\n";
+	echo "<select name='".$instance_id."' id='".$instance_id."' class='formfld' ".($has_recording_play || $has_recording_download ? "onchange=\"recording_reset('".$instance_id."'); set_playable('".$instance_id."', this.value, this.options[this.selectedIndex].parentNode.getAttribute('data-type'));\"" : null).">\n";
 	echo "	<option value=''></option>\n";
 	$found = $playable = false;
 	if (!empty($audio_files[0]) && is_array($audio_files[0]) && @sizeof($audio_files[0]) != 0) {
@@ -887,15 +896,15 @@
 			echo "</optgroup>\n";
 		}
 	}
-	if (permission_exists('ivr_menu_audio_edit') && !empty($instance_value) && !$found) {
+	if ($has_ivr_menu_audio_edit && !empty($instance_value) && !$found) {
 		echo "	<option value='".escape($instance_value)."' selected='selected'>".escape($instance_value)."</option>\n";
 	}
 	unset($selected);
 	echo "	</select>\n";
-	if (permission_exists('ivr_menu_audio_edit')) {
+	if ($has_ivr_menu_audio_edit) {
 		echo "<input type='button' id='btn_select_to_input_".$instance_id."' class='btn' name='' alt='back' onclick='toggle_select_input(document.getElementById(\"".$instance_id."\"), \"".$instance_id."\"); this.style.visibility=\"hidden\";' value='&#9665;'>";
 	}
-	if ((permission_exists('recording_play') || permission_exists('recording_download')) && (!empty($playable) || empty($instance_value))) {
+	if (($has_recording_play || $has_recording_download) && (!empty($playable) || empty($instance_value))) {
 		switch (pathinfo($playable, PATHINFO_EXTENSION)) {
 			case 'wav' : $mime_type = 'audio/wav'; break;
 			case 'mp3' : $mime_type = 'audio/mpeg'; break;
@@ -921,7 +930,7 @@
 	echo "</tr>\n";
 	echo "<tr>\n";
 	echo "<td class='vtable' align='left'>\n";
-	echo "<select name='".$instance_id."' id='".$instance_id."' class='formfld' ".(permission_exists('recording_play') || permission_exists('recording_download') ? "onchange=\"recording_reset('".$instance_id."'); set_playable('".$instance_id."', this.value, this.options[this.selectedIndex].parentNode.getAttribute('data-type'));\"" : null).">\n";
+	echo "<select name='".$instance_id."' id='".$instance_id."' class='formfld' ".($has_recording_play || $has_recording_download ? "onchange=\"recording_reset('".$instance_id."'); set_playable('".$instance_id."', this.value, this.options[this.selectedIndex].parentNode.getAttribute('data-type'));\"" : null).">\n";
 	echo "	<option value=''></option>\n";
 	$found = $playable = false;
 	if (!empty($audio_files[0]) && is_array($audio_files[0]) && @sizeof($audio_files[0]) != 0) {
@@ -970,15 +979,15 @@
 			echo "</optgroup>\n";
 		}
 	}
-	if (permission_exists('ivr_menu_audio_edit') && !empty($instance_value) && !$found) {
+	if ($has_ivr_menu_audio_edit && !empty($instance_value) && !$found) {
 		echo "	<option value='".escape($instance_value)."' selected='selected'>".escape($instance_value)."</option>\n";
 	}
 	unset($selected);
 	echo "	</select>\n";
-	if (permission_exists('ivr_menu_audio_edit')) {
+	if ($has_ivr_menu_audio_edit) {
 		echo "<input type='button' id='btn_select_to_input_".$instance_id."' class='btn' name='' alt='back' onclick='toggle_select_input(document.getElementById(\"".$instance_id."\"), \"".$instance_id."\"); this.style.visibility=\"hidden\";' value='&#9665;'>";
 	}
-	if ((permission_exists('recording_play') || permission_exists('recording_download')) && (!empty($playable) || empty($instance_value))) {
+	if (($has_recording_play || $has_recording_download) && (!empty($playable) || empty($instance_value))) {
 		switch (pathinfo($playable, PATHINFO_EXTENSION)) {
 			case 'wav' : $mime_type = 'audio/wav'; break;
 			case 'mp3' : $mime_type = 'audio/mpeg'; break;
@@ -1003,7 +1012,7 @@
 	echo "					<td class='vtable'>".$text['label-order']."</td>\n";
 	echo "					<td class='vtable'>".$text['label-description']."</td>\n";
 	echo "					<td class='vtable'>".$text['label-enabled']."</td>\n";
-	if ($show_option_delete && permission_exists('ivr_menu_option_delete')) {
+	if ($show_option_delete && $has_ivr_menu_option_delete) {
 		echo "					<td class='vtable edit_delete_checkbox_all' onmouseover=\"swap_display('delete_label_options', 'delete_toggle_options');\" onmouseout=\"swap_display('delete_label_options', 'delete_toggle_options');\">\n";
 		echo "						<span id='delete_label_options'>".$text['label-delete']."</span>\n";
 		echo "						<span id='delete_toggle_options'><input type='checkbox' id='checkbox_all_options' name='checkbox_all' onclick=\"edit_all_toggle('options');\"></span>\n";
@@ -1069,7 +1078,7 @@
 				echo "	</span>\n";
 			}
 			echo "</td>\n";
-			if ($show_option_delete && permission_exists('ivr_menu_option_delete')) {
+			if ($show_option_delete && $has_ivr_menu_option_delete) {
 				if (!empty($field['ivr_menu_option_uuid']) && is_uuid($field['ivr_menu_option_uuid'])) {
 					echo "<td class='vtable' style='text-align: center; padding-bottom: 3px;'>";
 					echo "	<input type='checkbox' name='ivr_menu_options_delete[".$x."][checked]' value='true' class='chk_delete checkbox_options' onclick=\"edit_delete_action('options');\">\n";
@@ -1230,7 +1239,7 @@
 		echo "</tr>\n";
 		echo "<tr>\n";
 		echo "<td class='vtable' align='left'>\n";
-		echo "<select name='".$instance_id."' id='".$instance_id."' class='formfld' ".(permission_exists('recording_play') || permission_exists('recording_download') ? "onchange=\"recording_reset('".$instance_id."'); set_playable('".$instance_id."', this.value, this.options[this.selectedIndex].parentNode.getAttribute('data-type'));\"" : null).">\n";
+		echo "<select name='".$instance_id."' id='".$instance_id."' class='formfld' ".($has_recording_play || $has_recording_download ? "onchange=\"recording_reset('".$instance_id."'); set_playable('".$instance_id."', this.value, this.options[this.selectedIndex].parentNode.getAttribute('data-type'));\"" : null).">\n";
 		echo "	<option value=''></option>\n";
 		$found = $playable = false;
 		if (!empty($audio_files[1]) && is_array($audio_files[1]) && @sizeof($audio_files[1]) != 0) {
@@ -1269,15 +1278,15 @@
 				echo "</optgroup>\n";
 			}
 		}
-		if (permission_exists('ivr_menu_audio_edit') && !empty($instance_value) && !$found) {
+		if ($has_ivr_menu_audio_edit && !empty($instance_value) && !$found) {
 			echo "	<option value='".escape($instance_value)."' selected='selected'>".escape($instance_value)."</option>\n";
 		}
 		unset($selected);
 		echo "	</select>\n";
-		if (permission_exists('ivr_menu_audio_edit')) {
+		if ($has_ivr_menu_audio_edit) {
 			echo "<input type='button' id='btn_select_to_input_".$instance_id."' class='btn' name='' alt='back' onclick='toggle_select_input(document.getElementById(\"".$instance_id."\"), \"".$instance_id."\"); this.style.visibility=\"hidden\";' value='&#9665;'>";
 		}
-		if ((permission_exists('recording_play') || permission_exists('recording_download')) && (!empty($playable) || empty($instance_value))) {
+		if (($has_recording_play || $has_recording_download) && (!empty($playable) || empty($instance_value))) {
 			switch (pathinfo($playable, PATHINFO_EXTENSION)) {
 				case 'wav' : $mime_type = 'audio/wav'; break;
 				case 'mp3' : $mime_type = 'audio/mpeg'; break;
@@ -1303,7 +1312,7 @@
 		echo "</tr>\n";
 		echo "<tr>\n";
 		echo "<td class='vtable' align='left'>\n";
-		echo "<select name='".$instance_id."' id='".$instance_id."' class='formfld' ".(permission_exists('recording_play') || permission_exists('recording_download') ? "onchange=\"recording_reset('".$instance_id."'); set_playable('".$instance_id."', this.value, this.options[this.selectedIndex].parentNode.getAttribute('data-type'));\"" : null).">\n";
+		echo "<select name='".$instance_id."' id='".$instance_id."' class='formfld' ".($has_recording_play || $has_recording_download ? "onchange=\"recording_reset('".$instance_id."'); set_playable('".$instance_id."', this.value, this.options[this.selectedIndex].parentNode.getAttribute('data-type'));\"" : null).">\n";
 		echo "	<option value=''></option>\n";
 		$found = $playable = false;
 		if (!empty($audio_files[1]) && is_array($audio_files[1]) && @sizeof($audio_files[1]) != 0) {
@@ -1342,15 +1351,15 @@
 				echo "</optgroup>\n";
 			}
 		}
-		if (permission_exists('ivr_menu_audio_edit') && !empty($instance_value) && !$found) {
+		if ($has_ivr_menu_audio_edit && !empty($instance_value) && !$found) {
 			echo "	<option value='".escape($instance_value)."' selected='selected'>".escape($instance_value)."</option>\n";
 		}
 		unset($selected);
 		echo "	</select>\n";
-		if (permission_exists('ivr_menu_audio_edit')) {
+		if ($has_ivr_menu_audio_edit) {
 			echo "<input type='button' id='btn_select_to_input_".$instance_id."' class='btn' name='' alt='back' onclick='toggle_select_input(document.getElementById(\"".$instance_id."\"), \"".$instance_id."\"); this.style.visibility=\"hidden\";' value='&#9665;'>";
 		}
-		if ((permission_exists('recording_play') || permission_exists('recording_download')) && (!empty($playable) || empty($instance_value))) {
+		if (($has_recording_play || $has_recording_download) && (!empty($playable) || empty($instance_value))) {
 			switch (pathinfo($playable, PATHINFO_EXTENSION)) {
 				case 'wav' : $mime_type = 'audio/wav'; break;
 				case 'mp3' : $mime_type = 'audio/mpeg'; break;
@@ -1475,7 +1484,7 @@
 		echo "</td>\n";
 		echo "</tr>\n";
 
-		if (permission_exists('ivr_menu_domain')) {
+		if ($has_ivr_menu_domain) {
 			echo "<tr>\n";
 			echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 			echo "	".$text['label-domain']."\n";
@@ -1503,7 +1512,7 @@
 	//--- end: advanced -----------------------
 
 	echo "<table width='100%' border='0' cellpadding='0' cellspacing='0'>\n";
-	if (permission_exists('ivr_menu_context')) {
+	if ($has_ivr_menu_context) {
 		echo "<tr>\n";
 		echo "<td class='vncellreq' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-context']."\n";

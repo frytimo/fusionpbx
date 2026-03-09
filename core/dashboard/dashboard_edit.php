@@ -30,6 +30,7 @@
 		echo "access denied";
 		exit;
 	}
+	$has_dashboard_domain = permission_exists('dashboard_domain');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -53,7 +54,7 @@
 
 //get http post variables and set them to php variables
 	if (!empty($_POST)) {
-		$domain_uuid = permission_exists('dashboard_domain') ? $_POST["domain_uuid"] : $_SESSION['domain_uuid'];
+		$domain_uuid = $has_dashboard_domain ? $_POST["domain_uuid"] : $_SESSION['domain_uuid'];
 		$dashboard_name = $_POST["dashboard_name"] ?? '';
 		$dashboard_enabled = $_POST["dashboard_enabled"];
 		$dashboard_description = $_POST["dashboard_description"] ?? '';
@@ -190,7 +191,7 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('dashboard_domain')) {
+	if ($has_dashboard_domain) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-domain']."\n";

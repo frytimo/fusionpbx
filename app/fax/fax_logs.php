@@ -34,6 +34,7 @@
 		echo "access denied";
 		exit;
 	}
+	$has_fax_log_delete = permission_exists('fax_log_delete');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -55,7 +56,7 @@
 	if (!empty($action) && !empty($fax_logs) && is_array($fax_logs) && @sizeof($fax_logs) != 0) {
 		switch ($action) {
 			case 'delete':
-				if (permission_exists('fax_log_delete')) {
+				if ($has_fax_log_delete) {
 					$obj = new fax;
 					$obj->fax_uuid = $fax_uuid;
 					$obj->delete_logs($fax_logs);
@@ -157,7 +158,7 @@
 	echo "	<div class='heading'><b>".$text['title-fax_logs']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','link'=>'fax.php']);
-	if (permission_exists('fax_log_delete') && $fax_logs) {
+	if ($has_fax_log_delete && $fax_logs) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'name'=>'btn_delete','style'=>'margin-left: 15px;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo button::create(['type'=>'button','label'=>$text['button-refresh'],'icon'=>$settings->get('theme', 'button_icon_refresh'),'style'=>'margin-left: 15px;','onclick'=>'document.location.reload(true);']);
@@ -174,7 +175,7 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('fax_log_delete') && $fax_logs) {
+	if ($has_fax_log_delete && $fax_logs) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -188,7 +189,7 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('fax_log_delete')) {
+	if ($has_fax_log_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle();' ".(empty($fax_logs) ? "style='visibility: hidden;'" : null).">\n";
 		echo "	</th>\n";
@@ -221,7 +222,7 @@
 		foreach ($fax_logs as $row) {
 			$list_row_url = "fax_log_view.php?id=".urlencode($row['fax_log_uuid'])."&fax_uuid=".$fax_uuid;
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('fax_log_delete')) {
+			if ($has_fax_log_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='fax_logs[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='fax_logs[$x][uuid]' value='".escape($row['fax_log_uuid'])."' />\n";

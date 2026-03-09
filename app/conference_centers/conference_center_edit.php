@@ -33,6 +33,9 @@
 		echo "access denied";
 		exit;
 	}
+	$has_conference_center_delete = permission_exists('conference_center_delete');
+	$has_recording_download       = permission_exists('recording_download');
+	$has_recording_play           = permission_exists('recording_play');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -56,7 +59,7 @@
 	if (!empty($_POST) && empty($_POST["persistformvar"])) {
 
 		//delete the conference center
-			if (!empty($_POST['action']) && $_POST['action'] == 'delete' && permission_exists('conference_center_delete') && is_uuid($conference_center_uuid)) {
+			if (!empty($_POST['action']) && $_POST['action'] == 'delete' && $has_conference_center_delete && is_uuid($conference_center_uuid)) {
 				//prepare
 					$array[0]['checked'] = 'true';
 					$array[0]['uuid'] = $conference_center_uuid;
@@ -242,7 +245,7 @@
 	require_once "resources/header.php";
 
 //show the content
-	if (permission_exists('recording_play') || permission_exists('recording_download')) {
+	if ($has_recording_play || $has_recording_download) {
 		echo "<script type='text/javascript' language='JavaScript'>\n";
 		echo "	function set_playable(id, audio_selected, audio_type) {\n";
 		echo "		file_ext = audio_selected.split('.').pop();\n";
@@ -318,7 +321,7 @@
 	echo "	<div class='heading'><b>".$text['title-conference_center']."</b></div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','style'=>'margin-right: 15px;','link'=>'conference_centers.php']);
-	if ($action == 'update' && permission_exists('conference_center_delete')) {
+	if ($action == 'update' && $has_conference_center_delete) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'name'=>'btn_delete','style'=>'margin-right: 15px;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo button::create(['type'=>'submit','label'=>$text['button-save'],'icon'=>$settings->get('theme', 'button_icon_save'),'id'=>'btn_save']);
@@ -326,7 +329,7 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if ($action == 'update' && permission_exists('conference_center_delete')) {
+	if ($action == 'update' && $has_conference_center_delete) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 	}
 
@@ -366,7 +369,7 @@
 	echo "</tr>\n";
 	echo "<tr>\n";
 	echo "<td class='vtable' align='left'>\n";
-	echo "<select name='".$instance_id."' id='".$instance_id."' class='formfld' ".(permission_exists('recording_play') || permission_exists('recording_download') ? "onchange=\"recording_reset('".$instance_id."'); set_playable('".$instance_id."', this.value, this.options[this.selectedIndex].parentNode.getAttribute('data-type'));\"" : null).">\n";
+	echo "<select name='".$instance_id."' id='".$instance_id."' class='formfld' ".($has_recording_play || $has_recording_download ? "onchange=\"recording_reset('".$instance_id."'); set_playable('".$instance_id."', this.value, this.options[this.selectedIndex].parentNode.getAttribute('data-type'));\"" : null).">\n";
 	echo "	<option value=''></option>\n";
 	$found = $playable = false;
 	if (!empty($audio_files) && is_array($audio_files) && @sizeof($audio_files) != 0) {
@@ -413,7 +416,7 @@
 	if (if_group("superadmin")) {
 		echo "<input type='button' id='btn_select_to_input_".$instance_id."' class='btn' name='' alt='back' onclick='toggle_select_input(document.getElementById(\"".$instance_id."\"), \"".$instance_id."\"); this.style.visibility=\"hidden\";' value='&#9665;'>";
 	}
-	if ((permission_exists('recording_play') || permission_exists('recording_download')) && (!empty($playable) || empty($instance_value))) {
+	if (($has_recording_play || $has_recording_download) && (!empty($playable) || empty($instance_value))) {
 		switch (pathinfo($playable, PATHINFO_EXTENSION)) {
 			case 'wav' : $mime_type = 'audio/wav'; break;
 			case 'mp3' : $mime_type = 'audio/mpeg'; break;

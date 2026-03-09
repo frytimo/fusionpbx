@@ -33,6 +33,9 @@
 		echo "access denied";
 		exit;
 	}
+	$has_call_active_all       = permission_exists('call_active_all');
+	$has_call_active_eavesdrop = permission_exists('call_active_eavesdrop');
+	$has_call_active_hangup    = permission_exists('call_active_hangup');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -150,7 +153,7 @@
 	echo "	<div class='heading'><b>".$text['title']."</b><div id='calls_active_count' class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
 	echo "		<span id='refresh_state'>".button::create(['type'=>'button','title'=>$text['label-refresh_pause'],'icon'=>'sync-alt fa-spin','onclick'=>'refresh_stop()'])."</span>";
-	if (permission_exists('call_active_eavesdrop') && !empty($user['extensions'])) {
+	if ($has_call_active_eavesdrop && !empty($user['extensions'])) {
 		if (sizeof($user['extensions']) > 1) {
 			echo "	<input type='hidden' id='eavesdrop_dest' value=\"".(($_REQUEST['eavesdrop_dest'] == '') ? $user['extension'][0]['destination'] : escape($_REQUEST['eavesdrop_dest']))."\">\n";
 			echo "	<i class='fas fa-headphones' style='margin-left: 15px; cursor: help;' title='".$text['description-eavesdrop_destination']."' align='absmiddle'></i>\n";
@@ -166,10 +169,10 @@
 			echo "	<input type='hidden' id='eavesdrop_dest' value=\"".escape($user['extension'][0]['destination'])."\">\n";
 		}
 	}
-	if (permission_exists('call_active_hangup') && $rows) {
+	if ($has_call_active_hangup && $rows) {
 		echo button::create(['type'=>'button','label'=>$text['label-hangup'],'icon'=>'phone-slash','id'=>'btn_delete','onclick'=>"refresh_stop(); modal_open('modal-hangup','btn_hangup');"]);
 	}
-	if (permission_exists('call_active_all')) {
+	if ($has_call_active_all) {
 		if ($show == "all") {
 			echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$theme_button_icon_back,'link'=>'calls_active.php','onmouseover'=>'refresh_stop()','onmouseout'=>'refresh_start()']);
 		}
@@ -181,7 +184,7 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('call_active_hangup') && $rows) {
+	if ($has_call_active_hangup && $rows) {
 		echo modal::create(['id'=>'modal-hangup','type'=>'general','message'=>$text['confirm-hangups'],'actions'=>button::create(['type'=>'button','label'=>$text['label-hangup'],'icon'=>'check','id'=>'btn_hangup','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('hangup'); list_form_submit('form_list');"])]);
 	}
 

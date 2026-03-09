@@ -33,6 +33,10 @@
 		echo "access denied";
 		exit;
 	}
+	$has_menu_edit        = permission_exists('menu_edit');
+	$has_menu_item_add    = permission_exists('menu_item_add');
+	$has_menu_item_delete = permission_exists('menu_item_delete');
+	$has_menu_item_edit   = permission_exists('menu_item_edit');
 
 //get the http post data
 	if (!empty($_POST['menu_items'])) {
@@ -46,25 +50,25 @@
 	if (!empty($action) && !empty($menu_items)) {
 		switch ($action) {
 			// case 'toggle':
-			// 	if (permission_exists('menu_item_edit')) {
+			// 	if ($has_menu_item_edit) {
 			// 		$obj = new menu;
 			// 		$obj->toggle_items($menu_items);
 			// 	}
 			// 	break;
 			case 'delete':
-				if (permission_exists('menu_item_delete')) {
+				if ($has_menu_item_delete) {
 					$obj = new menu;
 					$obj->delete_items($menu_items);
 				}
 				break;
 			case 'group_items_add':
-				if (permission_exists('menu_item_edit')) {
+				if ($has_menu_item_edit) {
 					$obj = new menu;
 					$obj->assign_items($menu_items, $menu_uuid, $group_uuid);
 				}
 				break;
 			case 'group_items_delete':
-				if (permission_exists('menu_item_delete')) {
+				if ($has_menu_item_delete) {
 					$obj = new menu;
 					$obj->unassign_items($menu_items, $menu_uuid, $group_uuid);
 				}
@@ -171,18 +175,18 @@
 				$menu_item_icon = !empty($menu_item_icon) ? "<i class='".$menu_item_icon."' style='margin-left: 7px; margin-top: 2px; ".(!empty($menu_item_icon_color) ? "color: ".$menu_item_icon_color.";" : "opacity: 0.4;")."'></i>" : null;
 
 				//display the content of the list
-				if (permission_exists('menu_item_edit')) {
+				if ($has_menu_item_edit) {
 					$list_row_url = 'menu_item_edit.php?id='.urlencode($menu_uuid)."&menu_item_uuid=".urlencode($menu_item_uuid)."&menu_item_parent_uuid=".urlencode($row2['menu_item_parent_uuid']);
 				}
 				echo "<tr class='list-row' href='".$list_row_url."'>\n";
-				if (permission_exists('menu_item_edit') || permission_exists('menu_item_delete')) {
+				if ($has_menu_item_edit || $has_menu_item_delete) {
 					echo "	<td class='checkbox'>\n";
 					echo "		<input type='checkbox' name='menu_items[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 					echo "		<input type='hidden' name='menu_items[$x][uuid]' value='".escape($menu_item_uuid)."' />\n";
 					echo "	</td>\n";
 				}
 				echo "<td class='no-wrap".($menu_item_category != 'internal' ? "no-link" : null)."' style='padding-left: ".($menu_item_level * 25)."px;'>\n";
-				if (permission_exists('menu_item_edit')) {
+				if ($has_menu_item_edit) {
 					echo "	<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($menu_item_title)."</a>".$menu_item_icon."\n";
 				}
 				else {
@@ -192,7 +196,7 @@
 				echo "<td class='no-wrap overflow no-link hide-sm-dn'>".$menu_item_link."&nbsp;</td>\n";
 				echo "<td class='no-wrap overflow hide-xs'>".$group_list."&nbsp;</td>";
 				echo "<td class='center'>".$menu_item_category."&nbsp;</td>";
-				//if (permission_exists('menu_item_edit')) {
+				//if ($has_menu_item_edit) {
 				//	echo "	<td class='no-link center'>\n";
 				//	echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.($menu_item_protected == 'true' ? 'true' : 'false')],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
 				//}
@@ -204,13 +208,13 @@
 				echo "<td class='center no-wrap'>&nbsp;</td>";
 
 				//echo "<td align='center'>";
-				//if (permission_exists('menu_edit')) {
+				//if ($has_menu_edit) {
 				//	echo "  <input type='button' class='btn' name='' onclick=\"window.location='menu_item_move_up.php?menu_uuid=".$menu_uuid."&menu_item_parent_uuid=".$row2['menu_item_parent_uuid']."&menu_item_uuid=".$row2[menu_item_uuid]."&menu_item_order=".$row2[menu_item_order]."'\" value='<' title='".$row2[menu_item_order].". ".$text['button-move_up']."'>";
 				//	echo "  <input type='button' class='btn' name='' onclick=\"window.location='menu_item_move_down.php?menu_uuid=".$menu_uuid."&menu_item_parent_uuid=".$row2['menu_item_parent_uuid']."&menu_item_uuid=".$row2[menu_item_uuid]."&menu_item_order=".$row2[menu_item_order]."'\" value='>' title='".$row2[menu_item_order].". ".$text['button-move_down']."'>";
 				//}
 				//echo "</td>";
 
-				if (permission_exists('menu_item_edit') && $list_row_edit_button) {
+				if ($has_menu_item_edit && $list_row_edit_button) {
 					echo "	<td class='action-button'>\n";
 					echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 					echo "	</td>\n";
@@ -273,40 +277,40 @@
 	}
 	echo "	</select>\n";
 
-	if (permission_exists('menu_item_add') && $result) {
+	if ($has_menu_item_add && $result) {
 		echo button::create(['type'=>'button','label'=>$text['button-assign'],'icon'=>$_SESSION['theme']['button_icon_save'],'id'=>'btn_group_items_add','class' => 'btn btn-default revealed','collapse'=>'hide-xs','style'=>'display: none;','onclick'=>"list_action_set('group_items_add'); list_form_submit('form_list');"]);
 	}
-	if (permission_exists('menu_item_delete') && $result) {
+	if ($has_menu_item_delete && $result) {
 		echo button::create(['type'=>'button','label'=>$text['button-unassign'],'icon'=>$_SESSION['theme']['button_icon_cancel'],'name'=>'btn_group_items_delete','class' => 'btn btn-default revealed','style'=>'display: none; margin-right: 35px;','collapse'=>'hide-xs','onclick'=>"modal_open('modal-delete-groups','btn_group_items_delete');"]);
 	}
-	if (permission_exists('menu_item_delete') && $result) {
+	if ($has_menu_item_delete && $result) {
 		echo modal::create(['id'=>'modal-delete-groups','type'=>'unassign', 'actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_group_items_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('group_items_delete'); list_form_submit('form_list');"])]);
 	}
 	echo button::create(['type'=>'button','id'=>'action_bar_sub_button_back','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'collapse'=>'hide-xs','style'=>'margin-right: 15px; display: none;','link'=>'menu.php']);
-	if (permission_exists('menu_item_add')) {
+	if ($has_menu_item_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','collapse'=>'hide-xs','link'=>'menu_item_edit.php?id='.urlencode($menu_uuid)]);
 	}
-	// if (permission_exists('menu_item_edit') && $result) {
+	// if ($has_menu_item_edit && $result) {
 	// 	echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'name'=>'btn_toggle','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	// }
-	if (permission_exists('menu_item_delete') && $result) {
+	if ($has_menu_item_delete && $result) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'name'=>'btn_delete','collapse'=>'hide-xs','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo "	</div>\n";
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	// if (permission_exists('menu_item_edit') && $result) {
+	// if ($has_menu_item_edit && $result) {
 	// 	echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	// }
-	if (permission_exists('menu_item_delete') && $result) {
+	if ($has_menu_item_delete && $result) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "	<tr class='list-header'>";
-	if (permission_exists('menu_item_edit') || permission_exists('menu_item_delete')) {
+	if ($has_menu_item_edit || $has_menu_item_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle();' ".(!empty($result) ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
@@ -317,7 +321,7 @@
 	echo "		<th class='no-wrap center shrink'>".$text['label-category']."</th>";
 	//echo "		<th class='no-wrap center shrink'>".$text['label-protected']."</th>";
 	echo "		<th class='no-wrap center shrink'>".$text['label-menu_order']."</th>";
-	if (permission_exists('menu_item_edit') && $list_row_edit_button) {
+	if ($has_menu_item_edit && $list_row_edit_button) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -380,18 +384,18 @@
 				$menu_item_icon = !empty($menu_item_icon) ? "<i class='".$menu_item_icon."' style='margin-left: 7px; margin-top: 2px; ".(!empty($menu_item_icon_color) ? "color: ".$menu_item_icon_color.";" : "opacity: 0.4;")."'></i>" : null;
 
 			//display the content of the list
-				if (permission_exists('menu_item_edit')) {
+				if ($has_menu_item_edit) {
 					$list_row_url = 'menu_item_edit.php?id='.urlencode($menu_uuid)."&menu_item_uuid=".urlencode($menu_item_uuid)."&menu_uuid=".urlencode($menu_uuid);
 				}
 				echo "<tr class='list-row' href='".$list_row_url."'>\n";
-				if (permission_exists('menu_item_edit') || permission_exists('menu_item_delete')) {
+				if ($has_menu_item_edit || $has_menu_item_delete) {
 					echo "<td class='checkbox'>\n";
 					echo "	<input type='checkbox' name='menu_items[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 					echo "	<input type='hidden' name='menu_items[$x][uuid]' value='".escape($menu_item_uuid)."' />\n";
 					echo "</td>\n";
 				}
 				echo "<td>\n";
-				if (permission_exists('menu_item_edit')) {
+				if ($has_menu_item_edit) {
 					echo "	<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($menu_item_title)."</a>".$menu_item_icon."\n";
 				}
 				else {
@@ -401,7 +405,7 @@
 				echo "<td class='no-wrap overflow no-link hide-sm-dn'>".$menu_item_link."&nbsp;</td>\n";
 				echo "<td class='no-wrap overflow hide-xs'>".($group_list ?? '')."&nbsp;</td>\n";
 				echo "<td class='center'>".$menu_item_category."&nbsp;</td>\n";
-				//if (permission_exists('menu_item_edit')) {
+				//if ($has_menu_item_edit) {
 				//	echo "<td class='no-link center'>\n";
 				//	echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.($menu_item_protected == 'true' ? 'true' : 'false')],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
 				//}
@@ -413,13 +417,13 @@
 				echo "<td class='center'>".$row['menu_item_order']."&nbsp;</td>\n";
 
 				//echo "<td align='center' nowrap>";
-				//if (permission_exists('menu_edit')) {
+				//if ($has_menu_edit) {
 				//	echo "  <input type='button' class='btn' name='' onclick=\"window.location='menu_item_move_up.php?menu_uuid=".$menu_uuid."&menu_item_parent_uuid=".$row['menu_item_parent_uuid']."&menu_item_uuid=".$menu_item_uuid."&menu_item_order=".$row['menu_item_order']."'\" value='<' title='".$row['menu_item_order'].". ".$text['button-move_up']."'>";
 				//	echo "  <input type='button' class='btn' name='' onclick=\"window.location='menu_item_move_down.php?menu_uuid=".$menu_uuid."&menu_item_parent_uuid=".$row['menu_item_parent_uuid']."&menu_item_uuid=".$menu_item_uuid."&menu_item_order=".$row['menu_item_order']."'\" value='>' title='".$row['menu_item_order'].". ".$text['button-move_down']."'>";
 				//}
 				//echo "</td>";
 
-				if (permission_exists('menu_item_edit') && $list_row_edit_button) {
+				if ($has_menu_item_edit && $list_row_edit_button) {
 					echo "<td class='action-button'>\n";
 					echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 					echo "</td>\n";

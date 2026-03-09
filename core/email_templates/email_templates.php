@@ -31,6 +31,11 @@
 		echo "access denied";
 		exit;
 	}
+	$has_domain_select         = permission_exists('domain_select');
+	$has_email_template_add    = permission_exists('email_template_add');
+	$has_email_template_all    = permission_exists('email_template_all');
+	$has_email_template_delete = permission_exists('email_template_delete');
+	$has_email_template_edit   = permission_exists('email_template_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -51,19 +56,19 @@
 	if (!empty($action) && !empty($email_template_list)) {
 		switch ($action) {
 			case 'copy':
-				if (permission_exists('email_template_add')) {
+				if ($has_email_template_add) {
 					$obj = new email_templates;
 					$obj->copy($email_template_list);
 				}
 				break;
 			case 'toggle':
-				if (permission_exists('email_template_edit')) {
+				if ($has_email_template_edit) {
 					$obj = new email_templates;
 					$obj->toggle($email_template_list);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('email_template_delete')) {
+				if ($has_email_template_delete) {
 					$obj = new email_templates;
 					$obj->delete($email_template_list);
 				}
@@ -122,7 +127,7 @@
 		$sql .= "and template_language = :template_language ";
 		$parameters['template_language'] = $template_language;
 	}
-	if (!empty($_GET['show']) && $_GET['show'] == "all" && permission_exists('email_template_all')) {
+	if (!empty($_GET['show']) && $_GET['show'] == "all" && $has_email_template_all) {
 		if (!empty($sql_search)) {
 			$sql .= "and ".$sql_search;
 		}
@@ -140,7 +145,7 @@
 //prepare to page the results
 	$rows_per_page = $settings->get('domain', 'paging', 50);
 	$param = "&search=".$search;
-	if (!empty($_GET['show']) == "all" && permission_exists('email_template_all')) {
+	if (!empty($_GET['show']) == "all" && $has_email_template_all) {
 		$param .= "&show=all";
 	}
 	$page = isset($_GET['page']) ? $_GET['page'] : 0;
@@ -167,7 +172,7 @@
 		$sql .= "and template_language = :template_language ";
 		$parameters['template_language'] = $template_language;
 	}
-	if (!empty($_GET['show']) && $_GET['show'] == "all" && permission_exists('email_template_all')) {
+	if (!empty($_GET['show']) && $_GET['show'] == "all" && $has_email_template_all) {
 		if (!empty($sql_search)) {
 			$sql .= "and ".$sql_search;
 		}
@@ -226,20 +231,20 @@
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['title-email_templates']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('email_template_add')) {
+	if ($has_email_template_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'email_template_edit.php']);
 	}
-	if (permission_exists('email_template_add') && $email_templates) {
+	if ($has_email_template_add && $email_templates) {
 		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 	}
-	if (permission_exists('email_template_edit') && $email_templates) {
+	if ($has_email_template_edit && $email_templates) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
-	if (permission_exists('email_template_delete') && $email_templates) {
+	if ($has_email_template_delete && $email_templates) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if (permission_exists('email_template_all')) {
+	if ($has_email_template_all) {
 		if (!empty($_GET['show']) && $_GET['show'] == 'all') {
 			echo "		<input type='hidden' name='show' value='all'>";
 		}
@@ -278,13 +283,13 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('email_template_add') && $email_templates) {
+	if ($has_email_template_add && $email_templates) {
 		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('email_template_edit') && $email_templates) {
+	if ($has_email_template_edit && $email_templates) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('email_template_delete') && $email_templates) {
+	if ($has_email_template_delete && $email_templates) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -298,12 +303,12 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('email_template_add') || permission_exists('email_template_edit') || permission_exists('email_template_delete')) {
+	if ($has_email_template_add || $has_email_template_edit || $has_email_template_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($email_templates) ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
 	}
-	if (!empty($_GET['show']) && $_GET['show'] == "all" && permission_exists('email_template_all')) {
+	if (!empty($_GET['show']) && $_GET['show'] == "all" && $has_email_template_all) {
 		echo "<th>".$text['label-domain']."</th>\n";
 		//echo th_order_by('domain_name', $text['label-domain'], $order_by, $order, null, null, $param);
 	}
@@ -314,7 +319,7 @@
 	echo th_order_by('template_type', $text['label-template_type'], $order_by, $order, null, null, $param);
 	echo th_order_by('template_enabled', $text['label-template_enabled'], $order_by, $order, null, "class='center pct-10'", $param);
 	echo th_order_by('template_description', $text['label-template_description'], $order_by, $order, null, "class='hide-sm-dn'", $param);
-	if (permission_exists('email_template_edit') && $list_row_edit_button) {
+	if ($has_email_template_edit && $list_row_edit_button) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -323,20 +328,20 @@
 		$x = 0;
 		foreach($email_templates as $row) {
 			$list_row_url = '';
-			if (permission_exists('email_template_edit')) {
+			if ($has_email_template_edit) {
 				$list_row_url = "email_template_edit.php?id=".urlencode($row['email_template_uuid']);
-				if (!empty($row['domain_uuid']) && $row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+				if (!empty($row['domain_uuid']) && $row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('email_template_add') || permission_exists('email_template_edit') || permission_exists('email_template_delete')) {
+			if ($has_email_template_add || $has_email_template_edit || $has_email_template_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='email_template_list[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='email_template_list[$x][uuid]' value='".escape($row['email_template_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if (!empty($_GET['show']) && $_GET['show'] == "all" && permission_exists('email_template_all')) {
+			if (!empty($_GET['show']) && $_GET['show'] == "all" && $has_email_template_all) {
 				echo "	<td>";
 				if (is_uuid($row['domain_uuid'])) {
 					echo escape($_SESSION['domains'][$row['domain_uuid']]['domain_name']);
@@ -350,7 +355,7 @@
 			echo "	<td>".escape($row['template_category'])."&nbsp;</td>\n";
 			echo "	<td>".escape($row['template_subcategory'])."&nbsp;</td>\n";
 			echo "	<td class='overflow hide-xs'>";
-			if (permission_exists('email_template_edit')) {
+			if ($has_email_template_edit) {
 				echo "<a href='".$list_row_url."'>".escape($row['template_subject'])."</a>";
 			}
 			else {
@@ -358,7 +363,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td>".escape($row['template_type'])."&nbsp;</td>\n";
-			if (permission_exists('email_template_edit')) {
+			if ($has_email_template_edit) {
 				echo "	<td class='no-link center'>";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['template_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
 			}
@@ -368,7 +373,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td class='description overflow hide-sm-dn'>".escape($row['template_description'])."</td>\n";
-			if (permission_exists('email_template_edit') && $list_row_edit_button) {
+			if ($has_email_template_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

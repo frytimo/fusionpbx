@@ -34,6 +34,7 @@
 		echo "access denied";
 		exit;
 	}
+	$has_conference_interactive_view = permission_exists('conference_interactive_view');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -112,7 +113,7 @@ const text = <?= json_encode($text) ?>;
 
 //permissions
 const permissions = {
-	conference_interactive_view: <?= permission_exists('conference_interactive_view') ? 'true' : 'false' ?>,
+	conference_interactive_view: <?= $has_conference_interactive_view ? 'true' : 'false' ?>,
 	list_row_edit_button: <?= $settings->get('theme', 'list_row_edit_button', false) ? 'true' : 'false' ?>
 };
 

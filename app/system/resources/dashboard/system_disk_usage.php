@@ -12,6 +12,7 @@
 		echo "access denied";
 		exit;
 	}
+	$has_system_view_hdd = permission_exists('system_view_hdd');
 
 //convert to a key
 	$widget_key = str_replace(' ', '_', strtolower($widget_name));
@@ -118,7 +119,7 @@
 		echo "</tr>\n";
 
 		//disk usage
-			if (permission_exists('system_view_hdd')) {
+			if ($has_system_view_hdd) {
 				$system_information = [];
 				if (stristr(PHP_OS, 'Linux') || stristr(PHP_OS, 'FreeBSD')) {
 					$shell_result = shell_exec('df -hP');

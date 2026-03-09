@@ -35,6 +35,12 @@
 		echo "access denied";
 		exit;
 	}
+	$has_domain_select     = permission_exists('domain_select');
+	$has_ring_group_add    = permission_exists('ring_group_add');
+	$has_ring_group_all    = permission_exists('ring_group_all');
+	$has_ring_group_delete = permission_exists('ring_group_delete');
+	$has_ring_group_domain = permission_exists('ring_group_domain');
+	$has_ring_group_edit   = permission_exists('ring_group_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -118,11 +124,11 @@
 	unset($parameters);
 
 //get filtered ring group count
-	if ($show == "all" && permission_exists('ring_group_all')) {
+	if ($show == "all" && $has_ring_group_all) {
 		$sql = "select count(ring_group_uuid) from v_ring_groups ";
 		$sql .= "where true ";
 	}
-	elseif (permission_exists('ring_group_domain') || permission_exists('ring_group_all')) {
+	elseif ($has_ring_group_domain || $has_ring_group_all) {
 		$sql = "select count(ring_group_uuid)  from v_ring_groups ";
 		$sql .= "where domain_uuid = :domain_uuid ";
 		$parameters['domain_uuid'] = $domain_uuid;
@@ -151,20 +157,20 @@
 //prepare to page the results
 	$rows_per_page = $settings->get('domain', 'paging', 50);
 	$param = $search ? "&search=".$search : null;
-	$param = ($show == "all" && permission_exists('ring_group_all')) ? "&show=all" : null;
+	$param = ($show == "all" && $has_ring_group_all) ? "&show=all" : null;
 	$page = isset($_GET['page']) ? $_GET['page'] : 0;
 	list($paging_controls, $rows_per_page) = paging($num_rows, $param, $rows_per_page);
 	list($paging_controls_mini, $rows_per_page) = paging($num_rows, $param, $rows_per_page, true);
 	$offset = $rows_per_page * $page;
 
 //get the list
-	if ($show == "all" && permission_exists('ring_group_all')) {
+	if ($show == "all" && $has_ring_group_all) {
 		$sql = "select r.ring_group_uuid, r.domain_uuid, r.ring_group_name, r.ring_group_extension, r.ring_group_strategy, ";
 		$sql .= "r.ring_group_forward_destination, r.ring_group_forward_enabled, cast(r.ring_group_enabled as text), r.ring_group_description ";
 		$sql .= "from v_ring_groups as r ";
 		$sql .= "where true ";
 	}
-	else if (permission_exists('ring_group_domain') || permission_exists('ring_group_all')) {
+	else if ($has_ring_group_domain || $has_ring_group_all) {
 		$sql = "select r.ring_group_uuid, r.domain_uuid, r.ring_group_name, r.ring_group_extension, r.ring_group_strategy, ";
 		$sql .= "r.ring_group_forward_destination, r.ring_group_forward_enabled, cast(r.ring_group_enabled as text), r.ring_group_description ";
 		$sql .= "from v_ring_groups as r ";
@@ -209,20 +215,20 @@
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['title-ring_groups']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('ring_group_add')) {
+	if ($has_ring_group_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'ring_group_edit.php']);
 	}
-	if (permission_exists('ring_group_add') && $ring_groups) {
+	if ($has_ring_group_add && $ring_groups) {
 		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 	}
-	if (permission_exists('ring_group_edit') && $ring_groups) {
+	if ($has_ring_group_edit && $ring_groups) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
-	if (permission_exists('ring_group_delete') && $ring_groups) {
+	if ($has_ring_group_delete && $ring_groups) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if (permission_exists('ring_group_all')) {
+	if ($has_ring_group_all) {
 		if ($show == 'all') {
 			echo "		<input type='hidden' name='show' value='all'>";
 		}
@@ -241,13 +247,13 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('ring_group_add') && $ring_groups) {
+	if ($has_ring_group_add && $ring_groups) {
 		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('ring_group_edit') && $ring_groups) {
+	if ($has_ring_group_edit && $ring_groups) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('ring_group_delete') && $ring_groups) {
+	if ($has_ring_group_delete && $ring_groups) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -261,12 +267,12 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('ring_group_add') || permission_exists('ring_group_edit') || permission_exists('ring_group_delete')) {
+	if ($has_ring_group_add || $has_ring_group_edit || $has_ring_group_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".!empty($ring_groups ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
 	}
-	if ($show == "all" && permission_exists('ring_group_all')) {
+	if ($show == "all" && $has_ring_group_all) {
 		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order);
 	}
 	echo th_order_by('ring_group_name', $text['label-name'], $order_by, $order);
@@ -275,7 +281,7 @@
 	echo th_order_by('ring_group_forward_enabled', $text['label-forwarding'], $order_by, $order);
 	echo th_order_by('ring_group_enabled', $text['label-enabled'], $order_by, $order, null, "class='center'");
 	echo th_order_by('ring_group_description', $text['header-description'], $order_by, $order, null, "class='hide-sm-dn'");
-	if (permission_exists('ring_group_edit') && $settings->get('theme', 'list_row_edit_button', false)) {
+	if ($has_ring_group_edit && $settings->get('theme', 'list_row_edit_button', false)) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -286,24 +292,24 @@
 			//dispatch render-row hook
 			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
-			if (permission_exists('ring_group_edit')) {
+			if ($has_ring_group_edit) {
 				$list_row_url = "ring_group_edit.php?id=".urlencode($row['ring_group_uuid']);
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('ring_group_add') || permission_exists('ring_group_edit') || permission_exists('ring_group_delete')) {
+			if ($has_ring_group_add || $has_ring_group_edit || $has_ring_group_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='ring_groups[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='ring_groups[$x][uuid]' value='".escape($row['ring_group_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if ($show == "all" && permission_exists('ring_group_all')) {
+			if ($show == "all" && $has_ring_group_all) {
 				echo "	<td>".escape($_SESSION['domains'][$row['domain_uuid']]['domain_name'])."</td>\n";
 			}
 			echo "	<td>";
-			if (permission_exists('ring_group_edit')) {
+			if ($has_ring_group_edit) {
 				echo "<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['ring_group_name'])."</a>";
 			}
 			else {
@@ -313,7 +319,7 @@
 			echo "	<td>".escape($row['ring_group_extension'])."&nbsp;</td>\n";
 			echo "	<td>".$text['option-'.escape($row['ring_group_strategy'])]."&nbsp;</td>\n";
 			echo "	<td>".($row['ring_group_forward_enabled'] === true && !empty($row['ring_group_forward_destination']) ? format_phone(escape($row['ring_group_forward_destination'])) : null)."&nbsp;</td>\n";
-			if (permission_exists('ring_group_edit')) {
+			if ($has_ring_group_edit) {
 				echo "	<td class='no-link center'>";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['ring_group_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
 			}
@@ -323,7 +329,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td class='description overflow hide-sm-dn'>".escape($row['ring_group_description'])."&nbsp;</td>\n";
-			if (permission_exists('ring_group_edit') && $settings->get('theme', 'list_row_edit_button', false)) {
+			if ($has_ring_group_edit && $settings->get('theme', 'list_row_edit_button', false)) {
 				echo "	<td class='action-button'>";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

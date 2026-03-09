@@ -33,6 +33,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_conference_profile_param_add  = permission_exists('conference_profile_param_add');
+	$has_conference_profile_param_edit = permission_exists('conference_profile_param_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -108,12 +110,12 @@
 				$array['conference_profile_params'][0]['profile_param_enabled'] = $profile_param_enabled;
 				$array['conference_profile_params'][0]['profile_param_description'] = $profile_param_description;
 
-				if ($action == "add" && permission_exists('conference_profile_param_add')) {
+				if ($action == "add" && $has_conference_profile_param_add) {
 					$array['conference_profile_params'][0]['conference_profile_param_uuid'] = uuid();
 					message::add($text['message-add']);
 				}
 
-				if ($action == "update" && permission_exists('conference_profile_param_edit')) {
+				if ($action == "update" && $has_conference_profile_param_edit) {
 					$array['conference_profile_params'][0]['conference_profile_param_uuid'] = $conference_profile_param_uuid;
 					message::add($text['message-update']);
 				}

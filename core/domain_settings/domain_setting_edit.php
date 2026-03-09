@@ -33,12 +33,15 @@
 		echo "access denied";
 		exit;
 	}
+	$has_domain_setting_add           = permission_exists('domain_setting_add');
+	$has_domain_setting_category_edit = permission_exists('domain_setting_category_edit');
+	$has_domain_setting_edit          = permission_exists('domain_setting_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
 
 //retrieve allowed setting categories
-	if (!permission_exists('domain_setting_category_edit')) {
+	if (!$has_domain_setting_category_edit) {
 		if (!empty($_SESSION['settings'])) {
 			foreach ($_SESSION['groups'] as $index => $group) {
 				$group_name = $group['group_name'];
@@ -199,12 +202,12 @@
 					}
 
 				//add
-					if ($action == "add" && permission_exists('domain_setting_add')) {
+					if ($action == "add" && $has_domain_setting_add) {
 						$array['domain_settings'][0]['domain_setting_uuid'] = uuid();
 					}
 
 				//update
-					if ($action == "update" && permission_exists('domain_setting_edit')) {
+					if ($action == "update" && $has_domain_setting_edit) {
 						$array['domain_settings'][0]['domain_setting_uuid'] = $domain_setting_uuid;
 					}
 				//execute
@@ -400,7 +403,7 @@
 	echo "	".$text['label-category']."\n";
 	echo "</td>\n";
 	echo "<td width='70%' class='vtable' align='left'>\n";
-	if (permission_exists('domain_setting_category_edit')) {
+	if ($has_domain_setting_category_edit) {
 		if ($action == 'add') {
 			$domain_setting_category = $_GET['domain_setting_category'] ?? '';
 		}

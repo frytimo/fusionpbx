@@ -33,6 +33,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_contact_note_add  = permission_exists('contact_note_add');
+	$has_contact_note_edit = permission_exists('contact_note_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -107,7 +109,7 @@
 					$p->delete('contact_edit', 'temp');
 
 				//add the note
-					if ($action == "add" && permission_exists('contact_note_add')) {
+					if ($action == "add" && $has_contact_note_add) {
 						$contact_note_uuid = uuid();
 						$array['contact_notes'][0]['contact_note_uuid'] = $contact_note_uuid;
 
@@ -115,7 +117,7 @@
 					}
 
 				//update the note
-					if ($action == "update" && permission_exists('contact_note_edit')) {
+					if ($action == "update" && $has_contact_note_edit) {
 						$array['contact_notes'][0]['contact_note_uuid'] = $contact_note_uuid;
 
 						message::add($text['message-update']);

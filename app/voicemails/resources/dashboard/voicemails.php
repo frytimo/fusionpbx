@@ -12,6 +12,7 @@
 		echo "access denied";
 		exit;
 	}
+	$has_voicemail_view = permission_exists('voicemail_view');
 
 //convert to a key
 	$widget_key = str_replace(' ', '_', strtolower($widget_name));
@@ -135,9 +136,9 @@
 
 			foreach ($messages as $voicemail_uuid => $row) {
 				if (is_uuid($voicemail_uuid)) {
-					$tr_link = "href='".PROJECT_PATH."/app/voicemails/voicemail_messages.php?id=".(permission_exists('voicemail_view') ? $voicemail_uuid : $row['ext'])."'";
+					$tr_link = "href='".PROJECT_PATH."/app/voicemails/voicemail_messages.php?id=".($has_voicemail_view ? $voicemail_uuid : $row['ext'])."'";
 					echo "<tr ".$tr_link." style='cursor: pointer;'>";
-					echo "	<td class='".$row_style[$c]." hud_text'><a href='".PROJECT_PATH."/app/voicemails/voicemail_messages.php?id=".(permission_exists('voicemail_view') ? $voicemail_uuid : $row['ext'])."&back=".urlencode($_SERVER["REQUEST_URI"])."'>".$row['ext']."</a></td>";
+					echo "	<td class='".$row_style[$c]." hud_text'><a href='".PROJECT_PATH."/app/voicemails/voicemail_messages.php?id=".($has_voicemail_view ? $voicemail_uuid : $row['ext'])."&back=".urlencode($_SERVER["REQUEST_URI"])."'>".$row['ext']."</a></td>";
 					echo "	<td class='".$row_style[$c]." hud_text' style='text-align: center;'>".$row['new']."</td>";
 					echo "	<td class='".$row_style[$c]." hud_text' style='text-align: center;'>".$row['total']."</td>";
 					echo "</tr>";

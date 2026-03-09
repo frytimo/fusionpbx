@@ -33,6 +33,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_domain_select  = permission_exists('domain_select');
+	$has_extension_edit = permission_exists('extension_edit');
 
 //set from session variables
 	$list_row_edit_button = $settings->get('theme', 'list_row_edit_button', false);
@@ -65,7 +67,7 @@
 			echo "<th>".$text['label-extension']."</th>\n";
 			echo "<th class='center'>".$text['label-enabled']."</th>\n";
 			echo "<th class='hide-md-dn'>".$text['label-description']."</th>\n";
-			if (permission_exists('extension_edit') && $list_row_edit_button) {
+			if ($has_extension_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>&nbsp;</td>\n";
 			}
 			echo "</tr>\n";
@@ -74,15 +76,15 @@
 				$x = 0;
 				foreach ($contact_extensions as $row) {
 					$list_row_url = '';
-					if (permission_exists('extension_edit')) {
+					if ($has_extension_edit) {
 						$list_row_url = PROJECT_PATH.'/app/extensions/extension_edit.php?id='.urlencode($row['extension_uuid']);
-						if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+						if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 							$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 						}
 					}
 					echo "<tr class='list-row' href='".$list_row_url."' ".($row['url_primary'] ? "style='font-weight: bold;'" : null).">\n";
 					echo "	<td>";
-					if (permission_exists('extension_edit')) {
+					if ($has_extension_edit) {
 						echo 	"<a href='".PROJECT_PATH."/app/extensions/extension_edit.php?id=".urlencode($row['extension_uuid'])."'>".escape($row['extension'])."</a>";
 					}
 					else {
@@ -91,7 +93,7 @@
 					echo "	</td>\n";
 					echo "	<td class='center'>".$text['label-'.escape($row['enabled'])]."&nbsp;</td>\n";
 					echo "	<td class='description overflow hide-md-dn'>".$row['description']."&nbsp;</td>\n";
-					if (permission_exists('extension_edit') && $list_row_edit_button) {
+					if ($has_extension_edit && $list_row_edit_button) {
 						echo "	<td class='action-button'>\n";
 						echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 						echo "	</td>\n";

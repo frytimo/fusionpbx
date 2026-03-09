@@ -34,6 +34,11 @@
 		echo "access denied";
 		exit;
 	}
+	$has_domain_select = permission_exists('domain_select');
+	$has_user_add      = permission_exists('user_add');
+	$has_user_all      = permission_exists('user_all');
+	$has_user_delete   = permission_exists('user_delete');
+	$has_user_edit     = permission_exists('user_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -46,7 +51,7 @@
 	}
 
 //get total user count from the database, check limit, if defined
-	if (permission_exists('user_add') && !empty($action) && $action == 'copy' && !empty($settings->get('limit', 'users'))) {
+	if ($has_user_add && !empty($action) && $action == 'copy' && !empty($settings->get('limit', 'users'))) {
 		$sql = "select count(*) ";
 		$sql .= "from v_users ";
 		$sql .= "where domain_uuid = :domain_uuid ";
@@ -65,19 +70,19 @@
 	if (!empty($action) && is_array($users) && @sizeof($users) != 0) {
 		switch ($action) {
 			case 'copy':
-				if (permission_exists('user_add')) {
+				if ($has_user_add) {
 					$obj = new users;
 					$obj->copy($users);
 				}
 				break;
 			case 'toggle':
-				if (permission_exists('user_edit')) {
+				if ($has_user_edit) {
 					$obj = new users;
 					$obj->toggle($users);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('user_delete')) {
+				if ($has_user_delete) {
 					$obj = new users;
 					$obj->delete($users);
 				}
@@ -115,7 +120,7 @@
 
 //get the count
 	$sql = "select count(*) from view_users ";
-	if ($show == "all" && permission_exists('user_all')) {
+	if ($show == "all" && $has_user_all) {
 		if (isset($sql_search)) {
 			$sql .= "where ".$sql_search;
 		}
@@ -140,7 +145,7 @@
 //prepare to page the results
 	$rows_per_page = $settings->get('domain', 'paging', 50);
 	$param = $search ? "&search=".$search : null;
-	$param .= ($show == 'all' && permission_exists('user_all')) ? "&show=all" : null;
+	$param .= ($show == 'all' && $has_user_all) ? "&show=all" : null;
 	$page = !empty($_GET['page']) ? $_GET['page'] : 0;
 	list($paging_controls, $rows_per_page) = paging($num_rows, $param, $rows_per_page);
 	list($paging_controls_mini, $rows_per_page) = paging($num_rows, $param, $rows_per_page, true);
@@ -151,7 +156,7 @@
 	$sql .= "contact_organization,contact_name,contact_note, ";
 	$sql .= "cast(user_enabled as text) ";
 	$sql .= "from view_users ";
-	if ($show == "all" && permission_exists('user_all')) {
+	if ($show == "all" && $has_user_all) {
 		if (isset($sql_search)) {
 			$sql .= "where ".$sql_search;
 		}
@@ -188,23 +193,23 @@
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['title-users']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('user_add')) {
+	if ($has_user_add) {
 		if (!isset($id)) {
 			echo button::create(['type'=>'button','label'=>$text['button-import'],'icon'=>$settings->get('theme', 'button_icon_import'),'style'=>'margin-right: 15px;','link'=>'user_imports.php']);
 		}
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'user_edit.php']);
 	}
-	if (permission_exists('user_add') && $users) {
+	if ($has_user_add && $users) {
 		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 	}
-	if (permission_exists('user_edit') && $users) {
+	if ($has_user_edit && $users) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
-	if (permission_exists('user_delete') && $users) {
+	if ($has_user_delete && $users) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if (permission_exists('user_all')) {
+	if ($has_user_all) {
 		if ($show == 'all') {
 			echo "		<input type='hidden' name='show' value='all'>\n";
 		}
@@ -223,13 +228,13 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('user_add') && $users) {
+	if ($has_user_add && $users) {
 		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('user_edit') && $users) {
+	if ($has_user_edit && $users) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('user_delete') && $users) {
+	if ($has_user_delete && $users) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -243,12 +248,12 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('user_add') || permission_exists('user_edit') || permission_exists('user_delete')) {
+	if ($has_user_add || $has_user_edit || $has_user_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($users) ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
 	}
-	if ($show == 'all' && permission_exists('user_all')) {
+	if ($show == 'all' && $has_user_all) {
 		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order, null, null, $param);
 	}
 	echo th_order_by('username', $text['label-username'], $order_by, $order, null, null, $param);
@@ -260,7 +265,7 @@
 	//echo th_order_by('add_date', $text['label-add_date'], $order_by, $order);
 	echo th_order_by('contact_note', $text['label-contact_note'], $order_by, $order, null, "class='center'", $param);
 	echo th_order_by('user_enabled', $text['label-user_enabled'], $order_by, $order, null, "class='center'", $param);
-	if (permission_exists('user_edit') && $list_row_edit_button) {
+	if ($has_user_edit && $list_row_edit_button) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -268,24 +273,24 @@
 		$x = 0;
 		foreach ($users as $row) {
 			$list_row_url = '';
-			if (permission_exists('user_edit')) {
+			if ($has_user_edit) {
 				$list_row_url = "user_edit.php?id=".urlencode($row['user_uuid']);
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('user_add') || permission_exists('user_edit') || permission_exists('user_delete')) {
+			if ($has_user_add || $has_user_edit || $has_user_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='users[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='users[$x][uuid]' value='".escape($row['user_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if ($show == 'all' && permission_exists('user_all')) {
+			if ($show == 'all' && $has_user_all) {
 				echo "	<td>".escape($_SESSION['domains'][$row['domain_uuid']]['domain_name'])."</td>\n";
 			}
 			echo "	<td>\n";
-			if (permission_exists('user_edit')) {
+			if ($has_user_edit) {
 				echo "	<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['username'])."</a>\n";
 			}
 			else {
@@ -300,7 +305,7 @@
 			//echo "	<td>".escape($row['user_status'])."</td>\n";
 			//echo "	<td>".escape($row['add_date'])."</td>\n";
 			echo "	<td>".escape($row['contact_note'])."</td>\n";
-			if (permission_exists('user_edit')) {
+			if ($has_user_edit) {
 				echo "	<td class='no-link center'>\n";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['user_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
 			}
@@ -309,7 +314,7 @@
 				echo $text['label-'.$row['user_enabled']];
 			}
 			echo "	</td>\n";
-			if (permission_exists('user_edit') && $list_row_edit_button) {
+			if ($has_user_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>\n";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

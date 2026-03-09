@@ -33,6 +33,9 @@
 		echo "access denied";
 		exit;
 	}
+	$has_voicemail_greeting_delete = permission_exists('voicemail_greeting_delete');
+	$has_voicemail_greeting_edit   = permission_exists('voicemail_greeting_edit');
+	$has_voicemail_greeting_play   = permission_exists('voicemail_greeting_play');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -113,7 +116,7 @@
 if (!empty($_POST) && empty($_POST["persistformvar"])) {
 
 	//delete the voicemail greeting
-		if (permission_exists('voicemail_greeting_delete')) {
+		if ($has_voicemail_greeting_delete) {
 			if (!empty($_POST['action']) && $_POST['action'] == 'delete' && is_uuid($voicemail_greeting_uuid)) {
 				//prepare
 				$array[0]['checked'] = 'true';
@@ -155,7 +158,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 		}
 
 	//update the database
-	if ((empty($_POST["persistformvar"]) || $_POST["persistformvar"] != "true") && permission_exists('voicemail_greeting_edit')) {
+	if ((empty($_POST["persistformvar"]) || $_POST["persistformvar"] != "true") && $has_voicemail_greeting_edit) {
 
 		//get current vm greeting ids for mailbox
 		$sql = "select greeting_id ";
@@ -314,10 +317,10 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 	echo "	<div class='heading'><b>".$text['label-'.($action == 'update' ? 'edit' : 'add')]."</b></div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','collapse'=>'hide-xs','link'=>'voicemail_greetings.php?id='.urlencode($voicemail_id)]);
- 	if (permission_exists('voicemail_greeting_delete') && $action == 'update') {
+ 	if ($has_voicemail_greeting_delete && $action == 'update') {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'name'=>'btn_delete','collapse'=>'hide-xs','style'=>'margin-left: 15px;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
-	if (permission_exists('voicemail_greeting_play') && $action == 'update') {
+	if ($has_voicemail_greeting_play && $action == 'update') {
 		$greeting_hash = md5($greeting_voice.$greeting_message);
 		$greeting_file_name = strtolower(pathinfo($greeting_filename, PATHINFO_BASENAME));
 		$greeting_file_ext = pathinfo($greeting_file_name, PATHINFO_EXTENSION);
@@ -334,7 +337,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('voicemail_greeting_delete') && $action == 'update') {
+	if ($has_voicemail_greeting_delete && $action == 'update') {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 	}
 

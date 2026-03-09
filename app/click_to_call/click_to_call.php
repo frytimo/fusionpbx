@@ -39,6 +39,7 @@
 		echo "access denied";
 		exit;
 	}
+	$has_click_to_call_call = permission_exists('click_to_call_call');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -192,7 +193,7 @@
 							break; //limit to 1 row
 						}
 					}
-					if (permission_exists('click_to_call_call')) {
+					if ($has_click_to_call_call) {
 						if (strpbrk($dest, '@') != FALSE) { //sip-uri
 							$switch_cmd = $destination_common.",call_direction=outbound}sofia/external/".$dest.")";
 						}

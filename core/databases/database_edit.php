@@ -33,6 +33,7 @@
 		echo "access denied";
 		exit;
 	}
+	$has_database_delete = permission_exists('database_delete');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -78,7 +79,7 @@ if (count($_POST)>0 && empty($_POST["persistformvar"])) {
 	}
 
 	//delete the database
-		if (permission_exists('database_delete')) {
+		if ($has_database_delete) {
 			if (!empty($_POST['action']) && $_POST['action'] == 'delete' && is_uuid($database_uuid)) {
 				//prepare
 					$array[0]['checked'] = 'true';
@@ -220,7 +221,7 @@ if (count($_POST)>0 && empty($_POST["persistformvar"])) {
 	echo "	</div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','style'=>'margin-right: 15px;','link'=>'databases.php']);
-	if ($action == 'update' && permission_exists('database_delete')) {
+	if ($action == 'update' && $has_database_delete) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'name'=>'btn_delete','style'=>'margin-right: 15px;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo button::create(['type'=>'submit','label'=>$text['button-save'],'icon'=>$settings->get('theme', 'button_icon_save'),'id'=>'btn_save','name'=>'action','value'=>'save']);
@@ -228,7 +229,7 @@ if (count($_POST)>0 && empty($_POST["persistformvar"])) {
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if ($action == 'update' && permission_exists('database_delete')) {
+	if ($action == 'update' && $has_database_delete) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 	}
 

@@ -36,6 +36,14 @@
 		echo "access denied";
 		exit;
 	}
+	$has_call_block_add        = permission_exists('call_block_add');
+	$has_call_block_all        = permission_exists('call_block_all');
+	$has_call_block_delete     = permission_exists('call_block_delete');
+	$has_call_block_domain     = permission_exists('call_block_domain');
+	$has_call_block_extension  = permission_exists('call_block_extension');
+	$has_call_block_ivr        = permission_exists('call_block_ivr');
+	$has_call_block_ring_group = permission_exists('call_block_ring_group');
+	$has_call_block_voicemail  = permission_exists('call_block_voicemail');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -74,7 +82,7 @@
 //get http post variables and set them to php variables
 	if (!empty($_POST)) {
 		//get the variables from the http post
-		$domain_uuid = permission_exists('call_block_domain') ? $_POST["domain_uuid"] : $_SESSION['domain_uuid'];
+		$domain_uuid = $has_call_block_domain ? $_POST["domain_uuid"] : $_SESSION['domain_uuid'];
 		$call_block_direction = $_POST["call_block_direction"];
 		$extension_uuid = $_POST["extension_uuid"];
 		$call_block_name = $_POST["call_block_name"] ?? null;
@@ -101,7 +109,7 @@
 			if (!empty($_POST['action'])) {
 				switch ($_POST['action']) {
 					case 'delete':
-						if (permission_exists('call_block_delete') && is_uuid($call_block_uuid)) {
+						if ($has_call_block_delete && is_uuid($call_block_uuid)) {
 							//prepare
 								$array[0]['checked'] = 'true';
 								$array[0]['uuid'] = $call_block_uuid;
@@ -112,7 +120,7 @@
 						break;
 					case 'add':
 						$xml_cdrs = $_POST['xml_cdrs'] ?? null;
-						if (!empty($xml_cdrs) && permission_exists('call_block_add')) {
+						if (!empty($xml_cdrs) && $has_call_block_add) {
 							$obj = new call_block;
 							$obj->call_block_direction = $call_block_direction;
 							$obj->extension_uuid = $extension_uuid;
@@ -186,7 +194,7 @@
 					}
 
 				//if user doesn't have call block all then use the assigned extension_uuid
-					if (!permission_exists('call_block_extension')) {
+					if (!$has_call_block_extension) {
 						$extension_uuid = $_SESSION['user']['extension'][0]['extension_uuid'];
 					}
 
@@ -269,7 +277,7 @@
 		$sql = "select * from v_call_block ";
 		$sql .= "where ( ";
 		$sql .= "	domain_uuid = :domain_uuid ";
-		if (permission_exists('call_block_domain')) {
+		if ($has_call_block_domain) {
 			$sql .= "	or domain_uuid is null ";
 		}
 		$sql .= ") ";
@@ -296,11 +304,11 @@
 	$call_block_enabled = $call_block_enabled ?? true;
 
 //get the extensions
-	if (permission_exists('call_block_all') || permission_exists('call_block_extension')) {
+	if ($has_call_block_all || $has_call_block_extension) {
 		$sql = "select extension_uuid, extension, number_alias, user_context, description from v_extensions ";
 		$sql .= "where ( ";
 		$sql .= "	domain_uuid = :domain_uuid ";
-		if (permission_exists('call_block_domain')) {
+		if ($has_call_block_domain) {
 			$sql .= "	or domain_uuid is null ";
 		}
 		$sql .= ") ";
@@ -311,11 +319,11 @@
 	}
 
 //get the ivr's
-	if (permission_exists('call_block_all') || permission_exists('call_block_ivr')) {
+	if ($has_call_block_all || $has_call_block_ivr) {
 		$sql = "select ivr_menu_uuid,ivr_menu_name, ivr_menu_extension, ivr_menu_description from v_ivr_menus ";
 		$sql .= "where ( ";
 		$sql .= "	domain_uuid = :domain_uuid ";
-		if (permission_exists('call_block_domain')) {
+		if ($has_call_block_domain) {
 			$sql .= "	or domain_uuid is null ";
 		}
 		$sql .= ") ";
@@ -326,11 +334,11 @@
 	}
 
 //get the ring groups
-	if (permission_exists('call_block_all') || permission_exists('call_block_ring_group')) {
+	if ($has_call_block_all || $has_call_block_ring_group) {
 		$sql = "select ring_group_uuid,ring_group_name, ring_group_extension, ring_group_description from v_ring_groups ";
 		$sql .= "where ( ";
 		$sql .= "	domain_uuid = :domain_uuid ";
-		if (permission_exists('call_block_domain')) {
+		if ($has_call_block_domain) {
 			$sql .= "	or domain_uuid is null ";
 		}
 		$sql .= ") ";
@@ -345,7 +353,7 @@
 	$sql .= "from v_voicemails ";
 	$sql .= "where ( ";
 	$sql .= "	domain_uuid = :domain_uuid ";
-	if (permission_exists('call_block_domain')) {
+	if ($has_call_block_domain) {
 		$sql .= "	or domain_uuid is null ";
 	}
 	$sql .= ") ";
@@ -358,7 +366,7 @@
 //get recent calls from the database (if not editing an existing call block record)
 	if (empty($_REQUEST["id"])) {
 		//without block all permission, limit to assigned extension(s)
-		if (!permission_exists('call_block_extension') && !empty($_SESSION['user']['extension'])) {
+		if (!$has_call_block_extension && !empty($_SESSION['user']['extension'])) {
 			foreach ($_SESSION['user']['extension'] as $assigned_extension) {
 				$assigned_extensions[$assigned_extension['extension_uuid']] = $assigned_extension['user'];
 			}
@@ -399,22 +407,22 @@
 	$call_block_actions[] = ['group_name' => 'action', 'group_label' => $text['label-action'], 'app_name' => 'reject', 'value' => 'reject', 'label' => $text['label-reject']];
 	$call_block_actions[] = ['group_name' => 'action', 'group_label' => $text['label-action'], 'app_name' => 'busy', 'value' => 'busy', 'label' => $text['label-busy']];
 	$call_block_actions[] = ['group_name' => 'action', 'group_label' => $text['label-action'], 'app_name' => 'hold', 'value' => 'hold', 'label' => $text['label-hold']];
-	if (permission_exists('call_block_extension') && !empty($extensions)) {
+	if ($has_call_block_extension && !empty($extensions)) {
 		foreach ($extensions as $row) {
 			$call_block_actions[] = ['group_name' => 'extension', 'group_label' => $text['label-extension'], 'app_name' => 'extension', 'extension' => urlencode($row["extension"]), 'value' => 'extension:'.urlencode($row["extension"]), 'label' => escape($row['extension'])." ".escape($row['description'])];
 		}
 	}
-	if (permission_exists('call_block_ivr') && !empty($ivrs)) {
+	if ($has_call_block_ivr && !empty($ivrs)) {
 		foreach ($ivrs as $row) {
 			$call_block_actions[] = ['group_name' => 'ivr', 'group_label' => $text['label-ivr_menus'], 'app_name' => 'ivr', 'extension' => urlencode($row["extension"]), 'value' => 'ivr:'.urlencode($row["extension"]), 'label' => escape($row['ivr_menu_name'])." ".escape($row['ivr_menu_extension'])];
 		}
 	}
-	if (permission_exists('call_block_ring_group') && !empty($ring_groups)) {
+	if ($has_call_block_ring_group && !empty($ring_groups)) {
 		foreach ($ring_groups as $row) {
 			$call_block_actions[] = ['group_name' => 'ring_group', 'group_label' => $text['label-ring_groups'], 'app_name' => 'ring_group', 'extension' => urlencode($row["ring_group_extension"]), 'value' => 'ring_group:'.urlencode($row["ring_group_extension"]), 'label' => escape($row['ring_group_name'])." ".escape($row['ring_group_extension'])];
 		}
 	}
-	if (permission_exists('call_block_voicemail') && !empty($voicemails)) {
+	if ($has_call_block_voicemail && !empty($voicemails)) {
 		foreach ($voicemails as $row) {
 			$call_block_actions[] = ['group_name' => 'voicemail', 'group_label' => $text['label-voicemail'], 'app_name' => 'voicemail', 'extension' => urlencode($row["voicemail_id"]), 'value' => 'voicemail:'.urlencode($row["voicemail_id"]), 'label' => escape($row['voicemail_id'])." ".escape($row['voicemail_description'])];
 		}
@@ -443,7 +451,7 @@
 	echo 	"</div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','collapse'=>'hide-xs','style'=>'margin-right: 15px;','link'=>'call_block.php']);
-	if ($action == 'update' && permission_exists('call_block_delete')) {
+	if ($action == 'update' && $has_call_block_delete) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'name'=>'btn_delete','collapse'=>'hide-xs','style'=>'margin-right: 15px;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo button::create(['type'=>'submit','label'=>$text['button-save'],'icon'=>$settings->get('theme', 'button_icon_save'),'id'=>'btn_save','collapse'=>'hide-xs']);
@@ -451,7 +459,7 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if ($action == 'update' && permission_exists('call_block_delete')) {
+	if ($action == 'update' && $has_call_block_delete) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 	}
 
@@ -481,7 +489,7 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('call_block_extension')) {
+	if ($has_call_block_extension) {
 		echo "<tr>\n";
 		echo "<td width='30%' class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-extension']."\n";
@@ -558,7 +566,7 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('call_block_domain')) {
+	if ($has_call_block_domain) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-domain']."\n";
@@ -638,7 +646,7 @@
 		echo button::create(['type'=>'button','id'=>'action_bar_sub_button_back','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'collapse'=>'hide-xs','style'=>'display: none;','link'=>'call_block.php']);
 		if ($recent_calls) {
 			$select_margin = 'margin-left: 15px;';
-			if (permission_exists('call_block_extension')) {
+			if ($has_call_block_extension) {
 				echo 	"<select class='formfld' style='".$select_margin."' name='extension_uuid'>\n";
 				echo "		<option value='' disabled='disabled'>".$text['label-extension']."</option>\n";
 				echo "		<option value='' selected='selected'>".$text['label-all']."</option>\n";

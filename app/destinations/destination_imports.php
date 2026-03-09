@@ -33,6 +33,9 @@
 		echo "access denied";
 		exit;
 	}
+	$has_destination_context = permission_exists('destination_context');
+	$has_destination_domain  = permission_exists('destination_domain');
+	$has_destination_upload  = permission_exists('destination_upload');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -64,7 +67,7 @@
 
 //copy the csv file
 	//$_POST['submit'] == "Upload" &&
-	if (!empty($_FILES['ulfile']['tmp_name']) && is_uploaded_file($_FILES['ulfile']['tmp_name']) && permission_exists('destination_upload')) {
+	if (!empty($_FILES['ulfile']['tmp_name']) && is_uploaded_file($_FILES['ulfile']['tmp_name']) && $has_destination_upload) {
 		if ($_POST['type'] == 'csv') {
 			move_uploaded_file($_FILES['ulfile']['tmp_name'], $settings->get('server', 'temp').'/'.$_FILES['ulfile']['name']);
 			$save_msg = "Uploaded file to ".$settings->get('server', 'temp')."/". htmlentities($_FILES['ulfile']['name']);
@@ -808,7 +811,7 @@
 			echo "</td>\n";
 			echo "</tr>\n";
 
-			//if (permission_exists('destination_context')) {
+			//if ($has_destination_context) {
 				echo "<tr>\n";
 				echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 				echo "	".$text['label-destination_context']."\n";
@@ -835,7 +838,7 @@
 			echo "</td>\n";
 			echo "</tr>\n";
 
-			if (permission_exists('destination_domain')) {
+			if ($has_destination_domain) {
 				echo "<tr>\n";
 				echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 				echo "	".$text['label-domain']."\n";
@@ -997,7 +1000,7 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('destination_upload')) {
+	if ($has_destination_upload) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "			".$text['label-import_file_upload']."\n";

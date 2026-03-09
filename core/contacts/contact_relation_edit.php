@@ -34,6 +34,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_contact_relation_add  = permission_exists('contact_relation_add');
+	$has_contact_relation_edit = permission_exists('contact_relation_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -115,7 +117,7 @@
 					$p->delete('contact_edit', 'temp');
 
 				//add the relation
-					if ($action == "add" && permission_exists('contact_relation_add')) {
+					if ($action == "add" && $has_contact_relation_add) {
 						$contact_relation_uuid = uuid();
 						$array['contact_relations'][0]['contact_relation_uuid'] = $contact_relation_uuid;
 
@@ -132,7 +134,7 @@
 					}
 
 				//update the relation
-					if ($action == "update" && permission_exists('contact_relation_edit')) {
+					if ($action == "update" && $has_contact_relation_edit) {
 						$array['contact_relations'][0]['contact_relation_uuid'] = $contact_relation_uuid;
 
 						message::add($text['message-update']);

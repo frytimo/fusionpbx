@@ -34,6 +34,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_contact_url_add  = permission_exists('contact_url_add');
+	$has_contact_url_edit = permission_exists('contact_url_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -129,14 +131,14 @@
 					unset($sql, $parameters);
 				}
 
-				if ($action == "add" && permission_exists('contact_url_add')) {
+				if ($action == "add" && $has_contact_url_add) {
 					$contact_url_uuid = uuid();
 					$array['contact_urls'][0]['contact_url_uuid'] = $contact_url_uuid;
 
 					message::add($text['message-add']);
 				}
 
-				if ($action == "update" && permission_exists('contact_url_edit')) {
+				if ($action == "update" && $has_contact_url_edit) {
 					$array['contact_urls'][0]['contact_url_uuid'] = $contact_url_uuid;
 
 					message::add($text['message-update']);

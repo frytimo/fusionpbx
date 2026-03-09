@@ -31,6 +31,11 @@
 		echo "access denied";
 		exit;
 	}
+	$has_domain_select = permission_exists('domain_select');
+	$has_fifo_add      = permission_exists('fifo_add');
+	$has_fifo_all      = permission_exists('fifo_all');
+	$has_fifo_delete   = permission_exists('fifo_delete');
+	$has_fifo_edit     = permission_exists('fifo_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -67,19 +72,19 @@
 
 		switch ($action) {
 // 			case 'copy':
-// 				if (permission_exists('fifo_add')) {
+// 				if ($has_fifo_add) {
 // 					$obj = new fifo;
 // 					$obj->copy($fifo);
 // 				}
 // 				break;
 			case 'toggle':
-				if (permission_exists('fifo_edit')) {
+				if ($has_fifo_edit) {
 					$obj = new fifo;
 					$obj->toggle($fifo);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('fifo_delete')) {
+				if ($has_fifo_delete) {
 					$obj = new fifo;
 					$obj->delete($fifo);
 				}
@@ -120,7 +125,7 @@
 //get the count
 	$sql = "select count(fifo_uuid) ";
 	$sql .= "from v_fifo ";
-	if (permission_exists('fifo_all') && $show == 'all') {
+	if ($has_fifo_all && $show == 'all') {
 		$sql .= "where true ";
 	}
 	else {
@@ -141,7 +146,7 @@
 //prepare to page the results
 	$rows_per_page = $settings->get('domain', 'paging', 50);
 	$param = !empty($search) ? "&search=".$search : null;
-	$param .= (!empty($_GET['page']) && $show == 'all' && permission_exists('fifo_all')) ? "&show=all" : null;
+	$param .= (!empty($_GET['page']) && $show == 'all' && $has_fifo_all) ? "&show=all" : null;
 	$page = !empty($_GET['page']) && is_numeric($_GET['page']) ? $_GET['page'] : 0;
 	list($paging_controls, $rows_per_page) = paging($num_rows, $param, $rows_per_page);
 	list($paging_controls_mini, $rows_per_page) = paging($num_rows, $param, $rows_per_page, true);
@@ -161,7 +166,7 @@
 	$sql .= "cast(fifo_enabled as text), ";
 	$sql .= "fifo_description ";
 	$sql .= "from v_fifo as u, v_domains as d ";
-	if (permission_exists('fifo_all') && $show == 'all') {
+	if ($has_fifo_all && $show == 'all') {
 		$sql .= "where true ";
 	}
 	else {
@@ -196,20 +201,20 @@
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['title-fifos']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('fifo_add')) {
+	if ($has_fifo_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','name'=>'btn_add','link'=>'fifo_edit.php']);
 	}
-// 	if (permission_exists('fifo_add') && $fifo) {
+// 	if ($has_fifo_add && $fifo) {
 // 		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display:none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 // 	}
-	if (permission_exists('fifo_edit') && $fifo) {
+	if ($has_fifo_edit && $fifo) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display:none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
-	if (permission_exists('fifo_delete') && $fifo) {
+	if ($has_fifo_delete && $fifo) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display:none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if (permission_exists('fifo_all')) {
+	if ($has_fifo_all) {
 		if ($show == 'all') {
 			echo "		<input type='hidden' name='show' value='all'>\n";
 		}
@@ -227,13 +232,13 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-// 	if (permission_exists('fifo_add') && $fifo) {
+// 	if ($has_fifo_add && $fifo) {
 // 		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 // 	}
-	if (permission_exists('fifo_edit') && $fifo) {
+	if ($has_fifo_edit && $fifo) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('fifo_delete') && $fifo) {
+	if ($has_fifo_delete && $fifo) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -247,12 +252,12 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('fifo_add') || permission_exists('fifo_edit') || permission_exists('fifo_delete')) {
+	if ($has_fifo_add || $has_fifo_edit || $has_fifo_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".empty($fifo ? "style='visibility: hidden;'" : null).">\n";
 		echo "	</th>\n";
 	}
-	if ($show == 'all' && permission_exists('fifo_all')) {
+	if ($show == 'all' && $has_fifo_all) {
 		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order);
 	}
 	echo th_order_by('fifo_name', $text['label-fifo_name'], $order_by, $order);
@@ -262,7 +267,7 @@
 	echo th_order_by('fifo_order', $text['label-fifo_order'], $order_by, $order);
 	echo th_order_by('fifo_enabled', $text['label-enabled'], $order_by, $order, null, "class='center'");
 	echo "	<th class='hide-sm-dn'>".$text['label-fifo_description']."</th>\n";
-	if (permission_exists('fifo_edit') && $list_row_edit_button == 'true') {
+	if ($has_fifo_edit && $list_row_edit_button == 'true') {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -272,24 +277,24 @@
 		foreach ($fifo as $row) {
 			//dispatch render-row hook
 			app::dispatch_list_render_row(null, $url, $row, $x);
-			if (permission_exists('fifo_edit')) {
+			if ($has_fifo_edit) {
 				$list_row_url = "fifo_edit.php?id=".urlencode($row['fifo_uuid']);
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('fifo_add') || permission_exists('fifo_edit') || permission_exists('fifo_delete')) {
+			if ($has_fifo_add || $has_fifo_edit || $has_fifo_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='fifo[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='fifo[$x][uuid]' value='".escape($row['fifo_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if ($show == 'all' && permission_exists('fifo_all')) {
+			if ($show == 'all' && $has_fifo_all) {
 				echo "	<td>".escape($row['domain_name'])."</td>\n";
 			}
 			echo "	<td>\n";
-			if (permission_exists('fifo_edit')) {
+			if ($has_fifo_edit) {
 				echo "	<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['fifo_name'])."</a>\n";
 			}
 			else {
@@ -300,7 +305,7 @@
 			echo "	<td>".escape($row['fifo_agent_status'])."</td>\n";
 			echo "	<td>".escape($row['fifo_agent_queue'])."</td>\n";
 			echo "	<td>".escape($row['fifo_order'])."</td>\n";
-			if (permission_exists('fifo_edit')) {
+			if ($has_fifo_edit) {
 				echo "	<td class='no-link center'>\n";
 				echo "		<input type='hidden' name='number_translations[$x][fifo_enabled]' value='".escape($row['fifo_enabled'])."' />\n";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['fifo_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
@@ -311,7 +316,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td class='description overflow hide-sm-dn'>".escape($row['fifo_description'])."</td>\n";
-			if (permission_exists('fifo_edit') && $list_row_edit_button == 'true') {
+			if ($has_fifo_edit && $list_row_edit_button == 'true') {
 				echo "	<td class='action-button'>\n";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

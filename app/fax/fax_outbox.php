@@ -34,6 +34,7 @@
 		echo "access denied";
 		exit;
 	}
+	$has_fax_extension_view_domain = permission_exists('fax_extension_view_domain');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -45,7 +46,7 @@
 //get fax extensions
 	if (is_uuid($_REQUEST["id"])) {
 		$fax_uuid = $_REQUEST["id"];
-		if (permission_exists('fax_extension_view_domain')) {
+		if ($has_fax_extension_view_domain) {
 			//show all fax extensions
 			$sql = "select fax_name, fax_extension from v_fax ";
 			$sql .= "where domain_uuid = :domain_uuid ";
@@ -71,7 +72,7 @@
 			$fax_extension = $row["fax_extension"];
 		}
 		else {
-			if (!permission_exists('fax_extension_view_domain')) {
+			if (!$has_fax_extension_view_domain) {
 				echo "access denied";
 				exit;
 			}

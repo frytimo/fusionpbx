@@ -33,6 +33,10 @@
 		echo "access denied";
 		exit;
 	}
+	$has_group_member_view       = permission_exists('group_member_view');
+	$has_group_permission_add    = permission_exists('group_permission_add');
+	$has_group_permission_delete = permission_exists('group_permission_delete');
+	$has_group_permission_edit   = permission_exists('group_permission_edit');
 
 //get the group_uuid
 	if (!empty($_REQUEST["group_uuid"])) {
@@ -254,7 +258,7 @@
 
 		//delete the delete array
 			if (!empty($array['delete']) && is_array($array['delete']) && @sizeof($array['delete']) != 0) {
-				if (permission_exists('group_permission_delete')) {
+				if ($has_group_permission_delete) {
 					$database->delete($array['delete']);
 				}
 			}
@@ -281,7 +285,7 @@
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','style'=>'margin-right: 15px;','collapse'=>'hide-md-dn','link'=>'groups.php']);
 	echo button::create(['type'=>'button','label'=>$text['button-reload'],'icon'=>$settings->get('theme', 'button_icon_reload'),'collapse'=>'hide-md-dn','link'=>'?group_uuid='.urlencode($group_uuid).'&action=reload'.($view ? '&view='.urlencode($view) : null).($category ? '&category='.urlencode($category) : null).($search ? '&search='.urlencode($search) : '')]);
-	if (permission_exists('group_member_view')) {
+	if ($has_group_member_view) {
 		echo button::create(['type'=>'button','label'=>$text['button-members'],'icon'=>'users','collapse'=>'hide-md-dn','link'=>'group_members.php?group_uuid='.urlencode($group_uuid)]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
@@ -306,7 +310,7 @@
 	echo 		"<input type='text' class='txt list-search' style='margin-left: 0;' name='search' id='search' value=\"".escape($search)."\" placeholder=\"".$text['label-search']."\" onkeydown='list_search_reset();'>";
 	echo button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search','collapse'=>'hide-md-dn','style'=>($search != '' ? 'display: none;' : null)]);
 	echo button::create(['label'=>$text['button-reset'],'icon'=>$settings->get('theme', 'button_icon_reset'),'type'=>'button','id'=>'btn_reset','collapse'=>'hide-md-dn','link'=>'group_permissions.php?group_uuid='.urlencode($group_uuid),'style'=>($search == '' && $view == '' && $category == '' ? 'display: none;' : null)]);
-	if (permission_exists('group_permission_edit')) {
+	if ($has_group_permission_edit) {
 		echo button::create(['type'=>'button','label'=>$text['button-save'],'icon'=>$settings->get('theme', 'button_icon_save'),'id'=>'btn_save','collapse'=>'hide-md-dn','style'=>'margin-left: 15px;','onclick'=>"document.getElementById('form_list').submit();"]);
 	}
 	echo "		</form>\n";
@@ -346,13 +350,13 @@
 				echo "			<td align='left' colspan='999' style='cursor: default !important;' nowrap='nowrap'><b>".escape($application_name_label)."</b></td>\n";
 				echo "		</tr>";
 				echo "		<tr class='list-header heading_".$application_name."'>\n";
-				if (permission_exists('group_permission_add') || permission_exists('group_permission_edit') || permission_exists('group_permission_delete')) {
+				if ($has_group_permission_add || $has_group_permission_edit || $has_group_permission_delete) {
 					echo "		<th class='checkbox'>\n";
 					echo "			<input type='checkbox' id='checkbox_all_".$application_name."' name='checkbox_all' onclick=\"list_all_toggle('".$application_name."');\">\n";
 					echo "		</th>\n";
 				}
 				echo "			<th>".$text['label-group_name']."</th>\n";
-				if (permission_exists('group_permission_add') || permission_exists('group_permission_edit') || permission_exists('group_permission_delete')) {
+				if ($has_group_permission_add || $has_group_permission_edit || $has_group_permission_delete) {
 					echo "		<th class='checkbox' onmouseover=\"document.getElementById('checkbox_all_label_".$application_name."').style.display='none'; document.getElementById('checkbox_all_".$application_name."_protected').style.display='';\" onmouseout=\"document.getElementById('checkbox_all_label_".$application_name."').style.display=''; document.getElementById('checkbox_all_".$application_name."_protected').style.display='none';\">\n";
 					echo "			<span id='checkbox_all_label_".$application_name."'>".$text['label-group_protected']."</span>\n";
 					echo "			<input type='checkbox' id='checkbox_all_".$application_name."_protected' name='checkbox_protected_all' style='display: none;' onclick=\"list_all_toggle('".$application_name."_protected');\">\n";
@@ -365,7 +369,7 @@
 			//application permission
 			if (!$view || ($view == 'assigned' && $checked) || ($view == 'unassigned' && !$checked) || ($view == 'protected' && $protected)) {
 				echo "<tr class='list-row'>\n";
-				if (permission_exists('group_permission_add') || permission_exists('group_permission_edit') || permission_exists('group_permission_delete')) {
+				if ($has_group_permission_add || $has_group_permission_edit || $has_group_permission_delete) {
 					echo "	<td class='checkbox'>\n";
 					echo "		<input type='checkbox' name='group_permissions[$x][checked]' id='checkbox_".$x."' class='checkbox_".$application_name."' value='true' ".$checked." onclick=\"if (!this.checked) { document.getElementById('checkbox_all_".$application_name."').checked = false; }\">\n";
 					//echo "		<input type='hidden' name='group_permissions[$x][permission_uuid]' value='".escape($row['permission_uuid'])."' />\n";
@@ -375,7 +379,7 @@
 				echo "	<td class='no-wrap' onclick=\"if (document.getElementById('checkbox_".$x."').checked) { document.getElementById('checkbox_".$x."').checked = false; document.getElementById('checkbox_all_".$application_name."').checked = false; } else { document.getElementById('checkbox_".$x."').checked = true; }\">";
 				echo "		".escape($row['permission_name']);
 				echo "	</td>\n";
-				if (permission_exists('group_permission_add') || permission_exists('group_permission_edit') || permission_exists('group_permission_delete')) {
+				if ($has_group_permission_add || $has_group_permission_edit || $has_group_permission_delete) {
 					echo "	<td class='checkbox'>\n";
 					echo "		<input type='checkbox' name='group_permissions[$x][permission_protected]' id='checkbox_protected_".$x."' class='checkbox_".$application_name."_protected' value='true' ".$protected." onclick=\"if (!this.checked) { document.getElementById('checkbox_all_".$application_name."_protected').checked = false; }\">\n";
 					echo "	</td>\n";

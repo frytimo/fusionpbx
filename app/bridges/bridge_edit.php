@@ -30,6 +30,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_bridge_delete              = permission_exists('bridge_delete');
+	$has_outbound_route_any_gateway = permission_exists('outbound_route_any_gateway');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -68,7 +70,7 @@
 	if (!empty($_POST) && empty($_POST["persistformvar"])) {
 
 		//delete the bridge
-			if (permission_exists('bridge_delete')) {
+			if ($has_bridge_delete) {
 				if ($_POST['action'] == 'delete' && is_uuid($bridge_uuid)) {
 					//prepare
 						$array[0]['checked'] = 'true';
@@ -319,7 +321,7 @@
 //get the gateways
 	$sql = "select * from v_gateways ";
 	$sql .= "where enabled = 'true' ";
-	if (permission_exists('outbound_route_any_gateway')) {
+	if ($has_outbound_route_any_gateway) {
 		$sql .= "order by domain_uuid = :domain_uuid DESC, gateway ";
 	}
 	else {
@@ -394,7 +396,7 @@
 	echo "	<div class='heading'><b>".$text['title-bridge']."</b></div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','style'=>'margin-right: 15px;','link'=>'bridges.php']);
-	if ($action == 'update' && permission_exists('bridge_delete')) {
+	if ($action == 'update' && $has_bridge_delete) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'name'=>'btn_delete','style'=>'margin-right: 15px;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo button::create(['type'=>'submit','label'=>$text['button-save'],'icon'=>$settings->get('theme', 'button_icon_save'),'id'=>'btn_save','name'=>'action','value'=>'save']);
@@ -402,7 +404,7 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if ($action == 'update' && permission_exists('bridge_delete')) {
+	if ($action == 'update' && $has_bridge_delete) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 	}
 
@@ -488,7 +490,7 @@
 		echo "<optgroup label='".$text['label-bridge_gateways']."'>\n";
 		$previous_domain_uuid = '';
 		foreach($gateways as $row) {
-			if (permission_exists('outbound_route_any_gateway')) {
+			if ($has_outbound_route_any_gateway) {
 				if ($previous_domain_uuid != $row['domain_uuid']) {
 					$domain_name = '';
 					foreach($domains as $field) {

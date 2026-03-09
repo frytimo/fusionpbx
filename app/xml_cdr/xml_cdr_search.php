@@ -34,6 +34,12 @@
 		echo "access denied";
 		exit;
 	}
+	$has_xml_cdr_account_code              = permission_exists('xml_cdr_account_code');
+	$has_xml_cdr_all                       = permission_exists('xml_cdr_all');
+	$has_xml_cdr_b_leg                     = permission_exists('xml_cdr_b_leg');
+	$has_xml_cdr_search_call_center_queues = permission_exists('xml_cdr_search_call_center_queues');
+	$has_xml_cdr_search_ivr_menus          = permission_exists('xml_cdr_search_ivr_menus');
+	$has_xml_cdr_search_ring_groups        = permission_exists('xml_cdr_search_ring_groups');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -73,7 +79,7 @@
 	$extensions = $database->select($sql, $parameters, 'all');
 
 //get the ring groups
-	if (permission_exists('xml_cdr_search_ring_groups')) {
+	if ($has_xml_cdr_search_ring_groups) {
 		$sql = "select ring_group_uuid, ring_group_name, ring_group_extension from v_ring_groups ";
 		$sql .= "where domain_uuid = :domain_uuid ";
 		$sql .= "and ring_group_enabled = true ";
@@ -83,7 +89,7 @@
 	}
 
 //get the ivr menus
-	if (permission_exists('xml_cdr_search_ivr_menus')) {
+	if ($has_xml_cdr_search_ivr_menus) {
 		$sql = "select ivr_menu_uuid, ivr_menu_name, ivr_menu_extension from v_ivr_menus ";
 		$sql .= "where domain_uuid = :domain_uuid ";
 		$sql .= "and ivr_menu_enabled = true ";
@@ -93,7 +99,7 @@
 	}
 
 //get the call center queues
-	if (permission_exists('xml_cdr_search_call_center_queues')) {
+	if ($has_xml_cdr_search_call_center_queues) {
 		$sql = "select call_center_queue_uuid, queue_name, queue_extension from v_call_center_queues ";
 		$sql .= "where domain_uuid = :domain_uuid ";
 		$sql .= "order by queue_extension asc ";
@@ -168,7 +174,7 @@
 		}
 		echo "			</select>\n";
 
-		if (permission_exists('xml_cdr_b_leg')){
+		if ($has_xml_cdr_b_leg){
 			echo "			<select name='leg' class='formfld'>\n";
 			echo "			<option value='' selected='selected'></option>\n";
 			echo "			<option value='a'>a-leg</option>\n";
@@ -248,7 +254,7 @@
 		echo "			<input type='text' class='formfld' style='min-width: 75px; width: 75px;' name='duration_max' value='".escape($duration_max)."' placeholder=\"".$text['label-maximum']."\">\n";
 		echo "		</td>";
 		echo "	</tr>";
-		if (permission_exists('xml_cdr_all')) {
+		if ($has_xml_cdr_all) {
 			echo "	<tr>";
 			echo "		<td class='vncell'>".$text['button-show_all']."</td>";
 			echo "		<td class='vtable'>\n";
@@ -288,7 +294,7 @@
 		echo "		<td class='vncell'>".$text['label-bridge_uuid']."</td>";
 		echo "		<td class='vtable'><input type='text' class='formfld' name='bleg_uuid' value='".escape($bridge_uuid)."'></td>";
 		echo "	</tr>";
-		if (permission_exists('xml_cdr_account_code')) {
+		if ($has_xml_cdr_account_code) {
 			echo "	<tr>";
 			echo "		<td class='vncell'>".$text['label-accountcode']."</td>";
 			echo "		<td class='vtable'><input type='text' class='formfld' name='accountcode' value='".escape($accountcode)."'></td>";
@@ -340,7 +346,7 @@
 		echo "		</td>";
 		echo "	</tr>\n";
 
-		if (permission_exists('xml_cdr_search_call_center_queues')) {
+		if ($has_xml_cdr_search_call_center_queues) {
 			echo "	<tr>";
 			echo "		<td class='vncell'>".$text['label-call_center_queue']."</td>";
 			echo "		<td class='vtable'>";
@@ -358,7 +364,7 @@
 			unset($sql, $parameters, $call_center_queues, $row, $selected);
 		}
 
-		if (permission_exists('xml_cdr_search_ring_groups')) {
+		if ($has_xml_cdr_search_ring_groups) {
 			echo "	<tr>";
 			echo "		<td class='vncell'>".$text['label-ring_group']."</td>";
 			echo "		<td class='vtable'>";

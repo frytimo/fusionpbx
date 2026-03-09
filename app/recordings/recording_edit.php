@@ -34,6 +34,9 @@
 		echo "access denied";
 		exit;
 	}
+	$has_recording_delete = permission_exists('recording_delete');
+	$has_recording_edit   = permission_exists('recording_edit');
+	$has_recording_play   = permission_exists('recording_play');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -133,7 +136,7 @@
 		$recording_uuid = $_POST["recording_uuid"] ?? '';
 
 		//delete the recording
-		if (permission_exists('recording_delete')) {
+		if ($has_recording_delete) {
 			if (!empty($_POST['action']) && $_POST['action'] == 'delete' && is_uuid($recording_uuid)) {
 				//prepare
 				$array[0]['checked'] = 'true';
@@ -186,7 +189,7 @@
 
 		//update the database
 		if (empty($_POST["persistformvar"])) {
-			if (permission_exists('recording_edit')) {
+			if ($has_recording_edit) {
 
 				//set the recording format for approved types
 				if (!in_array($recording_extension, ['mp3', 'wav'], true)) {
@@ -322,10 +325,10 @@
 	echo "	<div class='heading'><b>".$text['title-edit']."</b></div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','link'=>'recordings.php']);
-	if (permission_exists('recording_delete') && !empty($recording_uuid) && is_uuid($recording_uuid)) {
+	if ($has_recording_delete && !empty($recording_uuid) && is_uuid($recording_uuid)) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'name'=>'btn_delete','style'=>'margin-left: 15px;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
-	if (permission_exists('recording_play') && !empty($recording_uuid) && is_uuid($recording_uuid)) {
+	if ($has_recording_play && !empty($recording_uuid) && is_uuid($recording_uuid)) {
 		$recording_hash = md5($recording_voice.$recording_message);
 		$recording_file_name = strtolower(pathinfo($recording_filename, PATHINFO_BASENAME));
 		$recording_file_ext = pathinfo($recording_file_name, PATHINFO_EXTENSION);
@@ -342,7 +345,7 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('recording_delete')) {
+	if ($has_recording_delete) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 	}
 

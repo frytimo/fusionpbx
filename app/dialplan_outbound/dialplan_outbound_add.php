@@ -38,6 +38,10 @@
 		echo "access denied";
 		exit;
 	}
+	$has_bridge_view                 = permission_exists('bridge_view');
+	$has_outbound_route_any_gateway  = permission_exists('outbound_route_any_gateway');
+	$has_outbound_route_pin_database = permission_exists('outbound_route_pin_database');
+	$has_outbound_route_pin_number   = permission_exists('outbound_route_pin_number');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -900,7 +904,7 @@
 //get the gateways
 	$sql = "select * from v_gateways ";
 	$sql .= "where enabled = true ";
-	if (permission_exists('outbound_route_any_gateway')) {
+	if ($has_outbound_route_any_gateway) {
 		$sql .= "order by CASE WHEN domain_uuid = :domain_uuid THEN 0 ELSE 1 END, domain_uuid DESC, gateway ";
 	}
 	else {
@@ -912,7 +916,7 @@
 	unset($sql, $parameters);
 
 //get the bridges
-	if (permission_exists('bridge_view')) {
+	if ($has_bridge_view) {
 		$sql = "select * from v_bridges ";
 		$sql .= "where bridge_enabled = true ";
 		$sql .= "and domain_uuid = :domain_uuid ";
@@ -1043,7 +1047,7 @@ function type_onchange(dialplan_detail_type) {
 	echo "<optgroup label='".$text['label-gateway']."'>\n";
 	$previous_domain_uuid = '';
 	foreach($gateways as $row) {
-		if (permission_exists('outbound_route_any_gateway')) {
+		if ($has_outbound_route_any_gateway) {
 			if ($previous_domain_uuid != $row['domain_uuid']) {
 				$domain_name = '';
 				foreach($domains as $field) {
@@ -1074,7 +1078,7 @@ function type_onchange(dialplan_detail_type) {
 		$previous_domain_uuid = $row['domain_uuid'];
 	}
 	echo "	</optgroup>\n";
-	if (permission_exists('bridge_view')) {
+	if ($has_bridge_view) {
 		echo "	<optgroup label='".$text['label-bridges']."'>\n";
 		foreach($bridges as $row) {
 			echo "		<option value=\"bridge:".$row['bridge_destination']."\">".$row['bridge_name']."</option>\n";
@@ -1104,7 +1108,7 @@ function type_onchange(dialplan_detail_type) {
 	echo "	<optgroup label='".$text['label-sip-gateway']."'>\n";
 	$previous_domain_uuid = '';
 	foreach($gateways as $row) {
-		if (permission_exists('outbound_route_any_gateway')) {
+		if ($has_outbound_route_any_gateway) {
 			if ($previous_domain_uuid != $row['domain_uuid']) {
 				$domain_name = '';
 				foreach($domains as $field) {
@@ -1135,7 +1139,7 @@ function type_onchange(dialplan_detail_type) {
 		$previous_domain_uuid = $row['domain_uuid'];
 	}
 	echo "	</optgroup>\n";
-	if (permission_exists('bridge_view')) {
+	if ($has_bridge_view) {
 		echo "	<optgroup label='".$text['label-bridges']."'>\n";
 		foreach($bridges as $row) {
 			echo "		<option value=\"bridge:".$row['bridge_destination']."\">".$row['bridge_name']."</option>\n";
@@ -1165,7 +1169,7 @@ function type_onchange(dialplan_detail_type) {
 	echo "	<optgroup label='".$text['label-sip-gateway']."'>\n";
 	$previous_domain_uuid = '';
 	foreach($gateways as $row) {
-		if (permission_exists('outbound_route_any_gateway')) {
+		if ($has_outbound_route_any_gateway) {
 			if ($previous_domain_uuid != $row['domain_uuid']) {
 				$domain_name = '';
 				foreach($domains as $field) {
@@ -1196,7 +1200,7 @@ function type_onchange(dialplan_detail_type) {
 		$previous_domain_uuid = $row['domain_uuid'];
 	}
 	echo "	</optgroup>\n";
-	if (permission_exists('bridge_view')) {
+	if ($has_bridge_view) {
 		echo "	<optgroup label='".$text['label-bridges']."'>\n";
 		foreach($bridges as $row) {
 			echo "		<option value=\"bridge:".$row['bridge_destination']."\">".$row['bridge_name']."</option>\n";
@@ -1318,7 +1322,7 @@ function type_onchange(dialplan_detail_type) {
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('outbound_route_pin_database')) {
+	if ($has_outbound_route_pin_database) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap>\n";
 		echo "	".$text['label-pin_database']."\n";
@@ -1340,7 +1344,7 @@ function type_onchange(dialplan_detail_type) {
 		echo "</td>\n";
 		echo "</tr>\n";
 	}
-	elseif (permission_exists('outbound_route_pin_number')) {
+	elseif ($has_outbound_route_pin_number) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap>\n";
 		echo "	".$text['label-pin_number']."\n";

@@ -34,6 +34,11 @@
 		echo "access denied";
 		exit;
 	}
+	$has_domain_select   = permission_exists('domain_select');
+	$has_ivr_menu_add    = permission_exists('ivr_menu_add');
+	$has_ivr_menu_all    = permission_exists('ivr_menu_all');
+	$has_ivr_menu_delete = permission_exists('ivr_menu_delete');
+	$has_ivr_menu_edit   = permission_exists('ivr_menu_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -73,19 +78,19 @@
 
 		switch ($action) {
 			case 'copy':
-				if (permission_exists('ivr_menu_add')) {
+				if ($has_ivr_menu_add) {
 					$obj = new ivr_menu;
 					$obj->copy($ivr_menus);
 				}
 				break;
 			case 'toggle':
-				if (permission_exists('ivr_menu_edit')) {
+				if ($has_ivr_menu_edit) {
 					$obj = new ivr_menu;
 					$obj->toggle($ivr_menus);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('ivr_menu_delete')) {
+				if ($has_ivr_menu_delete) {
 					$obj = new ivr_menu;
 					$obj->delete($ivr_menus);
 				}
@@ -117,7 +122,7 @@
 
 //prepare to page the results
 	$sql = "select count(*) from v_ivr_menus ";
-	if ($show == "all" && permission_exists('ivr_menu_all')) {
+	if ($show == "all" && $has_ivr_menu_all) {
 		$sql .= "where true ";
 	}
 	else {
@@ -138,7 +143,7 @@
 //prepare to page the results
 	$rows_per_page = $settings->get('domain', 'paging', 50);
 	$param = "&search=".urlencode($search);
-	if ($show == "all" && permission_exists('ivr_menu_all')) {
+	if ($show == "all" && $has_ivr_menu_all) {
 		$param .= "&show=all";
 	}
 	$page = !empty($_GET['page']) ? $_GET['page'] : 0;
@@ -155,7 +160,7 @@
 	$sql .= "cast(ivr_menu_enabled as text), ";
 	$sql .= "ivr_menu_description ";
 	$sql .= "from v_ivr_menus ";
-	if ($show == "all" && permission_exists('ivr_menu_all')) {
+	if ($show == "all" && $has_ivr_menu_all) {
 		$sql .= "where true ";
 	}
 	else {
@@ -190,20 +195,20 @@
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['title-ivr_menus']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('ivr_menu_add')) {
+	if ($has_ivr_menu_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'ivr_menu_edit.php']);
 	}
-	if (permission_exists('ivr_menu_add')) {
+	if ($has_ivr_menu_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 	}
-	if (permission_exists('ivr_menu_edit') && $ivr_menus) {
+	if ($has_ivr_menu_edit && $ivr_menus) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
-	if (permission_exists('ivr_menu_delete') && $ivr_menus) {
+	if ($has_ivr_menu_delete && $ivr_menus) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if (permission_exists('ivr_menu_all')) {
+	if ($has_ivr_menu_all) {
 		if ($show == 'all') {
 			echo "		<input type='hidden' name='show' value='all'>";
 		}
@@ -222,13 +227,13 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('ivr_menu_add') && $ivr_menus) {
+	if ($has_ivr_menu_add && $ivr_menus) {
 		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('ivr_menu_edit') && $ivr_menus) {
+	if ($has_ivr_menu_edit && $ivr_menus) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('ivr_menu_delete') && $ivr_menus) {
+	if ($has_ivr_menu_delete && $ivr_menus) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -242,19 +247,19 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('ivr_menu_add') || permission_exists('ivr_menu_edit') || permission_exists('ivr_menu_delete')) {
+	if ($has_ivr_menu_add || $has_ivr_menu_edit || $has_ivr_menu_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($ivr_menus) ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
 	}
-	if ($show == "all" && permission_exists('ivr_menu_all')) {
+	if ($show == "all" && $has_ivr_menu_all) {
 		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param, "class='shrink'");
 	}
 	echo th_order_by('ivr_menu_name', $text['label-name'], $order_by, $order);
 	echo th_order_by('ivr_menu_extension', $text['label-extension'], $order_by, $order);
 	echo th_order_by('ivr_menu_enabled', $text['label-enabled'], $order_by, $order, null, "class='center'");
 	echo th_order_by('ivr_menu_description', $text['label-description'], $order_by, $order, null, "class='hide-sm-dn'");
-	if (permission_exists('ivr_menu_edit') && $list_row_edit_button) {
+	if ($has_ivr_menu_edit && $list_row_edit_button) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -265,20 +270,20 @@
 			//dispatch render-row hook
 			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
-			if (permission_exists('ivr_menu_edit')) {
+			if ($has_ivr_menu_edit) {
 				$list_row_url = "ivr_menu_edit.php?id=".urlencode($row['ivr_menu_uuid']);
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('ivr_menu_add') || permission_exists('ivr_menu_edit') || permission_exists('ivr_menu_delete')) {
+			if ($has_ivr_menu_add || $has_ivr_menu_edit || $has_ivr_menu_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='ivr_menus[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='ivr_menus[$x][uuid]' value='".escape($row['ivr_menu_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if ($show == "all" && permission_exists('ivr_menu_all')) {
+			if ($show == "all" && $has_ivr_menu_all) {
 				if (!empty($_SESSION['domains'][$row['domain_uuid']]['domain_name'])) {
 					$domain = $_SESSION['domains'][$row['domain_uuid']]['domain_name'];
 				}
@@ -288,7 +293,7 @@
 				echo "	<td>".escape($domain)."</td>\n";
 			}
 			echo "	<td>";
-			if (permission_exists('ivr_menu_edit')) {
+			if ($has_ivr_menu_edit) {
 				echo "<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['ivr_menu_name'])."</a>";
 			}
 			else {
@@ -296,7 +301,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td>".escape($row['ivr_menu_extension'])."&nbsp;</td>\n";
-			if (permission_exists('ivr_menu_edit')) {
+			if ($has_ivr_menu_edit) {
 				echo "	<td class='no-link center'>";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['ivr_menu_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
 			}
@@ -306,7 +311,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td class='description overflow hide-sm-dn'>".escape($row['ivr_menu_description'])."&nbsp;</td>\n";
-			if (permission_exists('ivr_menu_edit') && $list_row_edit_button) {
+			if ($has_ivr_menu_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

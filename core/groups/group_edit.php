@@ -33,6 +33,10 @@
 		echo "access denied";
 		exit;
 	}
+	$has_group_add             = permission_exists('group_add');
+	$has_group_delete          = permission_exists('group_delete');
+	$has_group_member_view     = permission_exists('group_member_view');
+	$has_group_permission_view = permission_exists('group_permission_view');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -73,13 +77,13 @@
 
 				switch ($_POST['action']) {
 					case 'copy':
-						if (permission_exists('group_add')) {
+						if ($has_group_add) {
 							$obj = new groups;
 							$obj->copy($array);
 						}
 						break;
 					case 'delete':
-						if (permission_exists('group_delete')) {
+						if ($has_group_delete) {
 							$obj = new groups;
 							$obj->delete($array);
 						}
@@ -197,19 +201,19 @@
 	echo "	<div class='heading'><b>".$text['title-group']."</b></div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','link'=>'groups.php']);
-	if ($action == 'update' && permission_exists('group_permission_view')) {
+	if ($action == 'update' && $has_group_permission_view) {
 		$button_margin = 'margin-left: 15px;';
 		echo button::create(['type'=>'button','label'=>$text['button-permissions'],'icon'=>'key','style'=>$button_margin,'link'=>'group_permissions.php?group_uuid='.urlencode($group_uuid)]);
 	}
-	if ($action == 'update' && permission_exists('group_member_view')) {
+	if ($action == 'update' && $has_group_member_view) {
 		$button_margin = 'margin-left: 0px;';
 		echo button::create(['type'=>'button','label'=>$text['button-members'],'icon'=>'users','style'=>$button_margin,'link'=>'group_members.php?group_uuid='.urlencode($group_uuid)]);
 	}
-	if ($action == 'update' && permission_exists('group_add')) {
+	if ($action == 'update' && $has_group_add) {
 		$button_margin = 'margin-left: 15px;';
 		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'name'=>'btn_copy','style'=>$button_margin,'onclick'=>"modal_open('modal-copy','btn_copy');"]);
 	}
-	if ($action == 'update' && permission_exists('group_delete')) {
+	if ($action == 'update' && $has_group_delete) {
 		$button_margin = 'margin-left: 0px;';
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'name'=>'btn_delete','style'=>$button_margin,'onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
@@ -218,10 +222,10 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if ($action == 'update' && permission_exists('group_add')) {
+	if ($action == 'update' && $has_group_add) {
 		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'copy','onclick'=>"modal_close();"])]);
 	}
-	if ($action == 'update' && permission_exists('group_delete')) {
+	if ($action == 'update' && $has_group_delete) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 	}
 

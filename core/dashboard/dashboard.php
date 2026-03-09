@@ -30,6 +30,13 @@
 		echo "access denied";
 		exit;
 	}
+	$has_dashboard_add    = permission_exists('dashboard_add');
+	$has_dashboard_all    = permission_exists('dashboard_all');
+	$has_dashboard_delete = permission_exists('dashboard_delete');
+	$has_dashboard_domain = permission_exists('dashboard_domain');
+	$has_dashboard_edit   = permission_exists('dashboard_edit');
+	$has_domain_all       = permission_exists('domain_all');
+	$has_domain_select    = permission_exists('domain_select');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -49,19 +56,19 @@
 	if (!empty($action) && is_array($dashboards) && @sizeof($dashboards) != 0) {
 		switch ($action) {
 			case 'copy':
-				if (permission_exists('dashboard_add')) {
+				if ($has_dashboard_add) {
 					$obj = new dashboard;
 					$obj->copy($dashboards);
 				}
 				break;
 			case 'toggle':
-				if (permission_exists('dashboard_edit')) {
+				if ($has_dashboard_edit) {
 					$obj = new dashboard;
 					$obj->toggle($dashboards);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('dashboard_delete')) {
+				if ($has_dashboard_delete) {
 					$obj = new dashboard;
 					$obj->delete($dashboards);
 				}
@@ -81,14 +88,14 @@
 	$sql = "select count(dashboard_uuid) ";
 	$sql .= "from v_dashboards ";
 	$sql .= "where true \n";
-	if ($show == "all" && permission_exists('dashboard_all')) {
+	if ($show == "all" && $has_dashboard_all) {
 		//$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 		//$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	}
 	else {
 		$sql .= "and ( ";
 		$sql .= "	domain_uuid = :domain_uuid ";
-		if (permission_exists('dashboard_domain')) {
+		if ($has_dashboard_domain) {
 			$sql .= "	or domain_uuid is null ";
 		}
 		$sql .= ") ";
@@ -113,14 +120,14 @@
 	$sql .= "dashboard_description \n";
 	$sql .= "from v_dashboards as d \n";
 	$sql .= "where true \n";
-	if ($show == "all" && permission_exists('dashboard_all')) {
+	if ($show == "all" && $has_dashboard_all) {
 		//$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 		//$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	}
 	else {
 		$sql .= "and ( ";
 		$sql .= "	domain_uuid = :domain_uuid ";
-		if (permission_exists('dashboard_domain')) {
+		if ($has_dashboard_domain) {
 			$sql .= "	or domain_uuid is null ";
 		}
 		$sql .= ") ";
@@ -151,19 +158,19 @@
 	echo "	<div class='heading'><b>".$text['title-dashboards']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','name'=>'btn_back','style'=>'margin-right: 15px;','link'=>'index.php']);
-	if (permission_exists('dashboard_add')) {
+	if ($has_dashboard_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','name'=>'btn_add','link'=>'dashboard_edit.php']);
 	}
-	if (permission_exists('dashboard_add') && !empty($dashboards)) {
+	if ($has_dashboard_add && !empty($dashboards)) {
 		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display:none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 	}
-	if (permission_exists('dashboard_edit') && !empty($dashboards)) {
+	if ($has_dashboard_edit && !empty($dashboards)) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display:none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
-	if (permission_exists('dashboard_delete') && !empty($dashboards)) {
+	if ($has_dashboard_delete && !empty($dashboards)) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display:none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
-	if (permission_exists('domain_all')) {
+	if ($has_domain_all) {
 		if ($show == 'all') {
 			echo "		<input type='hidden' name='show' value='all'>";
 		}
@@ -183,13 +190,13 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('dashboard_add') && !empty($dashboards)) {
+	if ($has_dashboard_add && !empty($dashboards)) {
 		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('dashboard_edit') && !empty($dashboards)) {
+	if ($has_dashboard_edit && !empty($dashboards)) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('dashboard_delete') && !empty($dashboards)) {
+	if ($has_dashboard_delete && !empty($dashboards)) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -200,18 +207,18 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('dashboard_add') || permission_exists('dashboard_edit') || permission_exists('dashboard_delete')) {
+	if ($has_dashboard_add || $has_dashboard_edit || $has_dashboard_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($dashboards) ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
 	}
-	if ($show == 'all' && permission_exists('dashboard_all')) {
+	if ($show == 'all' && $has_dashboard_all) {
 		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order);
 	}
 	echo th_order_by('dashboard_name', $text['label-dashboard_name'], $order_by, $order);
 	echo th_order_by('dashboard_enabled', $text['label-dashboard_enabled'], $order_by, $order, null, "class='center'");
 	echo "	<th class='hide-sm-dn'>".$text['label-dashboard_description']."</th>\n";
-	if (permission_exists('dashboard_edit') && $settings->get('theme', 'list_row_edit_button', false)) {
+	if ($has_dashboard_edit && $settings->get('theme', 'list_row_edit_button', false)) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -220,20 +227,20 @@
 		$x = 0;
 		foreach ($dashboards as $row) {
 			$list_row_url = '';
-			if (permission_exists('dashboard_edit')) {
+			if ($has_dashboard_edit) {
 				$list_row_url = "dashboard_edit.php?id=".urlencode($row['dashboard_uuid']);
-				if (!empty($row['domain_uuid']) && $row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+				if (!empty($row['domain_uuid']) && $row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('dashboard_add') || permission_exists('dashboard_edit') || permission_exists('dashboard_delete')) {
+			if ($has_dashboard_add || $has_dashboard_edit || $has_dashboard_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='dashboards[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='dashboards[$x][dashboard_uuid]' value='".escape($row['dashboard_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if (!empty($show) && $show == 'all' && permission_exists('domain_all')) {
+			if (!empty($show) && $show == 'all' && $has_domain_all) {
 				if (!empty($row['domain_uuid']) && is_uuid($row['domain_uuid'])) {
 					echo "	<td>".escape($_SESSION['domains'][$row['domain_uuid']]['domain_name'])."</td>\n";
 				}
@@ -242,14 +249,14 @@
 				}
 			}
 			echo "	<td>\n";
-			if (permission_exists('dashboard_edit')) {
+			if ($has_dashboard_edit) {
 				echo "	<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['dashboard_name'])."</a>\n";
 			}
 			else {
 				echo "	".escape($row['dashboard_name']);
 			}
 			echo "	</td>\n";
-			if (permission_exists('dashboard_edit')) {
+			if ($has_dashboard_edit) {
 				echo "	<td class='no-link center'>\n";
 				echo "		<input type='hidden' name='number_translations[$x][dashboard_enabled]' value='".escape($row['dashboard_enabled'])."' />\n";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.($row['dashboard_enabled']?:'false')],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
@@ -260,7 +267,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td class='description overflow hide-sm-dn'>".escape($row['dashboard_description'])."</td>\n";
-			if (permission_exists('dashboard_edit') && $settings->get('theme', 'list_row_edit_button', false)) {
+			if ($has_dashboard_edit && $settings->get('theme', 'list_row_edit_button', false)) {
 				echo "	<td class='action-button'>\n";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

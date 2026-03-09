@@ -36,6 +36,14 @@
 		echo "access denied";
 		exit;
 	}
+	$has_call_center_active_view = permission_exists('call_center_active_view');
+	$has_destination_view        = permission_exists('destination_view');
+	$has_device_view             = permission_exists('device_view');
+	$has_extension_view          = permission_exists('extension_view');
+	$has_gateway_view            = permission_exists('gateway_view');
+	$has_ivr_menu_view           = permission_exists('ivr_menu_view');
+	$has_ring_group_view         = permission_exists('ring_group_view');
+	$has_user_view               = permission_exists('user_view');
 
 //convert to a key
 	$widget_key = str_replace(' ', '_', strtolower($widget_name));
@@ -62,28 +70,28 @@
 			echo "<div class='hud_box'>\n";
 
 		//determine stats
-			if (permission_exists('user_view')) {
+			if ($has_user_view) {
 				$sql_select[] = "(select count(user_uuid) from v_users where domain_uuid = :domain_uuid) as users";
 			}
-			if (permission_exists('call_center_active_view')) {
+			if ($has_call_center_active_view) {
 				$sql_select[] = "(select count(call_center_queue_uuid) from v_call_center_queues where domain_uuid = :domain_uuid) as call_center_queues";
 			}
-			if (permission_exists('destination_view')) {
+			if ($has_destination_view) {
 				$sql_select[] = "(select count(destination_uuid) from v_destinations where domain_uuid = :domain_uuid) as destinations";
 			}
-			if (permission_exists('device_view')) {
+			if ($has_device_view) {
 				$sql_select[] = "(select count(device_uuid) from v_devices where domain_uuid = :domain_uuid) as devices";
 			}
-			if (permission_exists('extension_view')) {
+			if ($has_extension_view) {
 				$sql_select[] = "(select count(extension_uuid) from v_extensions where domain_uuid = :domain_uuid) as extensions";
 			}
-			if (permission_exists('gateway_view')) {
+			if ($has_gateway_view) {
 				$sql_select[] = "(select count(gateway_uuid) from v_gateways where domain_uuid = :domain_uuid) as gateways";
 			}
-			if (permission_exists('ivr_menu_view')) {
+			if ($has_ivr_menu_view) {
 				$sql_select[] = "(select count(ivr_menu_uuid) from v_ivr_menus where domain_uuid = :domain_uuid) as ivr_menus";
 			}
-			if (permission_exists('ring_group_view')) {
+			if ($has_ring_group_view) {
 				$sql_select[] = "(select count(ring_group_uuid) from v_ring_groups where domain_uuid = :domain_uuid) as ring_groups";
 			}
 			if (is_array($sql_select) && @sizeof($sql_select) != 0) {
@@ -94,13 +102,13 @@
 			}
 
 		//determine chart data
-			if (permission_exists('extension_view')) {
+			if ($has_extension_view) {
 				$onclick = "onclick=\"document.location.href='".PROJECT_PATH."/app/extensions/extensions.php'\"";
 				$hud_stat_used = $usage['extensions'];
 				$hud_stat_remaining = $settings->get('limit', 'extensions', 0) - $usage['extensions'];
 				$hud_stat_title = $text['label-extensions'];
 			}
-			else if (permission_exists('destination_view')) {
+			else if ($has_destination_view) {
 				$onclick = "onclick=\"document.location.href='".PROJECT_PATH."/app/destinations/destinations.php'\"";
 				$hud_stat_used = $usage['destinations'];
 				$hud_stat_remaining = $settings->get('limit', 'destinations', 0) - $usage['destinations'];
@@ -192,35 +200,35 @@
 					$limit = $value['numeric'];
 					switch ($category) {
 						case 'users':
-							if (!permission_exists('user_view')) { continue 2; }
+							if (!$has_user_view) { continue 2; }
 							$url = '/core/users/users.php';
 							break;
 						case 'call_center_queues':
-							if (!permission_exists('call_center_active_view')) { continue 2; }
+							if (!$has_call_center_active_view) { continue 2; }
 							$url = '/app/call_centers/call_center_queues.php';
 							break;
 						case 'destinations':
-							if (!permission_exists('destination_view')) { continue 2; }
+							if (!$has_destination_view) { continue 2; }
 							$url = '/app/destinations/destinations.php';
 							break;
 						case 'devices':
-							if (!permission_exists('device_view')) { continue 2; }
+							if (!$has_device_view) { continue 2; }
 							$url = '/app/devices/devices.php';
 							break;
 						case 'extensions':
-							if (!permission_exists('extension_view')) { continue 2; }
+							if (!$has_extension_view) { continue 2; }
 							$url = '/app/extensions/extensions.php';
 							break;
 						case 'gateways':
-							if (!permission_exists('gateway_view')) { continue 2; }
+							if (!$has_gateway_view) { continue 2; }
 							$url = '/app/gateways/gateways.php';
 							break;
 						case 'ivr_menus':
-							if (!permission_exists('ivr_menu_view')) { continue 2; }
+							if (!$has_ivr_menu_view) { continue 2; }
 							$url = '/app/ivr_menus/ivr_menus.php';
 							break;
 						case 'ring_groups':
-							if (!permission_exists('ring_group_view')) { continue 2; }
+							if (!$has_ring_group_view) { continue 2; }
 							$url = '/app/ring_groups/ring_groups.php';
 							break;
 					}

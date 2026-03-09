@@ -34,6 +34,18 @@
 		echo "access denied";
 		exit;
 	}
+	$has_call_broadcast_accountcode         = permission_exists('call_broadcast_accountcode');
+	$has_call_broadcast_add                 = permission_exists('call_broadcast_add');
+	$has_call_broadcast_caller_id           = permission_exists('call_broadcast_caller_id');
+	$has_call_broadcast_concurrent_limit    = permission_exists('call_broadcast_concurrent_limit');
+	$has_call_broadcast_delete              = permission_exists('call_broadcast_delete');
+	$has_call_broadcast_destination_number  = permission_exists('call_broadcast_destination_number');
+	$has_call_broadcast_edit                = permission_exists('call_broadcast_edit');
+	$has_call_broadcast_phone_numbers       = permission_exists('call_broadcast_phone_numbers');
+	$has_call_broadcast_start_time          = permission_exists('call_broadcast_start_time');
+	$has_call_broadcast_timeout             = permission_exists('call_broadcast_timeout');
+	$has_call_broadcast_toll_allow          = permission_exists('call_broadcast_toll_allow');
+	$has_call_broadcast_voicemail_detection = permission_exists('call_broadcast_voicemail_detection');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -142,7 +154,7 @@ function upload_file($sql, $broadcast_phone_numbers) {
 if (!empty($_POST) && empty($_POST["persistformvar"])) {
 
 	//delete the call broadcast
-		if (permission_exists('call_broadcast_delete')) {
+		if ($has_call_broadcast_delete) {
 			if (!empty($_POST['action']) && $_POST['action'] == 'delete' && is_uuid($call_broadcast_uuid)) {
 				//prepare
 					$call_broadcasts[0]['checked'] = 'true';
@@ -198,7 +210,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 	if (empty($_POST["persistformvar"])) {
 
 		//prep insert
-			if ($action == "add" && permission_exists('call_broadcast_add')) {
+			if ($action == "add" && $has_call_broadcast_add) {
 				//begin insert array
 					$call_broadcast_uuid = uuid();
 					$array['call_broadcasts'][0]['call_broadcast_uuid'] = $call_broadcast_uuid;
@@ -211,7 +223,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 			}
 
 		//prep update
-			if ($action == "update" && permission_exists('call_broadcast_edit')) {
+			if ($action == "update" && $has_call_broadcast_edit) {
 				//begin update array
 					$array['call_broadcasts'][0]['call_broadcast_uuid'] = $call_broadcast_uuid;
 
@@ -238,33 +250,33 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 				//build the database array
 					$array['call_broadcasts'][0]['domain_uuid'] = $domain_uuid;
 					$array['call_broadcasts'][0]['broadcast_name'] = $broadcast_name;
-					if (permission_exists('call_broadcast_start_time')) {
+					if ($has_call_broadcast_start_time) {
 						$array['call_broadcasts'][0]['broadcast_start_time'] = strtotime($broadcast_start_time) - strtotime('now') >= 0 ? strtotime($broadcast_start_time) - strtotime('now') : null;
 					}
-					if (permission_exists('call_broadcast_accountcode')) {
+					if ($has_call_broadcast_accountcode) {
 						$array['call_broadcasts'][0]['broadcast_accountcode'] = $broadcast_accountcode;
 					}
-					if (permission_exists('call_broadcast_timeout')) {
+					if ($has_call_broadcast_timeout) {
 						$array['call_broadcasts'][0]['broadcast_timeout'] = strlen($broadcast_timeout) != 0 ? $broadcast_timeout : null;
 					}
-					if (permission_exists('call_broadcast_concurrent_limit')) {
+					if ($has_call_broadcast_concurrent_limit) {
 						$array['call_broadcasts'][0]['broadcast_concurrent_limit'] = strlen($broadcast_concurrent_limit) != 0 ? $broadcast_concurrent_limit : null;
 					}
-					if (permission_exists("call_broadcast_caller_id")) {
+					if ($has_call_broadcast_caller_id) {
 						$array['call_broadcasts'][0]['broadcast_caller_id_name'] = $broadcast_caller_id_name;
 						$array['call_broadcasts'][0]['broadcast_caller_id_number'] = $broadcast_caller_id_number;
 					}
-					if (permission_exists('call_broadcast_destination_number')) {
+					if ($has_call_broadcast_destination_number) {
 						$array['call_broadcasts'][0]['broadcast_destination_data'] = $broadcast_destination_data;
 					}
 					//$array['call_broadcasts'][0]['broadcast_destination_type'] = $broadcast_destination_type;
-					if (permission_exists('call_broadcast_phone_numbers')) {
+					if ($has_call_broadcast_phone_numbers) {
 						$array['call_broadcasts'][0]['broadcast_phone_numbers'] = $broadcast_phone_numbers;
 					}
-					if (permission_exists('call_broadcast_voicemail_detection')) { //broadcast_avmd
+					if ($has_call_broadcast_voicemail_detection) { //broadcast_avmd
 						$array['call_broadcasts'][0]['broadcast_avmd'] = $broadcast_avmd;
 					}
-					if (permission_exists('call_broadcast_toll_allow')) {
+					if ($has_call_broadcast_toll_allow) {
 						$array['call_broadcasts'][0]['broadcast_toll_allow'] = $broadcast_toll_allow;
 					}
 					$array['call_broadcasts'][0]['broadcast_description'] = $broadcast_description;
@@ -339,7 +351,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 	if ($action == "update") {
 		echo button::create(['type'=>'button','label'=>$text['button-start'],'icon'=>$settings->get('theme', 'button_icon_start'),'style'=>'margin-left: 15px;','link'=>'call_broadcast_send.php?id='.urlencode($call_broadcast_uuid)]);
 		echo button::create(['type'=>'button','label'=>$text['button-stop'],'icon'=>$settings->get('theme', 'button_icon_stop'),'link'=>'call_broadcast_stop.php?id='.urlencode($call_broadcast_uuid)]);
-		if (permission_exists('call_broadcast_delete')) {
+		if ($has_call_broadcast_delete) {
 			echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'name'=>'btn_delete','style'=>'margin-left: 15px;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 		}
 	}
@@ -348,7 +360,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if ($action == 'update' && permission_exists('call_broadcast_delete')) {
+	if ($action == 'update' && $has_call_broadcast_delete) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 	}
 
@@ -366,7 +378,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('call_broadcast_start_time')) {
+	if ($has_call_broadcast_start_time) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap>\n";
 		echo "	".$text['label-start_time']."\n";
@@ -379,7 +391,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('call_broadcast_accountcode')) {
+	if ($has_call_broadcast_accountcode) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-accountcode']."\n";
@@ -393,7 +405,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('call_broadcast_timeout')) {
+	if ($has_call_broadcast_timeout) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap>\n";
 		echo "	".$text['label-timeout']."\n";
@@ -406,7 +418,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('call_broadcast_concurrent_limit')) {
+	if ($has_call_broadcast_concurrent_limit) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap>\n";
 		echo "	".$text['label-concurrent-limit']."\n";
@@ -449,7 +461,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 	//echo "</td>\n";
 	//echo "</tr>\n";
 
-	if (permission_exists("call_broadcast_caller_id")) {
+	if ($has_call_broadcast_caller_id) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap>\n";
 		echo "	".$text['label-caller-id-name']."\n";
@@ -501,7 +513,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 	echo "</tr>\n";
 	*/
 
-	if (permission_exists('call_broadcast_destination_number')) {
+	if ($has_call_broadcast_destination_number) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap>\n";
 		echo "	".$text['label-destination']."\n";
@@ -513,7 +525,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 		echo "</td>\n";
 		echo "</tr>\n";
 	}
-	if (permission_exists('call_broadcast_phone_numbers')) {
+	if ($has_call_broadcast_phone_numbers) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap>\n";
 		echo "	".$text['label-phone']."\n";
@@ -529,7 +541,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 		echo "</td>\n";
 		echo "</tr>\n";
 	}
-	if (permission_exists('call_broadcast_voicemail_detection')) {
+	if ($has_call_broadcast_voicemail_detection) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-avmd']."\n";
@@ -551,7 +563,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 		echo "</td>\n";
 		echo "</tr>\n";
 	}
-	if (permission_exists('call_broadcast_toll_allow')) {
+	if ($has_call_broadcast_toll_allow) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-broadcast_toll_allow']."\n";

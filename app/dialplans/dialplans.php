@@ -36,6 +36,28 @@ if (!(permission_exists('dialplan_view') || permission_exists('inbound_route_vie
 	echo "access denied";
 	exit;
 }
+	$has_dialplan_add          = permission_exists('dialplan_add');
+	$has_dialplan_all          = permission_exists('dialplan_all');
+	$has_dialplan_context      = permission_exists('dialplan_context');
+	$has_dialplan_delete       = permission_exists('dialplan_delete');
+	$has_dialplan_edit         = permission_exists('dialplan_edit');
+	$has_dialplan_global       = permission_exists('dialplan_global');
+	$has_dialplan_xml          = permission_exists('dialplan_xml');
+	$has_domain_select         = permission_exists('domain_select');
+	$has_fifo_add              = permission_exists('fifo_add');
+	$has_fifo_delete           = permission_exists('fifo_delete');
+	$has_fifo_edit             = permission_exists('fifo_edit');
+	$has_inbound_route_add     = permission_exists('inbound_route_add');
+	$has_inbound_route_copy    = permission_exists('inbound_route_copy');
+	$has_inbound_route_delete  = permission_exists('inbound_route_delete');
+	$has_inbound_route_edit    = permission_exists('inbound_route_edit');
+	$has_outbound_route_add    = permission_exists('outbound_route_add');
+	$has_outbound_route_copy   = permission_exists('outbound_route_copy');
+	$has_outbound_route_delete = permission_exists('outbound_route_delete');
+	$has_outbound_route_edit   = permission_exists('outbound_route_edit');
+	$has_time_condition_add    = permission_exists('time_condition_add');
+	$has_time_condition_delete = permission_exists('time_condition_delete');
+	$has_time_condition_edit   = permission_exists('time_condition_edit');
 
 // add multi-lingual support
 $text = new text()->get();
@@ -93,7 +115,7 @@ if (!empty($action) && is_array($dialplans) && @sizeof($dialplans) != 0) {
 	// process action
 	switch ($action) {
 		case 'copy':
-			if (permission_exists('dialplan_add')) {
+			if ($has_dialplan_add) {
 				$obj = new dialplan;
 				$obj->app_uuid = $app_uuid;
 				$obj->list_page = $list_page;
@@ -101,7 +123,7 @@ if (!empty($action) && is_array($dialplans) && @sizeof($dialplans) != 0) {
 			}
 			break;
 		case 'toggle':
-			if (permission_exists('dialplan_edit')) {
+			if ($has_dialplan_edit) {
 				$obj = new dialplan;
 				$obj->app_uuid = $app_uuid;
 				$obj->list_page = $list_page;
@@ -109,7 +131,7 @@ if (!empty($action) && is_array($dialplans) && @sizeof($dialplans) != 0) {
 			}
 			break;
 		case 'delete':
-			if (permission_exists('dialplan_delete')) {
+			if ($has_dialplan_delete) {
 				$obj = new dialplan;
 				$obj->app_uuid = $app_uuid;
 				$obj->list_page = $list_page;
@@ -155,11 +177,11 @@ $button_icon_reset = $settings->get('theme', 'button_icon_reset') ?? '';
 
 // get the number of rows in the dialplan
 $sql = "select count(dialplan_uuid) from v_dialplans ";
-if ($show == "all" && permission_exists('dialplan_all')) {
+if ($show == "all" && $has_dialplan_all) {
 	$sql .= "where true ";
 } else {
 	$sql .= "where (domain_uuid = :domain_uuid ";
-	if (permission_exists('dialplan_global')) {
+	if ($has_dialplan_global) {
 		$sql .= "or domain_uuid is null ";
 	}
 	$sql .= ") ";
@@ -216,7 +238,7 @@ if (!empty($order_by)) {
 if (!empty($order)) {
 	$params[] = "order=" . urlencode($order);
 }
-if ($show == "all" && permission_exists('dialplan_all')) {
+if ($show == "all" && $has_dialplan_all) {
 	$params[] = "show=all";
 }
 if (!empty($params)) {
@@ -250,12 +272,12 @@ $sql .= "dialplan_order, ";
 $sql .= "cast(dialplan_enabled as text), ";
 $sql .= "dialplan_description ";
 $sql .= "from v_dialplans ";
-if ($show == "all" && permission_exists('dialplan_all')) {
+if ($show == "all" && $has_dialplan_all) {
 	$sql .= "where true ";
 } else {
 	$sql .= "where (";
 	$sql .= "	domain_uuid = :domain_uuid ";
-	if (permission_exists('dialplan_global')) {
+	if ($has_dialplan_global) {
 		$sql .= "	or domain_uuid is null ";
 	}
 	$sql .= ") ";
@@ -308,7 +330,7 @@ unset($sql, $parameters);
 // get the list of all dialplan contexts
 $sql = "select dc.* from ( ";
 $sql .= "select distinct dialplan_context from v_dialplans ";
-if ($show == "all" && permission_exists('dialplan_all')) {
+if ($show == "all" && $has_dialplan_all) {
 	$sql .= "where true ";
 } else {
 	$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
@@ -405,15 +427,15 @@ echo "</b><div class='count'>" . number_format($num_rows) . "</div>";
 echo "</div>\n";
 echo "	<div class='actions'>\n";
 $button_add_url = '';
-if ($app_uuid == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && permission_exists('inbound_route_add')) {
+if ($app_uuid == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && $has_inbound_route_add) {
 	$button_add_url = PROJECT_PATH . "/app/dialplan_inbound/dialplan_inbound_add.php";
-} else if ($app_uuid == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && permission_exists('outbound_route_add')) {
+} else if ($app_uuid == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && $has_outbound_route_add) {
 	$button_add_url = PROJECT_PATH . "/app/dialplan_outbound/dialplan_outbound_add.php";
-} else if ($app_uuid == "16589224-c876-aeb3-f59f-523a1c0801f7" && permission_exists('fifo_add')) {
+} else if ($app_uuid == "16589224-c876-aeb3-f59f-523a1c0801f7" && $has_fifo_add) {
 	$button_add_url = PROJECT_PATH . "/app/fifo/fifo_add.php";
-} else if ($app_uuid == "4b821450-926b-175a-af93-a03c441818b1" && permission_exists('time_condition_add')) {
+} else if ($app_uuid == "4b821450-926b-175a-af93-a03c441818b1" && $has_time_condition_add) {
 	$button_add_url = PROJECT_PATH . "/app/time_conditions/time_condition_edit.php";
-} else if (permission_exists('dialplan_add')) {
+} else if ($has_dialplan_add) {
 	$button_add_url = PROJECT_PATH . "/app/dialplans/dialplan_add.php";
 }
 if (!empty($button_add_url)) {
@@ -421,39 +443,39 @@ if (!empty($button_add_url)) {
 }
 if (!empty($dialplans)) {
 	if (
-		($app_uuid == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && permission_exists('inbound_route_copy')) ||
-		($app_uuid == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && permission_exists('outbound_route_copy')) ||
-		($app_uuid == "16589224-c876-aeb3-f59f-523a1c0801f7" && permission_exists('fifo_add')) ||
-		($app_uuid == "4b821450-926b-175a-af93-a03c441818b1" && permission_exists('time_condition_add')) ||
-		permission_exists('dialplan_add')
+		($app_uuid == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && $has_inbound_route_copy) ||
+		($app_uuid == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && $has_outbound_route_copy) ||
+		($app_uuid == "16589224-c876-aeb3-f59f-523a1c0801f7" && $has_fifo_add) ||
+		($app_uuid == "4b821450-926b-175a-af93-a03c441818b1" && $has_time_condition_add) ||
+		$has_dialplan_add
 	) {
 		echo button::create(['type' => 'button', 'label' => $text['button-copy'], 'icon' => $button_icon_copy, 'id' => 'btn_copy', 'name' => 'btn_copy', 'style' => 'display: none;', 'onclick' => "modal_open('modal-copy','btn_copy');"]);
 	}
 	if (
-		($app_uuid == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && permission_exists('inbound_route_edit')) ||
-		($app_uuid == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && permission_exists('outbound_route_edit')) ||
-		($app_uuid == "16589224-c876-aeb3-f59f-523a1c0801f7" && permission_exists('fifo_edit')) ||
-		($app_uuid == "4b821450-926b-175a-af93-a03c441818b1" && permission_exists('time_condition_edit')) ||
-		permission_exists('dialplan_edit')
+		($app_uuid == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && $has_inbound_route_edit) ||
+		($app_uuid == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && $has_outbound_route_edit) ||
+		($app_uuid == "16589224-c876-aeb3-f59f-523a1c0801f7" && $has_fifo_edit) ||
+		($app_uuid == "4b821450-926b-175a-af93-a03c441818b1" && $has_time_condition_edit) ||
+		$has_dialplan_edit
 	) {
 		echo button::create(['type' => 'button', 'label' => $text['button-toggle'], 'icon' => $button_icon_toggle, 'id' => 'btn_toggle', 'name' => 'btn_toggle', 'style' => 'display: none;', 'onclick' => "modal_open('modal-toggle','btn_toggle');"]);
 	}
 	if (
-		($app_uuid == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && permission_exists('inbound_route_delete')) ||
-		($app_uuid == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && permission_exists('outbound_route_delete')) ||
-		($app_uuid == "16589224-c876-aeb3-f59f-523a1c0801f7" && permission_exists('fifo_delete')) ||
-		($app_uuid == "4b821450-926b-175a-af93-a03c441818b1" && permission_exists('time_condition_delete')) ||
-		permission_exists('dialplan_delete')
+		($app_uuid == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && $has_inbound_route_delete) ||
+		($app_uuid == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && $has_outbound_route_delete) ||
+		($app_uuid == "16589224-c876-aeb3-f59f-523a1c0801f7" && $has_fifo_delete) ||
+		($app_uuid == "4b821450-926b-175a-af93-a03c441818b1" && $has_time_condition_delete) ||
+		$has_dialplan_delete
 	) {
 		echo button::create(['type' => 'button', 'label' => $text['button-delete'], 'icon' => $button_icon_delete, 'id' => 'btn_delete', 'name' => 'btn_delete', 'style' => 'display: none;', 'onclick' => "modal_open('modal-delete','btn_delete');"]);
 	}
-	if (permission_exists('dialplan_xml')) {
+	if ($has_dialplan_xml) {
 		echo button::create(['type' => 'button', 'label' => $text['button-xml'], 'icon' => 'code', 'style' => 'margin-left: 3px;', 'link' => 'dialplan_xml.php']);
 	}
 }
 echo "<form id='form_search' class='inline' method='get'>\n";
-if (permission_exists('dialplan_all')) {
-	if ($show == 'all' && permission_exists('dialplan_all')) {
+if ($has_dialplan_all) {
+	if ($show == 'all' && $has_dialplan_all) {
 		echo "		<input type='hidden' name='show' value='all'>";
 	} else {
 		if (!empty($app_uuid)) {
@@ -484,7 +506,7 @@ if (!empty($order_by)) {
 if (!empty($order)) {
 	echo "<input type='hidden' name='order' value='" . escape($order) . "'>";
 }
-if (permission_exists('dialplan_context')) {
+if ($has_dialplan_context) {
 	echo "<select name='context' id='context' class='formfld' style='max-width: " . (empty($context) || $context == 'global' ? '80px' : '140px') . "; margin-left: 18px;' onchange=\"$('#form_search').submit();\">\n";
 	echo "<option value='' " . (!$context ? "selected='selected'" : null) . " disabled='disabled'>" . $text['label-context'] . "...</option>\n";
 	echo "<option value=''></option>\n";
@@ -512,7 +534,7 @@ if (!empty($order_by)) {
 if (!empty($order)) {
 	$params[] = "order=" . urlencode($order);
 }
-if (!empty($show) && permission_exists('dialplan_all')) {
+if (!empty($show) && $has_dialplan_all) {
 	$params[] = "show=" . urlencode($show);
 }
 // echo button::create(['label'=>$text['button-reset'],'icon'=>$button_icon_reset,'type'=>'button','id'=>'btn_reset','link'=>'dialplans.php'.($params ? '?'.implode('&', $params) : null),'style'=>($search == '' ? 'display: none;' : null)]);
@@ -527,29 +549,29 @@ echo "</div>\n";
 
 if (!empty($dialplans)) {
 	if (
-		($app_uuid == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && permission_exists('inbound_route_copy')) ||
-		($app_uuid == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && permission_exists('outbound_route_copy')) ||
-		($app_uuid == "16589224-c876-aeb3-f59f-523a1c0801f7" && permission_exists('fifo_add')) ||
-		($app_uuid == "4b821450-926b-175a-af93-a03c441818b1" && permission_exists('time_condition_add')) ||
-		permission_exists('dialplan_add')
+		($app_uuid == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && $has_inbound_route_copy) ||
+		($app_uuid == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && $has_outbound_route_copy) ||
+		($app_uuid == "16589224-c876-aeb3-f59f-523a1c0801f7" && $has_fifo_add) ||
+		($app_uuid == "4b821450-926b-175a-af93-a03c441818b1" && $has_time_condition_add) ||
+		$has_dialplan_add
 	) {
 		echo modal::create(['id' => 'modal-copy', 'type' => 'copy', 'actions' => button::create(['type' => 'button', 'label' => $text['button-continue'], 'icon' => 'check', 'id' => 'btn_copy', 'style' => 'float: right; margin-left: 15px;', 'collapse' => 'never', 'onclick' => "modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 	}
 	if (
-		($app_uuid == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && permission_exists('inbound_route_edit')) ||
-		($app_uuid == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && permission_exists('outbound_route_edit')) ||
-		($app_uuid == "16589224-c876-aeb3-f59f-523a1c0801f7" && permission_exists('fifo_edit')) ||
-		($app_uuid == "4b821450-926b-175a-af93-a03c441818b1" && permission_exists('time_condition_edit')) ||
-		permission_exists('dialplan_edit')
+		($app_uuid == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && $has_inbound_route_edit) ||
+		($app_uuid == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && $has_outbound_route_edit) ||
+		($app_uuid == "16589224-c876-aeb3-f59f-523a1c0801f7" && $has_fifo_edit) ||
+		($app_uuid == "4b821450-926b-175a-af93-a03c441818b1" && $has_time_condition_edit) ||
+		$has_dialplan_edit
 	) {
 		echo modal::create(['id' => 'modal-toggle', 'type' => 'toggle', 'actions' => button::create(['type' => 'button', 'label' => $text['button-continue'], 'icon' => 'check', 'id' => 'btn_toggle', 'style' => 'float: right; margin-left: 15px;', 'collapse' => 'never', 'onclick' => "modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
 	if (
-		($app_uuid == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && permission_exists('inbound_route_delete')) ||
-		($app_uuid == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && permission_exists('outbound_route_delete')) ||
-		($app_uuid == "16589224-c876-aeb3-f59f-523a1c0801f7" && permission_exists('fifo_delete')) ||
-		($app_uuid == "4b821450-926b-175a-af93-a03c441818b1" && permission_exists('time_condition_delete')) ||
-		permission_exists('dialplan_delete')
+		($app_uuid == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && $has_inbound_route_delete) ||
+		($app_uuid == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && $has_outbound_route_delete) ||
+		($app_uuid == "16589224-c876-aeb3-f59f-523a1c0801f7" && $has_fifo_delete) ||
+		($app_uuid == "4b821450-926b-175a-af93-a03c441818b1" && $has_time_condition_delete) ||
+		$has_dialplan_delete
 	) {
 		echo modal::create(['id' => 'modal-delete', 'type' => 'delete', 'actions' => button::create(['type' => 'button', 'label' => $text['button-continue'], 'icon' => 'check', 'id' => 'btn_delete', 'style' => 'float: right; margin-left: 15px;', 'collapse' => 'never', 'onclick' => "modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
@@ -569,7 +591,7 @@ switch ($app_uuid) {
 		echo $text['description-time_conditions'];
 		break;
 	default:
-		echo $text['description-dialplan_manager' . (permission_exists('dialplan_edit') ? '-superadmin' : '')];
+		echo $text['description-dialplan_manager' . ($has_dialplan_edit ? '-superadmin' : '')];
 }
 echo "\n<br /><br />\n";
 
@@ -585,19 +607,19 @@ echo "<div class='card'>\n";
 echo "<table class='list'>\n";
 echo "<tr class='list-header'>\n";
 if (
-	($app_uuid == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && (permission_exists('inbound_route_copy') || permission_exists('inbound_route_edit') || permission_exists('inbound_route_delete'))) ||
-	($app_uuid == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && (permission_exists('outbound_route_copy') || permission_exists('outbound_route_edit') || permission_exists('outbound_route_delete'))) ||
-	($app_uuid == "16589224-c876-aeb3-f59f-523a1c0801f7" && (permission_exists('fifo_add') || permission_exists('fifo_edit') || permission_exists('fifo_delete'))) ||
-	($app_uuid == "4b821450-926b-175a-af93-a03c441818b1" && (permission_exists('time_condition_add') || permission_exists('time_condition_edit') || permission_exists('time_condition_delete'))) ||
-	permission_exists('dialplan_add') ||
-	permission_exists('dialplan_edit') ||
-	permission_exists('dialplan_delete')
+	($app_uuid == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && ($has_inbound_route_copy || $has_inbound_route_edit || $has_inbound_route_delete)) ||
+	($app_uuid == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && ($has_outbound_route_copy || $has_outbound_route_edit || $has_outbound_route_delete)) ||
+	($app_uuid == "16589224-c876-aeb3-f59f-523a1c0801f7" && ($has_fifo_add || $has_fifo_edit || $has_fifo_delete)) ||
+	($app_uuid == "4b821450-926b-175a-af93-a03c441818b1" && ($has_time_condition_add || $has_time_condition_edit || $has_time_condition_delete)) ||
+	$has_dialplan_add ||
+	$has_dialplan_edit ||
+	$has_dialplan_delete
 ) {
 	echo "	<th class='checkbox'>\n";
 	echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' " . (!empty($dialplans) ?: "style='visibility: hidden;'") . ">\n";
 	echo "	</th>\n";
 }
-if ($show == "all" && permission_exists('dialplan_all')) {
+if ($show == "all" && $has_dialplan_all) {
 	echo "<th>" . $text['label-domain'] . "</th>\n";
 }
 if ($context) {
@@ -606,12 +628,12 @@ if ($context) {
 if ($search) {
 	$params[] = "search=" . urlencode($search);
 }
-if ($show == 'all' && permission_exists('dialplan_all')) {
+if ($show == 'all' && $has_dialplan_all) {
 	$params[] = "show=all";
 }
 echo th_order_by('dialplan_name', $text['label-name'], $order_by, $order, $app_uuid, null, (!empty($params) ? implode('&', $params) : null));
 echo th_order_by('dialplan_number', $text['label-number'], $order_by, $order, $app_uuid, null, (!empty($params) ? implode('&', $params) : null));
-if (permission_exists('dialplan_context')) {
+if ($has_dialplan_context) {
 	echo th_order_by('dialplan_context', $text['label-context'], $order_by, $order, $app_uuid, null, (!empty($params) ? implode('&', $params) : null));
 }
 echo th_order_by('dialplan_order', $text['label-order'], $order_by, $order, $app_uuid, "class='center shrink'", (!empty($params) ? implode('&', $params) : null));
@@ -619,11 +641,11 @@ echo th_order_by('dialplan_enabled', $text['label-enabled'], $order_by, $order, 
 echo th_order_by('dialplan_description', $text['label-description'], $order_by, $order, $app_uuid, "class='hide-sm-dn' style='min-width: 100px;'", (!empty($params) ? implode('&', $params) : null));
 unset($params);
 if ((
-	($app_uuid == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && permission_exists('inbound_route_edit')) ||
-	($app_uuid == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && permission_exists('outbound_route_edit')) ||
-	($app_uuid == "16589224-c876-aeb3-f59f-523a1c0801f7" && permission_exists('fifo_edit')) ||
-	($app_uuid == "4b821450-926b-175a-af93-a03c441818b1" && permission_exists('time_condition_edit')) ||
-	permission_exists('dialplan_edit')
+	($app_uuid == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && $has_inbound_route_edit) ||
+	($app_uuid == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && $has_outbound_route_edit) ||
+	($app_uuid == "16589224-c876-aeb3-f59f-523a1c0801f7" && $has_fifo_edit) ||
+	($app_uuid == "4b821450-926b-175a-af93-a03c441818b1" && $has_time_condition_edit) ||
+	$has_dialplan_edit
 ) && $list_row_edit_button) {
 	echo "	<td class='action-button'>&nbsp;</td>\n";
 }
@@ -638,37 +660,37 @@ if (!empty($dialplans)) {
 
 		$list_row_url = '';
 		if ($row['app_uuid'] == "4b821450-926b-175a-af93-a03c441818b1") {
-			if (permission_exists('time_condition_edit') || permission_exists('dialplan_edit')) {
+			if ($has_time_condition_edit || $has_dialplan_edit) {
 				$list_row_url = PROJECT_PATH . "/app/time_conditions/time_condition_edit.php?id=" . urlencode($row['dialplan_uuid']) . (is_uuid($app_uuid) ? "&app_uuid=" . urlencode($app_uuid) : null);
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 					$list_row_url .= '&domain_uuid=' . urlencode($row['domain_uuid']) . '&domain_change=true';
 				}
 			}
 		} else if (
-			($row['app_uuid'] == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && permission_exists('inbound_route_edit')) ||
-			($row['app_uuid'] == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && permission_exists('outbound_route_edit')) ||
-			($row['app_uuid'] == "16589224-c876-aeb3-f59f-523a1c0801f7" && permission_exists('fifo_edit')) ||
-			permission_exists('dialplan_edit')
+			($row['app_uuid'] == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && $has_inbound_route_edit) ||
+			($row['app_uuid'] == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && $has_outbound_route_edit) ||
+			($row['app_uuid'] == "16589224-c876-aeb3-f59f-523a1c0801f7" && $has_fifo_edit) ||
+			$has_dialplan_edit
 		) {
 			$list_row_url = "dialplan_edit.php?id=" . urlencode($row['dialplan_uuid']) . (is_uuid($app_uuid) ? "&app_uuid=" . urlencode($app_uuid) : null);
-			if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+			if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 				$list_row_url .= '&domain_uuid=' . urlencode($row['domain_uuid'] ?? '') . '&domain_change=true';
 			}
 		}
 		echo "<tr class='list-row' href='" . $list_row_url . "'>\n";
 		if (
-			(!is_uuid($app_uuid) && (permission_exists('dialplan_add') || permission_exists('dialplan_edit') || permission_exists('dialplan_delete'))) ||
-			($app_uuid == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && (permission_exists('inbound_route_copy') || permission_exists('inbound_route_edit') || permission_exists('inbound_route_delete'))) ||
-			($app_uuid == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && (permission_exists('outbound_route_copy') || permission_exists('outbound_route_edit') || permission_exists('outbound_route_delete'))) ||
-			($app_uuid == "16589224-c876-aeb3-f59f-523a1c0801f7" && (permission_exists('fifo_add') || permission_exists('fifo_edit') || permission_exists('fifo_delete'))) ||
-			($app_uuid == "4b821450-926b-175a-af93-a03c441818b1" && (permission_exists('time_condition_add') || permission_exists('time_condition_edit') || permission_exists('time_condition_delete')))
+			(!is_uuid($app_uuid) && ($has_dialplan_add || $has_dialplan_edit || $has_dialplan_delete)) ||
+			($app_uuid == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && ($has_inbound_route_copy || $has_inbound_route_edit || $has_inbound_route_delete)) ||
+			($app_uuid == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && ($has_outbound_route_copy || $has_outbound_route_edit || $has_outbound_route_delete)) ||
+			($app_uuid == "16589224-c876-aeb3-f59f-523a1c0801f7" && ($has_fifo_add || $has_fifo_edit || $has_fifo_delete)) ||
+			($app_uuid == "4b821450-926b-175a-af93-a03c441818b1" && ($has_time_condition_add || $has_time_condition_edit || $has_time_condition_delete))
 		) {
 			echo "	<td class='checkbox'>\n";
 			echo "		<input type='checkbox' name='dialplans[$x][checked]' id='checkbox_" . $x . "' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 			echo "		<input type='hidden' name='dialplans[$x][uuid]' value='" . escape($row['dialplan_uuid']) . "' />\n";
 			echo "	</td>\n";
 		}
-		if ($show == "all" && permission_exists('dialplan_all')) {
+		if ($show == "all" && $has_dialplan_all) {
 			if (!empty($_SESSION['domains'][$row['domain_uuid']]['domain_name'])) {
 				$domain = $_SESSION['domains'][$row['domain_uuid']]['domain_name'];
 			} else {
@@ -684,16 +706,16 @@ if (!empty($dialplans)) {
 		}
 		echo "	</td>\n";
 		echo "	<td>" . ((!empty($row['dialplan_number'])) ? escape(format_phone($row['dialplan_number'])) : "&nbsp;") . "</td>\n";
-		if (permission_exists('dialplan_context')) {
+		if ($has_dialplan_context) {
 			echo "	<td>" . escape($row['dialplan_context']) . "</td>\n";
 		}
 		echo "	<td class='center'>" . escape($row['dialplan_order']) . "</td>\n";
 		if (
-			(!is_uuid($app_uuid) && permission_exists('dialplan_edit')) ||
-			($row['app_uuid'] == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && permission_exists('inbound_route_edit')) ||
-			($row['app_uuid'] == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && permission_exists('outbound_route_edit')) ||
-			($row['app_uuid'] == "16589224-c876-aeb3-f59f-523a1c0801f7" && permission_exists('fifo_edit')) ||
-			($row['app_uuid'] == "4b821450-926b-175a-af93-a03c441818b1" && permission_exists('time_condition_edit'))
+			(!is_uuid($app_uuid) && $has_dialplan_edit) ||
+			($row['app_uuid'] == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && $has_inbound_route_edit) ||
+			($row['app_uuid'] == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && $has_outbound_route_edit) ||
+			($row['app_uuid'] == "16589224-c876-aeb3-f59f-523a1c0801f7" && $has_fifo_edit) ||
+			($row['app_uuid'] == "4b821450-926b-175a-af93-a03c441818b1" && $has_time_condition_edit)
 		) {
 			echo "	<td class='no-link center'>";
 			echo button::create(['type' => 'submit', 'class' => 'link', 'label' => $text['label-' . $row['dialplan_enabled']], 'title' => $text['button-toggle'], 'onclick' => "list_self_check('checkbox_" . $x . "'); list_action_set('toggle'); list_form_submit('form_list')"]);
@@ -704,11 +726,11 @@ if (!empty($dialplans)) {
 		echo "	</td>\n";
 		echo "	<td class='description overflow hide-sm-dn'>" . escape($dialplan_description) . "&nbsp;</td>\n";
 		if ($list_row_edit_button && (
-			(!is_uuid($app_uuid) && permission_exists('dialplan_edit')) ||
-			($row['app_uuid'] == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && permission_exists('inbound_route_edit')) ||
-			($row['app_uuid'] == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && permission_exists('outbound_route_edit')) ||
-			($row['app_uuid'] == "16589224-c876-aeb3-f59f-523a1c0801f7" && permission_exists('fifo_edit')) ||
-			($row['app_uuid'] == "4b821450-926b-175a-af93-a03c441818b1" && permission_exists('time_condition_edit'))
+			(!is_uuid($app_uuid) && $has_dialplan_edit) ||
+			($row['app_uuid'] == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && $has_inbound_route_edit) ||
+			($row['app_uuid'] == "8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3" && $has_outbound_route_edit) ||
+			($row['app_uuid'] == "16589224-c876-aeb3-f59f-523a1c0801f7" && $has_fifo_edit) ||
+			($row['app_uuid'] == "4b821450-926b-175a-af93-a03c441818b1" && $has_time_condition_edit)
 		)) {
 			echo "	<td class='action-button'>";
 			echo button::create(['type' => 'button', 'title' => $text['button-edit'], 'icon' => $button_icon_edit, 'link' => $list_row_url]);

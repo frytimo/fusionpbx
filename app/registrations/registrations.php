@@ -34,6 +34,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_registration_all    = permission_exists('registration_all');
+	$has_registration_reload = permission_exists('registration_reload');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -103,7 +105,7 @@
 	$token = $object->create($_SERVER['PHP_SELF']);
 
 //detect page reload via ajax
-	$reload = isset($_GET['reload']) && permission_exists('registration_reload') ? true : false;
+	$reload = isset($_GET['reload']) && $has_registration_reload ? true : false;
 
 //define location url
 	$location = ($reload ? 'registration_reload.php' : 'registrations.php');
@@ -127,7 +129,7 @@
 		echo button::create(['type'=>'button','label'=>$text['button-reboot'],'title'=>$text['button-reboot'],'icon'=>'power-off','onclick'=>"modal_open('modal-reboot','btn_reboot');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if (permission_exists('registration_all')) {
+	if ($has_registration_all) {
 		if (!empty($show) && $show == 'all') {
 			echo 	"<input type='hidden' name='show' value='".escape($show)."'>";
 			echo button::create(['type'=>'button','label'=>$text['button-show_local'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>$location.($qs['search'] || $qs['profile'] ? '?' : null).$qs['search'].$qs['profile']]);

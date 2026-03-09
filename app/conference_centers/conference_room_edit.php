@@ -34,6 +34,25 @@
 		echo "access denied";
 		exit;
 	}
+	$has_conference_active_view             = permission_exists('conference_active_view');
+	$has_conference_interactive_view        = permission_exists('conference_interactive_view');
+	$has_conference_room_account_code       = permission_exists('conference_room_account_code');
+	$has_conference_room_add                = permission_exists('conference_room_add');
+	$has_conference_room_announce_count     = permission_exists('conference_room_announce_count');
+	$has_conference_room_announce_name      = permission_exists('conference_room_announce_name');
+	$has_conference_room_announce_recording = permission_exists('conference_room_announce_recording');
+	$has_conference_room_delete             = permission_exists('conference_room_delete');
+	$has_conference_room_edit               = permission_exists('conference_room_edit');
+	$has_conference_room_email_address      = permission_exists('conference_room_email_address');
+	$has_conference_room_enabled            = permission_exists('conference_room_enabled');
+	$has_conference_room_max_members        = permission_exists('conference_room_max_members');
+	$has_conference_room_moderator_endconf  = permission_exists('conference_room_moderator_endconf');
+	$has_conference_room_mute               = permission_exists('conference_room_mute');
+	$has_conference_room_profile            = permission_exists('conference_room_profile');
+	$has_conference_room_record             = permission_exists('conference_room_record');
+	$has_conference_room_sounds             = permission_exists('conference_room_sounds');
+	$has_conference_room_wait_mod           = permission_exists('conference_room_wait_mod');
+	$has_conference_session_view            = permission_exists('conference_session_view');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -181,7 +200,7 @@
 	}
 
 //delete the user
-	if (!empty($_GET["a"]) && $_GET["a"] == "delete" && permission_exists('conference_room_delete')) {
+	if (!empty($_GET["a"]) && $_GET["a"] == "delete" && $has_conference_room_delete) {
 		if (is_uuid($_REQUEST["conference_room_user_uuid"])) {
 			//set the variables
 				$conference_room_user_uuid = $_REQUEST["conference_room_user_uuid"];
@@ -302,7 +321,7 @@
 		//add or update the database
 			if (empty($_POST["persistformvar"])) {
 
-				if ($action == "add" && permission_exists('conference_room_add')) {
+				if ($action == "add" && $has_conference_room_add) {
 					//add a conference room
 						$conference_room_uuid = uuid();
 						$array['conference_rooms'][0]['conference_room_uuid'] = $conference_room_uuid;
@@ -325,10 +344,10 @@
 						$array['conference_rooms'][0]['mute'] = $mute;
 						$array['conference_rooms'][0]['created'] = 'now()';
 						$array['conference_rooms'][0]['created_by'] = $_SESSION['user_uuid'];
-						if (permission_exists('conference_room_email_address')) {
+						if ($has_conference_room_email_address) {
 							$array['conference_rooms'][0]['email_address'] = $email_address;
 						}
-						if (permission_exists('conference_room_account_code')) {
+						if ($has_conference_room_account_code) {
 							$array['conference_rooms'][0]['account_code'] = $account_code;
 						}
 						$array['conference_rooms'][0]['enabled'] = $enabled;
@@ -358,7 +377,7 @@
 						message::add($text['message-add']);
 				}
 
-				if ($action == "update" && permission_exists('conference_room_edit')) {
+				if ($action == "update" && $has_conference_room_edit) {
 
 					//update the conference room
 						$array['conference_rooms'][0]['conference_room_uuid'] = $conference_room_uuid;
@@ -397,10 +416,10 @@
 							$array['conference_rooms'][0]['mute'] = $mute;
 						}
 						$array['conference_rooms'][0]['sounds'] = $sounds;
-						if (permission_exists('conference_room_email_address')) {
+						if ($has_conference_room_email_address) {
 							$array['conference_rooms'][0]['email_address'] = $email_address;
 						}
-						if (permission_exists('conference_room_account_code')) {
+						if ($has_conference_room_account_code) {
 							$array['conference_rooms'][0]['account_code'] = $account_code;
 						}
 						if (!empty($enabled)) {
@@ -550,13 +569,13 @@
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','link'=>'conference_rooms.php']);
 	if (!empty($conference_room_uuid) && is_uuid($conference_room_uuid)) {
-		if (permission_exists('conference_interactive_view')) {
+		if ($has_conference_interactive_view) {
 			echo button::create(['type'=>'button','label'=>$text['button-view'],'icon'=>$settings->get('theme', 'button_icon_view'),'style'=>'margin-left: 15px;','link'=>'../conferences_active/conference_interactive.php?c='.urlencode($conference_room_uuid)]);
 		}
-		else if (permission_exists('conference_active_view')) {
+		else if ($has_conference_active_view) {
 			echo button::create(['type'=>'button','label'=>$text['button-view'],'icon'=>$settings->get('theme', 'button_icon_view'),'style'=>'margin-left: 15px;','link'=>'../conferences_active/conferences_active.php']);
 		}
-		if (permission_exists('conference_session_view')) {
+		if ($has_conference_session_view) {
 			echo button::create(['type'=>'button','label'=>$text['button-sessions'],'icon'=>'list','link'=>'conference_sessions.php?id='.urlencode($conference_room_uuid)]);
 		}
 	}
@@ -610,7 +629,7 @@
 	echo "		</td>";
 	echo "	</tr>";
 
-	if (permission_exists('conference_room_edit')) {
+	if ($has_conference_room_edit) {
 		echo "	<tr>";
 		echo "		<td class='vncell' valign='top'>".$text['label-users']."</td>";
 		echo "		<td class='vtable' align='left'>";
@@ -620,7 +639,7 @@
 				echo "			<tr>\n";
 				echo "				<td class='vtable'>".escape($row['username'])."</td>\n";
 				echo "				<td style='width: 25px;' align='right'>\n";
-				if (permission_exists('conference_room_delete')) {
+				if ($has_conference_room_delete) {
 					echo "					<a href='conference_room_edit.php?conference_room_user_uuid=".escape($row['conference_room_user_uuid'])."&conference_room_uuid=".escape($conference_room_uuid)."&a=delete' alt='delete' onclick=\"return confirm(".$text['confirm-delete'].")\">$v_link_label_delete</a>\n";
 				}
 				echo "				</td>\n";
@@ -629,7 +648,7 @@
 			echo "			</table>\n";
 			echo "			<br />\n";
 		}
-		if (permission_exists('conference_room_add') && is_array($users) && @sizeof($users) != 0) {
+		if ($has_conference_room_add && is_array($users) && @sizeof($users) != 0) {
 			echo "			<select name='user_uuid' class='formfld' style='width: auto;'>\n";
 			echo "				<option value=''></option>\n";
 			foreach ($users as $user) {
@@ -647,7 +666,7 @@
 		echo "	</tr>";
 	}
 
-	if (permission_exists('conference_room_profile')) {
+	if ($has_conference_room_profile) {
 		echo "<tr>\n";
 		echo "<td class='vncellreq' valign='top' align='left' nowrap='nowrap'>".$text['label-profile']."</td>\n";
 		echo "<td class='vtable' align='left'>\n";
@@ -667,7 +686,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('conference_room_record')) {
+	if ($has_conference_room_record) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>".$text['label-record']."</td>\n";
 		echo "<td class='vtable' align='left'>\n";
@@ -687,7 +706,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('conference_room_max_members')) {
+	if ($has_conference_room_max_members) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>".$text['label-max-members']."</td>\n";
 		echo "<td class='vtable' align='left'>\n";
@@ -707,7 +726,7 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('conference_room_wait_mod')) {
+	if ($has_conference_room_wait_mod) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>".$text['label-wait_for_moderator']."</td>\n";
 		echo "<td class='vtable' align='left'>\n";
@@ -727,7 +746,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('conference_room_moderator_endconf')) {
+	if ($has_conference_room_moderator_endconf) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>".$text['label-moderator_endconf']."</td>\n";
 		echo "<td class='vtable' align='left'>\n";
@@ -747,7 +766,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('conference_room_announce_name')) {
+	if ($has_conference_room_announce_name) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>".$text['label-announce_name']."</td>\n";
 		echo "<td class='vtable' align='left'>\n";
@@ -767,7 +786,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('conference_room_announce_count')) {
+	if ($has_conference_room_announce_count) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>".$text['label-announce_count']."</td>\n";
 		echo "<td class='vtable' align='left'>\n";
@@ -787,7 +806,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('conference_room_announce_recording')) {
+	if ($has_conference_room_announce_recording) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>".$text['label-announce_recording']."</td>\n";
 		echo "<td class='vtable' align='left'>\n";
@@ -818,7 +837,7 @@
 	//echo "</td>\n";
 	//echo "</tr>\n";
 
-	if (permission_exists('conference_room_mute')) {
+	if ($has_conference_room_mute) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>".$text['label-mute']."</td>\n";
 		echo "<td class='vtable' align='left'>\n";
@@ -839,7 +858,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('conference_room_email_address')) {
+	if ($has_conference_room_email_address) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-email_address']."\n";
@@ -852,7 +871,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('conference_room_account_code')) {
+	if ($has_conference_room_account_code) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-account_code']."\n";
@@ -865,7 +884,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('conference_room_enabled')) {
+	if ($has_conference_room_enabled) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>".$text['label-enabled']."</td>\n";
 		echo "<td class='vtable' align='left'>\n";
@@ -886,7 +905,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('conference_room_sounds')) {
+	if ($has_conference_room_sounds) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>".$text['label-sounds']."</td>\n";
 		echo "<td class='vtable' align='left'>\n";

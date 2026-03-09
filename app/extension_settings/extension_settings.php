@@ -30,6 +30,10 @@
 		echo "access denied";
 		exit;
 	}
+	$has_extension_setting_add    = permission_exists('extension_setting_add');
+	$has_extension_setting_all    = permission_exists('extension_setting_all');
+	$has_extension_setting_delete = permission_exists('extension_setting_delete');
+	$has_extension_setting_edit   = permission_exists('extension_setting_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -76,17 +80,17 @@
 
 		switch ($action) {
 			case 'copy':
-				if (permission_exists('extension_setting_add')) {
+				if ($has_extension_setting_add) {
 					$obj->copy($extension_settings);
 				}
 				break;
 			case 'toggle':
-				if (permission_exists('extension_setting_edit')) {
+				if ($has_extension_setting_edit) {
 					$obj->toggle($extension_settings);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('extension_setting_delete')) {
+				if ($has_extension_setting_delete) {
 					$obj->extension_uuid = $extension_uuid;
 					$obj->delete($extension_settings);
 				}
@@ -184,20 +188,20 @@
 
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_add','name'=>'btn_add','style'=>'margin-right: 15px;','link'=>'/app/extensions/extension_edit.php?id='.$extension_uuid]);
 
-	if (permission_exists('extension_setting_add')) {
+	if ($has_extension_setting_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','name'=>'btn_add','link'=>'extension_setting_edit.php?extension_uuid='.$extension_uuid]);
 	}
-	if (permission_exists('extension_setting_add') && $extension_settings) {
+	if ($has_extension_setting_add && $extension_settings) {
 		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display:none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 	}
-	if (permission_exists('extension_setting_edit') && $extension_settings) {
+	if ($has_extension_setting_edit && $extension_settings) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display:none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
-	if (permission_exists('extension_setting_delete') && $extension_settings) {
+	if ($has_extension_setting_delete && $extension_settings) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display:none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	//if (permission_exists('extension_setting_all')) {
+	//if ($has_extension_setting_all) {
 	//	if ($_GET['show'] == 'all') {
 	//		echo "		<input type='hidden' name='show' value='all'>\n";
 	//	}
@@ -217,13 +221,13 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('extension_setting_add') && $extension_settings) {
+	if ($has_extension_setting_add && $extension_settings) {
 		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('extension_setting_edit') && $extension_settings) {
+	if ($has_extension_setting_edit && $extension_settings) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('extension_setting_delete') && $extension_settings) {
+	if ($has_extension_setting_delete && $extension_settings) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -263,12 +267,12 @@
 				echo "			<td align='left' colspan='999' nowrap='nowrap'><b>".escape($label_extension_setting_type)."</b></td>\n";
 				echo "		</tr>";
 				echo "<tr class='list-header'>\n";
-				if (permission_exists('extension_setting_add') || permission_exists('extension_setting_edit') || permission_exists('extension_setting_delete')) {
+				if ($has_extension_setting_add || $has_extension_setting_edit || $has_extension_setting_delete) {
 					echo "	<th class='checkbox'>\n";
 					echo "		<input type='checkbox' id='checkbox_all_".$extension_setting_type."' name='checkbox_all' onclick=\"list_all_toggle('".$extension_setting_type."'); checkbox_on_change(this);\">\n";
 					echo "	</th>\n";
 				}
-				//if ($_GET['show'] == 'all' && permission_exists('extension_setting_all')) {
+				//if ($_GET['show'] == 'all' && $has_extension_setting_all) {
 				//	echo th_order_by('domain_name', $text['label-domain'], $order_by, $order);
 				//}
 
@@ -282,29 +286,29 @@
 				echo "	<th class='center'>".$text['label-extension_setting_enabled']."</th>\n";
 
 				echo "	<th class='hide-sm-dn'>".$text['label-extension_setting_description']."</th>\n";
-				if (permission_exists('extension_setting_edit') && $list_row_edit_button) {
+				if ($has_extension_setting_edit && $list_row_edit_button) {
 					echo "	<td class='action-button'>&nbsp;</td>\n";
 				}
 				echo "</tr>\n";
 
 			}
-			if (permission_exists('extension_setting_edit')) {
+			if ($has_extension_setting_edit) {
 				$list_row_url = "extension_setting_edit.php?id=".urlencode($row['extension_setting_uuid'])."&extension_uuid=".urlencode($extension_uuid);
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('extension_setting_add') || permission_exists('extension_setting_edit') || permission_exists('extension_setting_delete')) {
+			if ($has_extension_setting_add || $has_extension_setting_edit || $has_extension_setting_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='extension_settings[$x][checked]' id='checkbox_".$x."' class='checkbox_".$extension_setting_type."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all_".$extension_setting_type."').checked = false; }\">\n";
 				echo "		<input type='hidden' name='extension_settings[$x][uuid]' value='".escape($row['extension_setting_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			//if ($_GET['show'] == 'all' && permission_exists('extension_setting_all')) {
+			//if ($_GET['show'] == 'all' && $has_extension_setting_all) {
 			//	echo "	<td>".escape($row['domain_name'])."</td>\n";
 			//}
 			echo "	<td>".escape($row['extension_setting_type'])."</td>\n";
 			echo "	<td>".escape($row['extension_setting_name'])."</td>\n";
 			echo "	<td>".escape($row['extension_setting_value'])."</td>\n";
-			if (permission_exists('extension_setting_edit')) {
+			if ($has_extension_setting_edit) {
 				echo "	<td class='no-link center'>\n";
 				echo "		<input type='hidden' name='number_translations[$x][extension_setting_enabled]' value='".escape($row['extension_setting_enabled'])."' />\n";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['extension_setting_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
@@ -315,7 +319,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td class='description overflow hide-sm-dn'>".escape($row['extension_setting_description'])."</td>\n";
-			if (permission_exists('extension_setting_edit') && $list_row_edit_button) {
+			if ($has_extension_setting_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>\n";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

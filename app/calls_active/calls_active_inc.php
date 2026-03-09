@@ -33,6 +33,13 @@
 		echo "access denied";
 		exit;
 	}
+	$has_call_active_all         = permission_exists('call_active_all');
+	$has_call_active_application = permission_exists('call_active_application');
+	$has_call_active_codec       = permission_exists('call_active_codec');
+	$has_call_active_eavesdrop   = permission_exists('call_active_eavesdrop');
+	$has_call_active_hangup      = permission_exists('call_active_hangup');
+	$has_call_active_profile     = permission_exists('call_active_profile');
+	$has_call_active_secure      = permission_exists('call_active_secure');
 
 //get the session settings
 	$domain_uuid = $_SESSION['domain_uuid'];
@@ -88,7 +95,7 @@
 					$row['domain_name'] = explode('@', $row['presence_id'])[1];
 				}
 			//add the row to the array
-				if (($show == 'all' && permission_exists('call_active_all'))) {
+				if (($show == 'all' && $has_call_active_all)) {
 					$rows[] = $row;
 				}
 				elseif ($row['domain_name'] == $domain_name) {
@@ -142,12 +149,12 @@
 	echo "<div class='card'>\n";
 	echo "	<table id='calls_active' class='list'>\n";
 	echo "	<tr class='list-header'>\n";
-	if (permission_exists('call_active_hangup')) {
+	if ($has_call_active_hangup) {
 		echo "		<th class='checkbox'>\n";
 		echo "			<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='if (this.checked) { refresh_stop(); } else { refresh_start(); } list_all_toggle();' ".(empty($rows) ? "style='visibility: hidden;'" : null).">\n";
 		echo "		</th>\n";
 	}
-	if (permission_exists('call_active_profile')) {
+	if ($has_call_active_profile) {
 		echo "		<th class='hide-small'>".$text['label-profile']."</th>\n";
 	}
 	echo "		<th>".$text['label-duration']."</th>\n";
@@ -157,16 +164,16 @@
 	echo "		<th class='hide-small'>".$text['label-cid-name']."</th>\n";
 	echo "		<th>".$text['label-cid-number']."</th>\n";
 	echo "		<th>".$text['label-destination']."</th>\n";
-	if (permission_exists('call_active_application')) {
+	if ($has_call_active_application) {
 		echo "		<th class='hide-small hide-medium'>".$text['label-app']."</th>\n";
 	}
-	if (permission_exists('call_active_codec')) {
+	if ($has_call_active_codec) {
 		echo "		<th class='hide-small hide-medium'>".$text['label-codec']."</th>\n";
 	}
-	if (permission_exists('call_active_secure')) {
+	if ($has_call_active_secure) {
 		echo "		<th class='hide-small hide-medium'>".$text['label-secure']."</th>\n";
 	}
-	if (permission_exists('call_active_eavesdrop') || permission_exists('call_active_hangup')) {
+	if ($has_call_active_eavesdrop || $has_call_active_hangup) {
 		echo "		<th>&nbsp;</th>\n";
 	}
 	echo "	</tr>\n";
@@ -218,13 +225,13 @@
 
 			//send the html
 				echo "	<tr class='list-row'>\n";
-				if (permission_exists('call_active_hangup')) {
+				if ($has_call_active_hangup) {
 					echo "		<td class='checkbox'>\n";
 					echo "			<input type='checkbox' name='calls[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"if (this.checked) { refresh_stop(); } else { document.getElementById('checkbox_all').checked = false; }\">\n";
 					echo "			<input type='hidden' name='calls[$x][uuid]' value='".escape($uuid)."' />\n";
 					echo "		</td>\n";
 				}
-				if (permission_exists('call_active_profile')) {
+				if ($has_call_active_profile) {
 					echo "		<td class='hide-small'>".escape($sip_profile)."&nbsp;</td>\n";
 				}
 				//echo "		<td>".escape($created)."&nbsp;</td>\n";
@@ -236,23 +243,23 @@
 				echo "		<td class='hide-small'>".escape($cid_name)."&nbsp;</td>\n";
 				echo "		<td>".escape($cid_num)."&nbsp;</td>\n";
 				echo "		<td>".escape($dest)."&nbsp;</td>\n";
-				if (permission_exists('call_active_application')) {
+				if ($has_call_active_application) {
 					echo "		<td class='hide-small hide-medium' style='max-width: 200px; word-wrap: break-word;'>".(!empty($application) ? escape($application).":".escape($application_data) : null)."&nbsp;</td>\n";
 				}
-				if (permission_exists('call_active_codec')) {
+				if ($has_call_active_codec) {
 					echo "		<td class='hide-small hide-medium'>".escape($read_codec).":".escape($read_rate)." / ".escape($write_codec).":".escape($write_rate)."&nbsp;</td>\n";
 				}
-				if (permission_exists('call_active_secure')) {
+				if ($has_call_active_secure) {
 					echo "		<td class='hide-small hide-medium'>".escape($secure)."&nbsp;</td>\n";
 				}
-				if (permission_exists('call_active_eavesdrop') || permission_exists('call_active_hangup')) {
+				if ($has_call_active_eavesdrop || $has_call_active_hangup) {
 					echo "		<td class='button right' style='padding-right: 0;'>\n";
 					//eavesdrop
-					if (permission_exists('call_active_eavesdrop') && $callstate == 'ACTIVE' && !empty($user['extensions']) && !in_array($cid_num, $user['extensions'])) {
+					if ($has_call_active_eavesdrop && $callstate == 'ACTIVE' && !empty($user['extensions']) && !in_array($cid_num, $user['extensions'])) {
 						echo button::create(['type'=>'button','label'=>$text['label-eavesdrop'],'icon'=>'headphones','collapse'=>'hide-lg-dn','onclick'=>"if (confirm('".$text['confirm-eavesdrop']."')) { eavesdrop_call('".escape($cid_num)."','".escape($uuid)."'); } else { this.blur(); return false; }",'onmouseover'=>'refresh_stop()','onmouseout'=>'refresh_start()']);
 					}
 					//hangup
-					if (permission_exists('call_active_hangup')) {
+					if ($has_call_active_hangup) {
 						echo button::create(['type'=>'button','label'=>$text['label-hangup'],'icon'=>'phone-slash','collapse'=>'hide-lg-dn','onclick'=>"if (confirm('".$text['confirm-hangup']."')) { list_self_check('checkbox_".$x."'); list_action_set('hangup'); list_form_submit('form_list'); } else { this.blur(); return false; }",'onmouseover'=>'refresh_stop()','onmouseout'=>'refresh_start()']);
 					}
 					echo "	</td>\n";

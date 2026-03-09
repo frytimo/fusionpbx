@@ -33,6 +33,9 @@
 		echo "access denied";
 		exit;
 	}
+	$has_gateway_add      = permission_exists('gateway_add');
+	$has_gateway_channels = permission_exists('gateway_channels');
+	$has_gateway_domain   = permission_exists('gateway_domain');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -55,7 +58,7 @@
 //get total gateway count from the database, check limit, if defined
 	if ($action == 'add' && $settings->get('limit', 'gateways') != '') {
 		$sql = "select count(gateway_uuid) from v_gateways ";
-		$sql .= "where (domain_uuid = :domain_uuid ".(permission_exists('gateway_domain') ? " or domain_uuid is null " : null).") ";
+		$sql .= "where (domain_uuid = :domain_uuid ".($has_gateway_domain ? " or domain_uuid is null " : null).") ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$total_gateways = $database->select($sql, $parameters, 'column');
 		unset($sql, $parameters);
@@ -105,7 +108,7 @@
 	}
 
 //prevent the domain_uuid from not being set by someone without this permission
-	if (!permission_exists('gateway_domain')) {
+	if (!$has_gateway_domain) {
 		$domain_uuid = $_SESSION['domain_uuid'];
 	}
 
@@ -355,7 +358,7 @@
 	echo "	<div class='heading'><b>".$text['title-gateway']."</b></div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','link'=>'gateways.php']);
-	if ($action == "update" && permission_exists('gateway_add')) {
+	if ($action == "update" && $has_gateway_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'name'=>'btn_copy','style'=>'margin-left: 15px;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 	}
 	echo button::create(['type'=>'button','label'=>$text['button-save'],'icon'=>$settings->get('theme', 'button_icon_save'),'id'=>'btn_save','style'=>'margin-left: 15px;','onclick'=>'submit_form();']);
@@ -363,7 +366,7 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if ($action == "update" && permission_exists('gateway_add')) {
+	if ($action == "update" && $has_gateway_add) {
 		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','link'=>'gateway_copy.php?id='.urlencode($gateway_uuid),'onclick'=>"modal_close();"])]);
 	}
 
@@ -765,7 +768,7 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('gateway_channels')) {
+	if ($has_gateway_channels) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap>\n";
 		echo "    ".$text['label-channels']."\n";
@@ -789,7 +792,7 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('gateway_domain')) {
+	if ($has_gateway_domain) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-domain']."\n";

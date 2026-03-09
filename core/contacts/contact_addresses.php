@@ -33,6 +33,9 @@
 		echo "access denied";
 		exit;
 	}
+	$has_contact_address_delete = permission_exists('contact_address_delete');
+	$has_contact_address_edit   = permission_exists('contact_address_edit');
+	$has_domain_select          = permission_exists('domain_select');
 
 //set from session variables
 	$list_row_edit_button = $settings->get('theme', 'list_row_edit_button', false);
@@ -64,7 +67,7 @@
 			echo "<div class='card'>\n";
 			echo "<table class='list'>\n";
 			echo "<tr class='list-header'>\n";
-			if (permission_exists('contact_address_delete')) {
+			if ($has_contact_address_delete) {
 				echo "	<th class='checkbox'>\n";
 				echo "		<input type='checkbox' id='checkbox_all_addresses' name='checkbox_all' onclick=\"edit_all_toggle('addresses');\" ".(!empty($contact_addresses) ?: "style='visibility: hidden;'").">\n";
 				echo "	</th>\n";
@@ -75,7 +78,7 @@
 			echo "<th class='center'>".!empty($text['label-address_country'])."</th>\n";
 			echo "<th class='shrink'>&nbsp;</th>\n";
 			echo "<th class='hide-md-dn'>".!empty($text['label-address_description'])."</th>\n";
-			if (permission_exists('contact_address_edit') && $list_row_edit_button == 'true') {
+			if ($has_contact_address_edit && $list_row_edit_button == 'true') {
 				echo "	<td class='action-button'>&nbsp;</td>\n";
 			}
 			echo "</tr>\n";
@@ -85,14 +88,14 @@
 				foreach ($contact_addresses as $row) {
 					$map_query = $row['address_street']." ".$row['address_extended'].", ".$row['address_locality'].", ".$row['address_region'].", ".$row['address_region'].", ".$row['address_postal_code'];
 					$list_row_url = '';
-					if (permission_exists('contact_address_edit')) {
+					if ($has_contact_address_edit) {
 						$list_row_url = "contact_address_edit.php?contact_uuid=".urlencode($row['contact_uuid'])."&id=".urlencode($row['contact_address_uuid']);
-						if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+						if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 							$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 						}
 					}
 					echo "<tr class='list-row' href='".$list_row_url."'>\n";
-					if (permission_exists('contact_address_delete')) {
+					if ($has_contact_address_delete) {
 						echo "	<td class='checkbox'>\n";
 						echo "		<input type='checkbox' name='contact_addresses[$x][checked]' id='checkbox_".$x."' class='chk_delete checkbox_addresses' value='true' onclick=\"edit_delete_action('addresses');\">\n";
 						echo "		<input type='hidden' name='contact_addresses[$x][uuid]' value='".escape($row['contact_address_uuid'])."' />\n";
@@ -105,7 +108,7 @@
 					echo "	<td class='center'>".escape($row['address_country'])."&nbsp;</td>\n";
 					echo "	<td class='button no-link'><a href=\"http://maps.google.com/maps?q=".urlencode($map_query)."&hl=en\" target=\"_blank\"><img src='resources/images/icon_gmaps.png' style='width: 21px; height: 21px; alt='".!empty($text['label-google_map'])."' title='".!empty($text['label-google_map'])."'></a></td>\n";
 					echo "	<td class='description overflow hide-md-dn'>".escape($row['address_description'])."&nbsp;</td>\n";
-					if (permission_exists('contact_address_edit') && $list_row_edit_button == 'true') {
+					if ($has_contact_address_edit && $list_row_edit_button == 'true') {
 						echo "	<td class='action-button'>\n";
 						echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 						echo "	</td>\n";

@@ -12,6 +12,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_click_to_call_call = permission_exists('click_to_call_call');
+	$has_xml_cdr_domain     = permission_exists('xml_cdr_domain');
 
 //convert to a key
 	$widget_key = str_replace(' ', '_', strtolower($widget_name));
@@ -63,7 +65,7 @@
 	$sql .=	"	) \n";
 	$sql .=	"	and (status = 'missed') ";
 	$sql .=	"	and hangup_cause <> 'LOSE_RACE' ";
-	if (!permission_exists('xml_cdr_domain')) {
+	if (!$has_xml_cdr_domain) {
 		if (!empty($assigned_extensions)) {
 			$x = 0;
 			foreach ($assigned_extensions as $assigned_extension_uuid => $assigned_extension) {
@@ -188,7 +190,7 @@
 					$start_date_time = str_replace(' 0',' ', $start_date_time);
 				}
 				//set click-to-call variables
-				if (permission_exists('click_to_call_call')) {
+				if ($has_click_to_call_call) {
 					$tr_link = "onclick=\"send_cmd('".PROJECT_PATH."/app/click_to_call/click_to_call.php".
 						"?src_cid_name=".urlencode($row['caller_id_name'] ?? '').
 						"&src_cid_number=".urlencode($row['caller_id_number'] ?? '').

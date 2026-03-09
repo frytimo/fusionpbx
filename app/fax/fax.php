@@ -34,6 +34,19 @@
 		echo "access denied";
 		exit;
 	}
+	$has_domain_select             = permission_exists('domain_select');
+	$has_fax_active_view           = permission_exists('fax_active_view');
+	$has_fax_extension_add         = permission_exists('fax_extension_add');
+	$has_fax_extension_copy        = permission_exists('fax_extension_copy');
+	$has_fax_extension_delete      = permission_exists('fax_extension_delete');
+	$has_fax_extension_edit        = permission_exists('fax_extension_edit');
+	$has_fax_extension_view_all    = permission_exists('fax_extension_view_all');
+	$has_fax_extension_view_domain = permission_exists('fax_extension_view_domain');
+	$has_fax_inbox_view            = permission_exists('fax_inbox_view');
+	$has_fax_log_view              = permission_exists('fax_log_view');
+	$has_fax_queue_view            = permission_exists('fax_queue_view');
+	$has_fax_send                  = permission_exists('fax_send');
+	$has_fax_sent_view             = permission_exists('fax_sent_view');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -54,13 +67,13 @@
 
 		switch ($action) {
 			case 'copy':
-				if (permission_exists('fax_extension_copy')) {
+				if ($has_fax_extension_copy) {
 					$obj = new fax;
 					$obj->copy($fax_servers);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('fax_extension_delete')) {
+				if ($has_fax_extension_delete) {
 					$obj = new fax;
 					$obj->delete($fax_servers);
 				}
@@ -88,13 +101,13 @@
 	$show = $_GET["show"] ?? '';
 
 //get record counts
-	if ($show == "all" && permission_exists('fax_extension_view_all')) {
+	if ($show == "all" && $has_fax_extension_view_all) {
 		//show all fax extensions
 		$sql = "select count(f.fax_uuid) ";
 		$sql .= "from v_fax as f ";
 		$sql .= "where true ";
 	}
-	elseif (permission_exists('fax_extension_view_domain') || permission_exists('fax_extension_view_all')) {
+	elseif ($has_fax_extension_view_domain || $has_fax_extension_view_all) {
 		//show all fax extensions for this domain
 		$sql = "select count(f.fax_uuid) ";
 		$sql .= "from v_fax as f ";
@@ -127,7 +140,7 @@
 //prepare paging
 	$rows_per_page = $settings->get('domain', 'paging', 50);
 	$param = "&search=".urlencode($search);
-	if ($show == "all" && permission_exists('fax_extension_view_all')) {
+	if ($show == "all" && $has_fax_extension_view_all) {
 		$param .= "&show=all";
 	}
 	$page = !empty($_GET['page']) ? $_GET['page'] : 0;
@@ -136,12 +149,12 @@
 	$offset = $rows_per_page * $page;
 
 //get fax extensions
-	if ($show == "all" && permission_exists('fax_extension_view_all')) {
+	if ($show == "all" && $has_fax_extension_view_all) {
 		//show all fax extensions
 		$sql = "select * from v_fax as f ";
 		$sql .= "where true ";
 	}
-	elseif (permission_exists('fax_extension_view_domain') || permission_exists('fax_extension_view_all')) {
+	elseif ($has_fax_extension_view_domain || $has_fax_extension_view_all) {
 		//show all fax extensions for this domain
 		$sql = "select fax_uuid, domain_uuid, fax_extension, fax_prefix, fax_name, fax_email, fax_description ";
 		$sql .= "from v_fax as f ";
@@ -188,16 +201,16 @@
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['title-fax']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('fax_extension_add')) {
+	if ($has_fax_extension_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'fax_edit.php']);
 	}
-	if (permission_exists('fax_extension_copy') && $result) {
+	if ($has_fax_extension_copy && $result) {
 		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 	}
-	if (permission_exists('fax_extension_delete') && $result) {
+	if ($has_fax_extension_delete && $result) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
-	if (permission_exists('fax_extension_view_all')) {
+	if ($has_fax_extension_view_all) {
 		if ($show == 'all') {
 			echo "		<input type='hidden' name='show' value='all'>";
 		}
@@ -217,10 +230,10 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('fax_extension_copy') && $result) {
+	if ($has_fax_extension_copy && $result) {
 		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('fax_extension_delete') && $result) {
+	if ($has_fax_extension_delete && $result) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -234,12 +247,12 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('fax_extension_add') || permission_exists('fax_extension_delete')) {
+	if ($has_fax_extension_add || $has_fax_extension_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(empty($result) ? "style='visibility: hidden;'" : null).">\n";
 		echo "	</th>\n";
 	}
-	if (permission_exists('fax_extension_view_all') && !empty($_GET['show']) && $_GET['show'] == 'all') {
+	if ($has_fax_extension_view_all && !empty($_GET['show']) && $_GET['show'] == 'all') {
 		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order);
 	}
 	echo th_order_by('fax_name', $text['label-name'], $order_by, $order);
@@ -247,7 +260,7 @@
 	echo th_order_by('fax_email', $text['label-email'], $order_by, $order);
 	echo "	<th>".$text['label-tools']."</th>";
 	echo th_order_by('fax_description', $text['label-description'], $order_by, $order, null, "class='hide-sm-dn'");
-	if (permission_exists('fax_extension_edit') && $settings->get('theme', 'list_row_edit_button', false)) {
+	if ($has_fax_extension_edit && $settings->get('theme', 'list_row_edit_button', false)) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -258,24 +271,24 @@
 			//dispatch render-row hook
 			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
-			if (permission_exists('fax_extension_edit')) {
+			if ($has_fax_extension_edit) {
 				$list_row_url = "fax_edit.php?id=".urlencode($row['fax_uuid']);
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('fax_extension_add') || permission_exists('fax_extension_delete')) {
+			if ($has_fax_extension_add || $has_fax_extension_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='fax_servers[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='fax_servers[$x][uuid]' value='".escape($row['fax_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if (permission_exists('fax_extension_view_all') && !empty($_GET['show']) && $_GET['show'] == 'all') {
+			if ($has_fax_extension_view_all && !empty($_GET['show']) && $_GET['show'] == 'all') {
 				echo "	<td>".escape($_SESSION['domains'][$row['domain_uuid']]['domain_name'])."</td>\n";
 			}
 			echo "	<td>";
-			if (permission_exists('fax_extension_edit')) {
+			if ($has_fax_extension_edit) {
 				echo "<a href='".$list_row_url."'>".escape($row['fax_name'])."</a>";
 			}
 			else {
@@ -285,10 +298,10 @@
 			echo "	<td>".escape($row['fax_extension'])."</td>\n";
 			echo "	<td class='overflow' style='min-width: 25%;'>".escape(str_replace("\\",'', $row['fax_email'] ?? ''))."&nbsp;</td>\n";
 			echo "	<td class='no-link no-wrap'>";
-			if (permission_exists('fax_send')) {
+			if ($has_fax_send) {
 				echo "		<a href='fax_send.php?id=".urlencode($row['fax_uuid'])."'>".$text['label-new']."</a>&nbsp;&nbsp;";
 			}
-			if (permission_exists('fax_inbox_view')) {
+			if ($has_fax_inbox_view) {
 				if (!empty($row['fax_email_inbound_subject_tag'])) {
 					$file = "fax_files_remote.php";
 					$box = escape($row['fax_email_connection_mailbox']);
@@ -300,22 +313,22 @@
 				echo "		<a href='".$file."?order_by=fax_date&order=desc&id=".urlencode($row['fax_uuid'])."&box=".$box."'>".$text['label-inbox']."</a>&nbsp;&nbsp;";
 				//echo "		<a href='fax_outbox.php?id=".urlencode($row['fax_uuid'])."'>".$text['label-outbox']."</a>&nbsp;&nbsp;";
 			}
-			if (permission_exists('fax_sent_view')) {
+			if ($has_fax_sent_view) {
 				echo "		<a href='fax_files.php?order_by=fax_date&order=desc&id=".urlencode($row['fax_uuid'])."&box=sent'>".$text['label-sent']."</a>&nbsp;&nbsp;";
 			}
-			if (permission_exists('fax_log_view')) {
+			if ($has_fax_log_view) {
 				echo "		<a href='fax_logs.php?id=".urlencode($row['fax_uuid'])."'>".$text['label-log']."</a>&nbsp;&nbsp;";
 			}
-			if (file_exists(__DIR__ . '/fax_active.php') && permission_exists('fax_active_view') && !empty($settings->get('fax', 'send_mode')) && $settings->get('fax', 'send_mode') == 'queue') {
+			if (file_exists(__DIR__ . '/fax_active.php') && $has_fax_active_view && !empty($settings->get('fax', 'send_mode')) && $settings->get('fax', 'send_mode') == 'queue') {
 				echo "		<a href='fax_active.php?id=".urlencode($row['fax_uuid'])."'>".$text['label-active']."</a>&nbsp;&nbsp;";
 			}
-			if (permission_exists('fax_queue_view')) {
+			if ($has_fax_queue_view) {
 				echo "		<a href='/app/fax_queue/fax_queue.php'>".$text['label-queue']."</a>&nbsp;&nbsp;";
 			}
 
 			echo "	</td>\n";
 			echo "	<td class='description overflow hide-sm-dn'>".escape($row['fax_description'])."&nbsp;</td>\n";
-			if (permission_exists('fax_extension_edit') && $settings->get('theme', 'list_row_edit_button', false)) {
+			if ($has_fax_extension_edit && $settings->get('theme', 'list_row_edit_button', false)) {
 				echo "	<td class='action-button'>";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

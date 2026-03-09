@@ -38,6 +38,7 @@
 		echo "access denied";
 		exit;
 	}
+	$has_music_on_hold_all = permission_exists('music_on_hold_all');
 
 //create the waveform file
 	if (is_uuid($_GET['id']) && is_uuid($_GET['moh_id']) && !empty($_GET['data'])) {
@@ -45,7 +46,7 @@
 		//get the music_on_hold array
 		$sql = "select music_on_hold_path from v_music_on_hold ";
 		$sql .= "where music_on_hold_uuid = :moh_id ";
-		if (!permission_exists('music_on_hold_all')) {
+		if (!$has_music_on_hold_all) {
 			$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 			$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		}

@@ -33,6 +33,7 @@
 		echo "access denied";
 		exit;
 	}
+	$has_contact_upload = permission_exists('contact_upload');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -55,7 +56,7 @@
 
 //copy the csv file
 	//$_POST['submit'] == "Upload" &&
-	if (!empty($_FILES['ulfile']['tmp_name']) && is_uploaded_file($_FILES['ulfile']['tmp_name']) && permission_exists('contact_upload')) {
+	if (!empty($_FILES['ulfile']['tmp_name']) && is_uploaded_file($_FILES['ulfile']['tmp_name']) && $has_contact_upload) {
 		if ($_POST['type'] == 'csv') {
 			move_uploaded_file($_FILES['ulfile']['tmp_name'], $settings->get('server', 'temp').'/'.$_FILES['ulfile']['name']);
 			$save_msg = "Uploaded file to ".$settings->get('server', 'temp')."/". htmlentities($_FILES['ulfile']['name']);

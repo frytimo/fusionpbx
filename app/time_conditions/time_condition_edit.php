@@ -33,6 +33,9 @@
 		echo "access denied";
 		exit;
 	}
+	$has_dialplan_edit          = permission_exists('dialplan_edit');
+	$has_time_condition_context = permission_exists('time_condition_context');
+	$has_time_condition_domain  = permission_exists('time_condition_domain');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -73,13 +76,13 @@
 		$dialplan_anti_action_array = explode(":", $dialplan_anti_action);
 		$dialplan_anti_action_app = array_shift($dialplan_anti_action_array);
 		$dialplan_anti_action_data = join(':', $dialplan_anti_action_array);
-		if (permission_exists('time_condition_context')) {
+		if ($has_time_condition_context) {
 			$dialplan_context = $_POST["dialplan_context"];
 		}
 		$dialplan_enabled = $_POST["dialplan_enabled"];
 		$dialplan_description = $_POST["dialplan_description"];
 
-		if (!permission_exists('time_condition_domain')) {
+		if (!$has_time_condition_domain) {
 			$domain_uuid = $_SESSION['domain_uuid'];
 		}
 	}
@@ -117,7 +120,7 @@
 			$dialplan_name = str_replace('/', '', $dialplan_name);
 
 		//set the context for users that do not have the permission
-			if (permission_exists('time_condition_context')) {
+			if ($has_time_condition_context) {
 				$dialplan_context = $_POST["dialplan_context"];
 			}
 			else {
@@ -963,7 +966,7 @@ echo "<div class='action_bar' id='action_bar'>\n";
 echo "	<div class='heading'><b>".$text['title-time_condition']."</b></div>\n";
 echo "	<div class='actions'>\n";
 echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','style'=>'margin-right: 15px;','link'=>PROJECT_PATH.'/app/time_conditions/time_conditions.php?app_uuid=4b821450-926b-175a-af93-a03c441818b1']);
-if ($action == 'update' && permission_exists('dialplan_edit')) {
+if ($action == 'update' && $has_dialplan_edit) {
 	echo button::create(['type'=>'button','label'=>$text['button-dialplan'],'icon'=>'list','style'=>'margin-right: 15px;','link'=>PROJECT_PATH.'/app/dialplans/dialplan_edit.php?id='.urlencode($dialplan_uuid).'&app_uuid=4b821450-926b-175a-af93-a03c441818b1']);
 }
 echo button::create(['type'=>'submit','label'=>$text['button-save'],'icon'=>$settings->get('theme', 'button_icon_save'),'id'=>'btn_save']);
@@ -1269,7 +1272,7 @@ if ($action == 'update') {
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('time_condition_domain')) {
+	if ($has_time_condition_domain) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-domain']."\n";
@@ -1297,7 +1300,7 @@ if ($action == 'update') {
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('time_condition_context')) {
+	if ($has_time_condition_context) {
 		echo "<tr>\n";
 		echo "<td class='vncellreq' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-context']."\n";

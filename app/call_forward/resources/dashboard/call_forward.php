@@ -9,6 +9,12 @@
 		echo "access denied";
 		exit;
 	}
+	$has_call_forward     = permission_exists('call_forward');
+	$has_call_forward_all = permission_exists('call_forward_all');
+	$has_do_not_disturb   = permission_exists('do_not_disturb');
+	$has_extension_edit   = permission_exists('extension_edit');
+	$has_extension_view   = permission_exists('extension_view');
+	$has_follow_me        = permission_exists('follow_me');
 
 //convert to a key
 	$widget_key = str_replace(' ', '_', strtolower($widget_name));
@@ -22,7 +28,7 @@
 
 //extensions link
 	$extension_link = '#';
-	if (permission_exists('extension_view')) {
+	if ($has_extension_view) {
 		$extension_link = PROJECT_PATH."/app/extensions/extensions.php";
 	}
 	$call_forward_link = PROJECT_PATH."/app/call_forward/call_forward.php";
@@ -43,7 +49,7 @@
 	$sql .= "do_not_disturb ";
 	$sql .= "from ";
 	$sql .= "v_extensions ";
-	if (!empty($_GET['show']) && $_GET['show'] == "all" && permission_exists('call_forward_all')) {
+	if (!empty($_GET['show']) && $_GET['show'] == "all" && $has_call_forward_all) {
 		$sql .= "where true ";
 	}
 	else {
@@ -51,7 +57,7 @@
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	}
 	$sql .= "and enabled = true ";
-	if (!permission_exists('extension_edit')) {
+	if (!$has_extension_edit) {
 		if (is_array($_SESSION['user']['extension']) && count($_SESSION['user']['extension']) > 0) {
 			$sql .= "and (";
 			$x = 0;
@@ -80,13 +86,13 @@
 	$show_stat = false;
 	if (is_array($extensions) && @sizeof($extensions) != 0) {
 		foreach ($extensions as $row) {
-			if (permission_exists('call_forward')) {
+			if ($has_call_forward) {
 				$stats['call_forward'] += $row['forward_all_enabled'] == true && $row['forward_all_destination'] ? 1 : 0;
 			}
-			if (permission_exists('follow_me')) {
+			if ($has_follow_me) {
 				$stats['follow_me'] += $row['follow_me_enabled'] == true && is_uuid($row['follow_me_uuid']) ? 1 : 0;
 			}
-			if (permission_exists('do_not_disturb')) {
+			if ($has_do_not_disturb) {
 				$stats['dnd'] += $row['do_not_disturb'] == true ? 1 : 0;
 			}
 		}
@@ -113,39 +119,39 @@
 		echo "			type: 'doughnut',\n";
 		echo "			data: {\n";
 		echo "				labels: [\n";
-		if (permission_exists('do_not_disturb')) {
+		if ($has_do_not_disturb) {
 			echo "				'".$text['label-dnd'].": ".$stats['dnd']."',\n";
 		}
-		if (permission_exists('follow_me')) {
+		if ($has_follow_me) {
 			echo "				'".$text['label-follow_me'].": ".$stats['follow_me']."',\n";
 		}
-		if (permission_exists('call_forward')) {
+		if ($has_call_forward) {
 			echo "				'".$text['label-call_forward'].": ".$stats['call_forward']."',\n";
 		}
 		echo "					'".$text['label-active'].": ".$stats['active']."',\n";
 		echo "				],\n";
 		echo "				datasets: [{\n";
 		echo "					data: [\n";
-		if (permission_exists('do_not_disturb')) {
+		if ($has_do_not_disturb) {
 			echo "					'".$stats['dnd']."',\n";
 		}
-		if (permission_exists('follow_me')) {
+		if ($has_follow_me) {
 			echo "					'".$stats['follow_me']."',\n";
 		}
-		if (permission_exists('call_forward')) {
+		if ($has_call_forward) {
 			echo "					'".$stats['call_forward']."',\n";
 		}
 		echo "						'".$stats['active']."',\n";
 		echo "						0.00001,\n";
 		echo "					],\n";
 		echo "					backgroundColor: [\n";
-		if (permission_exists('do_not_disturb')) {
+		if ($has_do_not_disturb) {
 			echo "					'".($settings->get('theme', 'dashboard_call_forward_chart_color_do_not_disturb') ?? '#ea4c46')."',\n";
 		}
-		if (permission_exists('follow_me')) {
+		if ($has_follow_me) {
 			echo "					'".($settings->get('theme', 'dashboard_call_forward_chart_color_follow_me') ?? '#03c04a')."',\n";
 		}
-		if (permission_exists('call_forward')) {
+		if ($has_call_forward) {
 			echo "					'".($settings->get('theme', 'dashboard_call_forward_chart_color_call_forward') ?? '#2a9df4')."',\n";
 		}
 		echo "						'".($settings->get('theme', 'dashboard_call_forward_chart_color_active') ?? '#d4d4d4')."',\n";
@@ -199,13 +205,13 @@
 		echo "<table class='tr_hover' width='100%' cellpadding='0' cellspacing='0' border='0'>\n";
 		echo "<tr style='position: -webkit-sticky; position: sticky; z-index: 5; top: 0;'>\n";
 		echo "<th class='hud_heading'><a href='".$extension_link."'>".$text['label-extension']."</a></th>\n";
-		if (permission_exists('call_forward')) {
+		if ($has_call_forward) {
 			echo "	<th class='hud_heading' style='text-align: center;'><a href='".$call_forward_link."'>".$text['label-call_forward']."</a></th>\n";
 		}
-		if (permission_exists('follow_me')) {
+		if ($has_follow_me) {
 			echo "	<th class='hud_heading' style='text-align: center;'><a href='".$call_forward_link."'>".$text['label-follow_me']."</a></th>\n";
 		}
-		if (permission_exists('do_not_disturb')) {
+		if ($has_do_not_disturb) {
 			echo "	<th class='hud_heading' style='text-align: center;'><a href='".$call_forward_link."'>".$text['label-dnd']."</a></th>\n";
 		}
 		echo "</tr>\n";
@@ -214,10 +220,10 @@
 				$tr_link = PROJECT_PATH."/app/call_forward/call_forward_edit.php?id=".$row['extension_uuid'];
 				echo "<tr href='".$tr_link."'>\n";
 				echo "	<td valign='top' class='".$row_style[$c]." hud_text'><a href='".$tr_link."' title=\"".$text['button-edit']."\">".escape($row['extension'])."</a></td>\n";
-				if (permission_exists('call_forward')) {
+				if ($has_call_forward) {
 					echo "	<td valign='top' class='".$row_style[$c]." hud_text' style='text-align: center;'>".($row['forward_all_enabled'] == 'true' ? escape(format_phone($row['forward_all_destination'])) : '&nbsp;')."</td>\n";
 				}
-				if (permission_exists('follow_me')) {
+				if ($has_follow_me) {
 					//get destination count
 					$follow_me_destination_count = 0;
 					if ($row['follow_me_enabled'] == true && is_uuid($row['follow_me_uuid'])) {
@@ -231,7 +237,7 @@
 					}
 					echo "	<td valign='top' class='".$row_style[$c]." hud_text' style='text-align: center;'>".($follow_me_destination_count ? $text['label-enabled'].' ('.$follow_me_destination_count.')' : '&nbsp;')."</td>\n";
 				}
-				if (permission_exists('do_not_disturb')) {
+				if ($has_do_not_disturb) {
 					echo "	<td valign='top' class='".$row_style[$c]." hud_text' style='text-align: center;'>".($row['do_not_disturb'] == 'true' ? $text['label-enabled'] : '&nbsp;')."</td>\n";
 				}
 				echo "</tr>\n";

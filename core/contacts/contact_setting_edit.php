@@ -34,6 +34,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_contact_setting_add  = permission_exists('contact_setting_add');
+	$has_contact_setting_edit = permission_exists('contact_setting_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -133,7 +135,7 @@
 					$p->delete('contact_edit', 'temp');
 
 				//add the setting
-					if ($action == "add" && permission_exists('contact_setting_add')) {
+					if ($action == "add" && $has_contact_setting_add) {
 						$contact_setting_uuid = uuid();
 						$array['contact_settings'][0]['contact_setting_uuid'] = $contact_setting_uuid;
 
@@ -141,7 +143,7 @@
 					}
 
 				//update the setting
-					if ($action == "update" && permission_exists('contact_setting_edit')) {
+					if ($action == "update" && $has_contact_setting_edit) {
 						$array['contact_settings'][0]['contact_setting_uuid'] = $contact_setting_uuid;
 
 						message::add($text['message-update']);

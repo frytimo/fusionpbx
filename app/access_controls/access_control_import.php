@@ -33,6 +33,7 @@
 		echo "access denied";
 		exit;
 	}
+	$has_access_control_node_add = permission_exists('access_control_node_add');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -78,7 +79,7 @@
 
 //copy the csv file
 	//$_POST['submit'] == "Upload" &&
-	if (!empty($_FILES['ulfile']['tmp_name']) &&  is_uploaded_file($_FILES['ulfile']['tmp_name']) && permission_exists('access_control_node_add')) {
+	if (!empty($_FILES['ulfile']['tmp_name']) &&  is_uploaded_file($_FILES['ulfile']['tmp_name']) && $has_access_control_node_add) {
 		if (!empty($_POST['type']) &&$_POST['type'] == 'csv') {
 			$file = $settings->get('server', 'temp').'/'.$_FILES['ulfile']['name'];
 			if (move_uploaded_file($_FILES['ulfile']['tmp_name'], $file)) {

@@ -33,12 +33,15 @@
 		echo "access denied";
 		exit;
 	}
+	$has_user_setting_add           = permission_exists('user_setting_add');
+	$has_user_setting_category_edit = permission_exists('user_setting_category_edit');
+	$has_user_setting_edit          = permission_exists('user_setting_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
 
 //retrieve allowed setting categories
-	if (!permission_exists('user_setting_category_edit')) {
+	if (!$has_user_setting_category_edit) {
 		if (!empty($_SESSION['settings'])) {
 			foreach ($_SESSION['groups'] as $index => $group) {
 				$group_name = $group['group_name'];
@@ -178,12 +181,12 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 				}
 
 			//add the user setting
-				if ($action == "add" && permission_exists('user_setting_add')) {
+				if ($action == "add" && $has_user_setting_add) {
 					$array['user_settings'][0]['user_setting_uuid'] = uuid();
 				}
 
 			//update the user setting
-				if ($action == "update" && permission_exists('user_setting_edit')) {
+				if ($action == "update" && $has_user_setting_edit) {
 					$array['user_settings'][0]['user_setting_uuid'] = $user_setting_uuid;
 				}
 
@@ -369,7 +372,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 	echo "	".$text['label-category']."\n";
 	echo "</td>\n";
 	echo "<td width='70%' class='vtable' align='left'>\n";
-	if (permission_exists('user_setting_category_edit')) {
+	if ($has_user_setting_category_edit) {
 		echo "	<input type='text' class='formfld' name='user_setting_category' id='user_setting_category' maxlength='255' value=\"".escape($user_setting_category)."\">\n";
 	}
 	else {

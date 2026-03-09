@@ -33,6 +33,22 @@
 		echo "access denied";
 		exit;
 	}
+	$has_voicemail_add                    = permission_exists('voicemail_add');
+	$has_voicemail_delete                 = permission_exists('voicemail_delete');
+	$has_voicemail_edit                   = permission_exists('voicemail_edit');
+	$has_voicemail_file                   = permission_exists('voicemail_file');
+	$has_voicemail_forward                = permission_exists('voicemail_forward');
+	$has_voicemail_greeting_download      = permission_exists('voicemail_greeting_download');
+	$has_voicemail_greeting_play          = permission_exists('voicemail_greeting_play');
+	$has_voicemail_local_after_email      = permission_exists('voicemail_local_after_email');
+	$has_voicemail_option_add             = permission_exists('voicemail_option_add');
+	$has_voicemail_option_delete          = permission_exists('voicemail_option_delete');
+	$has_voicemail_option_edit            = permission_exists('voicemail_option_edit');
+	$has_voicemail_recording_instructions = permission_exists('voicemail_recording_instructions');
+	$has_voicemail_recording_options      = permission_exists('voicemail_recording_options');
+	$has_voicemail_sms_edit               = permission_exists('voicemail_sms_edit');
+	$has_voicemail_transcription_enabled  = permission_exists('voicemail_transcription_enabled');
+	$has_voicemail_view                   = permission_exists('voicemail_view');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -77,7 +93,7 @@
 
 				switch ($_POST['action']) {
 					case 'delete':
-						if (permission_exists('voicemail_delete')) {
+						if ($has_voicemail_delete) {
 							$obj = new voicemail;
 							$obj->voicemail_delete($array);
 						}
@@ -150,12 +166,12 @@
 			if (empty($_POST["persistformvar"])) {
 
 				//get a new voicemail_uuid
-					if ($action == "add" && permission_exists('voicemail_add')) {
+					if ($action == "add" && $has_voicemail_add) {
 						//set the voicemail uuid
 						$voicemail_uuid = uuid();
 
 						//if adding a mailbox and don't have the transcription permission, set the default transcribe behavior
-						if (!permission_exists('voicemail_transcription_enabled')) {
+						if (!$has_voicemail_transcription_enabled) {
 							$voicemail_transcription_enabled = $settings->get('voicemail', 'transcription_enabled_default', false);
 						}
 					}
@@ -171,16 +187,16 @@
 					$array['voicemails'][0]['voicemail_sms_to'] = $voicemail_sms_to;
 					$array['voicemails'][0]['voicemail_transcription_enabled'] = $voicemail_transcription_enabled;
 					$array['voicemails'][0]['voicemail_tutorial'] = $voicemail_tutorial;
-					if (permission_exists('voicemail_recording_instructions')) {
+					if ($has_voicemail_recording_instructions) {
 						$array['voicemails'][0]['voicemail_recording_instructions'] = $voicemail_recording_instructions;
 					}
-					if (permission_exists('voicemail_recording_options')) {
+					if ($has_voicemail_recording_options) {
 						$array['voicemails'][0]['voicemail_recording_options'] = $voicemail_recording_options;
 					}
-					if (permission_exists('voicemail_file')) {
+					if ($has_voicemail_file) {
 						$array['voicemails'][0]['voicemail_file'] = $voicemail_file;
 					}
-					if (permission_exists('voicemail_local_after_email')) {
+					if ($has_voicemail_local_after_email) {
 						$array['voicemails'][0]['voicemail_local_after_email'] = $voicemail_local_after_email;
 					}
 					$array['voicemails'][0]['voicemail_enabled'] = $voicemail_enabled;
@@ -190,7 +206,7 @@
 					$p = permissions::new();
 
 				//add voicemail options
-					if (permission_exists('voicemail_option_add') && sizeof($voicemail_options) > 0) {
+					if ($has_voicemail_option_add && sizeof($voicemail_options) > 0) {
 						foreach ($voicemail_options as $x => $voicemail_option) {
 							if ($voicemail_option['voicemail_option_digits'] == '' || $voicemail_option['voicemail_option_param'] == '') { unset($voicemail_options[$x]); }
 						}
@@ -226,7 +242,7 @@
 					}
 
 				//add voicemail destination
-					if (permission_exists('voicemail_forward') && is_uuid($voicemail_destination)) {
+					if ($has_voicemail_forward && is_uuid($voicemail_destination)) {
 						$array['voicemail_destinations'][0]['domain_uuid'] = $domain_uuid;
 						$array['voicemail_destinations'][0]['voicemail_destination_uuid'] = uuid();
 						$array['voicemail_destinations'][0]['voicemail_uuid'] = $voicemail_uuid;
@@ -268,7 +284,7 @@
 				//remove checked voicemail options
 					if (
 						$action == 'update'
-						&& permission_exists('voicemail_option_delete')
+						&& $has_voicemail_option_delete
 						&& is_array($voicemail_options_delete)
 						&& @sizeof($voicemail_options_delete) != 0
 						) {
@@ -280,7 +296,7 @@
 				//remove checked voicemail destinations
 					if (
 						$action == 'update'
-						&& permission_exists('voicemail_forward')
+						&& $has_voicemail_forward
 						&& is_array($voicemail_destinations_delete)
 						&& @sizeof($voicemail_destinations_delete) != 0
 						) {
@@ -299,16 +315,16 @@
 						(!empty($_POST['recorded_name']) && $_POST['recorded_name'] == 1) &&
 						!empty($settings->get('switch', 'storage')) &&
 						file_exists($settings->get('switch', 'storage').'/voicemail/default/'.$domain_name.'/'.$voicemail_id.'/recorded_name.wav') &&
-						(permission_exists('voicemail_greeting_play') || permission_exists('voicemail_greeting_download'))
+						($has_voicemail_greeting_play || $has_voicemail_greeting_download)
 						) {
 						@unlink($settings->get('switch', 'storage').'/voicemail/default/'.$domain_name.'/'.$voicemail_id.'/recorded_name.wav');
 					}
 
 				//set message
-					if ($action == "add" && permission_exists('voicemail_add')) {
+					if ($action == "add" && $has_voicemail_add) {
 						message::add($text['message-add']);
 					}
-					if ($action == "update" && permission_exists('voicemail_edit')) {
+					if ($action == "update" && $has_voicemail_edit) {
 						message::add($text['message-update']);
 					}
 
@@ -513,7 +529,7 @@
 	}
 
 //set the location for the back button
-	if (permission_exists('voicemail_view')) {
+	if ($has_voicemail_view) {
 		$back_button_location = "voicemails.php";
 	}
 	else {
@@ -521,7 +537,7 @@
 	}
 
 //show the content
-	if (permission_exists('voicemail_greeting_play') || permission_exists('voicemail_greeting_download')) {
+	if ($has_voicemail_greeting_play || $has_voicemail_greeting_download) {
 		echo "<script type='text/javascript' language='JavaScript'>\n";
 		echo "	function set_playable(id, audio_selected, mime_type) {\n";
 		echo "		if (mime_type != undefined && mime_type != '' && audio_selected != undefined) {\n";
@@ -543,7 +559,7 @@
 	echo "	<div class='heading'><b>".$text['title-voicemail']."</b></div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','link'=>$back_button_location]);
-	if ($action == "update" && (permission_exists('voicemail_delete') || permission_exists('voicemail_option_delete'))) {
+	if ($action == "update" && ($has_voicemail_delete || $has_voicemail_option_delete)) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'name'=>'btn_delete','style'=>'margin-left: 15px;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo button::create(['type'=>'button','label'=>$text['button-save'],'icon'=>$settings->get('theme', 'button_icon_save'),'id'=>'btn_save','style'=>'margin-left: 15px;','onclick'=>($password_complexity ? "if (check_password_strength(document.getElementById('password').value)) { submit_form(); } else { this.blur(); return false; }" : 'submit_form();')]);
@@ -551,7 +567,7 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if ($action == "update" && (permission_exists('voicemail_delete') || permission_exists('voicemail_option_delete'))) {
+	if ($action == "update" && ($has_voicemail_delete || $has_voicemail_option_delete)) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 	}
 
@@ -607,7 +623,7 @@
 	if (
 		!empty($settings->get('switch', 'storage')) &&
 		file_exists($settings->get('switch', 'storage').'/voicemail/default/'.$domain_name.'/'.$voicemail_id.'/recorded_name.wav') &&
-		(permission_exists('voicemail_greeting_play') || permission_exists('voicemail_greeting_download'))
+		($has_voicemail_greeting_play || $has_voicemail_greeting_download)
 		) {
 		echo "<tr>\n";
 		echo "<td class='vncell' rowspan='2' valign='top' align='left' nowrap='nowrap'>\n";
@@ -634,7 +650,7 @@
 	echo "</tr>\n";
 	echo "<tr>\n";
 	echo "<td class='vtable' align='left'>\n";
-	echo "	<select class='formfld' name='greeting_id' id='greeting_id' onchange=\"if (this.selectedIndex == 0) { $('#alternate_greeting_id').slideDown(); } else { $('#alternate_greeting_id').slideUp(); } ".(permission_exists('voicemail_greeting_play') || permission_exists('voicemail_greeting_download') ? "recording_reset('greeting'); set_playable('greeting', this.options[this.selectedIndex].getAttribute('data-uuid'), this.options[this.selectedIndex].getAttribute('data-mime'));" : null)."\">\n";
+	echo "	<select class='formfld' name='greeting_id' id='greeting_id' onchange=\"if (this.selectedIndex == 0) { $('#alternate_greeting_id').slideDown(); } else { $('#alternate_greeting_id').slideUp(); } ".($has_voicemail_greeting_play || $has_voicemail_greeting_download ? "recording_reset('greeting'); set_playable('greeting', this.options[this.selectedIndex].getAttribute('data-uuid'), this.options[this.selectedIndex].getAttribute('data-mime'));" : null)."\">\n";
 	echo "		<option value=''>".$text['label-default']."</option>\n";
 	echo "		<option value='0' ".(isset($greeting_id) && $greeting_id == "0" ? "selected='selected'" : null).">".$text['label-none']."</option>\n";
 	$playable = false;
@@ -647,7 +663,7 @@
 			else {
 				unset($selected);
 			}
-			if ((permission_exists('voicemail_greeting_play') || permission_exists('voicemail_greeting_download')) && !empty($greeting['greeting_filename'])) {
+			if (($has_voicemail_greeting_play || $has_voicemail_greeting_download) && !empty($greeting['greeting_filename'])) {
 				switch (pathinfo($greeting['greeting_filename'], PATHINFO_EXTENSION)) {
 					case 'wav' : $mime_type = 'audio/wav'; break;
 					case 'mp3' : $mime_type = 'audio/mpeg'; break;
@@ -658,7 +674,7 @@
 		}
 	}
 	echo "	</select>\n";
-	if ((permission_exists('voicemail_greeting_play') || permission_exists('voicemail_greeting_download')) && (!empty($playable) || empty($greeting_id))) {
+	if (($has_voicemail_greeting_play || $has_voicemail_greeting_download) && (!empty($playable) || empty($greeting_id))) {
 		echo "<audio id='recording_audio_greeting' style='display: none;' preload='none' ontimeupdate=\"update_progress('greeting')\" onended=\"recording_reset('greeting');\" src='../voicemail_greetings/voicemail_greetings.php?id=".escape($voicemail_id)."&a=download&type=rec&uuid=".escape($greetings[($greeting_id ?? '')]['voicemail_greeting_uuid'] ?? '')."' type='".($mime_type ?? '')."'></audio>";
 		echo button::create(['type'=>'button','title'=>$text['label-play'].' / '.$text['label-pause'],'icon'=>$settings->get('theme', 'button_icon_play'),'id'=>'recording_button_greeting','style'=>'display: '.(!empty($greeting_id) ? 'inline' : 'none'),'onclick'=>"recording_play('greeting','".escape($voicemail_id).'|'.escape($greetings[($greeting_id ?? '')]['voicemail_greeting_uuid'] ?? '')."','greeting')"]);
 		unset($playable, $mime_type);
@@ -689,7 +705,7 @@
 
 	echo "<table width='100%' border='0' cellpadding='0' cellspacing='0'>\n";
 
-	if (permission_exists('voicemail_recording_instructions')) {
+	if ($has_voicemail_recording_instructions) {
 		echo "<tr>\n";
 		echo "<td width='30%' class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-recording_instructions']."\n";
@@ -712,7 +728,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('voicemail_recording_options')) {
+	if ($has_voicemail_recording_options) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-recording_options']."\n";
@@ -735,7 +751,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('voicemail_option_add') || permission_exists('voicemail_option_edit')) {
+	if ($has_voicemail_option_add || $has_voicemail_option_edit) {
 		echo "	<tr>";
 		echo "		<td width='30%' class='vncell' valign='top'>".$text['label-options']."</td>";
 		echo "		<td width='70%' class='vtable' align='left'>";
@@ -745,7 +761,7 @@
 		echo "					<td class='vtable'>".$text['label-destination']."</td>\n";
 		echo "					<td class='vtable' style='text-align: center;'>".$text['label-order']."</td>\n";
 		echo "					<td class='vtable'>".$text['label-description']."</td>\n";
-		if ($show_option_delete && permission_exists('voicemail_option_delete')) {
+		if ($show_option_delete && $has_voicemail_option_delete) {
 			echo "					<td class='vtable edit_delete_checkbox_all' onmouseover=\"swap_display('delete_label_options', 'delete_toggle_options');\" onmouseout=\"swap_display('delete_label_options', 'delete_toggle_options');\">\n";
 			echo "						<span id='delete_label_options'>".$text['label-delete']."</span>\n";
 			echo "						<span id='delete_toggle_options'><input type='checkbox' id='checkbox_all_options' name='checkbox_all' onclick=\"edit_all_toggle('options');\"></span>\n";
@@ -759,7 +775,7 @@
 				echo "					<td class='vtable'>".escape($field['voicemail_option_param'])."</td>\n";
 				echo "					<td class='vtable' style='text-align: center;'>".escape($field['voicemail_option_order'])."</td>\n";
 				echo "					<td class='vtable'>".escape($field['voicemail_option_description'])."</td>\n";
-				if ($show_option_delete && permission_exists('voicemail_option_delete')) {
+				if ($show_option_delete && $has_voicemail_option_delete) {
 					echo "				<td class='vtable' style='text-align: center; padding-bottom: 3px;'>";
 					if (is_uuid($field['voicemail_option_uuid'])) {
 						echo "					<input type='checkbox' name='voicemail_options_delete[".$x."][checked]' value='true' class='chk_delete checkbox_options' onclick=\"edit_delete_action('options');\">\n";
@@ -827,7 +843,7 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('voicemail_sms_edit') && file_exists(dirname(__DIR__, 2).'/app/sms/')) {
+	if ($has_voicemail_sms_edit && file_exists(dirname(__DIR__, 2).'/app/sms/')) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-voicemail_sms_to']."\n";
@@ -840,7 +856,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('voicemail_transcription_enabled') && $transcribe_enabled) {
+	if ($has_voicemail_transcription_enabled && $transcribe_enabled) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-voicemail_transcription_enabled']."\n";
@@ -863,7 +879,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('voicemail_file')) {
+	if ($has_voicemail_file) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-voicemail_file']."\n";
@@ -880,7 +896,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('voicemail_file') && permission_exists('voicemail_local_after_email')) {
+	if ($has_voicemail_file && $has_voicemail_local_after_email) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-voicemail_local_after_email']."\n";
@@ -903,7 +919,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('voicemail_forward')) {
+	if ($has_voicemail_forward) {
 		echo "	<tr>";
 		echo "		<td class='vncell' valign='top'>".$text['label-forward_destinations']."</td>";
 		echo "		<td class='vtable'>";

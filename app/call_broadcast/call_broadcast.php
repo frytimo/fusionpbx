@@ -34,6 +34,11 @@
 		echo "access denied";
 		exit;
 	}
+	$has_call_broadcast_add    = permission_exists('call_broadcast_add');
+	$has_call_broadcast_all    = permission_exists('call_broadcast_all');
+	$has_call_broadcast_delete = permission_exists('call_broadcast_delete');
+	$has_call_broadcast_edit   = permission_exists('call_broadcast_edit');
+	$has_domain_select         = permission_exists('domain_select');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -61,13 +66,13 @@
 
 		switch ($action) {
 			case 'copy':
-				if (permission_exists('call_broadcast_add')) {
+				if ($has_call_broadcast_add) {
 					$obj = new call_broadcast;
 					$obj->copy($call_broadcasts);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('call_broadcast_delete')) {
+				if ($has_call_broadcast_delete) {
 					$obj = new call_broadcast;
 					$obj->delete($call_broadcasts);
 				}
@@ -97,7 +102,7 @@
 //get the count
 	$sql = "select count(*) from v_call_broadcasts ";
 	$sql .= "where true ";
-	if ($show != "all" || !permission_exists('call_broadcast_all')) {
+	if ($show != "all" || !$has_call_broadcast_all) {
 		$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	}
@@ -119,7 +124,7 @@
 	if (!empty($search)) {
 		$param .= "&search=".urlencode($search);
 	}
-	if ($show == "all" && permission_exists('call_broadcast_all')) {
+	if ($show == "all" && $has_call_broadcast_all) {
 		$param .= "&show=all";
 	}
 	$page = $_GET['page'] ?? '';
@@ -136,7 +141,7 @@
 	$sql .= "broadcast_avmd, broadcast_destination_data, broadcast_accountcode, broadcast_toll_allow ";
 	$sql .= "from v_call_broadcasts ";
 	$sql .= "where true ";
-	if ($show != "all" || !permission_exists('call_broadcast_all')) {
+	if ($show != "all" || !$has_call_broadcast_all) {
 		$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	}
@@ -169,17 +174,17 @@
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['title-call_broadcast']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('call_broadcast_add')) {
+	if ($has_call_broadcast_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'call_broadcast_edit.php']);
 	}
-	if (permission_exists('call_broadcast_add') && $result) {
+	if ($has_call_broadcast_add && $result) {
 		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 	}
-	if (permission_exists('call_broadcast_delete') && $result) {
+	if ($has_call_broadcast_delete && $result) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if (permission_exists('call_broadcast_all')) {
+	if ($has_call_broadcast_all) {
 		if ($show == 'all') {
 			echo "		<input type='hidden' name='show' value='all'>";
 		}
@@ -198,10 +203,10 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('call_broadcast_add') && $result) {
+	if ($has_call_broadcast_add && $result) {
 		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('call_broadcast_delete') && $result) {
+	if ($has_call_broadcast_delete && $result) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -215,19 +220,19 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('call_broadcast_add') || permission_exists('call_broadcast_delete')) {
+	if ($has_call_broadcast_add || $has_call_broadcast_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($result) ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
 	}
-	if ($show == "all" && permission_exists('call_broadcast_all')) {
+	if ($show == "all" && $has_call_broadcast_all) {
 		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param, "class='shrink'");
 	}
 	echo th_order_by('broadcast_name', $text['label-name'], $order_by, $order);
 	echo th_order_by('broadcast_concurrent_limit', $text['label-concurrent-limit'], $order_by, $order);
 	echo th_order_by('broadcast_start_time', $text['label-start_time'], $order_by, $order);
 	echo th_order_by('broadcast_description', $text['label-description'], $order_by, $order);
-	if (permission_exists('call_broadcast_edit') && $list_row_edit_button) {
+	if ($has_call_broadcast_edit && $list_row_edit_button) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -238,20 +243,20 @@
 			//dispatch render-row hook
 			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
-			if (permission_exists('call_broadcast_edit')) {
+			if ($has_call_broadcast_edit) {
 				$list_row_url = "call_broadcast_edit.php?id=".urlencode($row['call_broadcast_uuid']);
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('call_broadcast_add') || permission_exists('call_broadcast_delete')) {
+			if ($has_call_broadcast_add || $has_call_broadcast_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='call_broadcasts[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='call_broadcasts[$x][uuid]' value='".escape($row['call_broadcast_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if ($show == "all" && permission_exists('call_broadcast_all')) {
+			if ($show == "all" && $has_call_broadcast_all) {
 				if (!empty($_SESSION['domains'][$row['domain_uuid']]['domain_name'])) {
 					$domain = $_SESSION['domains'][$row['domain_uuid']]['domain_name'];
 				}
@@ -261,7 +266,7 @@
 				echo "	<td>".escape($domain)."</td>\n";
 			}
 			echo "	<td>";
-			if (permission_exists('call_broadcast_edit')) {
+			if ($has_call_broadcast_edit) {
 				echo "<a href='".$list_row_url."'>".escape($row['broadcast_name'] ?? '')."</a>";
 			}
 			else {
@@ -276,7 +281,7 @@
 			}
 			echo "	<td>".escape($broadcast_start_time ?? '')."</td>\n";
 			echo "	<td class='description overflow hide-xs'>".escape($row['broadcast_description'])."</td>\n";
-			if (permission_exists('call_broadcast_edit') && $list_row_edit_button) {
+			if ($has_call_broadcast_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

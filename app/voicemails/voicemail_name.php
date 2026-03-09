@@ -33,6 +33,8 @@
 		echo "access denied";
 		return;
 	}
+	$has_voicemail_greeting_download = permission_exists('voicemail_greeting_download');
+	$has_voicemail_greeting_play     = permission_exists('voicemail_greeting_play');
 
 //get voicemail id
 	$voicemail_id = trim($_GET['id']);
@@ -60,7 +62,7 @@
 	}
 
 //download the name recording
-	if (permission_exists('voicemail_greeting_play') || permission_exists('voicemail_greeting_download')) {
+	if ($has_voicemail_greeting_play || $has_voicemail_greeting_download) {
 
 		if (file_exists($recording_dir.'/recorded_name.wav')) {
 

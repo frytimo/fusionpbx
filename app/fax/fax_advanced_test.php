@@ -35,6 +35,7 @@
 		echo "access denied";
 		exit;
 	}
+	$has_fax_extension_view = permission_exists('fax_extension_view');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -43,7 +44,7 @@
 	$fax_uuid = !empty($_GET['id']) && is_uuid($_GET['id']) ? $_GET['id'] : null;
 
 //get advanced fax settings
-	if (permission_exists('fax_extension_view')) {
+	if ($has_fax_extension_view) {
 		//retrieve any fax ext
 		$sql = "select ";
 		$sql .= "f.fax_name, f.fax_extension, f.fax_email_connection_type, f.fax_email_connection_host, f.fax_email_connection_port, f.fax_email_connection_security, ";

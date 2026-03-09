@@ -33,6 +33,32 @@
 		echo "access denied";
 		exit;
 	}
+	$has_destination_accountcode      = permission_exists('destination_accountcode');
+	$has_destination_add              = permission_exists('destination_add');
+	$has_destination_area_code        = permission_exists('destination_area_code');
+	$has_destination_caller_id_name   = permission_exists('destination_caller_id_name');
+	$has_destination_caller_id_number = permission_exists('destination_caller_id_number');
+	$has_destination_cid_name_prefix  = permission_exists('destination_cid_name_prefix');
+	$has_destination_condition_field  = permission_exists('destination_condition_field');
+	$has_destination_conditions       = permission_exists('destination_conditions');
+	$has_destination_context          = permission_exists('destination_context');
+	$has_destination_distinctive_ring = permission_exists('destination_distinctive_ring');
+	$has_destination_domain           = permission_exists('destination_domain');
+	$has_destination_edit             = permission_exists('destination_edit');
+	$has_destination_email            = permission_exists('destination_email');
+	$has_destination_emergency        = permission_exists('destination_emergency');
+	$has_destination_fax              = permission_exists('destination_fax');
+	$has_destination_hold_music       = permission_exists('destination_hold_music');
+	$has_destination_local            = permission_exists('destination_local');
+	$has_destination_number           = permission_exists('destination_number');
+	$has_destination_prefix           = permission_exists('destination_prefix');
+	$has_destination_record           = permission_exists('destination_record');
+	$has_destination_ringback         = permission_exists('destination_ringback');
+	$has_destination_trunk_prefix     = permission_exists('destination_trunk_prefix');
+	$has_group_edit                   = permission_exists('group_edit');
+	$has_message_view                 = permission_exists('message_view');
+	$has_provider_edit                = permission_exists('provider_edit');
+	$has_user_edit                    = permission_exists('user_edit');
 //add multi-lingual support
 	$text = new text()->get();
 
@@ -67,7 +93,7 @@
 	$record_extension = $settings->get('call_recordings', 'record_extension', 'mp3');
 
 //get total destination count from the database, check limit, if defined
-	if ($action == 'add' && $settings->get('limit', 'destinations', '') != '' && !permission_exists('destination_domain')) {
+	if ($action == 'add' && $settings->get('limit', 'destinations', '') != '' && !$has_destination_domain) {
 		$sql = "select count(*) from v_destinations where domain_uuid = :domain_uuid ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 		$total_destinations = $database->select($sql, $parameters, 'column');
@@ -150,7 +176,7 @@
 	if (!empty($_POST) && empty($_POST["persistformvar"])) {
 
 		//initialize the destinations object
-			if (permission_exists('destination_domain') && !empty($domain_uuid) && is_uuid($domain_uuid)) {
+			if ($has_destination_domain && !empty($domain_uuid) && is_uuid($domain_uuid)) {
 				$destination->domain_uuid = $domain_uuid;
 			}
 
@@ -181,7 +207,7 @@
 			}
 
 		//if the user doesn't have permission to set the destination_number then get it from the database
-			if (!empty($destination_uuid) && is_uuid($destination_uuid) && !permission_exists('destination_number')) {
+			if (!empty($destination_uuid) && is_uuid($destination_uuid) && !$has_destination_number) {
 				$sql = "select destination_number from v_destinations ";
 				$sql .= "where destination_uuid = :destination_uuid ";
 				$parameters['destination_uuid'] = $destination_uuid;
@@ -192,7 +218,7 @@
 		//check for all required data
 			$msg = '';
 			//if (empty($destination_type)) { $msg .= $text['message-required']." ".$text['label-destination_type']."<br>\n"; }
-			//if (empty($destination_prefix) && permission_exists('destination_prefix')) { $msg .= $text['message-required']." ".$text['label-destination_country_code']."<br>\n"; }
+			//if (empty($destination_prefix) && $has_destination_prefix) { $msg .= $text['message-required']." ".$text['label-destination_country_code']."<br>\n"; }
 			if (empty($destination_number)) { $msg .= $text['message-required']." ".$text['label-destination_number']."<br>\n"; }
 			if (empty($destination_context)) { $msg .= $text['message-required']." ".$text['label-destination_context']."<br>\n"; }
 
@@ -252,68 +278,68 @@
 		//if the user doesn't have the correct permission then
 		//override variables using information from the database
 			if (!empty($row)) {
-				if (!permission_exists('destination_prefix')) {
+				if (!$has_destination_prefix) {
 					$destination_prefix = $row["destination_prefix"] ?? null;
 				}
-				if (!permission_exists('destination_trunk_prefix')) {
+				if (!$has_destination_trunk_prefix) {
 					$destination_trunk_prefix = $row["destination_trunk_prefix"] ?? null;
 				}
-				if (!permission_exists('destination_area_code')) {
+				if (!$has_destination_area_code) {
 					$destination_area_code = $row["destination_area_code"] ?? null;
 				}
-				if (!permission_exists('destination_number')) {
+				if (!$has_destination_number) {
 					$destination_prefix = $row["destination_prefix"] ?? null;
 					$destination_number = $row["destination_number"] ?? null;
 				}
-				if (!permission_exists('destination_condition_field')) {
+				if (!$has_destination_condition_field) {
 					$destination_condition_field = $row["destination_condition_field"] ?? null;
 				}
-				if (!permission_exists('destination_caller_id_name')) {
+				if (!$has_destination_caller_id_name) {
 					$destination_caller_id_name = $row["destination_caller_id_name"] ?? null;
 				}
-				if (!permission_exists('destination_caller_id_number')) {
+				if (!$has_destination_caller_id_number) {
 					$destination_caller_id_number = $row["destination_caller_id_number"] ?? null;
 				}
-				if (!permission_exists('destination_context')) {
+				if (!$has_destination_context) {
 					$destination_context = $row["destination_context"] ?? 'public';
 				}
-				if (!permission_exists('destination_fax')) {
+				if (!$has_destination_fax) {
 					$fax_uuid = $row["fax_uuid"] ?? null;
 				}
-				if (!permission_exists('provider_edit')) {
+				if (!$has_provider_edit) {
 					$provider_uuid = $row["provider_uuid"] ?? null;
 				}
-				if (!permission_exists('user_edit')) {
+				if (!$has_user_edit) {
 					$user_uuid = $row["user_uuid"] ?? null;
 				}
-				if (!permission_exists('group_edit')) {
+				if (!$has_group_edit) {
 					$group_uuid = $row["group_uuid"] ?? null;
 				}
-				if (!permission_exists('destination_cid_name_prefix')) {
+				if (!$has_destination_cid_name_prefix) {
 					$destination_cid_name_prefix = $row["destination_cid_name_prefix"] ?? null;
 				}
-				if (!permission_exists('destination_record')) {
+				if (!$has_destination_record) {
 					$destination_record = $row["destination_record"] ?? null;
 				}
-				if (!permission_exists('destination_hold_music')) {
+				if (!$has_destination_hold_music) {
 					$destination_hold_music = $row["destination_hold_music"] ?? null;
 				}
-				if (!permission_exists('destination_distinctive_ring')) {
+				if (!$has_destination_distinctive_ring) {
 					$destination_distinctive_ring = $row["destination_distinctive_ring"] ?? null;
 				}
-				if (!permission_exists('destination_ringback')) {
+				if (!$has_destination_ringback) {
 					$destination_ringback = $row["destination_ringback"] ?? null;
 				}
-				if (!permission_exists('destination_accountcode')) {
+				if (!$has_destination_accountcode) {
 					$destination_accountcode = $row["destination_accountcode"] ?? null;
 				}
-				if (!permission_exists('destination_emergency')) {
+				if (!$has_destination_emergency) {
 					$destination_type_emergency = $row["destination_type_emergency"] ?? null;
 				}
-				if (!permission_exists('destination_domain')) {
+				if (!$has_destination_domain) {
 					$domain_uuid = $row["domain_uuid"] ?? null;
 				}
-				if (!permission_exists('destination_email')) {
+				if (!$has_destination_email) {
 					$destination_email = $row["destination_email"] ?? null;
 				}
 			}
@@ -366,7 +392,7 @@
 					if (is_uuid($fax_uuid)) {
 						$sql = "select * from v_fax ";
 						$sql .= "where fax_uuid = :fax_uuid ";
-						//if (!permission_exists('destination_domain')) {
+						//if (!$has_destination_domain) {
 						//	$sql .= "and domain_uuid = :domain_uuid ";
 						//}
 						$parameters['fax_uuid'] = $fax_uuid;
@@ -1127,7 +1153,7 @@
 									//delete the previous details
 										$sql = "delete from v_dialplan_details ";
 										$sql .= "where dialplan_uuid = :dialplan_uuid ";
-										if (!permission_exists('destination_domain')) {
+										if (!$has_destination_domain) {
 											$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 											$parameters['domain_uuid'] = $domain_uuid;
 										}
@@ -1141,41 +1167,41 @@
 								$array['destinations'][$x]["destination_uuid"] = $destination_uuid;
 								$array['destinations'][$x]["dialplan_uuid"] = $dialplan_uuid;
 								$array['destinations'][$x]["fax_uuid"] = $fax_uuid;
-								if (permission_exists('provider_edit')) {
+								if ($has_provider_edit) {
 									$array['destinations'][$x]["provider_uuid"] = $provider_uuid;
 								}
-								if (permission_exists('user_edit')) {
+								if ($has_user_edit) {
 									$array['destinations'][$x]["user_uuid"] = $user_uuid;
 								}
-								if (permission_exists('group_edit')) {
+								if ($has_group_edit) {
 									$array['destinations'][$x]["group_uuid"] = $group_uuid;
 								}
 								$array['destinations'][$x]["destination_type"] = $destination_type;
-								if (permission_exists('destination_condition_field')) {
+								if ($has_destination_condition_field) {
 									$array['destinations'][$x]["destination_condition_field"] = $destination_condition_field;
 								}
-								if (permission_exists('destination_number')) {
+								if ($has_destination_number) {
 									$array['destinations'][$x]["destination_number"] = $destination_number;
 									$array['destinations'][$x]["destination_number_regex"] = $destination_number_regex;
 									$array['destinations'][$x]["destination_prefix"] = $destination_prefix;
 								}
-								if (permission_exists('destination_trunk_prefix')) {
+								if ($has_destination_trunk_prefix) {
 									$array['destinations'][$x]["destination_trunk_prefix"] = $destination_trunk_prefix;
 								}
-								if (permission_exists('destination_area_code')) {
+								if ($has_destination_area_code) {
 									$array['destinations'][$x]["destination_area_code"] = $destination_area_code;
 								}
 								$array['destinations'][$x]["destination_caller_id_name"] = $destination_caller_id_name;
 								$array['destinations'][$x]["destination_caller_id_number"] = $destination_caller_id_number;
 								$array['destinations'][$x]["destination_cid_name_prefix"] = $destination_cid_name_prefix;
 								$array['destinations'][$x]["destination_context"] = $destination_context;
-								if (permission_exists("destination_hold_music")) {
+								if ($has_destination_hold_music) {
 									$array['destinations'][$x]["destination_hold_music"] = $destination_hold_music;
 								}
-								if (permission_exists("destination_distinctive_ring")) {
+								if ($has_destination_distinctive_ring) {
 									$array['destinations'][$x]["destination_distinctive_ring"] = $destination_distinctive_ring;
 								}
-								if (permission_exists("destination_record")) {
+								if ($has_destination_record) {
 									$array['destinations'][$x]["destination_record"] = $destination_record;
 								}
 								$array['destinations'][$x]["destination_email"] = $destination_email;
@@ -1186,7 +1212,7 @@
 								$array['destinations'][$x]["destination_type_voice"] = $destination_type_voice ? 1 : null;
 								$array['destinations'][$x]["destination_type_fax"] = $destination_type_fax ? 1 : null;
 								$array['destinations'][$x]["destination_type_text"] = $destination_type_text ? 1 : null;
-								if (permission_exists('destination_emergency')){
+								if ($has_destination_emergency){
 									$array['destinations'][$x]["destination_type_emergency"] = $destination_type_emergency ? 1 : null;
 								}
 
@@ -1552,12 +1578,12 @@
 	$destination_enabled = $destination_enabled ?? true;
 
 //initialize the destinations object
-	if (permission_exists('destination_domain') && is_uuid($domain_uuid)) {
+	if ($has_destination_domain && is_uuid($domain_uuid)) {
 		$destination->domain_uuid = $domain_uuid;
 	}
 
 //get the providers list
-	if (permission_exists('provider_edit')) {
+	if ($has_provider_edit) {
 		$sql = "select ";
 		$sql .= "provider_uuid, ";
 		$sql .= "provider_name, ";
@@ -1571,7 +1597,7 @@
 	}
 
 //get the users list
-	if (permission_exists('user_edit')) {
+	if ($has_user_edit) {
 		$sql = "select * from v_users ";
 		$sql .= "where domain_uuid = :domain_uuid ";
 		$sql .= "and user_enabled = true ";
@@ -1582,7 +1608,7 @@
 	}
 
 //get the groups list
-	if (permission_exists('group_edit')) {
+	if ($has_group_edit) {
 		$sql = "select group_uuid, domain_uuid, group_name, group_description from v_groups ";
 		$sql .= "where (domain_uuid is null or domain_uuid = :domain_uuid) ";
 		$sql .= "order by group_name asc ";
@@ -1691,7 +1717,7 @@
 	echo 	"</div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','style'=>'margin-right: 15px;','link'=>'destinations.php?type='.urlencode($destination_type)]);
-	if (permission_exists('destination_add') || permission_exists('destination_edit')) {
+	if ($has_destination_add || $has_destination_edit) {
 		echo button::create(['type'=>'submit','label'=>$text['button-save'],'icon'=>$settings->get('theme', 'button_icon_save'),'id'=>'btn_save']);
 	}
 	echo "	</div>\n";
@@ -1718,7 +1744,7 @@
 	}
 	echo "	<option value='inbound' ".($selected[0] ?? null).">".$text['option-inbound']."</option>\n";
 	echo "	<option value='outbound' ".($selected[1] ?? null).">".$text['option-outbound']."</option>\n";
-	if (permission_exists('destination_local')) {
+	if ($has_destination_local) {
 		echo "	<option value='local' ".($selected[2] ?? null).">".$text['option-local']."</option>\n";
 	}
 	unset($selected);
@@ -1729,7 +1755,7 @@
 	echo "</tr>\n";
 
 	//destination number
-	if (permission_exists('destination_prefix')) {
+	if ($has_destination_prefix) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-destination_country_code']."\n";
@@ -1743,7 +1769,7 @@
 	}
 
 	//trunk prefix
-	if (permission_exists('destination_trunk_prefix')) {
+	if ($has_destination_trunk_prefix) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-destination_trunk_prefix']."\n";
@@ -1757,7 +1783,7 @@
 	}
 
 	//area code
-	if (permission_exists('destination_area_code')) {
+	if ($has_destination_area_code) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-destination_area_code']."\n";
@@ -1776,7 +1802,7 @@
 	echo "	".$text['label-destination_number']."\n";
 	echo "</td>\n";
 	echo "<td class='vtable' align='left'>\n";
-	if (permission_exists('destination_number')) {
+	if ($has_destination_number) {
 		echo "	<input class='formfld' type='text' name='destination_number' maxlength='255' value=\"".escape($destination_number)."\" required='required'>\n";
 		echo "<br />\n";
 		echo $text['description-destination_number']."\n";
@@ -1788,7 +1814,7 @@
 	echo "</tr>\n";
 
 	//condition field
-	if (permission_exists('destination_condition_field')) {
+	if ($has_destination_condition_field) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-destination_condition_field']."\n";
@@ -1802,7 +1828,7 @@
 	}
 
 	//caller id name
-	if (permission_exists('destination_caller_id_name')) {
+	if ($has_destination_caller_id_name) {
 		echo "<tr id='tr_caller_id_name'>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-destination_caller_id_name']."\n";
@@ -1816,7 +1842,7 @@
 	}
 
 	//caler id number
-	if (permission_exists('destination_caller_id_number')) {
+	if ($has_destination_caller_id_number) {
 		echo "<tr id='tr_caller_id_number'>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-destination_caller_id_number']."\n";
@@ -1830,7 +1856,7 @@
 	}
 
 	//context
-	if (permission_exists('destination_context')) {
+	if ($has_destination_context) {
 		echo "<tr id='tr_destination_context'>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-destination_context']."\n";
@@ -1844,7 +1870,7 @@
 	}
 
 	//destination conditions
-	if (permission_exists('destination_conditions')) {
+	if ($has_destination_conditions) {
 		echo "<tr id='tr_conditions'>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-destination_conditions']."\n";
@@ -1903,7 +1929,7 @@
 	echo "</tr>\n";
 
 	//fax destinations
-	if (permission_exists('destination_fax')) {
+	if ($has_destination_fax) {
 		$sql = "select * from v_fax ";
 		$sql .= "where domain_uuid = :domain_uuid ";
 		$sql .= "order by fax_name asc ";
@@ -1937,7 +1963,7 @@
 	}
 
 	//providers
-	if (permission_exists('provider_edit') && !empty($providers)) {
+	if ($has_provider_edit && !empty($providers)) {
 		echo "<tr id='tr_provider'>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap>\n";
 		echo "	".$text['label-provider']."\n";
@@ -1963,7 +1989,7 @@
 	}
 
 	//destination email
-	if (permission_exists('destination_email') && permission_exists('message_view')) {
+	if ($has_destination_email && $has_message_view) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-destination_email']."\n";
@@ -1987,7 +2013,7 @@
 	}
 
 	//users
-	if (permission_exists('user_edit')) {
+	if ($has_user_edit) {
 		echo "<tr id='tr_user'>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-user']."\n";
@@ -2010,7 +2036,7 @@
 	}
 
 	//groups
-	if (permission_exists('group_edit')) {
+	if ($has_group_edit) {
 		echo "<tr id='tr_group'>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-group']."\n";
@@ -2033,7 +2059,7 @@
 	}
 
 	//caller id name prefix
-	if (permission_exists('destination_cid_name_prefix')) {
+	if ($has_destination_cid_name_prefix) {
 		echo "<tr id='tr_cid_name_prefix'>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-destination_cid_name_prefix']."\n";
@@ -2047,7 +2073,7 @@
 	}
 
 	//record
-	if ($destination_type == 'inbound' && permission_exists('destination_record')) {
+	if ($destination_type == 'inbound' && $has_destination_record) {
 		echo "<tr>\n";
 		echo "<tr id='tr_destination_record'>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>".$text['label-destination_record']."</td>\n";
@@ -2070,7 +2096,7 @@
 	}
 
 	//hold music
-	if (permission_exists("destination_hold_music") && is_dir(dirname(__DIR__, 2).'/app/music_on_hold')) {
+	if ($has_destination_hold_music && is_dir(dirname(__DIR__, 2).'/app/music_on_hold')) {
 		echo "<tr id='tr_hold_music'>\n";
 		echo "<td width=\"30%\" class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-destination_hold_music']."\n";
@@ -2085,7 +2111,7 @@
 	}
 
 	//distinctive ring
-	if (permission_exists("destination_distinctive_ring")) {
+	if ($has_destination_distinctive_ring) {
 		echo "<tr>\n";
 		echo "<tr id='tr_distinctive_ring'>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
@@ -2100,7 +2126,7 @@
 	}
 
 	//distinctive ringback
-	if (permission_exists("destination_ringback")) {
+	if ($has_destination_ringback) {
 		echo "<tr>\n";
 		echo "<tr id='tr_destination_ringback'>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
@@ -2115,7 +2141,7 @@
 	}
 
 	//account code
-	if (permission_exists("destination_accountcode")) {
+	if ($has_destination_accountcode) {
 		echo "<tr id='tr_account_code'>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-account_code']."\n";
@@ -2137,7 +2163,7 @@
 	echo "	<label><input type='checkbox' name='destination_type_voice' id='destination_type_voice' value='1' ".($destination_type_voice ? "checked='checked'" : null)."> ".$text['label-voice']."</label>&nbsp;\n";
 	echo "	<label><input type='checkbox' name='destination_type_fax' id='destination_type_fax' value='1' ".($destination_type_fax ? "checked='checked'" : null)."> ".$text['label-fax']."</label>&nbsp;\n";
 	echo "	<label><input type='checkbox' name='destination_type_text' id='destination_type_text' value='1' ".($destination_type_text ? "checked='checked'" : null)."> ".$text['label-text']."</label>&nbsp;\n";
-	if (permission_exists('destination_emergency')){
+	if ($has_destination_emergency){
 		echo "	<label><input type='checkbox' name='destination_type_emergency' id='destination_type_emergency' value='1' ".($destination_type_emergency ? "checked='checked'" : null)."> ".$text['label-emergency']."</label>\n";
 	}
 	echo "<br />\n";
@@ -2146,7 +2172,7 @@
 	echo "</tr>\n";
 
 	//domain
-	if (permission_exists('destination_domain')) {
+	if ($has_destination_domain) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-domain']."\n";

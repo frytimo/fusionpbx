@@ -30,6 +30,11 @@
 		echo "access denied";
 		exit;
 	}
+	$has__add                     = permission_exists('_add');
+	$has__delete                  = permission_exists('_delete');
+	$has_extension_setting_add    = permission_exists('extension_setting_add');
+	$has_extension_setting_delete = permission_exists('extension_setting_delete');
+	$has_extension_setting_update = permission_exists('extension_setting_update');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -87,17 +92,17 @@
 				//send the array to the database class
 				switch ($_POST['action']) {
 					case 'copy':
-						if (permission_exists('extension_setting_add')) {
+						if ($has_extension_setting_add) {
 							$database->copy($array);
 						}
 						break;
 					case 'delete':
-						if (permission_exists('extension_setting_delete')) {
+						if ($has_extension_setting_delete) {
 							$database->delete($array);
 						}
 						break;
 					case 'toggle':
-						if (permission_exists('extension_setting_update')) {
+						if ($has_extension_setting_update) {
 							$database->toggle($array);
 						}
 						break;
@@ -224,10 +229,10 @@
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','collapse'=>'hide-xs','style'=>'margin-right: 15px;','link'=>'extension_settings.php?id='.$extension_uuid]);
 	if ($action == 'update') {
-		if (permission_exists('_add')) {
+		if ($has__add) {
 			echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 		}
-		if (permission_exists('_delete')) {
+		if ($has__delete) {
 			echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none; margin-right: 15px;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 		}
 	}
@@ -240,10 +245,10 @@
 	echo "<br /><br />\n";
 
 	if ($action == 'update') {
-		if (permission_exists('extension_setting_add')) {
+		if ($has_extension_setting_add) {
 			echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'copy','onclick'=>"modal_close();"])]);
 		}
-		if (permission_exists('extension_setting_delete')) {
+		if ($has_extension_setting_delete) {
 			echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 		}
 	}

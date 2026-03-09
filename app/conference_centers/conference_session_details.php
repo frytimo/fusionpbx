@@ -33,6 +33,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_conference_session_details = permission_exists('conference_session_details');
+	$has_conference_session_play    = permission_exists('conference_session_play');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -117,7 +119,7 @@
 	}
 	if (!empty($tmp_name) && file_exists($tmp_dir.'/'.$tmp_name)) {
 		echo button::create(['type'=>'button','label'=>$text['button-download'],'icon'=>$settings->get('theme', 'button_icon_download'),'style'=>'margin-left: 15px;','link'=>'../recordings/recordings.php?a=download&type=rec&t=bin&filename='.base64_encode('archive/'.$tmp_year.'/'.$tmp_month.'/'.$tmp_day.'/'.$tmp_name)]);
-		if (permission_exists('conference_session_play')) {
+		if ($has_conference_session_play) {
 			echo button::create(['type'=>'button','label'=>$text['button-play'],'icon'=>$settings->get('theme', 'button_icon_play'),'onclick'=>"window.open('".PROJECT_PATH."/app/recordings/recording_play.php?a=download&type=moh&filename=".urlencode('archive/'.$tmp_year.'/'.$tmp_month.'/'.$tmp_day.'/'.$tmp_name)."', 'play',' width=420,height=150,menubar=no,status=no,toolbar=no');"]);
 		}
 	}
@@ -145,7 +147,7 @@
 	echo "<th>".$text['label-time']."</th>\n";
 	echo th_order_by('start_epoch', $text['label-start'], $order_by, $order);
 	echo th_order_by('end_epoch', $text['label-end'], $order_by, $order);
-	if (permission_exists('conference_session_details') && $list_row_edit_button) {
+	if ($has_conference_session_details && $list_row_edit_button) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -164,14 +166,14 @@
 				$time_difference = $row['end_epoch'] - $row['start_epoch'];
 				$time_difference = gmdate("G:i:s", $time_difference);
 			}
-			if (permission_exists('conference_session_details')) {
+			if ($has_conference_session_details) {
 				$list_row_url = "../xml_cdr/xml_cdr_details.php?id=".urlencode($row['uuid']);
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
 			//echo "	<td>".$row['meeting_uuid']."&nbsp;</td>\n";
 			//echo "	<td>".$row['conference_session_uuid']."&nbsp;</td>\n";
 			echo "	<td>";
-			if (permission_exists('conference_session_details')) {
+			if ($has_conference_session_details) {
 				echo "	<a href='".$list_row_url."' title=\"".$text['button-view']."\">".escape($row['caller_id_name'])."</a>\n";
 			}
 			else {
@@ -184,7 +186,7 @@
 			echo "	<td>".$time_difference."&nbsp;</td>\n";
 			echo "	<td>".$start_date."&nbsp;</td>\n";
 			echo "	<td>".$end_date."&nbsp;</td>\n";
-			if (permission_exists('conference_session_details') && $list_row_edit_button) {
+			if ($has_conference_session_details && $list_row_edit_button) {
 				echo "	<td class='action-button'>\n";
 				echo button::create(['type'=>'button','title'=>$text['button-view'],'icon'=>$settings->get('theme', 'button_icon_view'),'link'=>$list_row_url]);
 				echo "	</td>\n";

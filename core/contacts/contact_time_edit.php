@@ -33,6 +33,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_contact_time_add  = permission_exists('contact_time_add');
+	$has_contact_time_edit = permission_exists('contact_time_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -106,14 +108,14 @@
 
 				$p->delete('contact_edit', 'temp');
 
-				if ($action == "add" && permission_exists('contact_time_add')) {
+				if ($action == "add" && $has_contact_time_add) {
 					$contact_time_uuid = uuid();
 					$array['contact_times'][0]['contact_time_uuid'] = $contact_time_uuid;
 
 					message::add($text['message-add']);
 				}
 
-				if ($action == "update" && permission_exists('contact_time_edit')) {
+				if ($action == "update" && $has_contact_time_edit) {
 					$array['contact_times'][0]['contact_time_uuid'] = $contact_time_uuid;
 
 					message::add($text['message-update']);

@@ -40,6 +40,17 @@
 		echo "access denied";
 		exit;
 	}
+	$has_domain_select                   = permission_exists('domain_select');
+	$has_voicemail_add                   = permission_exists('voicemail_add');
+	$has_voicemail_all                   = permission_exists('voicemail_all');
+	$has_voicemail_delete                = permission_exists('voicemail_delete');
+	$has_voicemail_domain                = permission_exists('voicemail_domain');
+	$has_voicemail_edit                  = permission_exists('voicemail_edit');
+	$has_voicemail_export                = permission_exists('voicemail_export');
+	$has_voicemail_greeting_view         = permission_exists('voicemail_greeting_view');
+	$has_voicemail_import                = permission_exists('voicemail_import');
+	$has_voicemail_message_view          = permission_exists('voicemail_message_view');
+	$has_voicemail_transcription_enabled = permission_exists('voicemail_transcription_enabled');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -61,13 +72,13 @@
 
 		switch ($action) {
 			case 'toggle':
-				if (permission_exists('voicemail_edit')) {
+				if ($has_voicemail_edit) {
 					$obj = new voicemail;
 					$obj->voicemail_toggle($voicemails);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('voicemail_delete')) {
+				if ($has_voicemail_delete) {
 					$obj = new voicemail;
 					$obj->voicemail_delete($voicemails);
 				}
@@ -131,11 +142,11 @@
 	$sql = "select count(voicemail_uuid) from v_voicemails ";
 	$sql .= "where true ";
 	$parameters = null;
-	if ($show != "all" || !permission_exists('voicemail_all')) {
+	if ($show != "all" || !$has_voicemail_all) {
 		$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	}
-	if (!permission_exists('voicemail_domain')) {
+	if (!$has_voicemail_domain) {
 		if (is_array($voicemail_uuids) && sizeof($voicemail_uuids) != 0) {
 			$sql .= "and (";
 			foreach ($voicemail_uuids as $x => $row) {
@@ -160,7 +171,7 @@
 //prepare to page the results
 	$rows_per_page = $settings->get('domain', 'paging', 50);
 	$param = $search ? "&search=".urlencode($search) : null;
-	if ($show == "all" && permission_exists('voicemail_all')) {
+	if ($show == "all" && $has_voicemail_all) {
 		$param .= "&show=all";
 	}
 	$page = empty($_GET['page']) ? 0 : $_GET['page'];
@@ -174,11 +185,11 @@
 	$sql .= "from v_voicemails ";
 	$sql .= "where true ";
 	$parameters = null;
-	if ($show != "all" || !permission_exists('voicemail_all')) {
+	if ($show != "all" || !$has_voicemail_all) {
 		$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	}
-	if (!permission_exists('voicemail_domain')) {
+	if (!$has_voicemail_domain) {
 		if (is_array($voicemail_uuids) && sizeof($voicemail_uuids) != 0) {
 			$sql .= "and (";
 			foreach ($voicemail_uuids as $x => $row) {
@@ -206,11 +217,11 @@
 	unset($sql, $parameters);
 
 //get vm count for each mailbox
-	if (permission_exists('voicemail_message_view')) {
+	if ($has_voicemail_message_view) {
 		$parameters = null;
 		$sql = "select voicemail_uuid, count(voicemail_uuid) as voicemail_count ";
 		$sql .= "from v_voicemail_messages where true ";
-		if ($show !== 'all' || !permission_exists('voicemail_all')) {
+		if ($show !== 'all' || !$has_voicemail_all) {
 			$sql .= "and domain_uuid = :domain_uuid ";
 			$parameters['domain_uuid'] = $domain_uuid;
 		}
@@ -225,11 +236,11 @@
 	}
 
 //get vm greeting count for each mailbox
-	if (permission_exists('voicemail_greeting_view')) {
+	if ($has_voicemail_greeting_view) {
 		$parameters = null;
 		$sql = "select voicemail_id, count(greeting_id) as greeting_count ";
 		$sql .= "from v_voicemail_greetings where true ";
-		if ($show !== 'all' || !permission_exists('voicemail_all')) {
+		if ($show !== 'all' || !$has_voicemail_all) {
 			$sql .= "and domain_uuid = :domain_uuid ";
 			$parameters['domain_uuid'] = $domain_uuid;
 		}
@@ -255,23 +266,23 @@
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['title-voicemails']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('voicemail_import')) {
+	if ($has_voicemail_import) {
 		echo button::create(['type'=>'button','label'=>$text['button-import'],'icon'=>$settings->get('theme', 'button_icon_import'),'style'=>'','link'=>'voicemail_imports.php']);
 	}
-	if (permission_exists('voicemail_export')) {
+	if ($has_voicemail_export) {
 		echo button::create(['type'=>'button','label'=>$text['button-export'],'icon'=>$settings->get('theme', 'button_icon_export'),'style'=>'margin-right: 15px;','link'=>'voicemail_export.php']);
 	}
-	if (permission_exists('voicemail_add')) {
+	if ($has_voicemail_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'voicemail_edit.php']);
 	}
-	if (permission_exists('voicemail_edit') && $voicemails) {
+	if ($has_voicemail_edit && $voicemails) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
-	if (permission_exists('voicemail_delete') && $voicemails) {
+	if ($has_voicemail_delete && $voicemails) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if (permission_exists('voicemail_all')) {
+	if ($has_voicemail_all) {
 		if ($show == 'all') {
 			echo "		<input type='hidden' name='show' value='all'>";
 		}
@@ -290,10 +301,10 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('voicemail_edit') && $voicemails) {
+	if ($has_voicemail_edit && $voicemails) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('voicemail_delete') && $voicemails) {
+	if ($has_voicemail_delete && $voicemails) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -307,27 +318,27 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('voicemail_edit') || permission_exists('voicemail_delete')) {
+	if ($has_voicemail_edit || $has_voicemail_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($voicemails) ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
 	}
-	if ($show == "all" && permission_exists('voicemail_all')) {
+	if ($show == "all" && $has_voicemail_all) {
 		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param, "class='shrink'");
 	}
 	echo th_order_by('voicemail_id', $text['label-voicemail_id'], $order_by, $order, null, "style='width: 1%;'");
 	echo th_order_by('voicemail_mail_to', $text['label-voicemail_mail_to'], $order_by, $order, null, "class='hide-sm-dn'");
 	echo th_order_by('voicemail_file', $text['label-voicemail_file_attached'], $order_by, $order, null, "class='center hide-md-dn' style='width: 1%;'");
 	echo th_order_by('voicemail_local_after_email', $text['label-voicemail_local_after_email'], $order_by, $order, null, "class='center hide-md-dn' style='width: 1%;'");
-	if (permission_exists('voicemail_transcription_enabled') && $settings->get('transcribe', 'enabled', false) === true) {
+	if ($has_voicemail_transcription_enabled && $settings->get('transcribe', 'enabled', false) === true) {
 		echo th_order_by('voicemail_transcription_enabled', $text['label-voicemail_transcription_enabled'], $order_by, $order, null, "class='center' style='width: 1%;'");
 	}
-	if (permission_exists('voicemail_message_view') || permission_exists('voicemail_greeting_view')) {
+	if ($has_voicemail_message_view || $has_voicemail_greeting_view) {
 		echo "<th style='width: 17%;'>".$text['label-tools']."</th>\n";
 	}
 	echo th_order_by('voicemail_enabled', $text['label-voicemail_enabled'], $order_by, $order, null, "class='center' style='width: 1%;'");
 	echo th_order_by('voicemail_description', $text['label-voicemail_description'], $order_by, $order, null, "class='hide-sm-dn'");
-	if (permission_exists('voicemail_edit') && $list_row_edit_button) {
+	if ($has_voicemail_edit && $list_row_edit_button) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -338,20 +349,20 @@
 			//dispatch render-row hook
 			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
-			if (permission_exists('voicemail_edit')) {
+			if ($has_voicemail_edit) {
 				$list_row_url = "voicemail_edit.php?id=".urlencode($row['voicemail_uuid']);
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('voicemail_edit') || permission_exists('voicemail_delete')) {
+			if ($has_voicemail_edit || $has_voicemail_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='voicemails[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='voicemails[$x][uuid]' value='".escape($row['voicemail_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if ($show == "all" && permission_exists('voicemail_all')) {
+			if ($show == "all" && $has_voicemail_all) {
 				if (!empty($_SESSION['domains'][$row['domain_uuid']]['domain_name'])) {
 					$domain = $_SESSION['domains'][$row['domain_uuid']]['domain_name'];
 				}
@@ -361,7 +372,7 @@
 				echo "	<td>".escape($domain)."</td>\n";
 			}
 			echo "	<td>\n";
-			if (permission_exists('voicemail_edit')) {
+			if ($has_voicemail_edit) {
 				echo "	<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['voicemail_id'])."</a>\n";
 			}
 			else {
@@ -372,21 +383,21 @@
 			echo "	<td class='hide-sm-dn overflow' style='max-width: 175px;'>".escape($row['voicemail_mail_to'])."&nbsp;</td>\n";
 			echo "	<td class='center hide-md-dn'>".($row['voicemail_file'] == 'attach' ? $text['label-true'] : $text['label-false'])."</td>\n";
 			echo "	<td class='center hide-md-dn'>".ucwords(escape($row['voicemail_local_after_email']))."&nbsp;</td>\n";
-			if (permission_exists('voicemail_transcription_enabled') && $settings->get('transcribe', 'enabled', false) === true) {
+			if ($has_voicemail_transcription_enabled && $settings->get('transcribe', 'enabled', false) === true) {
 				echo "	<td class='center'>".ucwords(escape($row['voicemail_transcription_enabled']))."&nbsp;</td>\n";
 			}
-			if (permission_exists('voicemail_message_view') || permission_exists('voicemail_greeting_view')) {
+			if ($has_voicemail_message_view || $has_voicemail_greeting_view) {
 				echo "	<td class='no-link no-wrap'>\n";
-				if (permission_exists('voicemail_greeting_view')) {
+				if ($has_voicemail_greeting_view) {
 					echo "	<a href='".PROJECT_PATH."/app/voicemail_greetings/voicemail_greetings.php?id=".$row['voicemail_id']."&back=".urlencode($_SERVER["REQUEST_URI"])."' style='margin-right: 15px;'>".$text['label-greetings']." (".($voicemail_greetings_count[$row['voicemail_id']] ?? 0).")</a>\n";
 				}
-				if (permission_exists('voicemail_message_view')) {
+				if ($has_voicemail_message_view) {
 					$tmp_voicemail_string = (array_key_exists($row['voicemail_uuid'], $voicemails_count)) ? " (" . $voicemails_count[$row['voicemail_uuid']] . ")" : " (0)";
 					echo "	<a href='voicemail_messages.php?id=".escape($row['voicemail_uuid'])."&back=".urlencode($_SERVER["REQUEST_URI"])."'>".$text['label-messages'].$tmp_voicemail_string."</a>\n";
 				}
 				echo "	</td>\n";
 			}
-			if (permission_exists('voicemail_edit')) {
+			if ($has_voicemail_edit) {
 				echo "	<td class='no-link center'>\n";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['voicemail_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
 			}
@@ -396,7 +407,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td class='description overflow hide-sm-dn'>".escape($row['voicemail_description'])."&nbsp;</td>\n";
-			if (permission_exists('voicemail_edit') && $list_row_edit_button) {
+			if ($has_voicemail_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>\n";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

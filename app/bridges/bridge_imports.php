@@ -33,6 +33,7 @@
 		echo "access denied";
 		exit;
 	}
+	$has_bridge_import = permission_exists('bridge_import');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -66,7 +67,7 @@
 	}
 
 //copy the csv file
-	if (!empty($_FILES['ulfile']['tmp_name']) && is_uploaded_file($_FILES['ulfile']['tmp_name']) && permission_exists('bridge_import')) {
+	if (!empty($_FILES['ulfile']['tmp_name']) && is_uploaded_file($_FILES['ulfile']['tmp_name']) && $has_bridge_import) {
 		if ($_POST['type'] == 'csv') {
 			move_uploaded_file($_FILES['ulfile']['tmp_name'], $settings->get('server', 'temp').'/'.$_FILES['ulfile']['name']);
 			$save_msg = "Uploaded file to ".$settings->get('server', 'temp')."/". htmlentities($_FILES['ulfile']['name']);

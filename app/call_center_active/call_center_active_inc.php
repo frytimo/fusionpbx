@@ -34,6 +34,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_call_center_active_options = permission_exists('call_center_active_options');
+	$has_call_center_agent_edit     = permission_exists('call_center_agent_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -167,7 +169,7 @@
 				echo "<th>".$text['label-tier_state']."</th>\n";
 				echo "<th class='center'>".$text['label-tier_level']."</th>\n";
 				echo "<th class='center'>".$text['label-tier_position']."</th>\n";
-				if (permission_exists('call_center_active_options')) {
+				if ($has_call_center_active_options) {
 					echo "<th class='center'>".$text['label-options']."</th>\n";
 				}
 				echo "</tr>\n";
@@ -233,13 +235,13 @@
 									$last_status_change_length_formatted = format_seconds($last_status_change_length);
 									$last_bridge_end_length_formatted = format_seconds($last_bridge_end_length);
 
-									if (permission_exists('call_center_agent_edit')) {
+									if ($has_call_center_agent_edit) {
 										$list_row_url = "../call_centers/call_center_agent_edit.php?id=".$agent_uuid;
 									}
 
 									echo "<tr class='list-row' href='".$list_row_url."' data-agent-status='".escape($status)."'>\n";
 									echo "<td>";
-									if (permission_exists('call_center_agent_edit')) {
+									if ($has_call_center_agent_edit) {
 										echo "<a href='".$list_row_url."'>".escape($agent_name)."</a>";
 									}
 									else {
@@ -256,7 +258,7 @@
 									echo "<td>".escape($tier_state)."</td>\n";
 									echo "<td class='center'>".escape($tier_level)."</td>\n";
 									echo "<td class='center'>".escape($tier_position)."</td>\n";
-									if (permission_exists('call_center_active_options')) {
+									if ($has_call_center_active_options) {
 										echo "<td class='no-link center'>\n";
 										//need to check state to so only waiting gets call, and trying/answer gets eavesdrop
 										if ($tier_state == "Offering" || $tier_state == "Active Inbound") {
@@ -328,7 +330,7 @@
 			echo "<th>".$text['label-name']."</th>\n";
 			echo "<th>".$text['label-number']."</th>\n";
 			echo "<th>".$text['label-status']."</th>\n";
-			if (permission_exists('call_center_active_options')) {
+			if ($has_call_center_active_options) {
 				echo "<th>".$text['label-options']."</th>\n";
 			}
 			echo "<th>".$text['label-agent']."</th>\n";
@@ -376,7 +378,7 @@
 					echo "<td>".escape($caller_name)."&nbsp;</td>\n";
 					echo "<td>".escape($caller_number)."&nbsp;</td>\n";
 					echo "<td>".escape($state)."</td>\n";
-					if (permission_exists('call_center_active_options')) {
+					if ($has_call_center_active_options) {
 						echo "<td>";
 						if ($state != "Abandoned") {
 							$orig_command = "{origination_caller_id_name=eavesdrop,origination_caller_id_number=".escape($q_caller_number ?? '')."}user/".escape($_SESSION['user']['extension'][0]['user'] ?? '')."@".escape($_SESSION['domain_name'])." %26eavesdrop(".escape($session_uuid).")";

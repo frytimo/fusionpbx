@@ -33,6 +33,9 @@
 		echo "access denied";
 		exit;
 	}
+	$has_contact_url_delete = permission_exists('contact_url_delete');
+	$has_contact_url_edit   = permission_exists('contact_url_edit');
+	$has_domain_select      = permission_exists('domain_select');
 
 //set the uuid
 	if (!empty($_GET['id']) && is_uuid($_GET['id'])) {
@@ -61,7 +64,7 @@
 			echo "<div class='card'>\n";
 			echo "<table class='list'>\n";
 			echo "<tr class='list-header'>\n";
-			if (permission_exists('contact_url_delete')) {
+			if ($has_contact_url_delete) {
 				echo "	<th class='checkbox'>\n";
 				echo "		<input type='checkbox' id='checkbox_all_urls' name='checkbox_all' onclick=\"edit_all_toggle('urls');\" ".($contact_urls ?: "style='visibility: hidden;'").">\n";
 				echo "	</th>\n";
@@ -69,7 +72,7 @@
 			echo "<th class='pct-15'>".$text['label-url_label']."</th>\n";
 			echo "<th>".$text['label-url_address']."</th>\n";
 			echo "<th class='hide-md-dn'>".$text['label-url_description']."</th>\n";
-			if (permission_exists('contact_url_edit') && $settings->get('theme', 'list_row_edit_button', false)) {
+			if ($has_contact_url_edit && $settings->get('theme', 'list_row_edit_button', false)) {
 				echo "	<td class='action-button'>&nbsp;</td>\n";
 			}
 			echo "</tr>\n";
@@ -78,14 +81,14 @@
 				$x = 0;
 				foreach ($contact_urls as $row) {
 					$list_row_url = '';
-					if (permission_exists('contact_url_edit')) {
+					if ($has_contact_url_edit) {
 						$list_row_url = "contact_url_edit.php?contact_uuid=".urlencode($row['contact_uuid'])."&id=".urlencode($row['contact_url_uuid']);
-						if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+						if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 							$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 						}
 					}
 					echo "<tr class='list-row' href='".$list_row_url."'>\n";
-					if (permission_exists('contact_url_delete')) {
+					if ($has_contact_url_delete) {
 						echo "	<td class='checkbox'>\n";
 						echo "		<input type='checkbox' name='contact_urls[$x][checked]' id='checkbox_".$x."' class='chk_delete checkbox_urls' value='true' onclick=\"edit_delete_action('urls');\">\n";
 						echo "		<input type='hidden' name='contact_urls[$x][uuid]' value='".escape($row['contact_url_uuid'])."' />\n";
@@ -94,7 +97,7 @@
 					echo "	<td>".escape($row['url_label'])." ".($row['url_primary'] ? "&nbsp;<i class='fas fa-star fa-xs' style='float: right; margin-top: 0.5em; margin-right: -0.5em;' title=\"".$text['label-primary']."\"></i>" : null)."</td>\n";
 					echo "	<td class='no-link overflow no-wrap'><a href='".escape($row['url_address'])."' target='_blank'>".str_replace("http://", "", str_replace("https://", "", escape($row['url_address'])))."</a></td>\n";
 					echo "	<td class='description overflow hide-md-dn'>".escape($row['url_description'])."&nbsp;</td>\n";
-					if (permission_exists('contact_url_edit') && $settings->get('theme', 'list_row_edit_button', false)) {
+					if ($has_contact_url_edit && $settings->get('theme', 'list_row_edit_button', false)) {
 						echo "	<td class='action-button'>\n";
 						echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 						echo "	</td>\n";

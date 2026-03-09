@@ -34,6 +34,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_contact_phone_add  = permission_exists('contact_phone_add');
+	$has_contact_phone_edit = permission_exists('contact_phone_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -172,7 +174,7 @@
 					}
 
 				//add the phone
-					if ($action == "add" && permission_exists('contact_phone_add')) {
+					if ($action == "add" && $has_contact_phone_add) {
 						$contact_phone_uuid = uuid();
 						$array['contact_phones'][0]['contact_phone_uuid'] = $contact_phone_uuid;
 
@@ -180,7 +182,7 @@
 					}
 
 				//update the phone
-					if ($action == "update" && permission_exists('contact_phone_edit')) {
+					if ($action == "update" && $has_contact_phone_edit) {
 						$array['contact_phones'][0]['contact_phone_uuid'] = $contact_phone_uuid;
 
 						message::add($text['message-update']);

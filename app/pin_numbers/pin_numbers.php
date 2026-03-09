@@ -34,6 +34,10 @@
 		echo "access denied";
 		exit;
 	}
+	$has_domain_select     = permission_exists('domain_select');
+	$has_pin_number_add    = permission_exists('pin_number_add');
+	$has_pin_number_delete = permission_exists('pin_number_delete');
+	$has_pin_number_edit   = permission_exists('pin_number_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -54,19 +58,19 @@
 
 		switch ($action) {
 			case 'copy':
-				if (permission_exists('pin_number_add')) {
+				if ($has_pin_number_add) {
 					$obj = new pin_numbers;
 					$obj->copy($pin_numbers);
 				}
 				break;
 			case 'toggle':
-				if (permission_exists('pin_number_edit')) {
+				if ($has_pin_number_edit) {
 					$obj = new pin_numbers;
 					$obj->toggle($pin_numbers);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('pin_number_delete')) {
+				if ($has_pin_number_delete) {
 					$obj = new pin_numbers;
 					$obj->delete($pin_numbers);
 				}
@@ -140,16 +144,16 @@
 	echo "	<div class='heading'><b>".$text['title-pin_numbers']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-export'],'icon'=>$settings->get('theme', 'button_icon_export'),'style'=>'margin-right: 15px;','link'=>'pin_download.php']);
-	if (permission_exists('pin_number_add')) {
+	if ($has_pin_number_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'pin_number_edit.php']);
 	}
-	if (permission_exists('pin_number_add') && $pin_numbers) {
+	if ($has_pin_number_add && $pin_numbers) {
 		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'name'=>'btn_copy','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 	}
-	if (permission_exists('pin_number_edit') && $pin_numbers) {
+	if ($has_pin_number_edit && $pin_numbers) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'name'=>'btn_toggle','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
-	if (permission_exists('pin_number_delete') && $pin_numbers) {
+	if ($has_pin_number_delete && $pin_numbers) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'name'=>'btn_delete','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
@@ -164,13 +168,13 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('pin_number_add') && $pin_numbers) {
+	if ($has_pin_number_add && $pin_numbers) {
 		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('pin_number_edit') && $pin_numbers) {
+	if ($has_pin_number_edit && $pin_numbers) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('pin_number_delete') && $pin_numbers) {
+	if ($has_pin_number_delete && $pin_numbers) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -184,7 +188,7 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('pin_number_add') || permission_exists('pin_number_edit') || permission_exists('pin_number_delete')) {
+	if ($has_pin_number_add || $has_pin_number_edit || $has_pin_number_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle();' ".($pin_numbers ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
@@ -193,7 +197,7 @@
 	echo th_order_by('accountcode', $text['label-accountcode'], $order_by, $order);
 	echo th_order_by('enabled', $text['label-enabled'], $order_by, $order, null, "class='center'");
 	echo th_order_by('description', $text['label-description'], $order_by, $order, null, "class='hide-sm-dn'");
-	if (permission_exists('pin_number_edit') && $settings->get('theme', 'list_row_edit_button', false)) {
+	if ($has_pin_number_edit && $settings->get('theme', 'list_row_edit_button', false)) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -204,21 +208,21 @@
 			//dispatch render-row hook
 			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
-			if (permission_exists('pin_number_edit')) {
+			if ($has_pin_number_edit) {
 				$list_row_url = "pin_number_edit.php?id=".urlencode($row['pin_number_uuid']);
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('pin_number_add') || permission_exists('pin_number_edit') || permission_exists('pin_number_delete')) {
+			if ($has_pin_number_add || $has_pin_number_edit || $has_pin_number_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='pin_numbers[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='pin_numbers[$x][uuid]' value='".escape($row['pin_number_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
 			echo "	<td>";
-			if (permission_exists('pin_number_edit')) {
+			if ($has_pin_number_edit) {
 				echo "<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['pin_number'])."</a>";
 			}
 			else {
@@ -226,7 +230,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td>".escape($row['accountcode'])."&nbsp;</td>\n";
-			if (permission_exists('pin_number_edit')) {
+			if ($has_pin_number_edit) {
 				echo "	<td class='no-link center'>";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
 			}
@@ -236,7 +240,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td class='description overflow hide-sm-dn'>".escape($row['description'])."&nbsp;</td>\n";
-			if (permission_exists('pin_number_edit') && $settings->get('theme', 'list_row_edit_button', false)) {
+			if ($has_pin_number_edit && $settings->get('theme', 'list_row_edit_button', false)) {
 				echo "	<td class='action-button'>";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

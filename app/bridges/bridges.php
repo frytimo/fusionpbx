@@ -34,6 +34,12 @@
 		echo "access denied";
 		exit;
 	}
+	$has_bridge_add    = permission_exists('bridge_add');
+	$has_bridge_all    = permission_exists('bridge_all');
+	$has_bridge_delete = permission_exists('bridge_delete');
+	$has_bridge_edit   = permission_exists('bridge_edit');
+	$has_bridge_import = permission_exists('bridge_import');
+	$has_domain_select = permission_exists('domain_select');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -60,19 +66,19 @@
 	if (!empty($action) && !empty($bridges)) {
 		switch ($action) {
 			case 'copy':
-				if (permission_exists('bridge_add')) {
+				if ($has_bridge_add) {
 					$obj = new bridges;
 					$obj->copy($bridges);
 				}
 				break;
 			case 'toggle':
-				if (permission_exists('bridge_edit')) {
+				if ($has_bridge_edit) {
 					$obj = new bridges;
 					$obj->toggle($bridges);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('bridge_delete')) {
+				if ($has_bridge_delete) {
 					$obj = new bridges;
 					$obj->delete($bridges);
 				}
@@ -116,23 +122,23 @@
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['title-bridges']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('bridge_import')) {
+	if ($has_bridge_import) {
 		echo button::create(['type'=>'button','label'=>$text['button-import'],'icon'=>$settings->get('theme', 'button_icon_import'),'style'=>'margin-right: 15px;','link'=>'bridge_imports.php']);
 	}
-	if (permission_exists('bridge_add')) {
+	if ($has_bridge_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'bridge_edit.php']);
 	}
-	if (permission_exists('bridge_add') && $bridges) {
+	if ($has_bridge_add && $bridges) {
 		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 	}
-	if (permission_exists('bridge_edit') && $bridges) {
+	if ($has_bridge_edit && $bridges) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
-	if (permission_exists('bridge_delete') && $bridges) {
+	if ($has_bridge_delete && $bridges) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if (permission_exists('bridge_all')) {
+	if ($has_bridge_all) {
 		if (isset($show) && $show == 'all') {
 			echo "		<input type='hidden' name='show' value='all'>\n";
 		}
@@ -151,13 +157,13 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('bridge_add') && $bridges) {
+	if ($has_bridge_add && $bridges) {
 		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('bridge_edit') && $bridges) {
+	if ($has_bridge_edit && $bridges) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('bridge_delete') && $bridges) {
+	if ($has_bridge_delete && $bridges) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -171,19 +177,19 @@
 
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('bridge_add') || permission_exists('bridge_edit') || permission_exists('bridge_delete')) {
+	if ($has_bridge_add || $has_bridge_edit || $has_bridge_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(empty($bridges) ? "style='visibility: hidden;'" : null).">\n";
 		echo "	</th>\n";
 	}
-	if (!empty($show) && $show == 'all' && permission_exists('bridge_all')) {
+	if (!empty($show) && $show == 'all' && $has_bridge_all) {
 		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order);
 	}
 	echo th_order_by('bridge_name', $text['label-bridge_name'], $order_by, $order);
 	echo th_order_by('bridge_destination', $text['label-bridge_destination'], $order_by, $order);
 	echo th_order_by('bridge_enabled', $text['label-bridge_enabled'], $order_by, $order, null, "class='center'");
 	echo "	<th class='hide-sm-dn'>".$text['label-bridge_description']."</th>\n";
-	if (permission_exists('bridge_edit') && $list_row_edit_button) {
+	if ($has_bridge_edit && $list_row_edit_button) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -195,24 +201,24 @@
 			app::dispatch_list_render_row('bridge_list_page_hook', $url_paging, $row, $x);
 
 			$list_row_url = '';
-			if (permission_exists('bridge_edit')) {
+			if ($has_bridge_edit) {
 				$list_row_url = "bridge_edit.php?id=".urlencode($row['bridge_uuid']);
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('bridge_add') || permission_exists('bridge_edit') || permission_exists('bridge_delete')) {
+			if ($has_bridge_add || $has_bridge_edit || $has_bridge_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='bridges[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='bridges[$x][uuid]' value='".escape($row['bridge_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if (!empty($_GET['show']) && $_GET['show'] == 'all' && permission_exists('bridge_all')) {
+			if (!empty($_GET['show']) && $_GET['show'] == 'all' && $has_bridge_all) {
 				echo "	<td>".escape($row['domain_name'])."</td>\n";
 			}
 			echo "	<td>\n";
-			if (permission_exists('bridge_edit')) {
+			if ($has_bridge_edit) {
 				echo "	<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['bridge_name'])."</a>\n";
 			}
 			else {
@@ -220,7 +226,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td>".escape($row['bridge_destination'])."</td>\n";
-			if (permission_exists('bridge_edit')) {
+			if ($has_bridge_edit) {
 				echo "	<td class='no-link center'>\n";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['bridge_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
 			}
@@ -230,7 +236,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td class='description overflow hide-sm-dn'>".escape($row['bridge_description'])."</td>\n";
-			if (permission_exists('bridge_edit') && $list_row_edit_button) {
+			if ($has_bridge_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>\n";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

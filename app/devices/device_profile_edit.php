@@ -32,6 +32,15 @@
 		echo "access denied";
 		exit;
 	}
+	$has_device_key_extension          = permission_exists('device_key_extension');
+	$has_device_key_icon               = permission_exists('device_key_icon');
+	$has_device_key_protected          = permission_exists('device_key_protected');
+	$has_device_profile_add            = permission_exists('device_profile_add');
+	$has_device_profile_delete         = permission_exists('device_profile_delete');
+	$has_device_profile_domain         = permission_exists('device_profile_domain');
+	$has_device_profile_key_delete     = permission_exists('device_profile_key_delete');
+	$has_device_profile_setting_delete = permission_exists('device_profile_setting_delete');
+	$has_device_profile_setting_edit   = permission_exists('device_profile_setting_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -56,7 +65,7 @@
 
 				switch ($_POST['action']) {
 					case 'delete':
-						if (permission_exists('device_profile_delete')) {
+						if ($has_device_profile_delete) {
 							$obj = new device;
 							$obj->delete_profiles($array);
 						}
@@ -78,7 +87,7 @@
 			$device_profile_settings_delete = $_POST["device_profile_settings_delete"] ?? null;
 
 		//set the domain_uuid for users that do not have the permission
-			if (permission_exists('device_profile_domain')) {
+			if ($has_device_profile_domain) {
 				//allowed to updat the domain_uuid
 				$domain_uuid = $_POST["domain_uuid"];
 			}
@@ -157,7 +166,7 @@
 				}
 			}
 			$y = 0;
-			if (permission_exists("device_profile_setting_edit")) {
+			if ($has_device_profile_setting_edit) {
 				foreach ($device_profile_settings as $row) {
 					if (strlen($row['profile_setting_name']) > 0) {
 						$array['device_profiles'][0]['device_profile_settings'][$y]["domain_uuid"] = $domain_uuid;
@@ -177,7 +186,7 @@
 		//remove checked keys
 			if (
 				$action == 'update'
-				&& permission_exists('device_profile_key_delete')
+				&& $has_device_profile_key_delete
 				&& is_array($device_profile_keys_delete)
 				&& @sizeof($device_profile_keys_delete) != 0
 				) {
@@ -189,7 +198,7 @@
 		//remove checked settings
 			if (
 				$action == 'update'
-				&& permission_exists('device_profile_setting_delete')
+				&& $has_device_profile_setting_delete
 				&& is_array($device_profile_settings_delete)
 				&& @sizeof($device_profile_settings_delete) != 0
 				) {
@@ -386,14 +395,14 @@
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','link'=>'device_profiles.php']);
 	if ($action == 'update') {
 		$button_margin = 'margin-left: 15px;';
-		if (permission_exists('device_profile_add')) {
+		if ($has_device_profile_add) {
 			echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'name'=>'btn_copy','style'=>($button_margin ?? null),'onclick'=>"modal_open('modal-copy','btn_copy');"]);
 			unset($button_margin);
 		}
 		if (
-			permission_exists('device_profile_delete') ||
-			permission_exists('device_profile_key_delete') ||
-			permission_exists('device_profile_setting_delete')
+			$has_device_profile_delete ||
+			$has_device_profile_key_delete ||
+			$has_device_profile_setting_delete
 			) {
 			echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'name'=>'btn_delete','style'=>($button_margin ?? null),'onclick'=>"modal_open('modal-delete','btn_delete');"]);
 			unset($button_margin);
@@ -404,14 +413,14 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if ($action == 'update' && permission_exists('device_profile_add')) {
+	if ($action == 'update' && $has_device_profile_add) {
 		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','link'=>'device_profile_copy.php?id='.urlencode($device_profile_uuid),'onclick'=>"modal_close();"])]);
 	}
 	if (
 		$action == 'update' && (
-		permission_exists('device_profile_delete') ||
-		permission_exists('device_profile_key_delete') ||
-		permission_exists('device_profile_setting_delete')
+		$has_device_profile_delete ||
+		$has_device_profile_key_delete ||
+		$has_device_profile_setting_delete
 		)) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 	}
@@ -450,17 +459,17 @@
 		}
 		echo "			<th class='vtablereq'>".$text['label-device_key_line']."</th>\n";
 		echo "			<td class='vtable'>".$text['label-device_key_value']."</td>\n";
-		if (permission_exists('device_key_extension')) {
+		if ($has_device_key_extension) {
 			echo "			<td class='vtable'>".$text['label-device_key_extension']."</td>\n";
 		}
-		if (permission_exists('device_key_protected')) {
+		if ($has_device_key_protected) {
 			echo "			<td class='vtable'>".$text['label-device_key_protected']."</td>\n";
 		}
 		echo "			<td class='vtable'>".$text['label-device_key_label']."</td>\n";
-		if (permission_exists('device_key_icon')) {
+		if ($has_device_key_icon) {
 			echo "			<td class='vtable'>".$text['label-device_key_icon']."</td>\n";
 		}
-		if (is_array($device_profile_keys) && @sizeof($device_profile_keys) > 1 && permission_exists('device_profile_key_delete')) {
+		if (is_array($device_profile_keys) && @sizeof($device_profile_keys) > 1 && $has_device_profile_key_delete) {
 			echo "			<td class='vtable edit_delete_checkbox_all' onmouseover=\"swap_display('delete_label_keys', 'delete_toggle_keys');\" onmouseout=\"swap_display('delete_label_keys', 'delete_toggle_keys');\">\n";
 			echo "				<span id='delete_label_keys'>".$text['label-delete']."</span>\n";
 			echo "				<span id='delete_toggle_keys'><input type='checkbox' id='checkbox_all_keys' name='checkbox_all' onclick=\"edit_all_toggle('keys');\"></span>\n";
@@ -497,17 +506,17 @@
 			}
 			echo "				<th class='vtablereq'>".$text['label-device_key_line']."</td>\n";
 			echo "				<td class='vtable'>".$text['label-device_key_value']."</td>\n";
-			if (permission_exists('device_key_extension')) {
+			if ($has_device_key_extension) {
 				echo "				<td class='vtable'>".$text['label-device_key_extension']."</td>\n";
 			}
-			if (permission_exists('device_key_protected')) {
+			if ($has_device_key_protected) {
 				echo "				<td class='vtable'>".$text['label-device_key_protected']."</td>\n";
 			}
 			echo "				<td class='vtable'>".$text['label-device_key_label']."</td>\n";
-			if (permission_exists('device_key_icon')) {
+			if ($has_device_key_icon) {
 				echo "			<td class='vtable'>".$text['label-device_key_icon']."</td>\n";
 			}
-			if (!empty($device_profile_keys) && is_array($device_profile_keys) && @sizeof($device_profile_keys) > 1 && is_uuid($row["device_profile_key_uuid"]) && permission_exists('device_profile_key_delete')) {
+			if (!empty($device_profile_keys) && is_array($device_profile_keys) && @sizeof($device_profile_keys) > 1 && is_uuid($row["device_profile_key_uuid"]) && $has_device_profile_key_delete) {
 				echo "				<td class='vtable edit_delete_checkbox_all' onmouseover=\"swap_display('delete_label_keys_".$device_vendor."', 'delete_toggle_keys_".$device_vendor."');\" onmouseout=\"swap_display('delete_label_keys_".$device_vendor."', 'delete_toggle_keys_".$device_vendor."');\">\n";
 				echo "					<span id='delete_label_keys_".$device_vendor."'>".$text['label-delete']."</span>\n";
 				echo "					<span id='delete_toggle_keys_".$device_vendor."'><input type='checkbox' id='checkbox_all_keys_".$device_vendor."' name='checkbox_all' onclick=\"edit_all_toggle('keys_".$device_vendor."');\"></span>\n";
@@ -625,13 +634,13 @@
 		echo "				<input class='formfld' type='text' name='device_profile_keys[$x][profile_key_value]' maxlength='255' value=\"".escape($row["profile_key_value"])."\">\n";
 		echo "			</td>\n";
 
-		if (permission_exists('device_key_extension')) {
+		if ($has_device_key_extension) {
 			echo "			<td class='formfld'>\n";
 			echo "				<input class='formfld' type='text' name='device_profile_keys[$x][profile_key_extension]' maxlength='255' value=\"".escape($row["profile_key_extension"])."\">\n";
 			echo "			</td>\n";
 		}
 
-		if (permission_exists('device_key_protected')) {
+		if ($has_device_key_protected) {
 			echo "			<td>\n";
 			if ($input_toggle_style_switch) {
 				echo "	<span class='switch'>\n";
@@ -650,12 +659,12 @@
 		echo "			<td class='formfld'>\n";
 		echo "				<input class='formfld' type='text' name='device_profile_keys[$x][profile_key_label]' maxlength='255' value=\"".escape($row["profile_key_label"])."\">\n";
 		echo "			</td>\n";
-		if (permission_exists('device_key_icon')) {
+		if ($has_device_key_icon) {
 			echo "		<td class='formfld'>\n";
 			echo "			<input class='formfld' type='text' name='device_profile_keys[$x][profile_key_icon]' maxlength='255' value=\"".escape($row["profile_key_icon"])."\">\n";
 			echo "		</td>\n";
 		}
-		if (is_array($device_profile_keys) && @sizeof($device_profile_keys) > 1 && permission_exists('device_profile_key_delete')) {
+		if (is_array($device_profile_keys) && @sizeof($device_profile_keys) > 1 && $has_device_profile_key_delete) {
 			if (is_uuid($row["device_profile_key_uuid"])) {
 				echo "			<td class='vtable' style='text-align: center; padding-bottom: 3px;'>\n";
 				echo "				<input type='checkbox' name='device_profile_keys_delete[".$x."][checked]' value='true' class='chk_delete checkbox_keys_".$device_vendor."' onclick=\"edit_delete_action('keys_".$device_vendor."');\">\n";
@@ -680,7 +689,7 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('device_profile_setting_edit')) {
+	if ($has_device_profile_setting_edit) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-device_profile_settings']."\n";
@@ -692,7 +701,7 @@
 		echo "			<td class='vtable'>".$text['label-device_setting_value']."</td>\n";
 		echo "			<td class='vtable'>".$text['label-enabled']."</td>\n";
 		echo "			<td class='vtable'>".$text['label-device_setting_description']."</td>\n";
-		if (is_array($device_profile_settings) && @sizeof($device_profile_settings) > 1 && permission_exists('device_profile_setting_delete')) {
+		if (is_array($device_profile_settings) && @sizeof($device_profile_settings) > 1 && $has_device_profile_setting_delete) {
 			echo "			<td class='vtable edit_delete_checkbox_all' onmouseover=\"swap_display('delete_label_settings', 'delete_toggle_settings');\" onmouseout=\"swap_display('delete_label_settings', 'delete_toggle_settings');\">\n";
 			echo "				<span id='delete_label_settings'>".$text['label-delete']."</span>\n";
 			echo "				<span id='delete_toggle_settings'><input type='checkbox' id='checkbox_all_settings' name='checkbox_all' onclick=\"edit_all_toggle('settings');\"></span>\n";
@@ -727,7 +736,7 @@
 			echo "			<td class='formfld'>\n";
 			echo "				<input class='formfld' type='text' name='device_profile_settings[$x][profile_setting_description]' maxlength='255' value=\"".escape($row["profile_setting_description"])."\">\n";
 			echo "			</td>\n";
-			if (is_array($device_profile_settings) && @sizeof($device_profile_settings) > 1 && permission_exists('device_profile_setting_delete')) {
+			if (is_array($device_profile_settings) && @sizeof($device_profile_settings) > 1 && $has_device_profile_setting_delete) {
 				if (is_uuid($row["device_profile_setting_uuid"])) {
 					echo "			<td class='vtable' style='text-align: center; padding-bottom: 3px;'>\n";
 					echo "				<input type='checkbox' name='device_profile_settings_delete[".$x."][checked]' value='true' class='chk_delete checkbox_settings' onclick=\"edit_delete_action('settings');\">\n";
@@ -748,7 +757,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('device_profile_domain')) {
+	if ($has_device_profile_domain) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-domain_uuid']."\n";

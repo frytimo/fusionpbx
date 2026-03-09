@@ -34,22 +34,41 @@
 		echo "access denied";
 		exit;
 	}
+	$has_api_key           = permission_exists('api_key');
+	$has_contact_add       = permission_exists('contact_add');
+	$has_contact_edit      = permission_exists('contact_edit');
+	$has_contact_email_add = permission_exists('contact_email_add');
+	$has_contact_view      = permission_exists('contact_view');
+	$has_message_key       = permission_exists('message_key');
+	$has_ticket_add        = permission_exists('ticket_add');
+	$has_ticket_edit       = permission_exists('ticket_edit');
+	$has_user_add          = permission_exists('user_add');
+	$has_user_all          = permission_exists('user_all');
+	$has_user_domain       = permission_exists('user_domain');
+	$has_user_edit         = permission_exists('user_edit');
+	$has_user_group_delete = permission_exists('user_group_delete');
+	$has_user_groups       = permission_exists('user_groups');
+	$has_user_password     = permission_exists('user_password');
+	$has_user_permissions  = permission_exists('user_permissions');
+	$has_user_setting_view = permission_exists('user_setting_view');
+	$has_user_status       = permission_exists('user_status');
+	$has_user_type         = permission_exists('user_type');
 
 //add multi-lingual support
 	$text = new text()->get();
 
 //get user uuid
-	if (permission_exists('user_edit') && !empty($_REQUEST["id"]) && is_uuid($_REQUEST["id"])) {
+	if ($has_user_edit && !empty($_REQUEST["id"]) && is_uuid($_REQUEST["id"])) {
 		$user_uuid = $_REQUEST["id"];
 		$action = 'edit';
 	}
-	elseif (permission_exists('user_add') && !isset($_REQUEST["id"])) {
+	elseif ($has_user_add && !isset($_REQUEST["id"])) {
 		$user_uuid = uuid();
 		$action = 'add';
 	}
 
 //get total user count from the database, check limit, if defined
-	if (permission_exists('user_add') && $action == 'add' && $settings->get('limit', 'users') != '') {
+	if ($has_user_add && $action == 'add' && $settings->get('limit', 'users') != '') {
 		$sql = "select count(*) ";
 		$sql .= "from v_users ";
 		$sql .= "where domain_uuid = :domain_uuid ";
@@ -65,7 +84,7 @@
 	}
 
 //required to be a superadmin to update an account that is a member of the superadmin group
-	if (permission_exists('user_edit') && $action == 'edit') {
+	if ($has_user_edit && $action == 'edit') {
 		$superadmins = superadmin_list();
 		if (if_superadmin($superadmins, $user_uuid)) {
 			if (!if_group("superadmin")) {
@@ -76,7 +95,7 @@
 	}
 
 //delete the group from the user
-	if (!empty($_POST["action"]) && $_POST["action"] === "delete" && permission_exists("user_group_delete") && is_uuid($_POST["group_uuid"]) && is_uuid($user_uuid)) {
+	if (!empty($_POST["action"]) && $_POST["action"] === "delete" && $has_user_group_delete && is_uuid($_POST["group_uuid"]) && is_uuid($user_uuid)) {
 		//get the uuid
 			$group_uuid = $_POST['group_uuid'];
 
@@ -101,7 +120,7 @@
 	}
 
 //retrieve password requirements
-	if (permission_exists('user_password')) {
+	if ($has_user_password) {
 		$required['length'] = $settings->get('users', 'password_length', 12);
 		$required['number'] = $settings->get('users', 'password_number', false);
 		$required['lowercase'] = $settings->get('users', 'password_lowercase', false);
@@ -113,7 +132,7 @@
 	if (!empty($_POST)) {
 
 		//get the HTTP values and set as variables
-			if (permission_exists('user_edit') && $action == 'edit') {
+			if ($has_user_edit && $action == 'edit') {
 				$user_uuid = $_REQUEST["id"];
 				$username_old = $_POST["username_old"];
 			}
@@ -126,10 +145,10 @@
 			$user_language = $_POST["user_language"];
 			$user_time_zone = $_POST["user_time_zone"];
 
-			if (permission_exists('contact_edit') && $action == 'edit') {
+			if ($has_contact_edit && $action == 'edit') {
 				$contact_uuid = $_POST["contact_uuid"];
 			}
-			else if (permission_exists('contact_add') && $action == 'add') {
+			else if ($has_contact_add && $action == 'add') {
 				$contact_organization = $_POST["contact_organization"];
 				$contact_name_given = $_POST["contact_name_given"];
 				$contact_name_family = $_POST["contact_name_family"];
@@ -137,10 +156,10 @@
 			$group_uuid_name = $_POST["group_uuid_name"];
 			$user_type = $_POST["user_type"];
 			$user_enabled = $_POST["user_enabled"];
-			if (permission_exists('api_key')) {
+			if ($has_api_key) {
 				$api_key = $_POST["api_key"];
 			}
-			if (permission_exists('message_key')) {
+			if ($has_message_key) {
 				$message_key = $_POST["message_key"];
 			}
 			if (!empty($_SESSION['authentication']['methods']) && in_array('totp', $_SESSION['authentication']['methods'])) {
@@ -187,8 +206,8 @@
 			}
 
 			//require unique globally or per domain
-			if ((permission_exists('user_edit') && $action == 'edit' && $username != $username_old && !empty($username)) ||
-				(permission_exists('user_add') && $action == 'add' && !empty($username))) {
+			if (($has_user_edit && $action == 'edit' && $username != $username_old && !empty($username)) ||
+				($has_user_add && $action == 'add' && !empty($username))) {
 
 				$sql = "select count(*) from v_users ";
 				if (!empty($settings->get('users', 'unique')) && $settings->get('users', 'unique') == "global") {
@@ -213,7 +232,7 @@
 			}
 
 			//require passwords not allowed to be empty
-			if (permission_exists('user_password') && permission_exists('user_add') && $action == 'add') {
+			if ($has_user_password && $has_user_add && $action == 'add') {
 				if (empty($password)) {
 					message::add($text['message-password_blank'], 'negative', 7500);
 				}
@@ -228,7 +247,7 @@
 			}
 
 			//require passwords with the defined required attributes: length, number, lower case, upper case, and special characters
-			if (permission_exists('user_password') && !empty($password)) {
+			if ($has_user_password && !empty($password)) {
 				if (!empty($required['length']) && is_numeric($required['length']) && $required['length'] != 0) {
 					if (strlen($password) < $required['length']) {
 						$invalid[] = $text['label-characters'];
@@ -260,7 +279,7 @@
 			if (message::count() != 0 || !empty($invalid)) {
 				if ($invalid) { message::add($text['message-required'].implode(', ', $invalid), 'negative', 7500); }
 				persistent_form_values('store', $_POST);
-				header("Location: user_edit.php".(permission_exists('user_edit') && $action != 'add' ? "?id=".urlencode($user_uuid) : null));
+				header("Location: user_edit.php".($has_user_edit && $action != 'add' ? "?id=".urlencode($user_uuid) : null));
 				exit;
 			}
 			else {
@@ -367,7 +386,7 @@
 			unset($sql, $parameters, $row);
 
 		//check to see if message key is set
-			if (permission_exists('message_key')) {
+			if ($has_message_key) {
 				$sql = "select user_setting_uuid, user_setting_value from v_user_settings ";
 				$sql .= "where user_setting_category = 'message' ";
 				$sql .= "and user_setting_subcategory = 'key' ";
@@ -417,7 +436,7 @@
 			unset($sql, $parameters, $row);
 
 		//assign the user to the group
-			if ((permission_exists('user_add') || permission_exists('user_edit')) && !empty($_REQUEST["group_uuid_name"])) {
+			if (($has_user_add || $has_user_edit) && !empty($_REQUEST["group_uuid_name"])) {
 				$group_data = explode('|', $group_uuid_name);
 				$group_uuid = $group_data[0];
 				$group_name = $group_data[1];
@@ -441,7 +460,7 @@
 			}
 
 		//update domain, if changed
-			if ((permission_exists('user_add') || permission_exists('user_edit')) && permission_exists('user_domain')) {
+			if (($has_user_add || $has_user_edit) && $has_user_domain) {
 				//adjust group user records
 					$sql = "select user_group_uuid from v_user_groups ";
 					$sql .= "where user_uuid = :user_uuid ";
@@ -484,7 +503,7 @@
 			}
 
 		//add contact to array for insert
-			if ($action == 'add' && permission_exists('user_add') && permission_exists('contact_add')) {
+			if ($action == 'add' && $has_user_add && $has_contact_add) {
 				$contact_uuid = uuid();
 				$array['contacts'][$c]['domain_uuid'] = $domain_uuid;
 				$array['contacts'][$c]['contact_uuid'] = $contact_uuid;
@@ -494,7 +513,7 @@
 				$array['contacts'][$c]['contact_name_family'] = $contact_name_family;
 				$array['contacts'][$c]['contact_nickname'] = $username;
 				$c++;
-				if (permission_exists('contact_email_add')) {
+				if ($has_contact_email_add) {
 					$contact_email_uuid = uuid();
 					$array['contact_emails'][$c]['contact_email_uuid'] = $contact_email_uuid;
 					$array['contact_emails'][$c]['domain_uuid'] = $domain_uuid;
@@ -514,7 +533,7 @@
 			if (!empty($username) && (empty($username_old) || $username != $username_old)) {
 				$array['users'][$x]['username'] = $username;
 			}
-			if (permission_exists('user_password') && !empty($password) && $password == $password_confirm) {
+			if ($has_user_password && !empty($password) && $password == $password_confirm) {
 				//remove the session id files
 				$sql = "select session_id from v_user_logs ";
 				$sql .= "where user_uuid = :user_uuid ";
@@ -533,8 +552,8 @@
 			}
 			$array['users'][$x]['user_email'] = $user_email;
 			$array['users'][$x]['user_status'] = $user_status;
-			if (permission_exists('user_add') || permission_exists('user_edit')) {
-				if (permission_exists('api_key')) {
+			if ($has_user_add || $has_user_edit) {
+				if ($has_api_key) {
 					$array['users'][$x]['api_key'] = (!empty($api_key)) ? $api_key : null;
 				}
 				if (!empty($_SESSION['authentication']['methods']) && in_array('totp', $_SESSION['authentication']['methods'])) {
@@ -542,7 +561,7 @@
 				}
 				$array['users'][$x]['user_type'] = $user_type;
 				$array['users'][$x]['user_enabled'] = $user_enabled;
-				if (permission_exists('contact_add')) {
+				if ($has_contact_add) {
 					$array['users'][$x]['contact_uuid'] = (!empty($contact_uuid)) ? $contact_uuid : null;
 				}
 				if ($action == 'add') {
@@ -577,7 +596,7 @@
 			settings::clear_cache();
 
 		//if call center installed
-			if ($action == 'edit' && permission_exists('user_edit') && file_exists(dirname(__DIR__, 2)."/app/call_centers/app_config.php")) {
+			if ($action == 'edit' && $has_user_edit && file_exists(dirname(__DIR__, 2)."/app/call_centers/app_config.php")) {
 				//get the call center agent uuid
 					$sql = "select call_center_agent_uuid from v_call_center_agents ";
 					$sql .= "where domain_uuid = :domain_uuid ";
@@ -627,7 +646,7 @@
 				$sql .= "user_type, contact_uuid, user_enabled, user_status ";
 				$sql .= "from v_users ";
 				$sql .= "where user_uuid = :user_uuid ";
-				if (!permission_exists('user_all')) {
+				if (!$has_user_all) {
 					$sql .= "and domain_uuid = :domain_uuid ";
 					$parameters['domain_uuid'] = $domain_uuid;
 				}
@@ -642,7 +661,7 @@
 					$user_totp_secret = $row["user_totp_secret"];
 					$user_type = $row["user_type"];
 					$user_enabled = $row["user_enabled"];
-					if (permission_exists('contact_view')) {
+					if ($has_contact_view) {
 						$contact_uuid = $row["contact_uuid"];
 					}
 					$user_status = $row["user_status"];
@@ -693,7 +712,7 @@
 	$document['title'] = $text['title-user_edit'];
 
 //show the content
-	if (permission_exists('user_password')) {
+	if ($has_user_password) {
 		echo "<script>\n";
 		echo "	function compare_passwords() {\n";
 		echo "		if (document.getElementById('password') === document.activeElement || document.getElementById('password_confirm') === document.activeElement) {\n";
@@ -733,22 +752,22 @@
 	if (!empty($unsaved)) {
 		echo "<div class='unsaved'>".$text['message-unsaved_changes']." <i class='fas fa-exclamation-triangle'></i></div>";
 	}
-	if (permission_exists('user_add') || permission_exists('user_edit')) {
+	if ($has_user_add || $has_user_edit) {
 		echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','link'=>'users.php']);
 	}
 	$button_margin = 'margin-left: 15px;';
-	if (permission_exists('ticket_add') || permission_exists('ticket_edit')) {
+	if ($has_ticket_add || $has_ticket_edit) {
 		echo button::create(['type'=>'button','label'=>$text['button-tickets'],'icon'=>'tags','style'=>$button_margin,'link'=>PROJECT_PATH.'/app/tickets/tickets.php?user_uuid='.urlencode($user_uuid)]);
 		unset($button_margin);
 	}
-	if (permission_exists('user_permissions') && file_exists('../../app/user_permissions/user_permissions.php')) {
+	if ($has_user_permissions && file_exists('../../app/user_permissions/user_permissions.php')) {
 		echo button::create(['type'=>'button','label'=>$text['button-permissions'],'icon'=>'key','style'=>$button_margin,'link'=>PROJECT_PATH.'/app/user_permissions/user_permissions.php?id='.urlencode($user_uuid)]);
 		unset($button_margin);
 	}
-	if (permission_exists('user_setting_view')) {
+	if ($has_user_setting_view) {
 		echo button::create(['type'=>'button','label'=>$text['button-settings'],'icon'=>$settings->get('theme', 'button_icon_settings'),'id'=>'btn_settings','style'=>'','link'=>PROJECT_PATH.'/core/user_settings/user_settings.php?id='.urlencode($user_uuid)]);
 	}
-	if (permission_exists('user_add') || permission_exists('user_edit')) {
+	if ($has_user_add || $has_user_edit) {
 		echo button::create(['type'=>'button','label'=>$text['button-save'],'icon'=>$settings->get('theme', 'button_icon_save'),'id'=>'btn_save','style'=>'margin-left: 15px;','onclick'=>'submit_form();']);
 	}
 	echo "	</div>\n";
@@ -764,7 +783,7 @@
 	echo "	<tr>";
 	echo "		<td width='30%' class='vncellreq' valign='top'>".$text['label-username']."</td>";
 	echo "		<td width='70%' class='vtable'>";
-	if (permission_exists("user_edit")) {
+	if ($has_user_edit) {
 		echo "		<input type='text' class='formfld' name='username' id='username' autocomplete='new-password' value='".escape($username ?? '')."' required='required'>\n";
 		echo "		<input type='text' style='display: none;' disabled='disabled'>\n"; //help defeat browser auto-fill
 	}
@@ -775,7 +794,7 @@
 	echo "		</td>";
 	echo "	</tr>";
 
-	if (permission_exists('user_password')) {
+	if ($has_user_password) {
 		echo "	<tr>";
 		echo "		<td class='vncell".(($action == 'add') ? 'req' : null)."' valign='top'>".$text['label-password']."</td>";
 		echo "		<td class='vtable'>";
@@ -885,7 +904,7 @@
 	echo "	</td>\n";
 	echo "	</tr>\n";
 
-	if (permission_exists("user_status")) {
+	if ($has_user_status) {
 		echo "	<tr>\n";
 		echo "	<td width='20%' class=\"vncell\" valign='top'>\n";
 		echo "		".$text['label-status']."\n";
@@ -905,7 +924,7 @@
 		echo "	</tr>\n";
 	}
 
-	if ($action == 'edit' && permission_exists("user_edit") && permission_exists('contact_edit')) {
+	if ($action == 'edit' && $has_user_edit && $has_contact_edit) {
 		echo "	<tr>";
 		echo "		<td class='vncell' valign='top'>".$text['label-contact']."</td>";
 		echo "		<td class='vtable'>\n";
@@ -960,7 +979,7 @@
 		echo "		</td>";
 		echo "	</tr>";
 	}
-	elseif ($action == 'add' && permission_exists("user_add") && permission_exists('contact_add')) {
+	elseif ($action == 'add' && $has_user_add && $has_contact_add) {
 		echo "	<tr>";
 		echo "		<td class='vncell'>".$text['label-first_name']."</td>";
 		echo "		<td class='vtable'><input type='text' class='formfld' name='contact_name_given' value='".escape($contact_name_given ?? '')."'></td>";
@@ -975,7 +994,7 @@
 		echo "	</tr>";
 	}
 
-	if (permission_exists("user_groups")) {
+	if ($has_user_groups) {
 		echo "	<tr>";
 		echo "		<td class='vncellreq' valign='top'>".$text['label-groups']."</td>";
 		echo "		<td class='vtable'>";
@@ -1001,7 +1020,7 @@
 		$user_groups = $database->select($sql, $parameters, 'all');
 		if (is_array($user_groups)) {
 			echo "<table cellpadding='0' cellspacing='0' border='0'>\n";
-			if (permission_exists('user_group_delete')) {
+			if ($has_user_group_delete) {
 				echo "	<input type='hidden' id='action' name='action' value=''>\n";
 				echo "	<input type='hidden' id='group_uuid' name='group_uuid' value=''>\n";
 			}
@@ -1012,7 +1031,7 @@
 					echo "	<td class='vtable' style='white-space: nowrap; padding-right: 30px;' nowrap='nowrap'>";
 					echo escape($field['group_name']).((!empty($field['group_domain_uuid'])) ? "@".$_SESSION['domains'][$field['group_domain_uuid']]['domain_name'] : null);
 					echo "	</td>\n";
-					if (permission_exists('user_group_delete')) {
+					if ($has_user_group_delete) {
 						echo "	<td class='list_control_icons' style='width: 25px;'>\n";
 						echo button::create(['type'=>'button','icon'=>'fas fa-minus','id'=>'btn_delete','class'=>'default list_control_icon','name'=>'btn_delete','onclick'=>"modal_open('modal-delete-group-$x','btn_delete');"]);
 						echo modal::create(['id'=>'modal-delete-group-'.$x,'type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); document.getElementById('group_uuid').value = '".escape($field['group_uuid'])."'; list_form_submit('frm');"])]);
@@ -1060,7 +1079,7 @@
 		echo "	</tr>";
 	}
 
-	if (permission_exists('user_type')) {
+	if ($has_user_type) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-user_type']."\n";
@@ -1076,7 +1095,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('user_domain')) {
+	if ($has_user_domain) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-domain']."\n";
@@ -1096,7 +1115,7 @@
 		echo "<input type='hidden' name='domain_uuid' value='".escape($domain_uuid)."'>";
 	}
 
-	if (permission_exists('api_key')) {
+	if ($has_api_key) {
 		echo "	<tr>";
 		echo "		<td class='vncell' valign='top'>".$text['label-api_key']."</td>";
 		echo "		<td class='vtable'>\n";
@@ -1246,7 +1265,7 @@
 
 	if ($action == 'edit') {
 		echo "<input type='hidden' name='id' value=\"".escape($user_uuid)."\">";
-		if (permission_exists("user_edit")) {
+		if ($has_user_edit) {
 			echo "<input type='hidden' name='username_old' value=\"".escape($username)."\">";
 		}
 	}

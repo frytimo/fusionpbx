@@ -33,6 +33,10 @@
 		echo "access denied";
 		exit;
 	}
+	$has_contact_note_add    = permission_exists('contact_note_add');
+	$has_contact_note_delete = permission_exists('contact_note_delete');
+	$has_contact_note_edit   = permission_exists('contact_note_edit');
+	$has_domain_select       = permission_exists('domain_select');
 
 //set the uuid
 	if (!empty($_GET['id']) && is_uuid($_GET['id'])) {
@@ -72,14 +76,14 @@
 			echo "<div class='card'>\n";
 			echo "<table class='list'>\n";
 			echo "<tr class='list-header'>\n";
-			if (permission_exists('contact_note_delete')) {
+			if ($has_contact_note_delete) {
 				echo "	<th class='checkbox'>\n";
 				echo "		<input type='checkbox' id='checkbox_all_notes' name='checkbox_all' onclick=\"edit_all_toggle('notes');\" ".(!empty($contact_notes) ?: "style='visibility: hidden;'").">\n";
 				echo "	</th>\n";
 			}
 			echo "<th>".$text['label-note_content']."</th>\n";
 			echo "<th class='shrink'>".$text['label-note_user']."</th>\n";
-			if (permission_exists('contact_note_edit') && $list_row_edit_button == 'true') {
+			if ($has_contact_note_edit && $list_row_edit_button == 'true') {
 				echo "	<td class='action-button'>&nbsp;</td>\n";
 			}
 			echo "</tr>\n";
@@ -90,14 +94,14 @@
 					$contact_note = escape($contact_note);
 					$contact_note = str_replace("\n","<br />",$contact_note);
 					$list_row_url = '';
-					if (permission_exists('contact_note_add')) {
+					if ($has_contact_note_add) {
 						$list_row_url = "contact_note_edit.php?contact_uuid=".escape($row['contact_uuid'])."&id=".escape($row['contact_note_uuid']);
-						if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+						if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 							$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 						}
 					}
 					echo "<tr class='list-row' href='".$list_row_url."'>\n";
-					if (permission_exists('contact_note_delete')) {
+					if ($has_contact_note_delete) {
 						echo "	<td class='checkbox'>\n";
 						echo "		<input type='checkbox' name='contact_notes[$x][checked]' id='checkbox_".$x."' class='chk_delete checkbox_notes' value='true' onclick=\"edit_delete_action('notes');\">\n";
 						echo "		<input type='hidden' name='contact_notes[$x][uuid]' value='".escape($row['contact_note_uuid'])."' />\n";
@@ -105,7 +109,7 @@
 					}
 					echo "	<td class='overflow'>".$contact_note."</td>\n";
 					echo "	<td class='description no-wrap'><strong>".escape($row['last_mod_user'])."</strong>: ".date("j M Y @ ".$time_format, strtotime($row['last_mod_date']))."</td>\n";
-					if (permission_exists('contact_note_edit') && $list_row_edit_button == 'true') {
+					if ($has_contact_note_edit && $list_row_edit_button == 'true') {
 						echo "	<td class='action-button'>\n";
 						echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 						echo "	</td>\n";

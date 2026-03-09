@@ -33,6 +33,11 @@
 		echo "access denied";
 		exit;
 	}
+	$has_device_profile_add    = permission_exists('device_profile_add');
+	$has_device_profile_all    = permission_exists('device_profile_all');
+	$has_device_profile_delete = permission_exists('device_profile_delete');
+	$has_device_profile_edit   = permission_exists('device_profile_edit');
+	$has_domain_select         = permission_exists('domain_select');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -60,19 +65,19 @@
 
 		switch ($action) {
 			case 'copy':
-				if (permission_exists('device_profile_add')) {
+				if ($has_device_profile_add) {
 					$obj = new device;
 					$obj->copy_profiles($profiles);
 				}
 				break;
 			case 'toggle':
-				if (permission_exists('device_profile_edit')) {
+				if ($has_device_profile_edit) {
 					$obj = new device;
 					$obj->toggle_profiles($profiles);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('device_profile_delete')) {
+				if ($has_device_profile_delete) {
 					$obj = new device;
 					$obj->delete_profiles($profiles);
 				}
@@ -121,7 +126,7 @@
 //get the count
 	$sql = "select count(*) from v_device_profiles ";
 	$sql .= "where true ";
-	if ($show != "all" || !permission_exists('device_profile_all')) {
+	if ($show != "all" || !$has_device_profile_all) {
 		$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 		$parameters['domain_uuid'] = $domain_uuid;
 	}
@@ -135,7 +140,7 @@
 		$param .= "&search=".$search;
 		$param .= "&fields=".$fields;
 	}
-	if ($show == "all" && permission_exists('device_profile_all')) {
+	if ($show == "all" && $has_device_profile_all) {
 		$param .= "&show=all";
 	}
 	$page = $_GET['page'] ?? 0;
@@ -152,7 +157,7 @@
 	$sql .= "device_profile_description ";
 	$sql .= "from v_device_profiles ";
 	$sql .= "where true ";
-	if ($show != "all" || !permission_exists('device_profile_all')) {
+	if ($show != "all" || !$has_device_profile_all) {
 		$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 		$parameters['domain_uuid'] = $domain_uuid;
 	}
@@ -177,20 +182,20 @@
 	echo "	<div class='heading'><b>".$text['title-device_profiles']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','style'=>'margin-right: 15px;','link'=>'devices.php']);
-	if (permission_exists('device_profile_add')) {
+	if ($has_device_profile_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'device_profile_edit.php']);
 	}
-	if (permission_exists('device_profile_add') && $device_profiles) {
+	if ($has_device_profile_add && $device_profiles) {
 		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 	}
-	if (permission_exists('device_profile_edit') && $device_profiles) {
+	if ($has_device_profile_edit && $device_profiles) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
-	if (permission_exists('device_profile_delete') && $device_profiles) {
+	if ($has_device_profile_delete && $device_profiles) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if (permission_exists('device_profile_all')) {
+	if ($has_device_profile_all) {
 		if ($show == 'all') {
 			echo "		<input type='hidden' name='show' value='all'>";
 		}
@@ -217,13 +222,13 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('device_profile_add') && $device_profiles) {
+	if ($has_device_profile_add && $device_profiles) {
 		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('device_profile_edit') && $device_profiles) {
+	if ($has_device_profile_edit && $device_profiles) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('device_profile_delete') && $device_profiles) {
+	if ($has_device_profile_delete && $device_profiles) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -238,18 +243,18 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('device_profile_add') || permission_exists('device_profile_edit') || permission_exists('device_profile_delete')) {
+	if ($has_device_profile_add || $has_device_profile_edit || $has_device_profile_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(empty($device_profiles) ? "style='visibility: hidden;'" : null).">\n";
 		echo "	</th>\n";
 	}
-	if ($show == "all" && permission_exists('device_profile_all')) {
+	if ($show == "all" && $has_device_profile_all) {
 		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param);
 	}
 	echo th_order_by('device_profile_name', $text['label-device_profile_name'], $order_by, $order);
 	echo th_order_by('device_profile_enabled', $text['label-device_profile_enabled'], $order_by, $order, null, "class='center'");
 	echo th_order_by('device_profile_description', $text['label-device_profile_description'], $order_by, $order, null, "class='hide-xs'");
-	if (permission_exists('device_profile_edit') && $settings->get('theme', 'list_row_edit_button', false)) {
+	if ($has_device_profile_edit && $settings->get('theme', 'list_row_edit_button', false)) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -260,20 +265,20 @@
 			//dispatch render-row hook
 			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
-			if (permission_exists('device_profile_edit')) {
+			if ($has_device_profile_edit) {
 				$list_row_url = "device_profile_edit.php?id=".urlencode($row['device_profile_uuid']);
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('device_profile_add') || permission_exists('device_profile_edit') || permission_exists('device_profile_delete')) {
+			if ($has_device_profile_add || $has_device_profile_edit || $has_device_profile_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='profiles[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='profiles[$x][uuid]' value='".escape($row['device_profile_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if ($show == "all" && permission_exists('device_profile_all')) {
+			if ($show == "all" && $has_device_profile_all) {
 				if (!empty($_SESSION['domains'][$row['domain_uuid']]['domain_name'])) {
 					$domain = $_SESSION['domains'][$row['domain_uuid']]['domain_name'];
 				}
@@ -283,14 +288,14 @@
 				echo "	<td>".escape($domain)."</td>\n";
 			}
 			echo "	<td>";
-			if (permission_exists('device_profile_edit')) {
+			if ($has_device_profile_edit) {
 				echo "	<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['device_profile_name'])."</a>\n";
 			}
 			else {
 				echo "	".escape($row['device_profile_name'])."\n";
 			}
 			echo "	</td>\n";
-			if (permission_exists('device_profile_edit')) {
+			if ($has_device_profile_edit) {
 				echo "	<td class='no-link center'>";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['device_profile_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
 			}
@@ -300,7 +305,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td class='description overflow hide-xs'>".escape($row['device_profile_description'])."&nbsp;</td>\n";
-			if (permission_exists('device_profile_edit') && $settings->get('theme', 'list_row_edit_button', false)) {
+			if ($has_device_profile_edit && $settings->get('theme', 'list_row_edit_button', false)) {
 				echo "	<td class='action-button'>";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

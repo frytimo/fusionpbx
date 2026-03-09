@@ -33,6 +33,9 @@
 		echo "access denied";
 		exit;
 	}
+	$has_menu_add    = permission_exists('menu_add');
+	$has_menu_delete = permission_exists('menu_delete');
+	$has_menu_edit   = permission_exists('menu_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -55,7 +58,7 @@
 	if (!empty($action) && !empty($menus)) {
 		switch ($action) {
 			case 'delete':
-				if (permission_exists('menu_delete')) {
+				if ($has_menu_delete) {
 					$obj = new menu;
 					$obj->delete($menus);
 				}
@@ -107,10 +110,10 @@
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['title-menus']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('menu_add')) {
+	if ($has_menu_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'menu_edit.php']);
 	}
-	if (permission_exists('menu_delete') && $menus) {
+	if ($has_menu_delete && $menus) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
@@ -125,7 +128,7 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('menu_delete') && $menus) {
+	if ($has_menu_delete && $menus) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -139,7 +142,7 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('menu_add') || permission_exists('menu_edit') || permission_exists('menu_delete')) {
+	if ($has_menu_add || $has_menu_edit || $has_menu_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($menus) ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
@@ -147,7 +150,7 @@
 	echo th_order_by('menu_name', $text['label-menu_name'], $order_by, $order);
 	echo th_order_by('menu_language', $text['label-menu_language'], $order_by, $order);
 	echo "	<th class='hide-sm-dn'>".$text['label-menu_description']."</th>\n";
-	if (permission_exists('menu_edit') && $list_row_edit_button) {
+	if ($has_menu_edit && $list_row_edit_button) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -156,18 +159,18 @@
 		$x = 0;
 		$button_icon_edit = $settings->get('theme', 'button_icon_edit');
 		foreach ($menus as $row) {
-			if (permission_exists('menu_edit')) {
+			if ($has_menu_edit) {
 				$list_row_url = "menu_edit.php?id=".urlencode($row['menu_uuid']);
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('menu_add') || permission_exists('menu_edit') || permission_exists('menu_delete')) {
+			if ($has_menu_add || $has_menu_edit || $has_menu_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='menus[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='menus[$x][uuid]' value='".escape($row['menu_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
 			echo "	<td>\n";
-			if (permission_exists('menu_edit')) {
+			if ($has_menu_edit) {
 				echo "	<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['menu_name'])."</a>\n";
 			}
 			else {
@@ -176,7 +179,7 @@
 			echo "	</td>\n";
 			echo "	<td>".escape($row['menu_language'])."</td>\n";
 			echo "	<td class='description overflow hide-sm-dn'>".escape($row['menu_description'])."</td>\n";
-			if (permission_exists('menu_edit') && $list_row_edit_button) {
+			if ($has_menu_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>\n";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$button_icon_edit,'link'=>$list_row_url]);
 				echo "	</td>\n";

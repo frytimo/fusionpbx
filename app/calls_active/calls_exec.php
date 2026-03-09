@@ -33,6 +33,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_call_active_eavesdrop = permission_exists('call_active_eavesdrop');
+	$has_call_active_hangup    = permission_exists('call_active_hangup');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -44,7 +46,7 @@
 	}
 
 //authorized commands
-	if ($_REQUEST['action'] == 'hangup' && permission_exists('call_active_hangup')) {
+	if ($_REQUEST['action'] == 'hangup' && $has_call_active_hangup) {
 
 		//validate the token
 			$token = new token;
@@ -88,7 +90,7 @@
 			exit;
 
 	}
-	else if ($_REQUEST['action'] == 'eavesdrop' && permission_exists('call_active_eavesdrop')) {
+	else if ($_REQUEST['action'] == 'eavesdrop' && $has_call_active_eavesdrop) {
 
 		$uuid_pattern = '/[^-A-Fa-f0-9]/';
 		$number_pattern = '/[^-A-Za-z0-9()*#]/';

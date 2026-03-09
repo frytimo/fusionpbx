@@ -37,6 +37,9 @@
 		echo "access denied";
 		exit;
 	}
+	$has_database_add    = permission_exists('database_add');
+	$has_database_delete = permission_exists('database_delete');
+	$has_database_edit   = permission_exists('database_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -54,13 +57,13 @@
 	if (!empty($action) && !empty($databases)) {
 		switch ($action) {
 			case 'copy':
-				if (permission_exists('database_add')) {
+				if ($has_database_add) {
 					$obj = new databases;
 					$obj->copy($databases);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('database_delete')) {
+				if ($has_database_delete) {
 					$obj = new databases;
 					$obj->delete($databases);
 				}
@@ -105,23 +108,23 @@
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['header-databases']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('database_add')) {
+	if ($has_database_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'database_edit.php']);
 	}
-	if (permission_exists('database_add') && $databases) {
+	if ($has_database_add && $databases) {
 		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 	}
-	if (permission_exists('database_delete') && $databases) {
+	if ($has_database_delete && $databases) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo "	</div>\n";
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('database_add') && $databases) {
+	if ($has_database_add && $databases) {
 		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('database_delete') && $databases) {
+	if ($has_database_delete && $databases) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -134,7 +137,7 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('database_add') || permission_exists('database_delete')) {
+	if ($has_database_add || $has_database_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($databases) ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
@@ -144,7 +147,7 @@
 	echo th_order_by('database_host', $text['label-host'], $order_by, $order);
 	echo th_order_by('database_name', $text['label-name'], $order_by, $order);
 	echo th_order_by('database_description', $text['label-description'], $order_by, $order, null, "class='hide-sm-dn'");
-	if (permission_exists('database_edit') && $list_row_edit_button) {
+	if ($has_database_edit && $list_row_edit_button) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -154,7 +157,7 @@
 		foreach ($databases as $row) {
 			$list_row_url = "database_edit.php?id=".urlencode($row['database_uuid']);
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('database_add') || permission_exists('database_delete')) {
+			if ($has_database_add || $has_database_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='databases[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='databases[$x][uuid]' value='".escape($row['database_uuid'])."' />\n";
@@ -164,7 +167,7 @@
 			echo "	<td>".escape($row['database_type'])."&nbsp;</td>\n";
 			echo "	<td>".escape($row['database_host'])."&nbsp;</td>\n";
 			echo "	<td>";
-			if (permission_exists('database_edit')) {
+			if ($has_database_edit) {
 				echo "<a href='".$list_row_url."'>".escape($row['database_name'])."</a>";
 			}
 			else {
@@ -172,7 +175,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td class='description overflow hide-sm-dn'>".escape($row['database_description'])."&nbsp;</td>\n";
-			if (permission_exists('database_edit') && $list_row_edit_button) {
+			if ($has_database_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>\n";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

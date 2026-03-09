@@ -33,6 +33,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_module_add  = permission_exists('module_add');
+	$has_module_edit = permission_exists('module_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -106,14 +108,14 @@
 
 		//add or update the database
 			if (empty($_POST["persistformvar"])) {
-				if ($action == "add" && permission_exists('module_add')) {
+				if ($action == "add" && $has_module_add) {
 					$module_uuid = uuid();
 					$array['modules'][0]['module_uuid'] = $module_uuid;
 
 					message::add($text['message-add']);
 				}
 
-				if ($action == "update" && permission_exists('module_edit')) {
+				if ($action == "update" && $has_module_edit) {
 					$array['modules'][0]['module_uuid'] = $module_uuid;
 
 					message::add($text['message-update']);

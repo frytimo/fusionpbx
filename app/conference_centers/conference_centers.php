@@ -34,6 +34,12 @@
 		echo "access denied";
 		exit;
 	}
+	$has_conference_active_view   = permission_exists('conference_active_view');
+	$has_conference_center_add    = permission_exists('conference_center_add');
+	$has_conference_center_all    = permission_exists('conference_center_all');
+	$has_conference_center_delete = permission_exists('conference_center_delete');
+	$has_conference_center_edit   = permission_exists('conference_center_edit');
+	$has_domain_select            = permission_exists('domain_select');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -61,20 +67,20 @@
 		switch ($action) {
 			/*
 			case 'copy':
-				if (permission_exists('conference_center_add')) {
+				if ($has_conference_center_add) {
 					$obj = new conference_centers;
 					$obj->copy_conference_centers($conference_centers);
 				}
 				break;
 			*/
 			case 'toggle':
-				if (permission_exists('conference_center_edit')) {
+				if ($has_conference_center_edit) {
 					$obj = new conference_centers;
 					$obj->toggle_conference_centers($conference_centers);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('conference_center_delete')) {
+				if ($has_conference_center_delete) {
 					$obj = new conference_centers;
 					$obj->delete_conference_centers($conference_centers);
 				}
@@ -112,7 +118,7 @@
 //prepare to page the results
 	$sql = "select count(*) from v_conference_centers ";
 	$sql .= "where true ";
-	if ($show != "all" || !permission_exists('conference_center_all')) {
+	if ($show != "all" || !$has_conference_center_all) {
 		$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	}
@@ -122,7 +128,7 @@
 //prepare to page the results
 	$rows_per_page = $settings->get('domain', 'paging', 50);
 	$param = "&search=".urlencode($search);
-	if ($show == "all" && permission_exists('conference_center_all')) {
+	if ($show == "all" && $has_conference_center_all) {
 		$param .= "&show=all";
 	}
 	$page = $_GET['page'] ?? '';
@@ -144,7 +150,7 @@
 	$sql .= "cast(conference_center_enabled as text) ";
 	$sql .= "from v_conference_centers ";
 	$sql .= "where true ";
-	if ($show != "all" || !permission_exists('conference_center_all')) {
+	if ($show != "all" || !$has_conference_center_all) {
 		$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	}
@@ -174,21 +180,21 @@
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['title-conference_centers']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('conference_active_view')) {
+	if ($has_conference_active_view) {
 		echo button::create(['type'=>'button','label'=>$text['button-view_active'],'icon'=>'comments','link'=>PROJECT_PATH.'/app/conferences_active/conferences_active.php']);
 	}
 	echo button::create(['type'=>'button','label'=>$text['button-rooms'],'icon'=>'door-open','style'=>'margin-right: 15px;','link'=>'conference_rooms.php']);
-	if (permission_exists('conference_center_add')) {
+	if ($has_conference_center_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'conference_center_edit.php']);
 	}
-	if (permission_exists('conference_center_edit') && $conference_centers) {
+	if ($has_conference_center_edit && $conference_centers) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
-	if (permission_exists('conference_center_delete') && $conference_centers) {
+	if ($has_conference_center_delete && $conference_centers) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if (permission_exists('conference_center_all')) {
+	if ($has_conference_center_all) {
 		if ($show == 'all') {
 			echo "		<input type='hidden' name='show' value='all'>";
 		}
@@ -207,10 +213,10 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('conference_center_edit') && $conference_centers) {
+	if ($has_conference_center_edit && $conference_centers) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('conference_center_delete') && $conference_centers) {
+	if ($has_conference_center_delete && $conference_centers) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -224,12 +230,12 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('conference_center_edit') || permission_exists('conference_center_delete')) {
+	if ($has_conference_center_edit || $has_conference_center_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($conference_centers) ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
 	}
-	if ($show == "all" && permission_exists('conference_center_all')) {
+	if ($show == "all" && $has_conference_center_all) {
 		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param, "class='shrink'");
 	}
 	echo th_order_by('conference_center_name', $text['label-conference_center_name'], $order_by, $order);
@@ -238,7 +244,7 @@
 	echo th_order_by('conference_center_pin_length', $text['label-conference_center_pin_length'], $order_by, $order, null, "class='center shrink'");
 	echo th_order_by('conference_center_enabled', $text['label-conference_center_enabled'], $order_by, $order, null, "class='center'");
 	echo th_order_by('conference_center_description', $text['label-conference_center_description'], $order_by, $order, null, "class='hide-sm-dn'");
-	if (permission_exists('conference_center_edit') && $list_row_edit_button) {
+	if ($has_conference_center_edit && $list_row_edit_button) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -249,20 +255,20 @@
 		//dispatch render-row hook
 		app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
-			if (permission_exists('conference_center_edit')) {
+			if ($has_conference_center_edit) {
 				$list_row_url = "conference_center_edit.php?id=".$row['conference_center_uuid'];
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('conference_center_edit') || permission_exists('conference_center_delete')) {
+			if ($has_conference_center_edit || $has_conference_center_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='conference_centers[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='conference_centers[$x][uuid]' value='".escape($row['conference_center_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if ($show == "all" && permission_exists('conference_center_all')) {
+			if ($show == "all" && $has_conference_center_all) {
 				if (!empty($_SESSION['domains'][$row['domain_uuid']]['domain_name'])) {
 					$domain = $_SESSION['domains'][$row['domain_uuid']]['domain_name'];
 				}
@@ -275,7 +281,7 @@
 			echo "	<td>".escape($row['conference_center_extension'])."&nbsp;</td>\n";
 			echo "	<td>".escape($row['conference_center_greeting'])."&nbsp;</td>\n";
 			echo "	<td class='center'>".escape($row['conference_center_pin_length'])."&nbsp;</td>\n";
-			if (permission_exists('conference_center_edit')) {
+			if ($has_conference_center_edit) {
 				echo "	<td class='no-link center'>\n";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['conference_center_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
 			}
@@ -285,7 +291,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td class='description overflow hide-sm-dn'>".escape($row['conference_center_description'])."&nbsp;</td>\n";
-			if (permission_exists('conference_center_edit') && $list_row_edit_button) {
+			if ($has_conference_center_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

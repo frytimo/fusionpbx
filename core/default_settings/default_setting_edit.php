@@ -33,6 +33,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_default_setting_add  = permission_exists('default_setting_add');
+	$has_default_setting_edit = permission_exists('default_setting_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -223,12 +225,12 @@
 				}
 
 				//set the message and redirect the user
-				if ($action == "add" && permission_exists('default_setting_add')) {
+				if ($action == "add" && $has_default_setting_add) {
 					message::add($text['message-add']);
 					header("Location: default_settings.php?".$query_string."#anchor_".$default_setting_category);
 					return;
 				}
-				if ($action == "update" && permission_exists('default_setting_edit')) {
+				if ($action == "update" && $has_default_setting_edit) {
 					message::add($text['message-update']);
 					header("Location: default_settings.php?".$query_string."#anchor_".$default_setting_category);
 					return;

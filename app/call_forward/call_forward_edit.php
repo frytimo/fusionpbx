@@ -34,6 +34,14 @@
 		echo "access denied";
 		exit;
 	}
+	$has_call_forward                = permission_exists('call_forward');
+	$has_do_not_disturb              = permission_exists('do_not_disturb');
+	$has_extension_edit              = permission_exists('extension_edit');
+	$has_follow_me                   = permission_exists('follow_me');
+	$has_follow_me_cid_name_prefix   = permission_exists('follow_me_cid_name_prefix');
+	$has_follow_me_cid_number_prefix = permission_exists('follow_me_cid_number_prefix');
+	$has_follow_me_ignore_busy       = permission_exists('follow_me_ignore_busy');
+	$has_follow_me_prompt            = permission_exists('follow_me_prompt');
 
 //set toggle defaults
 	$forward_all_enabled = false;
@@ -75,7 +83,7 @@
 	$sql = "select * from v_extensions ";
 	$sql .= "where domain_uuid = :domain_uuid ";
 	$sql .= "and extension_uuid = :extension_uuid ";
-	if (!permission_exists('extension_edit')) {
+	if (!$has_extension_edit) {
 		if (count($_SESSION['user']['extension']) > 0) {
 			$sql .= "and (";
 			$x = 0;
@@ -177,7 +185,7 @@
 			}
 
 		//call forward config
-			if (permission_exists('call_forward')) {
+			if ($has_call_forward) {
 				//sanitize the destinations
 				$forward_all_destination = preg_replace('#[^\*0-9]#', '', $forward_all_destination);
 				$forward_busy_destination = preg_replace('#[^\*0-9]#', '', $forward_busy_destination);
@@ -198,14 +206,14 @@
 			}
 
 		//do not disturb (dnd) config
-			if (permission_exists('do_not_disturb')) {
+			if ($has_do_not_disturb) {
 				$array['extensions'][0]['domain_uuid'] = $_SESSION['domain_uuid'];
 				$array['extensions'][0]['extension_uuid'] = $extension_uuid;
 				$array['extensions'][0]['do_not_disturb'] = $do_not_disturb ? 'true' : 'false';
 			}
 
 		//follow me config
-			if (permission_exists('follow_me')) {
+			if ($has_follow_me) {
 
 				//add follow_me_uuid and follow_me_enabled to the extensions array
 					if ($follow_me_uuid == '') {
@@ -271,7 +279,7 @@
 
 		/*
 		//call forward config
-			if (permission_exists('call_forward')) {
+			if ($has_call_forward) {
 				$call_forward = new call_forward;
 				$call_forward->domain_uuid = $_SESSION['domain_uuid'];
 				$call_forward->domain_name = $_SESSION['domain_name'];
@@ -281,7 +289,7 @@
 			}
 
 		//do not disturb (dnd) config
-			if (permission_exists('do_not_disturb')) {
+			if ($has_do_not_disturb) {
 				$dnd = new do_not_disturb;
 				$dnd->domain_uuid = $_SESSION['domain_uuid'];
 				$dnd->domain_name = $_SESSION['domain_name'];
@@ -302,7 +310,7 @@
 			}
 
 		//follow me config and process
-			if (permission_exists('follow_me')) {
+			if ($has_follow_me) {
 				$follow_me = new follow_me;
 				$follow_me->domain_uuid = $_SESSION['domain_uuid'];
 				$follow_me->extension_uuid = $extension_uuid;
@@ -373,7 +381,7 @@
 			}
 
 		//send presence event
-			if (permission_exists('do_not_disturb')) {
+			if ($has_do_not_disturb) {
 				if ($do_not_disturb) {
 					//build the event
 					$cmd = "sendevent PRESENCE_IN\n";
@@ -715,7 +723,7 @@
 		echo "			<td class='vtable'>".$text['label-destination_number']."</td>\n";
 		echo "			<td class='vtable'>".$text['label-destination_delay']."</td>\n";
 		echo "			<td class='vtable'>".$text['label-destination_timeout']."</td>\n";
-		if (permission_exists('follow_me_prompt')) {
+		if ($has_follow_me_prompt) {
 			echo "		<td class='vtable'>".$text['label-destination_prompt']."</td>\n";
 		}
 		echo "		</tr>\n";
@@ -732,7 +740,7 @@
 			echo "			<td>\n";
 									destination_select('destinations['.$n.'][timeout]', $destination['timeout'], $settings->get('follow_me', 'timeout', 30));
 			echo "			</td>\n";
-			if (permission_exists('follow_me_prompt')) {
+			if ($has_follow_me_prompt) {
 				echo "		<td>\n";
 				echo "			<select class='formfld' style='width: 90px;' name='destinations[".$n."][prompt]'>\n";
 				echo "				<option value=''></option>\n";
@@ -748,7 +756,7 @@
 		echo "</td>\n";
 		echo "</tr>\n";
 
-		if (permission_exists('follow_me_ignore_busy')) {
+		if ($has_follow_me_ignore_busy) {
 			echo "		<tr>\n";
 			echo "			<td class='vncell' valign='top' align='left' nowrap='nowrap'>";
 			echo 				$text['label-ignore_busy'];
@@ -772,7 +780,7 @@
 			echo "		</tr>\n";
 		}
 
-		if (permission_exists('follow_me_cid_name_prefix')) {
+		if ($has_follow_me_cid_name_prefix) {
 			echo "<tr>\n";
 			echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 			echo "	".$text['label-cid-name-prefix']."\n";
@@ -785,7 +793,7 @@
 			echo "</tr>\n";
 		}
 
-		if (permission_exists('follow_me_cid_number_prefix')) {
+		if ($has_follow_me_cid_number_prefix) {
 			echo "<tr>\n";
 			echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 			echo "	".$text['label-cid-number-prefix']."\n";

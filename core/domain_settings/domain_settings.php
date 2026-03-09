@@ -33,6 +33,14 @@
 		echo "access denied";
 		exit;
 	}
+	$has_default_setting_add   = permission_exists('default_setting_add');
+	$has_default_setting_edit  = permission_exists('default_setting_edit');
+	$has_default_setting_view  = permission_exists('default_setting_view');
+	$has_domain_select         = permission_exists('domain_select');
+	$has_domain_setting_add    = permission_exists('domain_setting_add');
+	$has_domain_setting_all    = permission_exists('domain_setting_all');
+	$has_domain_setting_delete = permission_exists('domain_setting_delete');
+	$has_domain_setting_edit   = permission_exists('domain_setting_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -60,7 +68,7 @@
 			if (!empty($domain_settings)) {
 				switch ($action) {
 					case 'copy':
-						if (permission_exists('domain_setting_add') && permission_exists('domain_select') && count($_SESSION['domains']) > 1) {
+						if ($has_domain_setting_add && $has_domain_select && count($_SESSION['domains']) > 1) {
 							$obj = new domain_settings;
 							$obj->domain_uuid = $domain_uuid;
 							$obj->domain_uuid_target = $domain_uuid_target;
@@ -68,14 +76,14 @@
 						}
 						break;
 					case 'toggle':
-						if (permission_exists('domain_setting_edit')) {
+						if ($has_domain_setting_edit) {
 							$obj = new domain_settings;
 							$obj->domain_uuid = $domain_uuid;
 							$obj->toggle($domain_settings);
 						}
 						break;
 					case 'delete':
-						if (permission_exists('domain_setting_delete')) {
+						if ($has_domain_setting_delete) {
 							$obj = new domain_settings;
 							$obj->domain_uuid = $domain_uuid;
 							$obj->delete($domain_settings);
@@ -129,7 +137,7 @@
 	require_once "resources/header.php";
 
 //copy settings javascript
-	if (permission_exists("domain_select") && permission_exists("domain_setting_add") && !empty($_SESSION['domains'])) {
+	if ($has_domain_select && $has_domain_setting_add && !empty($_SESSION['domains'])) {
 		echo "<script language='javascript' type='text/javascript'>\n";
 		echo "	var fade_speed = 400;\n";
 		echo "	function show_domains() {\n";
@@ -157,14 +165,14 @@
 	echo "	<div class='heading'><b id='heading_sub'>".$domain_name."</b><div class='count'>".number_format($num_rows)."</div></div>\n"; //$text['title-domain_settings']
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'action_bar_sub_button_back','style'=>'','link'=>PROJECT_PATH.'/core/domains/domains.php']);
-	if (permission_exists('default_setting_view') && $num_rows) {
+	if ($has_default_setting_view && $num_rows) {
 		echo button::create(['type'=>'button','label'=>$text['select-global'],'icon'=>$settings->get('theme', 'button_icon_all'),'style'=>'','link'=>PROJECT_PATH.'/core/default_settings/default_settings.php']);
 		echo button::create(['type'=>'button','label'=>$text['button-reload'],'icon'=>$settings->get('theme', 'button_icon_reload'),'style'=>'margin-right: 15px;','link'=>PROJECT_PATH.'/core/default_settings/default_settings_reload.php?id='.$domain_uuid]);
 	}
-	if (permission_exists('domain_setting_add')) {
+	if ($has_domain_setting_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>PROJECT_PATH."/core/domain_settings/domain_setting_edit.php?domain_uuid=".urlencode($domain_uuid)]);
 	}
-	if (permission_exists("domain_select") && permission_exists("domain_setting_add") && $num_rows) {
+	if ($has_domain_select && $has_domain_setting_add && $num_rows) {
 		echo button::create(['type'=>'button','label'=>$text['button-copy'],'id'=>'btn_copy','icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','onclick'=>'show_domains();']);
 		echo button::create(['type'=>'button','label'=>$text['button-cancel'],'id'=>'btn_copy_cancel','icon'=>$settings->get('theme', 'button_icon_cancel'),'style'=>'display: none;','onclick'=>'hide_domains();']);
 		echo 	"<select class='formfld' style='display: none; width: auto;' id='target_domain' onchange=\"document.getElementById('domain_uuid_target').value = this.options[this.selectedIndex].value;\">\n";
@@ -174,17 +182,17 @@
 			if ($domain['domain_uuid'] == $domain_uuid) { continue; }
 			echo "	<option value='".escape($domain["domain_uuid"])."'>".escape($domain["domain_name"])."</option>\n";
 		}
-		if (permission_exists('default_setting_add') && permission_exists('default_setting_edit')) {
+		if ($has_default_setting_add && $has_default_setting_edit) {
 			echo "	<option value='' disabled='disabled'></option>\n";
 			echo "	<option value='default'>".$text['label-default_settings']."</option>\n";
 		}
 		echo "	</select>";
 		echo button::create(['type'=>'button','label'=>$text['button-paste'],'icon'=>$settings->get('theme', 'button_icon_paste'),'id'=>'btn_paste','style'=>'display: none;','onclick'=>"if (confirm('".$text['confirm-copy']."')) { list_action_set('copy'); list_form_submit('form_list'); } else { this.blur(); return false; }"]);
 	}
-	if (permission_exists('domain_setting_edit') && $num_rows) {
+	if ($has_domain_setting_edit && $num_rows) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'name'=>'btn_toggle','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
-	if (permission_exists('domain_setting_delete') && $num_rows) {
+	if ($has_domain_setting_delete && $num_rows) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'name'=>'btn_delete','onclick'=>"modal_open('modal-delete-settings','btn_delete_settings');"]);
 		echo modal::create(['id'=>'modal-delete-settings','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete_settings','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
@@ -192,10 +200,10 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('domain_setting_edit') && $num_rows) {
+	if ($has_domain_setting_edit && $num_rows) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('domain_setting_delete') && $num_rows) {
+	if ($has_domain_setting_delete && $num_rows) {
 		echo modal::create(['id'=>'modal-delete-settings','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete_settings','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -239,12 +247,12 @@
 				echo "<div class='card'>\n";
 				echo "<table class='list'>\n";
 				echo "<tr class='list-header'>\n";
-				if (permission_exists('domain_setting_add') || permission_exists('domain_setting_edit') || permission_exists('domain_setting_delete')) {
+				if ($has_domain_setting_add || $has_domain_setting_edit || $has_domain_setting_delete) {
 					echo "	<th class='checkbox'>\n";
 					echo "		<input type='checkbox' id='checkbox_all_".$domain_setting_category."' name='checkbox_all' onclick=\"list_all_toggle('".$domain_setting_category."');\">\n";
 					echo "	</th>\n";
 				}
-				if ($show == 'all' && permission_exists('domain_setting_all')) {
+				if ($show == 'all' && $has_domain_setting_all) {
 					echo th_order_by('domain_name', $text['label-domain'], $order_by, $order);
 				}
 				echo th_order_by('domain_setting_subcategory', $text['label-subcategory'], $order_by, $order, null, "class='pct-35'");
@@ -252,23 +260,23 @@
 				echo th_order_by('domain_setting_value', $text['label-value'], $order_by, $order, null, "class='pct-30'");
 				echo th_order_by('domain_setting_enabled', $text['label-enabled'], $order_by, $order, null, "class='center'");
 				echo "	<th class='pct-25 hide-sm-dn'>".$text['label-description']."</th>\n";
-				if (permission_exists('domain_setting_edit') && $list_row_edit_button) {
+				if ($has_domain_setting_edit && $list_row_edit_button) {
 					echo "	<td class='action-button'>&nbsp;</td>\n";
 				}
 				echo "</tr>\n";
 			}
-			if (permission_exists('domain_setting_edit')) {
+			if ($has_domain_setting_edit) {
 				$list_row_url = PROJECT_PATH."/core/domain_settings/domain_setting_edit.php?domain_uuid=".escape($domain_uuid)."&id=".escape($row['domain_setting_uuid']);
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('domain_setting_add') || permission_exists('domain_setting_edit') || permission_exists('domain_setting_delete')) {
+			if ($has_domain_setting_add || $has_domain_setting_edit || $has_domain_setting_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='domain_settings[$x][checked]' id='checkbox_".$x."' class='checkbox_".$domain_setting_category."' value='true' onclick=\"if (!this.checked) { document.getElementById('checkbox_all_".$domain_setting_category."').checked = false; }\">\n";
 				echo "		<input type='hidden' name='domain_settings[$x][uuid]' value='".escape($row['domain_setting_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
 			echo "	<td class='overflow no-wrap'>";
-			if (permission_exists('domain_setting_edit')) {
+			if ($has_domain_setting_edit) {
 				echo "	<a href='".$list_row_url."'>".escape($row['domain_setting_subcategory'])."</a>";
 			}
 			else {
@@ -376,7 +384,7 @@
 				}
 			}
 			echo "	</td>\n";
-			if (permission_exists('domain_setting_edit')) {
+			if ($has_domain_setting_edit) {
 				echo "	<td class='no-link center'>\n";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['domain_setting_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
 			}
@@ -386,7 +394,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td class='description overflow hide-sm-dn' title=\"".escape($row['domain_setting_description'])."\">".escape($row['domain_setting_description'])."&nbsp;</td>\n";
-			if (permission_exists('domain_setting_edit') && $list_row_edit_button) {
+			if ($has_domain_setting_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>\n";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

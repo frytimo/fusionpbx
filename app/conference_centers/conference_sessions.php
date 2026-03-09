@@ -34,6 +34,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_conference_session_delete = permission_exists('conference_session_delete');
+	$has_conference_session_play   = permission_exists('conference_session_play');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -52,7 +54,7 @@
 	if (!empty($action) && !empty($conference_sessions)) {
 		switch ($action) {
 			case 'delete':
-				if (permission_exists('conference_session_delete')) {
+				if ($has_conference_session_delete) {
 					$obj = new conference_centers;
 					$obj->meeting_uuid = $meeting_uuid;
 					$obj->delete_conference_sessions($conference_sessions);
@@ -130,7 +132,7 @@
 	echo "	<div class='heading'><b>".$text['title-conference_sessions']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','link'=>'conference_rooms.php']);
-	if (permission_exists('conference_session_delete') && $conference_sessions) {
+	if ($has_conference_session_delete && $conference_sessions) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'name'=>'btn_delete','style'=>'margin-left: 15px;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	if ($paging_controls_mini != '') {
@@ -140,7 +142,7 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('conference_session_delete') && $conference_sessions) {
+	if ($has_conference_session_delete && $conference_sessions) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -154,7 +156,7 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('conference_session_delete')) {
+	if ($has_conference_session_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle();' ".($conference_sessions ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
@@ -193,7 +195,7 @@
 			if (!empty($row['start_epoch'])) {
 				$list_row_url = "conference_session_details.php?uuid=".urlencode($row['conference_session_uuid']);
 				echo "<tr class='list-row' href='".$list_row_url."'>\n";
-				if (permission_exists('conference_session_delete')) {
+				if ($has_conference_session_delete) {
 					echo "	<td class='checkbox'>\n";
 					echo "		<input type='checkbox' name='conference_sessions[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 					echo "		<input type='hidden' name='conference_sessions[$x][uuid]' value='".escape($row['conference_session_uuid'])."' />\n";
@@ -211,7 +213,7 @@
 					echo "<td>\n";
 					echo button::create(['type'=>'button','label'=>$text['button-download'],'icon'=>$settings->get('theme', 'button_icon_download'),'style'=>'margin-right: 15px;','link'=>'download.php?id='.urlencode($row['conference_session_uuid'])]);
 					echo "</td>\n";
-					if (permission_exists('conference_session_play')) {
+					if ($has_conference_session_play) {
 						echo "<td>\n";
 						echo "	<audio controls=\"controls\" preload=\"none\">\n";
   						echo "		<source src=\"download.php?id=".escape($row['conference_session_uuid'])."\" type=\"audio/x-wav\">\n";

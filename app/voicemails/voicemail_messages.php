@@ -87,6 +87,10 @@
 		echo "access denied";
 		exit;
 	}
+	$has_voicemail_edit               = permission_exists('voicemail_edit');
+	$has_voicemail_greeting_view      = permission_exists('voicemail_greeting_view');
+	$has_voicemail_message_delete     = permission_exists('voicemail_message_delete');
+	$has_voicemail_message_transcribe = permission_exists('voicemail_message_transcribe');
 
 //add the settings object
 	$settings = new settings(["domain_uuid" => $_SESSION['domain_uuid'], "user_uuid" => $_SESSION['user_uuid']]);
@@ -146,7 +150,7 @@
 					// no return, exit
 					exit;
 				case 'transcribe':
-					if (permission_exists('voicemail_message_transcribe') && $transcribe_enabled && !empty($transcribe_engine) && is_array($voicemail_messages) && @sizeof($voicemail_messages) != 0) {
+					if ($has_voicemail_message_transcribe && $transcribe_enabled && !empty($transcribe_engine) && is_array($voicemail_messages) && @sizeof($voicemail_messages) != 0) {
 						$messages_transcribed = 0;
 						foreach ($voicemail_messages as $voicemail_message) {
 							if (!empty($voicemail_message['checked']) && $voicemail_message['checked'] == 'true' && is_uuid($voicemail_message['uuid']) && is_uuid($voicemail_message['voicemail_uuid'])) {
@@ -214,7 +218,7 @@
 					}
 					break;
 				case 'delete':
-					if (permission_exists('voicemail_message_delete')) {
+					if ($has_voicemail_message_delete) {
 						if (is_array($voicemail_messages) && @sizeof($voicemail_messages) != 0) {
 							$messages_deleted = 0;
 							foreach ($voicemail_messages as $voicemail_message) {
@@ -321,7 +325,7 @@
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','link'=>$_SESSION['back'][$_SERVER['PHP_SELF']]]);
 	$margin_left = false;
-	if (permission_exists('voicemail_message_transcribe') && $transcribe_enabled && !empty($transcribe_engine) && $num_rows) {
+	if ($has_voicemail_message_transcribe && $transcribe_enabled && !empty($transcribe_engine) && $num_rows) {
 		echo button::create(['type'=>'button','label'=>$text['button-transcribe'],'icon'=>'quote-right','id'=>'btn_transcribe','name'=>'btn_transcribe','collapse'=>'hide-xs','style'=>'display: none; margin-left: 15px;','onclick'=>"list_action_set('transcribe'); list_form_submit('form_list');"]);
 		$margin_left = true;
 	}
@@ -331,7 +335,7 @@
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','collapse'=>'hide-xs','style'=>'display: none;'.(!$margin_left ? 'margin-left: 15px;' : null),'onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 		$margin_left = true;
 	}
-	if (permission_exists('voicemail_message_delete') && $num_rows) {
+	if ($has_voicemail_message_delete && $num_rows) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','collapse'=>'hide-xs','style'=>'display: none;'.(!$margin_left ? 'margin-left: 15px;' : null),'onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	if (!empty($paging_controls_mini)) {
@@ -352,7 +356,7 @@
 			]);
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('voicemail_message_delete') && $num_rows) {
+	if ($has_voicemail_message_delete && $num_rows) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -382,10 +386,10 @@
 				echo "		<div class='action_bar sub'>\n";
 				echo "			<div class='heading'><b>".$text['label-mailbox'].": ".$field['voicemail_id']." ".$field['voicemail_description']."</b></div>\n";
 				echo "			<div class='actions'>\n";
-				if (permission_exists('voicemail_greeting_view')) {
+				if ($has_voicemail_greeting_view) {
 					echo button::create(['type'=>'button','label'=>$text['button-greetings'],'icon'=>'handshake','collapse'=>'hide-xs','link'=>PROJECT_PATH."/app/voicemail_greetings/voicemail_greetings.php?id=".$field['voicemail_id']."&back=".urlencode($_SERVER["REQUEST_URI"])]);
 				}
-				if (permission_exists('voicemail_edit')) {
+				if ($has_voicemail_edit) {
 					echo button::create(['type'=>'button','label'=>$text['button-settings'],'icon'=>'sliders-h','collapse'=>'hide-xs','link'=>'voicemail_edit.php?id='.urlencode($field['voicemail_uuid'])]);
 				}
 				echo "			</div>\n";
@@ -397,7 +401,7 @@
 
 				echo "<tr class='list-header'>\n";
 				$col_count = 0;
-				if (permission_exists('voicemail_message_delete')) {
+				if ($has_voicemail_message_delete) {
 					echo "	<th class='checkbox'>\n";
 					echo "		<input type='checkbox' id='checkbox_all_".$field['voicemail_id']."' name='checkbox_all' onclick=\"list_all_toggle('".$field['voicemail_id']."'); checkbox_on_change(this);\" ".(is_array($field['messages']) && @sizeof($field['messages']) > 0 ?: "style='visibility: hidden;'").">\n";
 					echo "	</th>\n";

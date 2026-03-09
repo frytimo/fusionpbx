@@ -33,6 +33,9 @@
 		echo "access denied";
 		return;
 	}
+	$has_menu_add               = permission_exists('menu_add');
+	$has_menu_edit              = permission_exists('menu_edit');
+	$has_menu_item_group_delete = permission_exists('menu_item_group_delete');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -65,7 +68,7 @@
 	}
 
 //delete the group from the menu item
-	if (!empty($_POST["action"]) && $_POST["action"] === "delete" && permission_exists("menu_item_group_delete") && is_uuid($_POST["menu_item_group_uuid"])) {
+	if (!empty($_POST["action"]) && $_POST["action"] === "delete" && $has_menu_item_group_delete && is_uuid($_POST["menu_item_group_uuid"])) {
 		//get the uuid
 			$menu_item_group_uuid = $_POST['menu_item_group_uuid'];
 
@@ -170,7 +173,7 @@
 				}
 
 			//add a menu item
-				if ($action == "add" && permission_exists('menu_add')) {
+				if ($action == "add" && $has_menu_add) {
 					$menu_item_uuid = uuid();
 					$array['menu_items'][0]['menu_uuid'] = $menu_uuid;
 					$array['menu_items'][0]['menu_item_title'] = $menu_item_title;
@@ -195,7 +198,7 @@
 				}
 
 			//update the menu item
-				if ($action == "update" && permission_exists('menu_edit')) {
+				if ($action == "update" && $has_menu_edit) {
 					$array['menu_items'][0]['menu_uuid'] = $menu_uuid;
 					$array['menu_items'][0]['menu_item_title'] = $menu_item_title;
 					$array['menu_items'][0]['menu_item_link'] = $menu_item_link;
@@ -228,7 +231,7 @@
 				//unset($parameters);
 
 			//add a group to the menu
-				if (!empty($group_uuid_name) && permission_exists('menu_add')) {
+				if (!empty($group_uuid_name) && $has_menu_add) {
 					$group_data = explode('|', $group_uuid_name);
 					$group_uuid = $group_data[0];
 					$group_name = $group_data[1];
@@ -246,7 +249,7 @@
 				}
 
 			//add the menu item label
-				if (!empty($menu_item_title) && permission_exists('menu_add')) {
+				if (!empty($menu_item_title) && $has_menu_add) {
 					$sql = "select count(*) from v_menu_languages ";
 					$sql .= "where menu_item_uuid = :menu_item_uuid ";
 					$sql .= "and menu_language = :menu_language ";
@@ -496,7 +499,7 @@
 	echo "		<td class='vtable'>";
 	if (!empty($menu_item_groups) && sizeof($menu_item_groups) != 0) {
 		echo "<table cellpadding='0' cellspacing='0' border='0'>\n";
-		if (permission_exists('menu_item_group_delete')) {
+		if ($has_menu_item_group_delete) {
 			echo "	<input type='hidden' id='action' name='action' value=''>\n";
 			echo "	<input type='hidden' id='menu_item_group_uuid' name='menu_item_group_uuid' value=''>\n";
 		}
@@ -507,7 +510,7 @@
 				echo "	<td class='vtable' style='white-space: nowrap; padding-right: 30px;' nowrap='nowrap'>";
 				echo $field['group_name'].((!empty($field['group_domain_uuid'])) ? "@".$_SESSION['domains'][$field['group_domain_uuid']]['domain_name'] : null);
 				echo "	</td>\n";
-				if (permission_exists('menu_item_group_delete')) {
+				if ($has_menu_item_group_delete) {
 					echo "	<td class='list_control_icons' style='width: 25px;'>";
 					echo button::create(['type'=>'button','icon'=>'fas fa-minus','id'=>'btn_delete','class'=>'default list_control_icon','name'=>'btn_delete','onclick'=>"modal_open('modal-delete-group-$x','btn_delete');"]);
 					echo modal::create(['id'=>'modal-delete-group-'.$x,'type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); document.getElementById('menu_item_group_uuid').value = '".escape($field['menu_item_group_uuid'])."'; list_form_submit('frm');"])]);
@@ -578,7 +581,7 @@
 	echo "</div>";
 	echo "<br><br>";
 
-	if (permission_exists('menu_add') || permission_exists('menu_edit')) {
+	if ($has_menu_add || $has_menu_edit) {
 		if ($action == "update") {
 			echo "<input type='hidden' name='menu_item_uuid' value='".escape($menu_item_uuid)."'>";
 		}

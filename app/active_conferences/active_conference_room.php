@@ -34,6 +34,14 @@ if (!permission_exists('conference_interactive_view')) {
 	echo "access denied";
 	exit;
 }
+	$has_conference_interactive_deaf   = permission_exists('conference_interactive_deaf');
+	$has_conference_interactive_energy = permission_exists('conference_interactive_energy');
+	$has_conference_interactive_gain   = permission_exists('conference_interactive_gain');
+	$has_conference_interactive_kick   = permission_exists('conference_interactive_kick');
+	$has_conference_interactive_lock   = permission_exists('conference_interactive_lock');
+	$has_conference_interactive_mute   = permission_exists('conference_interactive_mute');
+	$has_conference_interactive_video  = permission_exists('conference_interactive_video');
+	$has_conference_interactive_volume = permission_exists('conference_interactive_volume');
 
 //show intended global variables
 global $domain_uuid, $user_uuid, $settings, $database, $config;
@@ -101,14 +109,14 @@ $version = md5(file_get_contents(__DIR__ . '/resources/javascript/websocket_clie
 
 //build permissions object for client-side checks
 $user_permissions = [
-	'lock' => permission_exists('conference_interactive_lock'),
-	'mute' => permission_exists('conference_interactive_mute'),
-	'deaf' => permission_exists('conference_interactive_deaf'),
-	'kick' => permission_exists('conference_interactive_kick'),
-	'energy' => permission_exists('conference_interactive_energy'),
-	'volume' => permission_exists('conference_interactive_volume'),
-	'gain' => permission_exists('conference_interactive_gain'),
-	'video' => permission_exists('conference_interactive_video'),
+	'lock' => $has_conference_interactive_lock,
+	'mute' => $has_conference_interactive_mute,
+	'deaf' => $has_conference_interactive_deaf,
+	'kick' => $has_conference_interactive_kick,
+	'energy' => $has_conference_interactive_energy,
+	'volume' => $has_conference_interactive_volume,
+	'gain' => $has_conference_interactive_gain,
+	'video' => $has_conference_interactive_video,
 ];
 
 //get websocket settings from default settings

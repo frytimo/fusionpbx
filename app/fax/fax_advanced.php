@@ -33,6 +33,11 @@
 		echo "access denied";
 		exit;
 	}
+	$has_fax_extension        = permission_exists('fax_extension');
+	$has_fax_extension_add    = permission_exists('fax_extension_add');
+	$has_fax_extension_copy   = permission_exists('fax_extension_copy');
+	$has_fax_extension_delete = permission_exists('fax_extension_delete');
+	$has_fax_extension_edit   = permission_exists('fax_extension_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -74,7 +79,7 @@
 
 		//check for all required data
 			$msg = '';
-			//if (permission_exists('fax_extension') && empty($fax_extension)) { $msg .= "".$text['confirm-ext']."<br>\n"; }
+			//if ($has_fax_extension && empty($fax_extension)) { $msg .= "".$text['confirm-ext']."<br>\n"; }
 			//if (empty($fax_name)) { $msg .= "".$text['confirm-fax']."<br>\n"; }
 			if (!empty($msg) && empty($_POST["persistformvar"])) {
 				require_once "resources/header.php";
@@ -109,7 +114,7 @@
 					}
 
 				//prepare the unique identifiers
-					if ($action == "add" && permission_exists('fax_extension_add')) {
+					if ($action == "add" && $has_fax_extension_add) {
 						$fax_uuid = uuid();
 					}
 
@@ -144,10 +149,10 @@
 					}
 
 				//redirect the browser
-					if ($action == "update" && permission_exists('fax_extension_edit')) {
+					if ($action == "update" && $has_fax_extension_edit) {
 						message::add($text['confirm-update']);
 					}
-					if ($action == "add" && permission_exists('fax_extension_add')) {
+					if ($action == "add" && $has_fax_extension_add) {
 						message::add($text['confirm-add']);
 					}
 					header("Location: fax_advanced.php?id=".$fax_uuid);
@@ -254,10 +259,10 @@
 	echo "<br><br>\n";
 
 	if ($action == 'update') {
-		if (permission_exists('fax_extension_copy')) {
+		if ($has_fax_extension_copy) {
 			echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'copy','onclick'=>"modal_close();"])]);
 		}
-		if (permission_exists('fax_extension_delete')) {
+		if ($has_fax_extension_delete) {
 			echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 		}
 	}

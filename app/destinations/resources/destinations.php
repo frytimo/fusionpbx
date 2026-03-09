@@ -9,6 +9,7 @@
 		echo "access denied";
 		exit;
 	}
+	$has___singular__destinations = permission_exists('{$singular}_destinations');
 
 //get the action
 	$action = $_REQUEST['action'];
@@ -27,7 +28,7 @@
 	echo "		<option value=''></option>\n";
 	foreach($destinations as $key => $rows) {
 		$singular = $destination->singular($key);
-		if ($key == $action && permission_exists("{$singular}_destinations")) {
+		if ($key == $action && $has___singular__destinations) {
 			if (is_array($rows)) {
 				foreach($rows as $row) {
 

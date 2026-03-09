@@ -33,6 +33,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_domain_all    = permission_exists('domain_all');
+	$has_domain_select = permission_exists('domain_select');
 
 //get posted data
 	if (!empty($_POST['search'])) {
@@ -56,7 +58,7 @@
 	//echo "<link rel='stylesheet' type='text/css' href='/resources/fontawesome/css/all.min.css.php'>\n";
 
 //get the list of domains
-	if (permission_exists('domain_all') || permission_exists('domain_select')) {
+	if ($has_domain_all || $has_domain_select) {
 		$sql = "select * ";
 		$sql .= "from v_domains ";
 		$sql .= "where true ";

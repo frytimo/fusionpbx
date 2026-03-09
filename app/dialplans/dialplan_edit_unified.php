@@ -34,6 +34,8 @@ if (!permission_exists('dialplan_edit') && !permission_exists('dialplan_add')) {
 	echo "access denied";
 	exit;
 }
+	$has_dialplan_domain = permission_exists('dialplan_domain');
+	$has_dialplan_xml    = permission_exists('dialplan_xml');
 
 // add multi-lingual support
 $language = new text;
@@ -195,7 +197,7 @@ if (!empty($_POST['dialplan_xml']) && !empty($_POST['submit'])) {
 
 	// build the save array
 	$array['dialplans'][0]['dialplan_uuid'] = !empty($dialplan_uuid) ? $dialplan_uuid : uuid();
-	$array['dialplans'][0]['domain_uuid'] = permission_exists('dialplan_domain') && !empty($_POST['domain_uuid']) && is_uuid($_POST['domain_uuid'])
+	$array['dialplans'][0]['domain_uuid'] = $has_dialplan_domain && !empty($_POST['domain_uuid']) && is_uuid($_POST['domain_uuid'])
 		? $_POST['domain_uuid']
 		: $domain_uuid;
 	if ($action === 'add') {
@@ -1201,7 +1203,7 @@ require_once "resources/header.php";
 		<?php
 		echo button::create(['type' => 'button', 'label' => $text['button-back'], 'icon' => $settings->get('theme', 'button_icon_back'), 'id' => 'btn_back', 'link' => 'dialplans.php' . (!empty($app_uuid) && is_uuid($app_uuid) ? '?app_uuid=' . urlencode($app_uuid) : '')]);
 
-		if ($action === 'update' && permission_exists('dialplan_xml')) {
+		if ($action === 'update' && $has_dialplan_xml) {
 			echo button::create(['type' => 'button', 'label' => $text['button-legacy_editor'] ?? 'Legacy Editor', 'icon' => 'history', 'style' => 'margin-left: 15px;', 'link' => 'dialplan_edit.php?id=' . urlencode($dialplan_uuid) . (!empty($app_uuid) ? '&app_uuid=' . urlencode($app_uuid) : '')]);
 		}
 		?>

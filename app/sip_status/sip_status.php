@@ -34,6 +34,12 @@
 		echo "access denied";
 		exit;
 	}
+	$has_sip_profile_edit                   = permission_exists('sip_profile_edit');
+	$has_sip_status_command                 = permission_exists('sip_status_command');
+	$has_sip_status_flush_cache             = permission_exists('sip_status_flush_cache');
+	$has_sip_status_switch_status           = permission_exists('sip_status_switch_status');
+	$has_system_status_sofia_status         = permission_exists('system_status_sofia_status');
+	$has_system_status_sofia_status_profile = permission_exists('system_status_sofia_status_profile');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -139,10 +145,10 @@
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['title-sip_status']."</b></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('sip_status_flush_cache')) {
+	if ($has_sip_status_flush_cache) {
 		echo button::create(['type'=>'button','label'=>$text['button-flush_cache'],'icon'=>'eraser','collapse'=>'hide-xs','link'=>'cmd.php?action=cache-flush']);
 	}
-	if (permission_exists('sip_status_command')) {
+	if ($has_sip_status_command) {
 		echo button::create(['type'=>'button','label'=>$text['button-reload_acl'],'icon'=>'shield-alt','collapse'=>'hide-xs','link'=>'cmd.php?action=reloadacl']);
 		echo button::create(['type'=>'button','label'=>$text['button-reload_xml'],'icon'=>'code','collapse'=>'hide-xs','link'=>'cmd.php?action=reloadxml']);
 	}
@@ -154,7 +160,7 @@
 	echo $text['description-sip_status']."\n";
 	echo "<br /><br />\n";
 
-	if (permission_exists('system_status_sofia_status')) {
+	if ($has_system_status_sofia_status) {
 		echo "<b><a href='javascript:void(0);' onclick=\"$('#sofia_status').slideToggle();\">".$text['title-sofia-status']."</a></b>\n";
 		echo "<br />\n";
 
@@ -175,7 +181,7 @@
 				foreach ($xml->profile as $row) {
 					unset($list_row_url);
 					$profile_name = (string) $row->name;
-					$list_row_url = is_uuid($sip_profiles[$profile_name] ?? '') && permission_exists('sip_profile_edit') ? PROJECT_PATH."/app/sip_profiles/sip_profile_edit.php?id=".$sip_profiles[$profile_name] : null;
+					$list_row_url = is_uuid($sip_profiles[$profile_name] ?? '') && $has_sip_profile_edit ? PROJECT_PATH."/app/sip_profiles/sip_profile_edit.php?id=".$sip_profiles[$profile_name] : null;
 					echo "<tr class='list-row' href='".$list_row_url."'>\n";
 					echo "	<td>";
 					if ($list_row_url) {
@@ -252,7 +258,7 @@
 	}
 
 //sofia status profile
-	if ($event_socket && permission_exists('system_status_sofia_status_profile')) {
+	if ($event_socket && $has_system_status_sofia_status_profile) {
 		foreach ($sip_profiles as $sip_profile_name => $sip_profile_uuid) {
 			$xml_response = trim($event_socket->request("api sofia xmlstatus profile ".$sip_profile_name));
 
@@ -342,7 +348,7 @@
 	}
 
 //status
-	if ($event_socket->is_connected() && permission_exists('sip_status_switch_status')) {
+	if ($event_socket->is_connected() && $has_sip_status_switch_status) {
 		$response = $event_socket->request("api status");
 		echo "<b><a href='javascript:void(0);' onclick=\"$('#status').slideToggle();\">".$text['title-status']."</a></b>\n";
 		echo "<div id='status' style='margin-top: 20px; font-size: 9pt;'>";

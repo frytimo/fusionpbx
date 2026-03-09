@@ -34,6 +34,9 @@
 		echo "access denied";
 		exit;
 	}
+	$has_contact_setting_delete = permission_exists('contact_setting_delete');
+	$has_contact_setting_edit   = permission_exists('contact_setting_edit');
+	$has_domain_select          = permission_exists('domain_select');
 
 //set from session variables
 	$list_row_edit_button = $settings->get('theme', 'list_row_edit_button', false);
@@ -63,7 +66,7 @@
 			echo "<div class='card'>\n";
 			echo "<table class='list'>\n";
 			echo "<tr class='list-header'>\n";
-			if (permission_exists('contact_setting_delete')) {
+			if ($has_contact_setting_delete) {
 				echo "	<th class='checkbox'>\n";
 				echo "		<input type='checkbox' id='checkbox_all_settings' name='checkbox_all' onclick=\"edit_all_toggle('settings');\" ".($contact_settings ?: "style='visibility: hidden;'").">\n";
 				echo "	</th>\n";
@@ -74,7 +77,7 @@
 			echo "<th>".$text['label-contact_setting_value']."</th>";
 			echo "<th class='center'>".$text['label-enabled']."</th>";
 			echo "<th class='hide-md-dn'>".$text['label-description']."</th>";
-			if (permission_exists('contact_setting_edit') && $list_row_edit_button) {
+			if ($has_contact_setting_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>&nbsp;</td>\n";
 			}
 			echo "</tr>\n";
@@ -83,14 +86,14 @@
 				$x = 0;
 				foreach ($contact_settings as $row) {
 					$list_row_url = '';
-					if (permission_exists('contact_setting_edit')) {
+					if ($has_contact_setting_edit) {
 						$list_row_url = "contact_setting_edit.php?contact_uuid=".urlencode($contact_uuid)."&id=".urlencode($row['contact_setting_uuid']);
-						if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+						if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 							$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 						}
 					}
 					echo "<tr class='list-row' href='".$list_row_url."'>\n";
-					if (permission_exists('contact_setting_delete')) {
+					if ($has_contact_setting_delete) {
 						echo "	<td class='checkbox'>\n";
 						echo "		<input type='checkbox' name='contact_settings[$x][checked]' id='checkbox_".$x."' class='chk_delete checkbox_settings' value='true' onclick=\"edit_delete_action('settings');\">\n";
 						echo "		<input type='hidden' name='contact_settings[$x][uuid]' value='".escape($row['contact_setting_uuid'])."' />\n";
@@ -115,7 +118,7 @@
 					echo "	</td>\n";
 					echo "	<td class='center'>".$text['label-'.escape($row['contact_setting_enabled'])]."&nbsp;</td>\n";
 					echo "	<td class='description overflow hide-md-dn'>".$row['contact_setting_description']."&nbsp;</td>\n";
-					if (permission_exists('contact_setting_edit') && $list_row_edit_button) {
+					if ($has_contact_setting_edit && $list_row_edit_button) {
 						echo "	<td class='action-button'>\n";
 						echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 						echo "	</td>\n";

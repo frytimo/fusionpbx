@@ -30,6 +30,13 @@
 		echo "access denied";
 		exit;
 	}
+	$has_access_control_add         = permission_exists('access_control_add');
+	$has_access_control_delete      = permission_exists('access_control_delete');
+	$has_access_control_edit        = permission_exists('access_control_edit');
+	$has_access_control_node_add    = permission_exists('access_control_node_add');
+	$has_access_control_node_delete = permission_exists('access_control_node_delete');
+	$has_access_control_node_view   = permission_exists('access_control_node_view');
+	$has_access_control_update      = permission_exists('access_control_update');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -57,7 +64,7 @@
 	if (count($_POST) > 0 && empty($_POST["persistformvar"])) {
 
 		//check permissions
-			if (!(permission_exists('access_control_add') || permission_exists('access_control_edit'))) {
+			if (!($has_access_control_add || $has_access_control_edit)) {
 				echo "access denied";
 				exit;
 			}
@@ -94,17 +101,17 @@
 				//send the array to the database class
 				switch ($_POST['action']) {
 					case 'copy':
-						if (permission_exists('access_control_add')) {
+						if ($has_access_control_add) {
 							$database->copy($array);
 						}
 						break;
 					case 'delete':
-						if (permission_exists('access_control_delete')) {
+						if ($has_access_control_delete) {
 							$database->delete($array);
 						}
 						break;
 					case 'toggle':
-						if (permission_exists('access_control_update')) {
+						if ($has_access_control_update) {
 							$database->toggle($array);
 						}
 						break;
@@ -318,20 +325,20 @@
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','collapse'=>'hide-xs','style'=>'margin-right: 15px;','link'=>'access_controls.php']);
 	if ($action == 'update') {
-		if (permission_exists('access_control_node_add')) {
+		if ($has_access_control_node_add) {
 			echo button::create(['type'=>'button','label'=>$text['button-import'],'icon'=>$settings->get('theme', 'button_icon_import'),'style'=>'margin-right: 3px;','link'=>'access_control_import.php?id='.escape($access_control_uuid)]);
 		}
-		if (permission_exists('access_control_node_view')) {
+		if ($has_access_control_node_view) {
 			echo button::create(['type'=>'button','label'=>$text['button-export'],'icon'=>$settings->get('theme', 'button_icon_export'),'style'=>'margin-right: 3px;','link'=>'access_control_export.php?id='.escape($access_control_uuid)]);
 		}
-		if (permission_exists('access_control_node_add')) {
+		if ($has_access_control_node_add) {
 			echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 		}
-		if (permission_exists('access_control_node_delete')) {
+		if ($has_access_control_node_delete) {
 			echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none; margin-right: 15px;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 		}
 	}
-	if (permission_exists('access_control_add') || permission_exists('access_control_edit')) {
+	if ($has_access_control_add || $has_access_control_edit) {
 		echo button::create(['type'=>'submit','label'=>$text['button-save'],'icon'=>$settings->get('theme', 'button_icon_save'),'id'=>'btn_save','collapse'=>'hide-xs']);
 	}
 	echo "	</div>\n";
@@ -342,19 +349,19 @@
 	echo "<br /><br />\n";
 
 	if ($action == 'update') {
-		if (permission_exists('access_control_add')) {
+		if ($has_access_control_add) {
 			echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'copy','onclick'=>"modal_close();"])]);
 		}
-		if (permission_exists('access_control_delete')) {
+		if ($has_access_control_delete) {
 			echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 		}
 	}
 
 	if ($action == 'update') {
-		if (permission_exists('access_control_add')) {
+		if ($has_access_control_add) {
 			echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'copy','onclick'=>"modal_close();"])]);
 		}
-		if (permission_exists('access_control_delete')) {
+		if ($has_access_control_delete) {
 			echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 		}
 	}
@@ -408,7 +415,7 @@
 	echo "			<th class='vtablereq'>".$text['label-node_type']."</th>\n";
 	echo "			<td class='vtable'>".$text['label-node_cidr']."</td>\n";
 	echo "			<td class='vtable'>".$text['label-node_description']."</td>\n";
-	if (is_array($access_control_nodes) && @sizeof($access_control_nodes) > 1 && permission_exists('access_control_node_delete')) {
+	if (is_array($access_control_nodes) && @sizeof($access_control_nodes) > 1 && $has_access_control_node_delete) {
 		echo "			<td class='vtable edit_delete_checkbox_all' onmouseover=\"swap_display('delete_label_details', 'delete_toggle_details');\" onmouseout=\"swap_display('delete_label_details', 'delete_toggle_details');\">\n";
 		echo "				<span id='delete_label_details'>".$text['label-action']."</span>\n";
 		echo "				<span id='delete_toggle_details'><input type='checkbox' id='checkbox_all_details' name='checkbox_all' onclick=\"edit_all_toggle('details'); checkbox_on_change(this);\"></span>\n";
@@ -443,7 +450,7 @@
 		echo "			<td class='formfld'>\n";
 		echo "				<input class='formfld' type='text' name='access_control_nodes[$x][node_description]' maxlength='255' value=\"".escape($row["node_description"])."\">\n";
 		echo "			</td>\n";
-		if (is_array($access_control_nodes) && @sizeof($access_control_nodes) > 1 && permission_exists('access_control_node_delete')) {
+		if (is_array($access_control_nodes) && @sizeof($access_control_nodes) > 1 && $has_access_control_node_delete) {
 			if (is_uuid($row['access_control_node_uuid'])) {
 				echo "		<td class='vtable' style='text-align: center; padding-bottom: 3px;'>\n";
 				echo "			<input type='checkbox' name='access_control_nodes[".$x."][checked]' value='true' class='chk_delete checkbox_details' onclick=\"checkbox_on_change(this);\">\n";

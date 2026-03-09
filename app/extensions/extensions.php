@@ -35,6 +35,22 @@
 		echo "access denied";
 		exit;
 	}
+	$has_domain_select             = permission_exists('domain_select');
+	$has_extension_add             = permission_exists('extension_add');
+	$has_extension_all             = permission_exists('extension_all');
+	$has_extension_call_group      = permission_exists('extension_call_group');
+	$has_extension_delete          = permission_exists('extension_delete');
+	$has_extension_device_address  = permission_exists('extension_device_address');
+	$has_extension_device_template = permission_exists('extension_device_template');
+	$has_extension_edit            = permission_exists('extension_edit');
+	$has_extension_enabled         = permission_exists('extension_enabled');
+	$has_extension_export          = permission_exists('extension_export');
+	$has_extension_import          = permission_exists('extension_import');
+	$has_extension_registered      = permission_exists('extension_registered');
+	$has_extension_user_context    = permission_exists('extension_user_context');
+	$has_outbound_caller_id_name   = permission_exists('outbound_caller_id_name');
+	$has_outbound_caller_id_number = permission_exists('outbound_caller_id_number');
+	$has_voicemail_delete          = permission_exists('voicemail_delete');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -61,16 +77,16 @@
 
 		switch ($action) {
 			case 'toggle':
-				if (permission_exists('extension_enabled')) {
+				if ($has_extension_enabled) {
 					$obj = new extension;
 					$obj->toggle($extensions);
 				}
 				break;
 			case 'delete_extension':
 			case 'delete_extension_voicemail':
-				if (permission_exists('extension_delete')) {
+				if ($has_extension_delete) {
 					$obj = new extension;
-					if ($action == 'delete_extension_voicemail' && permission_exists('voicemail_delete')) {
+					if ($action == 'delete_extension_voicemail' && $has_voicemail_delete) {
 						$obj->delete_voicemail = true;
 					}
 					$obj->delete($extensions);
@@ -106,14 +122,14 @@
 	if (!empty($search)) {
 		$query_string .= '&search='.urlencode($search);
 	}
-	if (!empty($_GET['show']) && $_GET['show'] == "all" && permission_exists('extension_all')) {
+	if (!empty($_GET['show']) && $_GET['show'] == "all" && $has_extension_all) {
 		$query_string .= "&show=all";
 	}
 
 //get total extension count
 	$sql = "select count(*) from v_extensions ";
 	$sql .= "where true ";
-	if (!(!empty($_GET['show']) && $_GET['show'] == "all" && permission_exists('extension_all'))) {
+	if (!(!empty($_GET['show']) && $_GET['show'] == "all" && $has_extension_all)) {
 		$sql .= "and domain_uuid = :domain_uuid ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	}
@@ -129,7 +145,7 @@
 		$sql .= " or lower(emergency_caller_id_number) like :search ";
 		$sql .= " or lower(directory_first_name) like :search ";
 		$sql .= " or lower(directory_last_name) like :search ";
-		if (permission_exists("extension_call_group")) {
+		if ($has_extension_call_group) {
 			$sql .= " or lower(call_group) like :search ";
 		}
 		$sql .= " or lower(user_context) like :search ";
@@ -219,7 +235,7 @@
 	$sql .= "	and user_id = e.extension ";
 	$sql .= "	limit 1 ";
 	$sql .= ") AS device_uuid, ";
-	if (permission_exists("extension_device_address")) {
+	if ($has_extension_device_address) {
 		$sql .= "( ";
 		$sql .= "	select device_address ";
 		$sql .= "	from v_devices ";
@@ -231,7 +247,7 @@
 		$sql .= "		limit 1) ";
 		$sql .= ") AS device_address, ";
 	}
-	if (permission_exists("extension_device_template")) {
+	if ($has_extension_device_template) {
 		$sql .= "( ";
 		$sql .= "	select device_template ";
 		$sql .= "	from v_devices ";
@@ -246,7 +262,7 @@
 	$sql .= "true as true ";
 	$sql .= "from v_extensions as e ";
 	$sql .= "where true ";
-	if (!(!empty($_GET['show']) && $_GET['show'] == "all" && permission_exists('extension_all'))) {
+	if (!(!empty($_GET['show']) && $_GET['show'] == "all" && $has_extension_all)) {
 		$sql .= "and domain_uuid = :domain_uuid ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	}
@@ -262,7 +278,7 @@
 		$sql .= " or lower(emergency_caller_id_number) like :search ";
 		$sql .= " or lower(directory_first_name) like :search ";
 		$sql .= " or lower(directory_last_name) like :search ";
-		if (permission_exists("extension_call_group")) {
+		if ($has_extension_call_group) {
 			$sql .= " or lower(call_group) like :search ";
 		}
 		$sql .= " or lower(user_context) like :search ";
@@ -278,7 +294,7 @@
 	unset($sql, $parameters);
 
 //get the registrations
-	if (permission_exists('extension_registered')) {
+	if ($has_extension_registered) {
 		$obj = new registrations;
 		if (!empty($_GET['show']) && $_GET['show'] == 'all') {
 			$obj->show = 'all';
@@ -298,23 +314,23 @@
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['header-extensions']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('extension_import') && (empty($settings->get('limit', 'extensions', 0)) || $total_extensions < $settings->get('limit', 'extensions'))) {
+	if ($has_extension_import && (empty($settings->get('limit', 'extensions', 0)) || $total_extensions < $settings->get('limit', 'extensions'))) {
 		echo button::create(['type'=>'button','label'=>$text['button-import'],'icon'=>$settings->get('theme', 'button_icon_import'),'link'=>'extension_imports.php']);
 	}
-	if (permission_exists('extension_export')) {
+	if ($has_extension_export) {
 		echo button::create(['type'=>'button','label'=>$text['button-export'],'icon'=>$settings->get('theme', 'button_icon_export'),'link'=>'extension_download.php']);
 	}
-	$margin_left = permission_exists('extension_import') || permission_exists('extension_export') ? "margin-left: 15px;" : null;
-	if (permission_exists('extension_add')) {
+	$margin_left = $has_extension_import || $has_extension_export ? "margin-left: 15px;" : null;
+	if ($has_extension_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','style'=>($margin_left ?? ''),'link'=>'extension_edit.php']);
 		unset($margin_left);
 	}
-	if (permission_exists('extension_enabled') && $extensions) {
+	if ($has_extension_enabled && $extensions) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none; '.($margin_left ?? ''),'onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 		unset($margin_left);
 	}
-	if (permission_exists('extension_delete') && $extensions) {
-		if (permission_exists('voicemail_delete')) {
+	if ($has_extension_delete && $extensions) {
+		if ($has_voicemail_delete) {
 			echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none; '.($margin_left ?? ''),'onclick'=>"modal_open('modal-delete-options');"]);
 		}
 		else {
@@ -323,7 +339,7 @@
 		unset($margin_left);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if (permission_exists('extension_all')) {
+	if ($has_extension_all) {
 		if (!empty($_GET['show']) && $_GET['show'] == 'all') {
 			echo "		<input type='hidden' name='show' value='all'>";
 		}
@@ -348,11 +364,11 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('extension_enabled') && $extensions) {
+	if ($has_extension_enabled && $extensions) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('extension_delete') && $extensions) {
-		if (permission_exists('voicemail_delete')) {
+	if ($has_extension_delete && $extensions) {
+		if ($has_voicemail_delete) {
 			echo modal::create([
 				'id'=>'modal-delete-options',
 				'title'=>$text['modal_title-confirmation'],
@@ -385,41 +401,41 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('extension_enabled') || permission_exists('extension_delete')) {
+	if ($has_extension_enabled || $has_extension_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(empty($extensions) ? "style='visibility: hidden;'" : null).">\n";
 		echo "	</th>\n";
 	}
-	if (!empty($_GET['show']) && $_GET['show'] == "all" && permission_exists('extension_all')) {
+	if (!empty($_GET['show']) && $_GET['show'] == "all" && $has_extension_all) {
 		echo "<th>".$text['label-domain']."</th>\n";
 		//echo th_order_by('domain_name', $text['label-domain'], $order_by, $order);
 	}
-	if (permission_exists('extension_registered')) {
+	if ($has_extension_registered) {
 		echo "<th>&nbsp;</th>\n";
 	}
 	echo th_order_by('extension', $text['label-extension'], $order_by, $order, $query_string);
 	echo th_order_by('effective_caller_id_name', $text['label-effective_cid_name'], $order_by, $order, $query_string, "class='hide-xs'");
-	if (permission_exists("outbound_caller_id_name")) {
+	if ($has_outbound_caller_id_name) {
 		echo th_order_by('outbound_caller_id_name', $text['label-outbound_cid_name'], $order_by, $order, $query_string, "class='hide-sm-dn'");
 	}
-	if (permission_exists("outbound_caller_id_number")) {
+	if ($has_outbound_caller_id_number) {
 		echo th_order_by('outbound_caller_id_number', $text['label-outbound_cid_number'], $order_by, $order, $query_string, "class='hide-md-dn'");
 	}
-	if (permission_exists("extension_call_group")) {
+	if ($has_extension_call_group) {
 		echo th_order_by('call_group', $text['label-call_group'], $order_by, $order, $query_string);
 	}
-	if (permission_exists("extension_device_address")) {
+	if ($has_extension_device_address) {
 		echo th_order_by('device_address', $text['label-device_address'], $order_by, $order, $query_string, "class='hide-md-dn'");
 	}
-	if (permission_exists("extension_device_template")) {
+	if ($has_extension_device_template) {
 		echo th_order_by('device_template', $text['label-device_template'], $order_by, $order, $query_string, "class='hide-md-dn'");
 	}
-	if (permission_exists("extension_user_context")) {
+	if ($has_extension_user_context) {
 		echo th_order_by('user_context', $text['label-user_context'], $order_by, $order);
 	}
 	echo th_order_by('enabled', $text['label-enabled'], $order_by, $order, $query_string, "class='center'");
 	echo th_order_by('description', $text['label-description'], $order_by, $order, $query_string, "class='hide-sm-dn'");
-	if (permission_exists('extension_edit') && $settings->get('theme', 'list_row_edit_button', false)) {
+	if ($has_extension_edit && $settings->get('theme', 'list_row_edit_button', false)) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -430,23 +446,23 @@
 			//dispatch render-row hook
 			app::dispatch_list_render_row(null, $url, $row, $x);
 			$list_row_url = '';
-			if (permission_exists('extension_edit')) {
+			if ($has_extension_edit) {
 				$list_row_url = "extension_edit.php?id=".urlencode($row['extension_uuid']).(!empty($order_by) ? '&order_by='.$order_by.'&order='.$order : null).(is_numeric($page) ? '&page='.urlencode($page) : null);
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('extension_enabled') || permission_exists('extension_delete')) {
+			if ($has_extension_enabled || $has_extension_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='extensions[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='extensions[$x][uuid]' value='".escape($row['extension_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if (!empty($_GET['show']) && $_GET['show'] == "all" && permission_exists('extension_all')) {
+			if (!empty($_GET['show']) && $_GET['show'] == "all" && $has_extension_all) {
 				echo "	<td>".escape($_SESSION['domains'][$row['domain_uuid']]['domain_name'])."</td>\n";
 			}
-			if (permission_exists('extension_registered')) {
+			if ($has_extension_registered) {
 				$icon_registered_color = $settings->get('extension', 'icon_registered_color') ?? '#12d600';
 				$icon_unregistered_color = $settings->get('extension', 'icon_unregistered_color') ?? '#e21b1b';
 
@@ -478,7 +494,7 @@
 				echo "</td>\n";
 			}
 			echo "	<td>";
-			if (permission_exists('extension_edit')) {
+			if ($has_extension_edit) {
 				echo "<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['extension'])."</a>";
 			}
 			else {
@@ -487,25 +503,25 @@
 			echo "	</td>\n";
 
 			echo "	<td class='hide-xs'>".escape($row['effective_caller_id_name'])."&nbsp;</td>\n";
-			if (permission_exists("outbound_caller_id_name")) {
+			if ($has_outbound_caller_id_name) {
 				echo "	<td class='hide-sm-dn'>".escape($row['outbound_caller_id_name'])."&nbsp;</td>\n";
 			}
-			if (permission_exists("outbound_caller_id_number")) {
+			if ($has_outbound_caller_id_number) {
 				echo "	<td class='hide-md-dn'>".escape($row['outbound_caller_id_number'])."&nbsp;</td>\n";
 			}
-			if (permission_exists("extension_call_group")) {
+			if ($has_extension_call_group) {
 				echo "	<td>".escape($row['call_group'])."&nbsp;</td>\n";
 			}
-			if (permission_exists("extension_device_address")) {
+			if ($has_extension_device_address) {
 				echo "	<td class='hide-md-dn'><a href='" . PROJECT_PATH . "/app/devices/device_edit.php?id=".escape($row['device_uuid'])."'>".escape($row['device_address'])."</td>\n";
 			}
-			if (permission_exists("extension_device_template")) {
+			if ($has_extension_device_template) {
 				echo "	<td class='hide-md-dn'><a href='" . PROJECT_PATH . "/app/devices/device_edit.php?id=".escape($row['device_uuid'])."'>".escape($row['device_template'])."</td>\n";
 			}
-			if (permission_exists("extension_user_context")) {
+			if ($has_extension_user_context) {
 				echo "	<td>".escape($row['user_context'])."</td>\n";
 			}
-			if (permission_exists('extension_enabled')) {
+			if ($has_extension_enabled) {
 				echo "	<td class='no-link center'>";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
 			}
@@ -515,7 +531,7 @@
 			}
 			echo "	</td>\n";
 			echo "	<td class='description overflow hide-sm-dn'>".escape($row['description'])."</td>\n";
-			if (permission_exists('extension_edit') && $settings->get('theme', 'list_row_edit_button', false)) {
+			if ($has_extension_edit && $settings->get('theme', 'list_row_edit_button', false)) {
 				echo "	<td class='action-button'>";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

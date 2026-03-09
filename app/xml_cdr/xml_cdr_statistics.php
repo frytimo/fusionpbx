@@ -34,6 +34,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_xml_cdr_all             = permission_exists('xml_cdr_all');
+	$has_xml_cdr_search_advanced = permission_exists('xml_cdr_search_advanced');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -47,10 +49,10 @@
 
 //search url
 	$search_url = '';
-	if (permission_exists('xml_cdr_search_advanced')) {
+	if ($has_xml_cdr_search_advanced) {
 		$search_url .= '&redirect=xml_cdr_statistics';
 	}
-	if(permission_exists('xml_cdr_all') && (isset($_GET['showall']) && $_GET['showall'] === 'true')){
+	if($has_xml_cdr_all && (isset($_GET['showall']) && $_GET['showall'] === 'true')){
 		$search_url .= '&showall=true';
 		$show_all = true;
 	}
@@ -145,10 +147,10 @@
 	if (substr_count($_SERVER['HTTP_REFERER'], 'app/xml_cdr/xml_cdr.php') != 0) {
 		echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','style'=>'margin-right: 15px;','link'=>'xml_cdr.php']);
 	}
-	if (permission_exists('xml_cdr_search_advanced')) {
+	if ($has_xml_cdr_search_advanced) {
 		echo button::create(['type'=>'button','label'=>$text['button-advanced_search'],'icon'=>'tools','link'=>'xml_cdr_search.php?type=advanced'.$search_url]);
 	}
-	if (permission_exists('xml_cdr_all') && !$show_all) {
+	if ($has_xml_cdr_all && !$show_all) {
 		echo button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>'xml_cdr_statistics.php?showall=true'.$search_url]);
 	}
 	echo button::create(['type'=>'button','label'=>$text['button-extension_summary'],'icon'=>'list','link'=>'xml_cdr_extension_summary.php']);

@@ -34,6 +34,18 @@
 		echo "access denied";
 		exit;
 	}
+	$has_conference_active_view             = permission_exists('conference_active_view');
+	$has_conference_cdr_view                = permission_exists('conference_cdr_view');
+	$has_conference_interactive_view        = permission_exists('conference_interactive_view');
+	$has_conference_room_add                = permission_exists('conference_room_add');
+	$has_conference_room_announce_count     = permission_exists('conference_room_announce_count');
+	$has_conference_room_announce_name      = permission_exists('conference_room_announce_name');
+	$has_conference_room_announce_recording = permission_exists('conference_room_announce_recording');
+	$has_conference_room_delete             = permission_exists('conference_room_delete');
+	$has_conference_room_edit               = permission_exists('conference_room_edit');
+	$has_conference_room_enabled            = permission_exists('conference_room_enabled');
+	$has_conference_session_view            = permission_exists('conference_session_view');
+	$has_domain_select                      = permission_exists('domain_select');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -69,14 +81,14 @@
 
 		switch ($action) {
 			case 'toggle':
-				if (permission_exists('conference_room_edit')) {
+				if ($has_conference_room_edit) {
 					$obj = new conference_centers;
 					$obj->toggle_field = $toggle_field;
 					$obj->toggle_conference_rooms($conference_rooms);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('conference_room_delete')) {
+				if ($has_conference_room_delete) {
 					$obj = new conference_centers;
 					$obj->delete_conference_rooms($conference_rooms);
 				}
@@ -238,10 +250,10 @@
 	echo "	<div class='heading'><b>".$text['title-conference_rooms']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','style'=>'margin-right: 15px;','link'=>'conference_centers.php']);
-	if (permission_exists('conference_room_add')) {
+	if ($has_conference_room_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'conference_room_edit.php']);
 	}
-	if (permission_exists('conference_room_edit') && $result) {
+	if ($has_conference_room_edit && $result) {
 		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"toggle_select(); this.blur();"]);
 		echo 		"<select class='formfld' style='display: none; width: auto;' id='conference_room_feature' onchange=\"if (this.selectedIndex != 0) { modal_open('modal-toggle','btn_toggle'); }\">";
 		echo "			<option value='' selected='selected'>".$text['label-select']."</option>";
@@ -255,7 +267,7 @@
 		echo "			<option value='enabled'>".$text['label-enabled']."</option>";
 		echo "		</select>";
 	}
-	if (permission_exists('conference_room_delete') && $result) {
+	if ($has_conference_room_delete && $result) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
@@ -270,10 +282,10 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('conference_room_edit') && $result) {
+	if ($has_conference_room_edit && $result) {
 		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); document.getElementById('toggle_field').value = document.getElementById('conference_room_feature').options[document.getElementById('conference_room_feature').selectedIndex].value; list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
-	if (permission_exists('conference_room_delete') && $result) {
+	if ($has_conference_room_delete && $result) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -288,7 +300,7 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('conference_room_add') || permission_exists('conference_room_edit') || permission_exists('conference_room_delete')) {
+	if ($has_conference_room_add || $has_conference_room_edit || $has_conference_room_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($result) ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
@@ -309,11 +321,11 @@
 	echo th_order_by('sounds', $text['label-sounds'], $order_by, $order, null, "class='center'");
 	echo "<th class='center'>".$text['label-members']."</th>\n";
 	echo "<th class='center'>".$text['label-tools']."</th>\n";
-	if (permission_exists('conference_room_enabled')) {
+	if ($has_conference_room_enabled) {
 		echo th_order_by('enabled', $text['label-enabled'], $order_by, $order, null, "class='center'");
 	}
 	echo th_order_by('description', $text['label-description'], $order_by, $order, null, "class='hide-sm-dn'");
-	if (permission_exists('conference_room_edit') && $list_row_edit_button) {
+	if ($has_conference_room_edit && $list_row_edit_button) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -335,14 +347,14 @@
 			}
 
 			$list_row_url = '';
-			if (permission_exists('conference_room_edit')) {
+			if ($has_conference_room_edit) {
 				$list_row_url = "conference_room_edit.php?id=".urlencode($row['conference_room_uuid']);
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('conference_room_add') || permission_exists('conference_room_edit') || permission_exists('conference_room_delete')) {
+			if ($has_conference_room_add || $has_conference_room_edit || $has_conference_room_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='conference_rooms[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='conference_rooms[$x][uuid]' value='".escape($row['conference_room_uuid'])."' />\n";
@@ -354,7 +366,7 @@
 			//echo "	<td>".escape($row['conference_center_uuid'])."&nbsp;</td>\n";
 			//echo "	<td>".escape($row['profile'])."&nbsp;</td>\n";
 
-			if (permission_exists('conference_room_edit')) {
+			if ($has_conference_room_edit) {
 				echo "	<td class='no-link center'>\n";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.($row['record'] == "true" ? 'true' : 'false')],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); document.getElementById('toggle_field').value = 'record'; list_form_submit('form_list')"]);
 			}
@@ -373,7 +385,7 @@
 // 			echo "	</td>\n";
 			//echo "	<td>".$row['max_members']."&nbsp;</td>\n";
 
-			if (permission_exists('conference_room_edit')) {
+			if ($has_conference_room_edit) {
 				echo "	<td class='no-link center'>\n";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.($row['wait_mod'] == "true" ? 'true' : 'false')],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); document.getElementById('toggle_field').value = 'wait_mod'; list_form_submit('form_list')"]);
 			}
@@ -391,7 +403,7 @@
 // 			}
 // 			echo "	</td>\n";
 
-			if (permission_exists('conference_room_edit') && permission_exists('conference_room_announce_name')) {
+			if ($has_conference_room_edit && $has_conference_room_announce_name) {
 				echo "	<td class='no-link center'>\n";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.($row['announce_name'] == "true" ? 'true' : 'false')],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); document.getElementById('toggle_field').value = 'announce_name'; list_form_submit('form_list')"]);
 			}
@@ -400,7 +412,7 @@
 				echo $text['label-'.($row['announce_name'] == "true" ? 'true' : 'false')];
 			}
 			echo "	</td>\n";
-			if (permission_exists('conference_room_edit') && permission_exists('conference_room_announce_count')) {
+			if ($has_conference_room_edit && $has_conference_room_announce_count) {
 				echo "	<td class='no-link center'>\n";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.($row['announce_count'] == "true" ? 'true' : 'false')],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); document.getElementById('toggle_field').value = 'announce_count'; list_form_submit('form_list')"]);
 			}
@@ -409,7 +421,7 @@
 				echo $text['label-'.($row['announce_count'] == "true" ? 'true' : 'false')];
 			}
 			echo "	</td>\n";
-			if (permission_exists('conference_room_edit') && permission_exists('conference_room_announce_recording')) {
+			if ($has_conference_room_edit && $has_conference_room_announce_recording) {
 				echo "	<td class='no-link center'>\n";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.($row['announce_recording'] == "true" ? 'true' : 'false')],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); document.getElementById('toggle_field').value = 'announce_recording'; list_form_submit('form_list')"]);
 			}
@@ -427,7 +439,7 @@
 // 			}
 // 			echo "	</td>\n";
 
-			if (permission_exists('conference_room_edit')) {
+			if ($has_conference_room_edit) {
 				echo "	<td class='no-link center'>\n";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.($row['mute'] == "true" ? 'true' : 'false')],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); document.getElementById('toggle_field').value = 'mute'; list_form_submit('form_list')"]);
 			}
@@ -445,7 +457,7 @@
 // 			}
 // 			echo "	</td>\n";
 
-			if (permission_exists('conference_room_edit')) {
+			if ($has_conference_room_edit) {
 				echo "	<td class='no-link center'>\n";
 				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.($row['sounds'] == "true" ? 'true' : 'false')],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); document.getElementById('toggle_field').value = 'sounds'; list_form_submit('form_list')"]);
 			}
@@ -470,22 +482,22 @@
 				echo "	<td class='center'>0</td>\n";
 			}
 			echo "	<td class='no-link no-wrap center'>\n";
-			if (permission_exists('conference_interactive_view')) {
+			if ($has_conference_interactive_view) {
 				echo "		<a href='".PROJECT_PATH.$conference_view_page."?c=".urlencode($row['conference_room_uuid'])."'>".$text['label-view']."</a>\n";
 			}
-			else if (permission_exists('conference_active_view')) {
+			else if ($has_conference_active_view) {
 				echo "		<a href='".PROJECT_PATH.$conference_view_page."'>".$text['label-view']."</a>\n";
 			}
-			if (permission_exists('conference_cdr_view')) {
+			if ($has_conference_cdr_view) {
 				echo "		<a href='/app/conference_cdr/conference_cdr.php?id=".urlencode($row['conference_room_uuid'])."'>".$text['button-cdr']."</a>\n";
 			}
-			if (permission_exists('conference_session_view')) {
+			if ($has_conference_session_view) {
 				echo "		<a href='conference_sessions.php?id=".urlencode($row['conference_room_uuid'])."'>".$text['label-sessions']."</a>\n";
 			}
 			echo "	</td>\n";
 
-			if (permission_exists('conference_room_enabled')) {
-				if (permission_exists('conference_room_edit')) {
+			if ($has_conference_room_enabled) {
+				if ($has_conference_room_edit) {
 					echo "	<td class='no-link center'>\n";
 					echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.($row['enabled'] == "true" ? 'true' : 'false')],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); document.getElementById('toggle_field').value = 'enabled'; list_form_submit('form_list')"]);
 				}
@@ -505,7 +517,7 @@
 			}
 
 			echo "	<td class='description overflow hide-sm-dn'>".escape($row['description'])."</td>\n";
-			if (permission_exists('conference_room_edit') && $list_row_edit_button) {
+			if ($has_conference_room_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>\n";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

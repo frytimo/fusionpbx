@@ -30,6 +30,47 @@
 		echo "access denied";
 		exit;
 	}
+	$has_address_community         = permission_exists('address_community');
+	$has_address_latitude          = permission_exists('address_latitude');
+	$has_address_longitude         = permission_exists('address_longitude');
+	$has_contact_add               = permission_exists('contact_add');
+	$has_contact_address_add       = permission_exists('contact_address_add');
+	$has_contact_address_delete    = permission_exists('contact_address_delete');
+	$has_contact_address_view      = permission_exists('contact_address_view');
+	$has_contact_attachment_add    = permission_exists('contact_attachment_add');
+	$has_contact_attachment_delete = permission_exists('contact_attachment_delete');
+	$has_contact_attachment_view   = permission_exists('contact_attachment_view');
+	$has_contact_delete            = permission_exists('contact_delete');
+	$has_contact_email_add         = permission_exists('contact_email_add');
+	$has_contact_email_delete      = permission_exists('contact_email_delete');
+	$has_contact_email_view        = permission_exists('contact_email_view');
+	$has_contact_group_add         = permission_exists('contact_group_add');
+	$has_contact_group_delete      = permission_exists('contact_group_delete');
+	$has_contact_group_view        = permission_exists('contact_group_view');
+	$has_contact_note_add          = permission_exists('contact_note_add');
+	$has_contact_note_delete       = permission_exists('contact_note_delete');
+	$has_contact_note_view         = permission_exists('contact_note_view');
+	$has_contact_phone_add         = permission_exists('contact_phone_add');
+	$has_contact_phone_delete      = permission_exists('contact_phone_delete');
+	$has_contact_phone_view        = permission_exists('contact_phone_view');
+	$has_contact_relation_add      = permission_exists('contact_relation_add');
+	$has_contact_relation_delete   = permission_exists('contact_relation_delete');
+	$has_contact_relation_view     = permission_exists('contact_relation_view');
+	$has_contact_setting_add       = permission_exists('contact_setting_add');
+	$has_contact_setting_delete    = permission_exists('contact_setting_delete');
+	$has_contact_setting_view      = permission_exists('contact_setting_view');
+	$has_contact_time_add          = permission_exists('contact_time_add');
+	$has_contact_time_delete       = permission_exists('contact_time_delete');
+	$has_contact_time_view         = permission_exists('contact_time_view');
+	$has_contact_update            = permission_exists('contact_update');
+	$has_contact_url_add           = permission_exists('contact_url_add');
+	$has_contact_url_delete        = permission_exists('contact_url_delete');
+	$has_contact_url_view          = permission_exists('contact_url_view');
+	$has_contact_user_add          = permission_exists('contact_user_add');
+	$has_contact_user_delete       = permission_exists('contact_user_delete');
+	$has_contact_user_edit         = permission_exists('contact_user_edit');
+	$has_contact_user_view         = permission_exists('contact_user_view');
+	$has_user_edit                 = permission_exists('user_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -242,17 +283,17 @@
 				if (!empty($array)) {
 					switch ($_POST['action']) {
 						case 'copy':
-							if (permission_exists('contact_add')) {
+							if ($has_contact_add) {
 								$database->copy($array);
 							}
 							break;
 						case 'delete':
-							if (permission_exists('contact_delete')) {
+							if ($has_contact_delete) {
 								$database->delete($array);
 							}
 							break;
 						case 'toggle':
-							if (permission_exists('contact_update')) {
+							if ($has_contact_update) {
 								$database->toggle($array);
 							}
 							break;
@@ -424,17 +465,17 @@
 						$array['contacts'][0]['contact_addresses'][$y]['address_type'] = $row["address_type"];
 						$array['contacts'][0]['contact_addresses'][$y]['address_street'] = $row["address_street"];
 						$array['contacts'][0]['contact_addresses'][$y]['address_extended'] = $row["address_extended"];
-						if (permission_exists('address_community')) {
+						if ($has_address_community) {
 							$array['contacts'][0]['contact_addresses'][$y]['address_community'] = $row["address_community"];
 						}
 						$array['contacts'][0]['contact_addresses'][$y]['address_locality'] = $row["address_locality"];
 						$array['contacts'][0]['contact_addresses'][$y]['address_region'] = $row["address_region"];
 						$array['contacts'][0]['contact_addresses'][$y]['address_postal_code'] = $row["address_postal_code"];
 						$array['contacts'][0]['contact_addresses'][$y]['address_country'] = $row["address_country"];
-						if (permission_exists('address_latitude')) {
+						if ($has_address_latitude) {
 							$array['contacts'][0]['contact_addresses'][$y]['address_latitude'] = $row["address_latitude"];
 						}
-						if (permission_exists('address_longitude')) {
+						if ($has_address_longitude) {
 							$array['contacts'][0]['contact_addresses'][$y]['address_longitude'] = $row["address_longitude"];
 						}
 						$array['contacts'][0]['contact_addresses'][$y]['address_primary'] = $row["address_primary"];
@@ -1080,7 +1121,7 @@
 	echo "</script>";
 
 //styles and attachment viewing layer
-	if (permission_exists('contact_attachment_view') && !empty($contact_attachments) && is_array($contact_attachments)) {
+	if ($has_contact_attachment_view && !empty($contact_attachments) && is_array($contact_attachments)) {
 		echo "<style>\n";
 		echo "	#contact_attachment_layer {\n";
 		echo "		z-index: 999999;\n";
@@ -1105,17 +1146,17 @@
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','collapse'=>'hide-xs','style'=>'margin-right: 15px;','link'=>'contact_view.php?id='.$contact_uuid]);
 	if ($action == 'update') {
-		if (permission_exists('contact_phone_add')) {
+		if ($has_contact_phone_add) {
 			echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 		}
-		if (permission_exists('contact_phone_delete')) {
+		if ($has_contact_phone_delete) {
 			echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none; margin-right: 15px;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 		}
 	}
 
 	//add edit
 	if (isset($id)) {
-		if (permission_exists('contact_time_add')) {
+		if ($has_contact_time_add) {
 			//detect timer state (and start time)
 			$sql = "select ";
 			$sql .= "time_start ";
@@ -1143,48 +1184,48 @@
 	//}
 
 	//add user
-	if (isset($id) && permission_exists('user_edit')) {
+	if (isset($id) && $has_user_edit) {
 		echo button::create(['type'=>'button','label'=>$text['button-user'],'icon'=>'user','collapse'=>'hide-sm-dn','link'=>'../../core/users/user_edit.php?id='.urlencode($contact_user_uuid ?? '')]);
 	}
 	if (
 		$action == "update" && (
-		permission_exists('contact_phone_add') ||
-		permission_exists('contact_address_add') ||
-		permission_exists('contact_email_add') ||
-		permission_exists('contact_url_add') ||
-		permission_exists('contact_relation_add') ||
-		permission_exists('contact_note_add') ||
-		permission_exists('contact_time_add') ||
-		permission_exists('contact_setting_add') ||
-		permission_exists('contact_attachment_add')
+		$has_contact_phone_add ||
+		$has_contact_address_add ||
+		$has_contact_email_add ||
+		$has_contact_url_add ||
+		$has_contact_relation_add ||
+		$has_contact_note_add ||
+		$has_contact_time_add ||
+		$has_contact_setting_add ||
+		$has_contact_attachment_add
 		)) {
 		echo 		"<select class='formfld' style='width: auto; margin-left: 15px;' id='select_add' onchange=\"document.location.href='contact_' + (this.options[this.selectedIndex].value) + '_edit.php?contact_uuid=".urlencode($contact_uuid ?? null)."';\">\n";
 		echo "			<option value=''>".$text['button-add']."...</option>\n";
-		if (permission_exists('contact_phone_add')) { echo "<option value='phone'>".$text['label-phone_number']."</option>\n"; }
-		if (permission_exists('contact_address_add')) { echo "<option value='address'>".$text['label-address_address']."</option>\n"; }
-		if (permission_exists('contact_email_add')) { echo "<option value='email'>".$text['label-email']."</option>\n"; }
-		if (permission_exists('contact_url_add')) { echo "<option value='url'>".$text['label-url']."</option>\n"; }
-		if (permission_exists('contact_relation_add')) { echo "<option value='relation'>".$text['label-contact_relation_label']."</option>\n"; }
-		if (permission_exists('contact_note_add')) { echo "<option value='note'>".$text['label-contact_note']."</option>\n"; }
-		if (permission_exists('contact_time_add')) { echo "<option value='time'>".$text['label-time_time']."</option>\n"; }
-		if (permission_exists('contact_setting_add')) { echo "<option value='setting'>".$text['label-setting']."</option>\n"; }
-		if (permission_exists('contact_attachment_add')) { echo "<option value='attachment'>".$text['label-attachment']."</option>\n"; }
+		if ($has_contact_phone_add) { echo "<option value='phone'>".$text['label-phone_number']."</option>\n"; }
+		if ($has_contact_address_add) { echo "<option value='address'>".$text['label-address_address']."</option>\n"; }
+		if ($has_contact_email_add) { echo "<option value='email'>".$text['label-email']."</option>\n"; }
+		if ($has_contact_url_add) { echo "<option value='url'>".$text['label-url']."</option>\n"; }
+		if ($has_contact_relation_add) { echo "<option value='relation'>".$text['label-contact_relation_label']."</option>\n"; }
+		if ($has_contact_note_add) { echo "<option value='note'>".$text['label-contact_note']."</option>\n"; }
+		if ($has_contact_time_add) { echo "<option value='time'>".$text['label-time_time']."</option>\n"; }
+		if ($has_contact_setting_add) { echo "<option value='setting'>".$text['label-setting']."</option>\n"; }
+		if ($has_contact_attachment_add) { echo "<option value='attachment'>".$text['label-attachment']."</option>\n"; }
 		echo "		</select>";
 	}
 	if (
 		$action == "update" && (
-		permission_exists('contact_delete') ||
-		permission_exists('contact_user_delete') ||
-		permission_exists('contact_group_delete') ||
-		permission_exists('contact_phone_delete') ||
-		permission_exists('contact_address_delete') ||
-		permission_exists('contact_email_delete') ||
-		permission_exists('contact_url_delete') ||
-		permission_exists('contact_relation_delete') ||
-		permission_exists('contact_note_delete') ||
-		permission_exists('contact_time_delete') ||
-		permission_exists('contact_setting_delete') ||
-		permission_exists('contact_attachment_delete')
+		$has_contact_delete ||
+		$has_contact_user_delete ||
+		$has_contact_group_delete ||
+		$has_contact_phone_delete ||
+		$has_contact_address_delete ||
+		$has_contact_email_delete ||
+		$has_contact_url_delete ||
+		$has_contact_relation_delete ||
+		$has_contact_note_delete ||
+		$has_contact_time_delete ||
+		$has_contact_setting_delete ||
+		$has_contact_attachment_delete
 		)) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'name'=>'btn_delete','collapse'=>'hide-sm-dn','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
@@ -1197,10 +1238,10 @@
 	echo "<br /><br />\n";
 
 	if ($action == 'update') {
-		if (permission_exists('contact_add')) {
+		if ($has_contact_add) {
 			echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'copy','onclick'=>"modal_close();"])]);
 		}
-		if (permission_exists('contact_delete')) {
+		if ($has_contact_delete) {
 			echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 		}
 	}
@@ -1527,19 +1568,19 @@ echo "	</div>\n";
 unset($contact_note);
 
 if ($settings->get('contact', 'permissions', false)) {
-	if (permission_exists('contact_user_view') || permission_exists('contact_group_view')) {
+	if ($has_contact_user_view || $has_contact_group_view) {
 		echo "	<div class='form_set card'>\n";
 		echo "		<div class='heading'>\n";
 		echo "			<b>".$text['label-permissions']."</b>\n";
 		echo "		</div>\n";
 		echo "		<div style='clear: both;'></div>\n";
 
-		if (permission_exists('contact_user_edit')) {
+		if ($has_contact_user_edit) {
 			echo "		<div class='label' valign='top'>".$text['label-users']."</div>\n";
 			echo "		<div class='field no-wrap' align='left'>";
 			if ($action == "update" && !empty($contact_users_assigned)) {
 				echo "			<div class='vtable'>".$text['label-username']."\n";
-				if ($contact_users_assigned && permission_exists('contact_user_delete')) {
+				if ($contact_users_assigned && $has_contact_user_delete) {
 					//echo "			<div class='edit_delete_checkbox_all' onmouseover=\"swap_display('delete_label_users', 'delete_toggle_users');\" onmouseout=\"swap_display('delete_label_users', 'delete_toggle_users');\">\n";
 					echo "			<div style='float: right;'\">\n";
 					echo "				<span>".$text['label-delete']."</span>\n";
@@ -1550,7 +1591,7 @@ if ($settings->get('contact', 'permissions', false)) {
 				echo "		</div>\n";
 				foreach ($contact_users_assigned as $x => $field) {
 					echo "		<div class='vtable'>".escape($field['username'])."\n";
-					if ($contact_users_assigned && permission_exists('contact_user_delete')) {
+					if ($contact_users_assigned && $has_contact_user_delete) {
 						if (is_uuid($field['contact_user_uuid'])) {
 							echo "		<div style='text-align: center; padding-bottom: 3px; float: right; margin-right: 10px;'>\n";
 							//echo "			<input type='checkbox' name='contact_users_delete[".$x."][checked]' value='true' class='chk_delete checkbox_users' onclick=\"edit_delete_action('users');\">\n";
@@ -1569,7 +1610,7 @@ if ($settings->get('contact', 'permissions', false)) {
 					echo "	</div>\n";
 				}
 			}
-			if (permission_exists('contact_user_add')) {
+			if ($has_contact_user_add) {
 				echo "		<div class='vtable' style='border-bottom: none;'>\n";
 				echo "			<select name='contact_user_uuid' class='formfld' style='width: 112px;'>\n";
 				echo "				<option value=''></option>\n";
@@ -1588,12 +1629,12 @@ if ($settings->get('contact', 'permissions', false)) {
 			echo "		</div>\n";
 		}
 
-		if (permission_exists('contact_group_view')) {
+		if ($has_contact_group_view) {
 			echo "	<div class='label'>".$text['label-groups']."</div>";
 			echo "	<div class='field no-wrap'>";
 			if (!empty($contact_groups_assigned)) {
 				echo "		<div class='vtable'>".$text['label-group']."\n";
-				if ($contact_groups_assigned && permission_exists('contact_group_delete')) {
+				if ($contact_groups_assigned && $has_contact_group_delete) {
 					//echo "		<div class='edit_delete_checkbox_all' style='float: right;' onmouseover=\"swap_display('delete_label_groups', 'delete_toggle_groups');\" onmouseout=\"swap_display('delete_label_groups', 'delete_toggle_groups');\">\n";
 					echo "		<div style='float: right;'\">\n";
 					echo "			<span>".$text['label-delete']."</span>\n";
@@ -1605,7 +1646,7 @@ if ($settings->get('contact', 'permissions', false)) {
 				foreach ($contact_groups_assigned as $x => $field) {
 					if (!empty($field['group_name'])) {
 						echo "		<div class='vtable'>".escape($field['group_name'])."\n";
-						if (permission_exists('contact_group_delete')) {
+						if ($has_contact_group_delete) {
 							if (is_uuid($field['contact_group_uuid'])) {
 								echo "		<div style='text-align: center; padding-bottom: 3px; float: right; margin-right: 10px;'>";
 								//echo "			<input type='checkbox' name='contact_groups_delete[".$x."][checked]' value='true' class='chk_delete checkbox_groups' onclick=\"edit_delete_action('groups');\">\n";
@@ -1626,7 +1667,7 @@ if ($settings->get('contact', 'permissions', false)) {
 				}
 			}
 
-			if (permission_exists('contact_group_add')) {
+			if ($has_contact_group_add) {
 				if (!empty($contact_groups_available)) {
 					echo "	<div class='vtable' style='border-bottom: none;'>\n";
 					echo "		<select name='contact_group_uuid' class='formfld' style='width: 112px;'>\n";
@@ -1657,7 +1698,7 @@ if ($settings->get('contact', 'permissions', false)) {
 	}
 }
 
-if (permission_exists('contact_phone_view')) {
+if ($has_contact_phone_view) {
 
 	echo "<script type=\"text/javascript\">\n";
 	echo "function send_cmd(url) {\n";
@@ -1678,7 +1719,7 @@ if (permission_exists('contact_phone_view')) {
 		echo "	<div class='form_set card'>\n";
 		echo "		<div class='heading'>\n";
 		echo "			<b style='float: left;'>".$text['label-phone_numbers']."</b>\n";
-		if (permission_exists('contact_phone_delete')) {
+		if ($has_contact_phone_delete) {
 			echo "			<div class='checkbox' style='float: left; margin-top: 3px; margin-left: 8px;'>\n";
 			echo "				<input type='checkbox' name='contact_phones[$x][checked]' id='checkbox_".$x."' class='chk_delete checkbox_phones' value='true' onclick=\"edit_delete_action('phones');\">\n";
 			echo "				<input type='hidden' name='contact_phones[$x][uuid]' value='".escape($row['contact_phone_uuid'])."' />\n";
@@ -1859,7 +1900,7 @@ if (permission_exists('contact_phone_view')) {
 		echo "			&nbsp;\n";
 		echo "		</div>\n";
 
-		//if (!empty($contact_phones) && @sizeof($contact_phones) > 1 && permission_exists('contact_phone_delete')) {
+		//if (!empty($contact_phones) && @sizeof($contact_phones) > 1 && $has_contact_phone_delete) {
 		//	echo "		<div class='label'>\n";
 		//	echo "			".$text['label-action']."\n";
 		//	echo "		</div>\n";
@@ -1877,13 +1918,13 @@ if (permission_exists('contact_phone_view')) {
 	}
 }
 
-if (permission_exists('contact_address_view')) {
+if ($has_contact_address_view) {
 	$x = 0;
 	foreach($contact_addresses as $row) {
 		echo "	<div class='form_set card'>\n";
 		echo "		<div class='heading'>\n";
 		echo "			<b style='float: left;'>".$text['label-addresses']."</b>\n";
-		if (permission_exists('contact_address_delete')) {
+		if ($has_contact_address_delete) {
 			echo "			<div class='checkbox' style='float: left; margin-top: 3px; margin-left: 8px;'>\n";
 			echo "				<input type='checkbox' name='contact_addresses[$x][checked]' id='checkbox_".$x."' class='chk_delete checkbox_addresses' value='true' onclick=\"edit_delete_action('addresses');\">\n";
 			echo "				<input type='hidden' name='contact_addresses[$x][uuid]' value='".escape($row['contact_address_uuid'])."' />\n";
@@ -2029,7 +2070,7 @@ if (permission_exists('contact_address_view')) {
 		echo "			<input class='formfld' type='text' name='contact_addresses[$x][address_extended]' placeholder='".$text['label-address_address']." 2' maxlength='255' value=\"".escape($row["address_extended"])."\">\n";
 		echo "		</div>\n";
 
-		if (permission_exists('address_community')) {
+		if ($has_address_community) {
 			echo "		<div class='label'>\n";
 			echo "			".$text['label-address_community']."\n";
 			echo "		</div>\n";
@@ -2066,7 +2107,7 @@ if (permission_exists('contact_address_view')) {
 		echo "			<input class='formfld' type='text' name='contact_addresses[$x][address_country]' placeholder='' maxlength='255' value=\"".escape($row["address_country"])."\">\n";
 		echo "		</div>\n";
 
-		if (permission_exists('address_latitude')) {
+		if ($has_address_latitude) {
 			echo "		<div class='label'>\n";
 			echo "			".$text['label-address_latitude']."\n";
 			echo "		</div>\n";
@@ -2075,7 +2116,7 @@ if (permission_exists('contact_address_view')) {
 			echo "		</div>\n";
 		}
 
-		if (permission_exists('address_longitude')) {
+		if ($has_address_longitude) {
 			echo "		<div class='label'>\n";
 			echo "			".$text['label-address_longitude']."\n";
 			echo "		</div>\n";
@@ -2108,7 +2149,7 @@ if (permission_exists('contact_address_view')) {
 		echo "			<input class='formfld' type='text' name='contact_addresses[$x][address_description]' placeholder='' maxlength='255' value=\"".escape($row["address_description"])."\">\n";
 		echo "		</div>\n";
 
-		//if (!empty($contact_addresses) && @sizeof($contact_addresses) > 1 && permission_exists('contact_address_delete')) {
+		//if (!empty($contact_addresses) && @sizeof($contact_addresses) > 1 && $has_contact_address_delete) {
 		//	if (is_uuid($row['contact_address_uuid'])) {
 		//		echo "		<div class='label'>\n";
 		//		echo "			".$text['label-action']."\n";
@@ -2124,13 +2165,13 @@ if (permission_exists('contact_address_view')) {
 	}
 }
 
-if (permission_exists('contact_email_view')) {
+if ($has_contact_email_view) {
 	$x = 0;
 	foreach($contact_emails as $row) {
 		echo "	<div class='form_set card'>\n";
 		echo "		<div class='heading'>\n";
 		echo "			<b style='float: left;'>".$text['label-emails']."</b>\n";
-		if (permission_exists('contact_email_delete')) {
+		if ($has_contact_email_delete) {
 			echo "			<div class='checkbox' style='float: left; margin-top: 3px; margin-left: 8px;'>\n";
 			echo "				<input type='checkbox' name='contact_emails[$x][checked]' id='checkbox_".$x."' class='chk_delete checkbox_emails' value='true' onclick=\"edit_delete_action('emails');\">\n";
 			echo "				<input type='hidden' name='contact_emails[$x][uuid]' value='".escape($row['contact_email_uuid'])."' />\n";
@@ -2198,7 +2239,7 @@ if (permission_exists('contact_email_view')) {
 		echo "		<div class='field empty_row' style='grid-row: 6 / span 99;'>\n";
 		echo "		</div>\n";
 
-		//if (!empty($contact_emails) && @sizeof($contact_emails) > 1 && permission_exists('contact_email_delete')) {
+		//if (!empty($contact_emails) && @sizeof($contact_emails) > 1 && $has_contact_email_delete) {
 		//	if (is_uuid($row['contact_email_uuid'])) {
 		//		echo "		<div class='label'>\n";
 		//		echo "			".$text['label-action']."\n";
@@ -2213,13 +2254,13 @@ if (permission_exists('contact_email_view')) {
 	}
 }
 
-if (permission_exists('contact_url_view')) {
+if ($has_contact_url_view) {
 	$x = 0;
 	foreach($contact_urls as $row) {
 		echo "	<div class='form_set card'>\n";
 		echo "		<div class='heading'>\n";
 		echo "			<b style='float: left;'>".$text['label-contact_url']."</b>\n";
-		if (permission_exists('contact_url_delete')) {
+		if ($has_contact_url_delete) {
 			echo "			<div class='checkbox' style='float: left; margin-top: 3px; margin-left: 8px;'>\n";
 			echo "				<input type='checkbox' name='contact_urls[$x][checked]' id='checkbox_".$x."' class='chk_delete checkbox_urls' value='true' onclick=\"edit_delete_action('urls');\">\n";
 			echo "				<input type='hidden' name='contact_urls[$x][uuid]' value='".escape($row['contact_url_uuid'])."' />\n";
@@ -2305,7 +2346,7 @@ if (permission_exists('contact_url_view')) {
 		echo "			<div class='field no-wrap'>\n";
 		echo "				<input class='formfld' type='text' name='contact_urls[$x][url_description]' placeholder='' maxlength='255' value=\"".escape($row["url_description"])."\">\n";
 		echo "			</div>\n";
-		// if (!empty($contact_urls) && @sizeof($contact_urls) > 1 && permission_exists('contact_url_delete')) {
+		// if (!empty($contact_urls) && @sizeof($contact_urls) > 1 && $has_contact_url_delete) {
 		// 	if (is_uuid($row['contact_url_uuid'])) {
 		// 		echo "			<input type='checkbox' name='contact_urls[".$x."][checked]' value='true' class='chk_delete checkbox_details' onclick=\"checkbox_on_change(this);\">\n";
 		// 	}
@@ -2322,7 +2363,7 @@ if (permission_exists('contact_url_view')) {
 	}
 }
 
-if (permission_exists('contact_relation_view')) {
+if ($has_contact_relation_view) {
 	if (!empty($contact_relations)) {
 
 		$x = 0;
@@ -2354,7 +2395,7 @@ if (permission_exists('contact_relation_view')) {
 			echo "	<div class='form_set card'>\n";
 			echo "		<div class='heading'>\n";
 			echo "			<b style='float: left;'>".$text['label-contact_relation_label']."</b>\n";
-			if (permission_exists('contact_relation_delete')) {
+			if ($has_contact_relation_delete) {
 				echo "			<div class='checkbox' style='float: left; margin-top: 3px; margin-left: 8px;'>\n";
 				echo "				<input type='checkbox' name='contact_relations[$x][checked]' id='checkbox_".$x."' class='chk_delete checkbox_relations' value='true' onclick=\"edit_delete_action('relations');\">\n";
 				echo "				<input type='hidden' name='contact_relations[$x][uuid]' value='".escape($row['contact_relation_uuid'])."' />\n";
@@ -2427,13 +2468,13 @@ if (permission_exists('contact_relation_view')) {
 	}
 }
 
-if (permission_exists('contact_setting_view')) {
+if ($has_contact_setting_view) {
 	$x = 0;
 	foreach($contact_settings as $row) {
 		echo "	<div class='form_set card'>\n";
 		echo "		<div class='heading'>\n";
 		echo "			<b style='float: left;'>".$text['label-contact_settings']."</b>\n";
-		if (permission_exists('contact_setting_delete')) {
+		if ($has_contact_setting_delete) {
 			echo "			<div class='checkbox' style='float: left; margin-top: 3px; margin-left: 8px;'>\n";
 			echo "				<input type='checkbox' name='contact_settings[$x][checked]' id='checkbox_".$x."' class='chk_delete checkbox_settings' value='true' onclick=\"edit_delete_action('settings');\">\n";
 			echo "				<input type='hidden' name='contact_settings[$x][uuid]' value='".escape($row['contact_setting_uuid'])."' />\n";
@@ -2520,7 +2561,7 @@ if (permission_exists('contact_setting_view')) {
 	}
 }
 
-if (permission_exists('contact_attachment_view')) {
+if ($has_contact_attachment_view) {
 	$x = 0;
 	foreach($contact_attachments as $row) {
 		$attachment_type = strtolower(pathinfo($row['attachment_filename'], PATHINFO_EXTENSION));
@@ -2528,7 +2569,7 @@ if (permission_exists('contact_attachment_view')) {
 		echo "<div class='form_set card'>\n";
 		echo "	<div class='heading'>\n";
 		echo " 		<b style='float: left;'>".$text['label-attachments']."</b>\n";
-		if (permission_exists('contact_attachment_delete')) {
+		if ($has_contact_attachment_delete) {
 			echo "		<div class='checkbox' style='float: left; margin-top: 3px; margin-left: 8px;'>\n";
 			echo "			<input type='checkbox' name='contact_attachments[$x][checked]' id='checkbox_".$x."' class='chk_delete checkbox_attachments' value='true' onclick=\"edit_delete_action('attachments');\">\n";
 			echo "			<input type='hidden' name='contact_attachments[$x][uuid]' value='".escape($row['contact_attachment_uuid'])."' />\n";
@@ -2623,13 +2664,13 @@ if (permission_exists('contact_attachment_view')) {
 	}
 }
 
-if (permission_exists('contact_time_view')) {
+if ($has_contact_time_view) {
 	$x = 0;
 	foreach ($contact_times as $row) {
 		echo "<div class='form_set card'>\n";
 		echo "	<div class='heading'>\n";
 		echo " 		<b style='float: left;'>".$text['header_contact_times']."</b>\n";
-		if (permission_exists('contact_time_delete')) {
+		if ($has_contact_time_delete) {
 			echo "		<div class='checkbox' style='float: left; margin-top: 3px; margin-left: 8px;'>\n";
 			echo "			<input type='checkbox' name='contact_times[$x][checked]' id='checkbox_".$x."' class='chk_delete checkbox_times' value='true' onclick=\"edit_delete_action('times');\">\n";
 			echo "			<input type='hidden' name='contact_times[$x][uuid]' value='".escape($row['contact_time_uuid'])."' />\n";
@@ -2674,21 +2715,21 @@ if (permission_exists('contact_time_view')) {
 	unset($contact_times);
 }
 
-if (permission_exists('contact_note_view')) {
+if ($has_contact_note_view) {
 	$x = 0;
 	foreach($contact_notes as $row) {
 		$contact_note = $row['contact_note'];
 		if (!empty($contact_note)) {
 			$contact_note = htmlspecialchars($contact_note, ENT_QUOTES, 'UTF-8');
 		}
-		if (permission_exists('contact_note_add')) {
+		if ($has_contact_note_add) {
 			$list_row_url = "contact_note_edit.php?contact_uuid=".escape($row['contact_uuid'])."&id=".escape($row['contact_note_uuid']);
 		}
 
 		echo "<div class='form_set card'>\n";
 		echo "	<div class='heading'>\n";
 		echo "		<b style='float: left;'>".$text['label-contact_notes']."</b>\n";
-		if (permission_exists('contact_note_delete')) {
+		if ($has_contact_note_delete) {
 			echo "		<div class='checkbox' style='float: left; margin-top: 3px; margin-left: 8px;'>\n";
 			echo "			<input type='checkbox' name='contact_notes[$x][checked]' id='checkbox_".$x."' class='chk_delete checkbox_notes' value='true' onclick=\"edit_delete_action('notes');\">\n";
 			echo "			<input type='hidden' name='contact_notes[$x][uuid]' value='".escape($row['contact_note_uuid'])."' />\n";

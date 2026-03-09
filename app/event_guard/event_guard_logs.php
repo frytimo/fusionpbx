@@ -34,6 +34,10 @@ if (!permission_exists('event_guard_log_view')) {
 	echo "access denied";
 	exit;
 }
+	$has_domain_select          = permission_exists('domain_select');
+	$has_event_guard_log_add    = permission_exists('event_guard_log_add');
+	$has_event_guard_log_delete = permission_exists('event_guard_log_delete');
+	$has_event_guard_log_edit   = permission_exists('event_guard_log_edit');
 
 // add multi-lingual support
 $text = new text()->get();
@@ -54,25 +58,25 @@ if (!empty($action) && !empty($event_guard_logs) && is_array($event_guard_logs) 
 
 	switch ($action) {
 		case 'sweep':
-			if (permission_exists('event_guard_log_delete')) {
+			if ($has_event_guard_log_delete) {
 				$event_guard = new event_guard();
 				$event_guard->sweep($database);
 			}
 			break;
 		case 'copy':
-			if (permission_exists('event_guard_log_add')) {
+			if ($has_event_guard_log_add) {
 				$obj = new event_guard;
 				$obj->copy($event_guard_logs);
 			}
 			break;
 		case 'toggle':
-			// if (permission_exists('event_guard_log_edit')) {
+			// if ($has_event_guard_log_edit) {
 			//	$obj = new event_guard;
 			//	$obj->toggle($event_guard_logs);
 			// }
 			// break;
 		case 'delete':
-			if (permission_exists('event_guard_log_delete')) {
+			if ($has_event_guard_log_delete) {
 				$obj = new event_guard;
 				$obj->unblock($event_guard_logs);
 			}
@@ -189,16 +193,16 @@ require_once "resources/header.php";
 echo "<div class='action_bar' id='action_bar'>\n";
 echo "	<div class='heading'><b>" . $text['title-event_guard_logs'] . "</b><div class='count'>" . number_format($num_rows) . "</div></div>\n";
 echo "	<div class='actions'>\n";
-if (permission_exists('event_guard_log_add')) {
+if ($has_event_guard_log_add) {
 	echo button::create(['type' => 'button', 'label' => $text['button-add'], 'icon' => $settings->get('theme', 'button_icon_add'), 'id' => 'btn_add', 'name' => 'btn_add', 'link' => 'event_guard_log_edit.php']);
 }
-if (permission_exists('event_guard_log_add') && $event_guard_logs) {
+if ($has_event_guard_log_add && $event_guard_logs) {
 	echo button::create(['type' => 'button', 'label' => $text['button-copy'], 'icon' => $settings->get('theme', 'button_icon_copy'), 'id' => 'btn_copy', 'name' => 'btn_copy', 'style' => 'display:none;', 'onclick' => "modal_open('modal-copy','btn_copy');"]);
 }
-// if (permission_exists('event_guard_log_edit') && $event_guard_logs) {
+// if ($has_event_guard_log_edit && $event_guard_logs) {
 //	echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display:none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 // }
-if (permission_exists('event_guard_log_delete') && $event_guard_logs) {
+if ($has_event_guard_log_delete && $event_guard_logs) {
 	echo button::create(['type' => 'button', 'label' => $text['button-unblock'], 'icon' => $settings->get('theme', 'button_icon_delete'), 'id' => 'btn_delete', 'name' => 'btn_delete', 'style' => 'display:none;', 'onclick' => "modal_open('modal-delete','btn_delete');"]);
 }
 echo "<form id='form_search' class='inline' method='get'>\n";
@@ -219,13 +223,13 @@ echo "	</div>\n";
 echo "	<div style='clear: both;'></div>\n";
 echo "</div>\n";
 
-if (permission_exists('event_guard_log_add') && $event_guard_logs) {
+if ($has_event_guard_log_add && $event_guard_logs) {
 	echo modal::create(['id' => 'modal-copy', 'type' => 'copy', 'actions' => button::create(['type' => 'button', 'label' => $text['button-continue'], 'icon' => 'check', 'id' => 'btn_copy', 'style' => 'float: right; margin-left: 15px;', 'collapse' => 'never', 'onclick' => "modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 }
-if (permission_exists('event_guard_log_edit') && $event_guard_logs) {
+if ($has_event_guard_log_edit && $event_guard_logs) {
 	echo modal::create(['id' => 'modal-toggle', 'type' => 'toggle', 'actions' => button::create(['type' => 'button', 'label' => $text['button-continue'], 'icon' => 'check', 'id' => 'btn_toggle', 'style' => 'float: right; margin-left: 15px;', 'collapse' => 'never', 'onclick' => "modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 }
-if (permission_exists('event_guard_log_delete') && $event_guard_logs) {
+if ($has_event_guard_log_delete && $event_guard_logs) {
 	echo modal::create(['id' => 'modal-delete', 'type' => 'delete', 'actions' => button::create(['type' => 'button', 'label' => $text['button-continue'], 'icon' => 'check', 'id' => 'btn_delete', 'style' => 'float: right; margin-left: 15px;', 'collapse' => 'never', 'onclick' => "modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 }
 
@@ -239,10 +243,10 @@ echo "<input type='hidden' name='search' value=\"" . escape($search ?? '') . "\"
 echo "<div class='card'>\n";
 echo "<table class='list'>\n";
 echo "<tr class='list-header'>\n";
-if (permission_exists('event_guard_log_delete')) {
+if ($has_event_guard_log_delete) {
 	echo button::create(['type' => 'button', 'label' => $text['button-sweep'] ?? 'sweep', 'icon' => $_SESSION['theme']['button_icon_sweep'] ?? 'fa-solid fa-broom', 'id' => 'btn_sweep', 'name' => 'btn_sweep', 'onclick' => "modal_open('modal-sweep','btn_sweep');"]);
 }
-if (permission_exists('event_guard_log_add') || permission_exists('event_guard_log_edit') || permission_exists('event_guard_log_delete')) {
+if ($has_event_guard_log_add || $has_event_guard_log_edit || $has_event_guard_log_delete) {
 	echo "	<th class='checkbox'>\n";
 	echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' " . (empty($event_guard_logs) ? "style='visibility: hidden;'" : null) . ">\n";
 	echo "	</th>\n";
@@ -255,7 +259,7 @@ echo th_order_by('ip_address', $text['label-ip_address'], $order_by, $order);
 echo th_order_by('extension', $text['label-extension'], $order_by, $order);
 echo "<th class='hide-md-dn'>" . $text['label-user_agent'] . "</th>\n";
 echo th_order_by('log_status', $text['label-log_status'], $order_by, $order);
-if (permission_exists('event_guard_log_edit') && $settings->get('theme', 'list_row_edit_button', false)) {
+if ($has_event_guard_log_edit && $settings->get('theme', 'list_row_edit_button', false)) {
 	echo "	<td class='action-button'>&nbsp;</td>\n";
 }
 echo "</tr>\n";
@@ -266,21 +270,21 @@ if (is_array($event_guard_logs) && @sizeof($event_guard_logs) != 0) {
 		//dispatch render-row hook
 		app::dispatch_list_render_row(null, $url, $row, $x);
 		$list_row_url = '';
-		if (permission_exists('event_guard_log_edit')) {
+		if ($has_event_guard_log_edit) {
 			$list_row_url = "event_guard_log_edit.php?id=" . urlencode($row['event_guard_log_uuid']);
-			if (!empty($row['domain_uuid']) && $row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+			if (!empty($row['domain_uuid']) && $row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 				$list_row_url .= '&domain_uuid=' . urlencode($row['domain_uuid']) . '&domain_change=true';
 			}
 		}
 		echo "<tr class='list-row'>\n";
-		if (permission_exists('event_guard_log_add') || permission_exists('event_guard_log_edit') || permission_exists('event_guard_log_delete')) {
+		if ($has_event_guard_log_add || $has_event_guard_log_edit || $has_event_guard_log_delete) {
 			echo "	<td class='checkbox'>\n";
 			echo "		<input type='checkbox' name='event_guard_logs[$x][checked]' id='checkbox_" . $x . "' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 			echo "		<input type='hidden' name='event_guard_logs[$x][event_guard_log_uuid]' value='" . escape($row['event_guard_log_uuid']) . "' />\n";
 			echo "	</td>\n";
 		}
 		echo "	<td class='hide-md-dn'>\n";
-		if (permission_exists('event_guard_log_edit')) {
+		if ($has_event_guard_log_edit) {
 			echo "	<a href='" . $list_row_url . "' title=\"" . $text['button-edit'] . "\">" . escape($row['hostname']) . "</a>\n";
 		} else {
 			echo "	" . escape($row['hostname']);
@@ -301,7 +305,7 @@ if (is_array($event_guard_logs) && @sizeof($event_guard_logs) != 0) {
 		echo "	<td>" . escape($row['extension']) . "</td>\n";
 		echo "	<td class='hide-md-dn'>" . escape($row['user_agent']) . "</td>\n";
 		echo "	<td>" . escape($text['label-' . $row['log_status']]) . "</td>\n";
-		if (permission_exists('event_guard_log_edit') && $settings->get('theme', 'list_row_edit_button', false)) {
+		if ($has_event_guard_log_edit && $settings->get('theme', 'list_row_edit_button', false)) {
 			echo "	<td class='action-button'>\n";
 			echo button::create(['type' => 'button', 'title' => $text['button-edit'], 'icon' => $settings->get('theme', 'button_icon_edit'), 'link' => $list_row_url]);
 			echo "	</td>\n";

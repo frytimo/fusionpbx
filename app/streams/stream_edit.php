@@ -30,6 +30,7 @@
 		echo "access denied";
 		exit;
 	}
+	$has_stream_all = permission_exists('stream_all');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -180,7 +181,7 @@
 
 		//prepare the array
 			$array['streams'][0]['stream_uuid'] = $stream_uuid;
-			if (permission_exists('stream_all')) {
+			if ($has_stream_all) {
 				$array['streams'][0]['domain_uuid'] = $domain_uuid;
 			}
 			elseif ($action == 'add') {
@@ -225,7 +226,7 @@
 	}
 
 //need stream_all permission to edit a global stream
-	if (!permission_exists('stream_all') && $domain_uuid == null) {
+	if (!$has_stream_all && $domain_uuid == null) {
 		header('Location: streams.php');
 		return;
 	}
@@ -299,7 +300,7 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('stream_all')) {
+	if ($has_stream_all) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-domain_uuid']."\n";

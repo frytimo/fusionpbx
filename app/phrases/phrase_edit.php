@@ -36,6 +36,12 @@ if (permission_exists('phrase_add') || permission_exists('phrase_edit')) {
 	echo "access denied";
 	exit;
 }
+	$has_phrase_add     = permission_exists('phrase_add');
+	$has_phrase_delete  = permission_exists('phrase_delete');
+	$has_phrase_domain  = permission_exists('phrase_domain');
+	$has_phrase_edit    = permission_exists('phrase_edit');
+	$has_phrase_execute = permission_exists('phrase_execute');
+	$has_phrase_play    = permission_exists('phrase_play');
 
 function build_data_array_from_post(settings $settings) {
 	global $domain_uuid, $drop_rows;
@@ -98,7 +104,7 @@ function build_data_array_from_post(settings $settings) {
 						}
 					}
 					// build data array
-					if ($_POST['phrase_detail_function'][$i] == 'execute' && substr($_POST['phrase_detail_data'][$i], 0, 5) != "sleep" && !permission_exists("phrase_execute")) {
+					if ($_POST['phrase_detail_function'][$i] == 'execute' && substr($_POST['phrase_detail_data'][$i], 0, 5) != "sleep" && !$has_phrase_execute) {
 						header("Location: phrase_edit.php?id=" . $phrase_uuid);
 						exit;
 					}
@@ -187,7 +193,7 @@ if (count($_POST) > 0) {
 
 		switch ($_POST['action']) {
 			case 'delete':
-				if (permission_exists('phrase_delete')) {
+				if ($has_phrase_delete) {
 					$obj = new phrases;
 					$obj->delete($array);
 				}
@@ -198,7 +204,7 @@ if (count($_POST) > 0) {
 		exit;
 	}
 
-	if (permission_exists('phrase_domain')) {
+	if ($has_phrase_domain) {
 		$domain_uuid = $_POST["domain_uuid"];
 	}
 	$phrase_name = $_POST["phrase_name"];
@@ -255,7 +261,7 @@ if (count($_POST) > 0 && empty($_POST["persistformvar"])) {
 		switch ($action) {
 			case 'add':
 				// redirect when they don't have permission to add a phrase
-				if (!permission_exists('phrase_add')) {
+				if (!$has_phrase_add) {
 					header('Location: phrases.php');
 					exit();
 				}
@@ -266,7 +272,7 @@ if (count($_POST) > 0 && empty($_POST["persistformvar"])) {
 			case 'update':
 				// redirect when not adding and don't have permission to edit a phrase
 				if (empty($message)) {
-					if (!permission_exists('phrase_edit')) {
+					if (!$has_phrase_edit) {
 						header('Location: phrases.php');
 						exit();
 					}
@@ -343,17 +349,17 @@ require_once "resources/header.php";
 
 // javascript constants for use in the selection option group
 echo "<script>\n";
-echo "window.permission_execute = " . (permission_exists('phrase_execute') ? 'true' : 'false') . ";\n";
+echo "window.permission_execute = " . ($has_phrase_execute ? 'true' : 'false') . ";\n";
 echo "window.phrase_label_sounds = '" . ($text['label-sounds'] ?? 'Sounds') . "';\n";
 echo "window.phrase_label_recordings = '" . ($text['label-recordings'] ?? 'Recordings') . "';\n";
 // only include permissive actions
 $phrase_commands = [];
-if (permission_exists('phrase_play')) {
+if ($has_phrase_play) {
 	$phrase_commands[] = $text['label-play'] ?? 'Play';
 	$phrase_commands[] = $text['label-pause'] ?? 'Pause';
 }
 
-if (permission_exists('phrase_execute')) {
+if ($has_phrase_execute) {
 	$phrase_commands[] = $text['label-execute'] ?? 'Execute';
 }
 echo "window.phrase_commands = " . json_encode($phrase_commands, true) . ";\n";
@@ -446,14 +452,14 @@ echo "	<td class='vtable' style='border-bottom: none;' align='left' nowrap='nowr
 echo "		<select class='formfld' name='phrase_detail_function_empty' id='phrase_detail_function_empty' tag=''>\n";
 echo "			<option value='play-file'>" . $text['label-play'] . "</option>\n";
 echo "			<option value='pause'>" . $text['label-pause'] . "</option>\n";
-if (permission_exists('phrase_execute')) {
+if ($has_phrase_execute) {
 	echo "			<option value='execute'>" . $text['label-execute'] . "</option>\n";
 }
 echo "		</select>\n";
 echo "	</td>\n";
 echo "	<td class='vtable' style='border-bottom: none;' align='left' nowrap='nowrap'>\n";
 echo "		<select  class='formfld' id='phrase_detail_data_empty' name='phrase_detail_data_empty' style='width: 300px; min-width: 300px; max-width: 300px;' tag=''></select>";
-//	if (permission_exists('phrase_execute')) {
+//	if ($has_phrase_execute) {
 //		echo "	<input id='phrase_detail_data_switch_empty' type='button' class='btn' style='margin-left: 4px; display: none;' value='&#9665;' onclick=\"action_to_select(); load_action_options(document.getElementById('phrase_detail_function_empty').selectedIndex);\">\n";
 //	}
 echo "    <input type=hidden name='empty_uuid' value=''>";

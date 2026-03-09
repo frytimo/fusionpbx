@@ -34,6 +34,57 @@
 		echo "access denied";
 		exit;
 	}
+	$has_call_forward                     = permission_exists('call_forward');
+	$has_device_address_uuid              = permission_exists('device_address_uuid');
+	$has_device_all                       = permission_exists('device_all');
+	$has_device_domain_all                = permission_exists('device_domain_all');
+	$has_device_edit                      = permission_exists('device_edit');
+	$has_do_not_disturb                   = permission_exists('do_not_disturb');
+	$has_effective_caller_id_name         = permission_exists('effective_caller_id_name');
+	$has_effective_caller_id_number       = permission_exists('effective_caller_id_number');
+	$has_emergency_caller_id_name         = permission_exists('emergency_caller_id_name');
+	$has_emergency_caller_id_number       = permission_exists('emergency_caller_id_number');
+	$has_emergency_caller_id_select       = permission_exists('emergency_caller_id_select');
+	$has_emergency_caller_id_select_empty = permission_exists('emergency_caller_id_select_empty');
+	$has_extension_absolute_codec_string  = permission_exists('extension_absolute_codec_string');
+	$has_extension_accountcode            = permission_exists('extension_accountcode');
+	$has_extension_add                    = permission_exists('extension_add');
+	$has_extension_advanced               = permission_exists('extension_advanced');
+	$has_extension_call_group             = permission_exists('extension_call_group');
+	$has_extension_call_screen            = permission_exists('extension_call_screen');
+	$has_extension_cidr                   = permission_exists('extension_cidr');
+	$has_extension_copy                   = permission_exists('extension_copy');
+	$has_extension_delete                 = permission_exists('extension_delete');
+	$has_extension_dial_string            = permission_exists('extension_dial_string');
+	$has_extension_directory              = permission_exists('extension_directory');
+	$has_extension_domain                 = permission_exists('extension_domain');
+	$has_extension_edit                   = permission_exists('extension_edit');
+	$has_extension_enabled                = permission_exists('extension_enabled');
+	$has_extension_extension              = permission_exists('extension_extension');
+	$has_extension_force_ping             = permission_exists('extension_force_ping');
+	$has_extension_hold_music             = permission_exists('extension_hold_music');
+	$has_extension_language               = permission_exists('extension_language');
+	$has_extension_limit                  = permission_exists('extension_limit');
+	$has_extension_max_registrations      = permission_exists('extension_max_registrations');
+	$has_extension_missed_call            = permission_exists('extension_missed_call');
+	$has_extension_nibble_account         = permission_exists('extension_nibble_account');
+	$has_extension_password               = permission_exists('extension_password');
+	$has_extension_setting_view           = permission_exists('extension_setting_view');
+	$has_extension_toll                   = permission_exists('extension_toll');
+	$has_extension_type                   = permission_exists('extension_type');
+	$has_extension_user_context           = permission_exists('extension_user_context');
+	$has_extension_user_edit              = permission_exists('extension_user_edit');
+	$has_extension_user_record            = permission_exists('extension_user_record');
+	$has_follow_me                        = permission_exists('follow_me');
+	$has_number_alias                     = permission_exists('number_alias');
+	$has_outbound_caller_id_name          = permission_exists('outbound_caller_id_name');
+	$has_outbound_caller_id_number        = permission_exists('outbound_caller_id_number');
+	$has_outbound_caller_id_select        = permission_exists('outbound_caller_id_select');
+	$has_voicemail_edit                   = permission_exists('voicemail_edit');
+	$has_voicemail_file                   = permission_exists('voicemail_file');
+	$has_voicemail_local_after_email      = permission_exists('voicemail_local_after_email');
+	$has_voicemail_transcription_enabled  = permission_exists('voicemail_transcription_enabled');
+	$has_xml_cdr_view                     = permission_exists('xml_cdr_view');
 
 //get the domain and user UUIDs
 	$domain_uuid = $_SESSION['domain_uuid'] ?? '';
@@ -134,7 +185,7 @@
 	if (!empty($_POST)) {
 
 		//get the values from the HTTP POST and save them as PHP variables
-			if ($action == 'add' || permission_exists("extension_extension")) {
+			if ($action == 'add' || $has_extension_extension) {
 				$extension = str_replace(' ','-',$_POST["extension"]);
 			}
 			else { //lookup extension based on submitted uuid
@@ -204,7 +255,7 @@
 			}
 
 			$voicemail_id = $extension;
-			if (permission_exists('number_alias') && !empty($number_alias)) {
+			if ($has_number_alias && !empty($number_alias)) {
 				$voicemail_id = $number_alias;
 			}
 
@@ -238,7 +289,7 @@
 				//get the devices
 				$sql = "select count(device_uuid) from v_devices ";
 				$sql .= "where domain_uuid = :domain_uuid ";
-				if (!permission_exists('device_all') && !permission_exists('device_domain_all')) {
+				if (!$has_device_all && !$has_device_domain_all) {
 					$sql .= "and device_user_uuid = :user_uuid ";
 					$parameters['user_uuid'] = $user_uuid;
 				}
@@ -307,7 +358,7 @@
 	}
 
 //delete the user from the v_extension_users
-	if (!empty($_REQUEST["delete_type"]) && $_REQUEST["delete_type"] == "user" && is_uuid($_REQUEST["delete_uuid"]) && permission_exists("extension_delete")) {
+	if (!empty($_REQUEST["delete_type"]) && $_REQUEST["delete_type"] == "user" && is_uuid($_REQUEST["delete_uuid"]) && $has_extension_delete) {
 		//set the variables
 			$extension_uuid = $_REQUEST["id"];
 			$user_uuid = $_REQUEST["delete_uuid"];
@@ -334,7 +385,7 @@
 
 //delete the line from the v_device_lines
 	if (is_dir(dirname(__DIR__, 2).'/app/devices')) {
-		if (!empty($_REQUEST["delete_type"]) && $_REQUEST["delete_type"] == "device_line" && is_uuid($_REQUEST["delete_uuid"]) && permission_exists("extension_delete")) {
+		if (!empty($_REQUEST["delete_type"]) && $_REQUEST["delete_type"] == "device_line" && is_uuid($_REQUEST["delete_uuid"]) && $has_extension_delete) {
 			//set the variables
 				$device_line_uuid = $_REQUEST["delete_uuid"];
 
@@ -362,7 +413,7 @@
 	if (!empty($_POST) && empty($_POST["persistformvar"])) {
 
 		//set the domain_uuid
-			if (permission_exists('extension_domain') && is_uuid($_POST["domain_uuid"])) {
+			if ($has_extension_domain && is_uuid($_POST["domain_uuid"])) {
 				$domain_uuid = $_POST["domain_uuid"];
 			}
 
@@ -383,7 +434,7 @@
 			}
 
 		//require passwords with the defined required attributes: length, number, lower case, upper case, and special characters
-			// if (permission_exists('extension_password') && !empty($password)) {
+			// if ($has_extension_password && !empty($password)) {
 			// 	if (strlen($password) < $extension_password_length) {
 			// 		$invalid[] = $text['label-password'].": ".$text['label-characters'];
 			// 	}
@@ -413,7 +464,7 @@
 			if (message::count() != 0 || !empty($invalid)) {
 				if ($invalid) { message::add($text['message-required'].implode(', ', $invalid), 'negative', 7500); }
 				persistent_form_values('store', $_POST);
-				header("Location: extension_edit.php?".(permission_exists('extension_edit') && $action != 'add' ? "&id=".urlencode($extension_uuid) : null).(!empty($order_by) ? '&order_by='.$order_by : null).(!empty($order) ? '&order='.$order : null).(!empty($page) ? '&page='.$page : null));
+				header("Location: extension_edit.php?".($has_extension_edit && $action != 'add' ? "&id=".urlencode($extension_uuid) : null).(!empty($order_by) ? '&order_by='.$order_by : null).(!empty($order) ? '&order='.$order : null).(!empty($page) ? '&page='.$page : null));
 				exit;
 			}
 			else {
@@ -476,7 +527,7 @@
 							}
 							else {
 								//password permission not assigned get the password from the database
-									if ($action == "update" && !permission_exists('extension_password')) {
+									if ($action == "update" && !$has_extension_password) {
 										$sql = "select password from v_extensions ";
 										$sql .= "where extension_uuid = :extension_uuid ";
 										$sql .= "and domain_uuid = :domain_uuid ";
@@ -509,7 +560,7 @@
 									if ($action == "add" && empty($password)) {
 										$password = generate_password($password_length, $password_strength);
 									}
-									if ($action == "update" && permission_exists('extension_password') && empty($password)) {
+									if ($action == "update" && $has_extension_password && empty($password)) {
 										$password = generate_password($password_length, $password_strength);
 									}
 
@@ -523,13 +574,13 @@
 									$array["extensions"][$i]["domain_uuid"] = $domain_uuid;
 									$array["extensions"][$i]["extension_uuid"] = $extension_uuid;
 									$array["extensions"][$i]["extension"] = $extension;
-									if (permission_exists('number_alias')) {
+									if ($has_number_alias) {
 										$array["extensions"][$i]["number_alias"] = $number_alias;
 									}
 									if (!empty($password)) {
 										$array["extensions"][$i]["password"] = $password;
 									}
-									if (permission_exists('extension_accountcode')) {
+									if ($has_extension_accountcode) {
 										$array["extensions"][$i]["accountcode"] = $accountcode;
 									}
 									else {
@@ -537,31 +588,31 @@
 											$array["extensions"][$i]["accountcode"] = get_accountcode();
 										}
 									}
-									if (permission_exists("effective_caller_id_name")) {
+									if ($has_effective_caller_id_name) {
 										$array["extensions"][$i]["effective_caller_id_name"] = $effective_caller_id_name;
 									}
-									if (permission_exists("effective_caller_id_number")) {
+									if ($has_effective_caller_id_number) {
 										$array["extensions"][$i]["effective_caller_id_number"] = $effective_caller_id_number;
 									}
-									if (permission_exists("outbound_caller_id_name")) {
+									if ($has_outbound_caller_id_name) {
 										$array["extensions"][$i]["outbound_caller_id_name"] = $outbound_caller_id_name;
 									}
-									if (permission_exists("outbound_caller_id_number")) {
+									if ($has_outbound_caller_id_number) {
 										$array["extensions"][$i]["outbound_caller_id_number"] = $outbound_caller_id_number;
 									}
-									if (permission_exists("emergency_caller_id_name")) {
+									if ($has_emergency_caller_id_name) {
 										$array["extensions"][$i]["emergency_caller_id_name"] = $emergency_caller_id_name;
 									}
-									if (permission_exists("emergency_caller_id_number")) {
+									if ($has_emergency_caller_id_number) {
 										$array["extensions"][$i]["emergency_caller_id_number"] = $emergency_caller_id_number;
 									}
-									if (permission_exists("extension_directory")) {
+									if ($has_extension_directory) {
 										$array["extensions"][$i]["directory_first_name"] = $directory_first_name;
 										$array["extensions"][$i]["directory_last_name"] = $directory_last_name;
 										$array["extensions"][$i]["directory_visible"] = $directory_visible;
 										$array["extensions"][$i]["directory_exten_visible"] = $directory_exten_visible;
 									}
-									if (permission_exists("extension_max_registrations")) {
+									if ($has_extension_max_registrations) {
 										$array["extensions"][$i]["max_registrations"] = $max_registrations;
 									}
 									else {
@@ -569,11 +620,11 @@
 											$array["extensions"][$i]["max_registrations"] = $extension_max_registrations;
 										}
 									}
-									if (permission_exists("extension_limit")) {
+									if ($has_extension_limit) {
 										$array["extensions"][$i]["limit_max"] = $limit_max;
 										$array["extensions"][$i]["limit_destination"] = $limit_destination;
 									}
-									if (permission_exists("extension_user_context")) {
+									if ($has_extension_user_context) {
 										$array["extensions"][$i]["user_context"] = $user_context;
 									}
 									else {
@@ -581,59 +632,59 @@
 											$array["extensions"][$i]["user_context"] = $domain_name;
 										}
 									}
-									if (permission_exists('extension_missed_call')) {
+									if ($has_extension_missed_call) {
 										$array["extensions"][$i]["missed_call_app"] = $missed_call_app;
 										$array["extensions"][$i]["missed_call_data"] = $missed_call_data;
 									}
-									if (permission_exists('extension_toll')) {
+									if ($has_extension_toll) {
 										$array["extensions"][$i]["toll_allow"] = $toll_allow;
 									}
 									if (!empty($call_timeout)) {
 										$array["extensions"][$i]["call_timeout"] = $call_timeout;
 									}
-									if (permission_exists("extension_call_group")) {
+									if ($has_extension_call_group) {
 										$array["extensions"][$i]["call_group"] = $call_group;
 									}
 									$array["extensions"][$i]["call_screen_enabled"] = $call_screen_enabled;
-									if (permission_exists('extension_user_record')) {
+									if ($has_extension_user_record) {
 										$array["extensions"][$i]["user_record"] = $user_record;
 									}
-									if (permission_exists('extension_hold_music')) {
+									if ($has_extension_hold_music) {
 										$array["extensions"][$i]["hold_music"] = $hold_music;
 									}
-									if (permission_exists("extension_advanced")) {
+									if ($has_extension_advanced) {
 										$array["extensions"][$i]["auth_acl"] = $auth_acl;
-										if (permission_exists("extension_cidr")) {
+										if ($has_extension_cidr) {
 											$array["extensions"][$i]["cidr"] = $cidr;
 										}
 										$array["extensions"][$i]["sip_force_contact"] = $sip_force_contact;
 										$array["extensions"][$i]["sip_force_expires"] = $sip_force_expires;
-										if (permission_exists('extension_nibble_account')) {
+										if ($has_extension_nibble_account) {
 											if (!empty($nibble_account)) {
 												$array["extensions"][$i]["nibble_account"] = $nibble_account;
 											}
 										}
 										$array["extensions"][$i]["mwi_account"] = $mwi_account;
 										$array["extensions"][$i]["sip_bypass_media"] = $sip_bypass_media;
-										if (permission_exists('extension_absolute_codec_string')) {
+										if ($has_extension_absolute_codec_string) {
 											$array["extensions"][$i]["absolute_codec_string"] = $absolute_codec_string;
 										}
-										if (permission_exists('extension_force_ping')) {
+										if ($has_extension_force_ping) {
 											$array["extensions"][$i]["force_ping"] = $force_ping;
 										}
-										if (permission_exists('extension_dial_string')) {
+										if ($has_extension_dial_string) {
 											$array["extensions"][$i]["dial_string"] = $dial_string;
 										}
 									}
-									if (permission_exists('extension_language')) {
+									if ($has_extension_language) {
 										$array['extensions'][0]["extension_language"] = $extension_language;
 										$array['extensions'][0]["extension_dialect"] = $extension_dialect;
 										$array['extensions'][0]["extension_voice"] = $extension_voice;
 									}
-									if (permission_exists('extension_type')) {
+									if ($has_extension_type) {
 										$array["extensions"][$i]["extension_type"] = $extension_type;
 									}
-									if (permission_exists('extension_enabled')) {
+									if ($has_extension_enabled) {
 										$array["extensions"][$i]["enabled"] = $enabled;
 									}
 									$array["extensions"][$i]["description"] = $description;
@@ -785,7 +836,7 @@
 												$voicemail_uuid = uuid();
 												$voicemail_tutorial = true;
 												//if adding a mailbox and don't have the transcription permission, set the default transcribe behavior
-												if (!permission_exists('voicemail_transcription_enabled')) {
+												if (!$has_voicemail_transcription_enabled) {
 													$voicemail_transcription_enabled = $voicemail_transcription_enabled_default;
 												}
 											}
@@ -800,10 +851,10 @@
 											//$array["voicemails"][$i]["voicemail_alternate_greet_id"] = $alternate_greet_id;
 											$array["voicemails"][$i]["voicemail_mail_to"] = $voicemail_mail_to;
 											//$array["voicemails"][$i]["voicemail_attach_file"] = $voicemail_attach_file;
-											if (permission_exists('voicemail_file')) {
+											if ($has_voicemail_file) {
 												$array["voicemails"][$i]["voicemail_file"] = $voicemail_file;
 											}
-											if (permission_exists('voicemail_local_after_email')) {
+											if ($has_voicemail_local_after_email) {
 												$array["voicemails"][$i]["voicemail_local_after_email"] = $voicemail_local_after_email;
 											}
 											$array["voicemails"][$i]["voicemail_transcription_enabled"] = $voicemail_transcription_enabled;
@@ -839,7 +890,7 @@
 					}
 
 				//update devices having extension assigned to line(s) with new password
-					if ($action == "update" && $range == 1 && permission_exists('extension_password')) {
+					if ($action == "update" && $range == 1 && $has_extension_password) {
 						$sql = "update v_device_lines set ";
 						$sql .= "password = :password ";
 						$sql .= "where domain_uuid = :domain_uuid ";
@@ -871,13 +922,13 @@
 					unset($array);
 
 				//reload the access control list
-					if (permission_exists("extension_cidr")) {
+					if ($has_extension_cidr) {
 						$event_socket = event_socket::create();
 						if ($event_socket->is_connected()) { event_socket::api("reloadacl"); }
 					}
 
 				//check the permissions
-					if (permission_exists('extension_add') || permission_exists('extension_edit')) {
+					if ($has_extension_add || $has_extension_edit) {
 
 						//synchronize configuration
 							if (is_writable($switch_extensions)) {
@@ -894,7 +945,7 @@
 							}
 
 						//clear the cache
-							if (!permission_exists("extension_user_context") && $action == "update") {
+							if (!$has_extension_user_context && $action == "update") {
 								$sql = "select user_context from v_extensions ";
 								$sql .= "where extension_uuid = :extension_uuid ";
 								$parameters['extension_uuid'] = $extension_uuid;
@@ -902,7 +953,7 @@
 							}
 							$cache = new cache;
 							$cache->delete(gethostname().":directory:".$extension."@".$user_context);
-							if (permission_exists('number_alias') && !empty($number_alias)) {
+							if ($has_number_alias && !empty($number_alias)) {
 								$cache->delete(gethostname().":directory:".$number_alias."@".$user_context);
 							}
 
@@ -1033,7 +1084,7 @@
 //get the devices
 	$sql = "select * from v_devices ";
 	$sql .= "where domain_uuid = :domain_uuid ";
-	if (!permission_exists('device_all') && !permission_exists('device_domain_all')) {
+	if (!$has_device_all && !$has_device_domain_all) {
 		$sql .= "and device_user_uuid = :user_uuid ";
 		$parameters['user_uuid'] = $user_uuid;
 	}
@@ -1098,7 +1149,7 @@
 	unset($sql, $parameters);
 
 //get the emergency destinations
-	if (permission_exists('emergency_caller_id_select')) {
+	if ($has_emergency_caller_id_select) {
 		$sql = "select * from v_destinations ";
 		$sql .= "where domain_uuid = :domain_uuid ";
 		$sql .= "and destination_type = 'inbound' ";
@@ -1173,7 +1224,7 @@
 	echo "	document.iform.range_to.disabled = endis;\n";
 	echo "}\n";
 	echo "\n";
-	if (permission_exists('extension_advanced')) {
+	if ($has_extension_advanced) {
 		echo "function show_advanced_config() {\n";
 		echo "	$('#show_advanced_box').slideToggle();\n";
 		echo "	$('#show_advanced').slideToggle();\n";
@@ -1213,23 +1264,23 @@
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','link'=>'extensions.php?'.(!empty($order_by) ? '&order_by='.$order_by.'&order='.$order : null).(isset($page) && is_numeric($page) ? '&page='.$page : null)]);
 	if ($action == 'update') {
 		$button_margin = 'margin-left: 15px;';
-		if (permission_exists('xml_cdr_view')) {
+		if ($has_xml_cdr_view) {
 			echo button::create(['type'=>'button','label'=>$text['button-cdr'],'icon'=>'info-circle','style'=>($button_margin ?? ''),'link'=>'../xml_cdr/xml_cdr.php?extension_uuid='.urlencode($extension_uuid)]);
 			unset($button_margin);
 		}
-		if (permission_exists('follow_me') || permission_exists('call_forward') || permission_exists('do_not_disturb')) {
+		if ($has_follow_me || $has_call_forward || $has_do_not_disturb) {
 			echo button::create(['type'=>'button','label'=>$text['button-call_forward'],'icon'=>'diagram-project','style'=>($button_margin ?? ''),'link'=>'../call_forward/call_forward_edit.php?id='.urlencode($extension_uuid)]);
 			unset($button_margin);
 		}
-		if (permission_exists('extension_setting_view')) {
+		if ($has_extension_setting_view) {
 			echo button::create(['type'=>'button','label'=>$text['button-settings'],'icon'=>$settings->get('theme', 'button_icon_settings'),'id'=>'btn_settings','style'=>'','link'=>PROJECT_PATH.'/app/extension_settings/extension_settings.php?id='.urlencode($extension_uuid)]);
 		}
-		if (permission_exists('extension_copy')) {
+		if ($has_extension_copy) {
 			echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','style'=>'margin-left: 15px;','onclick'=>"copy_extension();"]);
 		}
 
 	}
-	if (permission_exists('extension_add') || permission_exists('extension_edit')) {
+	if ($has_extension_add || $has_extension_edit) {
 		echo button::create(['type'=>'button','label'=>$text['button-save'],'icon'=>$settings->get('theme', 'button_icon_save'),'id'=>'btn_save','style'=>'margin-left: 15px;','onclick'=>'submit_form();']);
 	}
 	echo "	</div>\n";
@@ -1244,7 +1295,7 @@
 	echo "    ".$text['label-extension']."\n";
 	echo "</td>\n";
 	echo "<td width='70%' class='vtable' align='left'>\n";
-	if ($action == "add" || permission_exists("extension_extension")) {
+	if ($action == "add" || $has_extension_extension) {
 		echo "    <input class='formfld' type='text' name='extension' autocomplete='new-password' maxlength='255' value=\"".escape($extension ?? '')."\" required='required' placeholder=\"".$settings->get('extension','extension_range','')."\">\n";
 		echo "    <input type='text' style='display: none;' disabled='disabled'>\n"; //help defeat browser auto-fill
 		echo "<br />\n";
@@ -1256,7 +1307,7 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('number_alias')) {
+	if ($has_number_alias) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-number_alias']."\n";
@@ -1270,7 +1321,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('extension_password') && $action == "update") {
+	if ($has_extension_password && $action == "update") {
 		echo "<tr>\n";
 		echo "<td class='vncellreq' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-password']."\n";
@@ -1325,7 +1376,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('extension_user_edit')) {
+	if ($has_extension_user_edit) {
 		echo "	<tr>";
 		echo "		<td class='vncell' valign='top'>".($action == "update" ? $text['label-users'] : $text['label-user'])."</td>";
 		echo "		<td class='vtable'>";
@@ -1360,7 +1411,7 @@
 		echo "	</tr>";
 	}
 
-	if (permission_exists('voicemail_edit') && is_dir(dirname(__DIR__, 2).'/app/voicemails')) {
+	if ($has_voicemail_edit && is_dir(dirname(__DIR__, 2).'/app/voicemails')) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-voicemail_password']."\n";
@@ -1374,7 +1425,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('extension_accountcode')) {
+	if ($has_extension_accountcode) {
 			echo "<tr>\n";
 			echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 			echo "    ".$text['label-accountcode']."\n";
@@ -1387,7 +1438,7 @@
 			echo "</tr>\n";
 	}
 
-	if (permission_exists('device_edit') && (empty($extension_type) || $extension_type != 'virtual')) {
+	if ($has_device_edit && (empty($extension_type) || $extension_type != 'virtual')) {
 		if (is_dir(dirname(__DIR__, 2).'/app/devices')) {
 			echo "<tr>\n";
 			echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
@@ -1484,7 +1535,7 @@
 						}
 					}
 				}
-				if (permission_exists('device_address_uuid') && ($limit_devices === null || $total_devices < $limit_devices)) {
+				if ($has_device_address_uuid && ($limit_devices === null || $total_devices < $limit_devices)) {
 					echo "							<option disabled='disabled'></option>\n";
 					echo "							<option value='UUID'>".$text['label-generate']."</option>\n";
 				}
@@ -1535,7 +1586,7 @@
 		}
 	}
 
-	if (permission_exists("effective_caller_id_name")) {
+	if ($has_effective_caller_id_name) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-effective_caller_id_name']."\n";
@@ -1548,7 +1599,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists("effective_caller_id_number")) {
+	if ($has_effective_caller_id_number) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-effective_caller_id_number']."\n";
@@ -1561,13 +1612,13 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists("outbound_caller_id_name")) {
+	if ($has_outbound_caller_id_name) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-outbound_caller_id_name']."\n";
 		echo "</td>\n";
 		echo "<td class='vtable' align='left'>\n";
-		if (permission_exists('outbound_caller_id_select')) {
+		if ($has_outbound_caller_id_select) {
 			if (!empty($destinations)) {
 				echo "	<select name='outbound_caller_id_name' id='outbound_caller_id_name' class='formfld'>\n";
 				echo "	<option value=''></option>\n";
@@ -1598,13 +1649,13 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists("outbound_caller_id_number")) {
+	if ($has_outbound_caller_id_number) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-outbound_caller_id_number']."\n";
 		echo "</td>\n";
 		echo "<td class='vtable' align='left'>\n";
-		if (permission_exists('outbound_caller_id_select')) {
+		if ($has_outbound_caller_id_select) {
 			if (!empty($destinations)) {
 				echo "	<select name='outbound_caller_id_number' id='outbound_caller_id_number' class='formfld'>\n";
 				echo "	<option value=''></option>\n";
@@ -1639,13 +1690,13 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists("emergency_caller_id_name")) {
+	if ($has_emergency_caller_id_name) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-emergency_caller_id_name']."\n";
 		echo "</td>\n";
 		echo "<td class='vtable' align='left'>\n";
-		if (permission_exists('emergency_caller_id_select')) {
+		if ($has_emergency_caller_id_select) {
 			if (!empty($emergency_destinations)) {
 				echo "	<select name='emergency_caller_id_name' id='emergency_caller_id_name' class='formfld'>\n";
 				echo "		<option value=''></option>\n";
@@ -1673,7 +1724,7 @@
 			echo "	<input class='formfld' type='text' name='emergency_caller_id_name' maxlength='255' value=\"".escape($emergency_caller_id_name ?? '')."\">\n";
 		}
 		echo "<br />\n";
-		if (permission_exists('outbound_caller_id_select') && count($destinations) > 0) {
+		if ($has_outbound_caller_id_select && count($destinations) > 0) {
 			echo $text['description-emergency_caller_id_name-select']."\n";
 		}
 		else {
@@ -1683,16 +1734,16 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists("emergency_caller_id_number")) {
+	if ($has_emergency_caller_id_number) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-emergency_caller_id_number']."\n";
 		echo "</td>\n";
 		echo "<td class='vtable' align='left'>\n";
-		if (permission_exists('emergency_caller_id_select')) {
+		if ($has_emergency_caller_id_select) {
 			if (!empty($emergency_destinations)) {
 				echo "	<select name='emergency_caller_id_number' id='emergency_caller_id_number' class='formfld'>\n";
-				if (permission_exists('emergency_caller_id_select_empty')) {
+				if ($has_emergency_caller_id_select_empty) {
 					echo "		<option value=''></option>\n";
 				}
 				foreach ($emergency_destinations as $row) {
@@ -1719,10 +1770,10 @@
 			echo "    <input class='formfld' type='text' name='emergency_caller_id_number' maxlength='255' min='0' step='1' value=\"".escape($emergency_caller_id_number ?? '')."\">\n";
 		}
 		echo "<br />\n";
-		if (permission_exists('emergency_caller_id_select') && !empty($emergency_destinations)){
+		if ($has_emergency_caller_id_select && !empty($emergency_destinations)){
 			echo $text['description-emergency_caller_id_number-select']."\n";
 		}
-		elseif (permission_exists('outbound_caller_id_select') && !empty($destinations)) {
+		elseif ($has_outbound_caller_id_select && !empty($destinations)) {
 			echo $text['description-emergency_caller_id_number-select']."\n";
 		}
 		else {
@@ -1732,7 +1783,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists("extension_directory")) {
+	if ($has_extension_directory) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-directory_full_name']."\n";
@@ -1788,7 +1839,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists("extension_max_registrations")) {
+	if ($has_extension_max_registrations) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-max_registrations']."\n";
@@ -1801,7 +1852,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists("extension_limit")) {
+	if ($has_extension_limit) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-limit_max']."\n";
@@ -1825,7 +1876,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('voicemail_edit') && is_dir(dirname(__DIR__, 2).'/app/voicemails')) {
+	if ($has_voicemail_edit && is_dir(dirname(__DIR__, 2).'/app/voicemails')) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-voicemail_enabled']."\n";
@@ -1858,7 +1909,7 @@
 		echo "</td>\n";
 		echo "</tr>\n";
 
-		if (permission_exists('voicemail_transcription_enabled') && $transcribe_enabled) {
+		if ($has_voicemail_transcription_enabled && $transcribe_enabled) {
 			echo "<tr>\n";
 			echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 			echo "	".$text['label-voicemail_transcription_enabled']."\n";
@@ -1881,7 +1932,7 @@
 			echo "</tr>\n";
 		}
 
-		if (permission_exists('voicemail_file')) {
+		if ($has_voicemail_file) {
 			echo "<tr>\n";
 			echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 			echo "    ".$text['label-voicemail_file']."\n";
@@ -1898,7 +1949,7 @@
 			echo "</tr>\n";
 		}
 
-		if (permission_exists('voicemail_local_after_email')) {
+		if ($has_voicemail_local_after_email) {
 			echo "<tr>\n";
 			echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 			echo "    ".$text['label-voicemail_local_after_email']."\n";
@@ -1922,7 +1973,7 @@
 		}
 	}
 
-	if (permission_exists('extension_missed_call')) {
+	if ($has_extension_missed_call) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-missed_call']."\n";
@@ -1942,7 +1993,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('extension_toll')) {
+	if ($has_extension_toll) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-toll_allow']."\n";
@@ -1981,7 +2032,7 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists("extension_call_group")) {
+	if ($has_extension_call_group) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-call_group']."\n";
@@ -2009,7 +2060,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('extension_call_screen')) {
+	if ($has_extension_call_screen) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-call_screen_enabled']."\n";
@@ -2032,7 +2083,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('extension_user_record')) {
+	if ($has_extension_user_record) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-user_record']."\n";
@@ -2071,7 +2122,7 @@
 		echo "</tr>\n";
 	}
 
-	if (is_dir(dirname(__DIR__, 2).'/app/music_on_hold') && permission_exists('extension_hold_music')) {
+	if (is_dir(dirname(__DIR__, 2).'/app/music_on_hold') && $has_extension_hold_music) {
 		echo "<tr>\n";
 		echo "<td width=\"30%\" class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-hold_music']."\n";
@@ -2086,7 +2137,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('extension_language')) {
+	if ($has_extension_language) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap>\n";
 		echo "	".$text['label-language']."\n";
@@ -2116,7 +2167,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('extension_type')) {
+	if ($has_extension_type) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-extension_type']."\n";
@@ -2132,7 +2183,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists('extension_domain')) {
+	if ($has_extension_domain) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "	".$text['label-domain']."\n";
@@ -2154,7 +2205,7 @@
 		echo "</tr>\n";
 	}
 
-	if (permission_exists("extension_user_context")) {
+	if ($has_extension_user_context) {
 		echo "<tr>\n";
 		echo "<td class='vncellreq' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-user_context']."\n";
@@ -2169,7 +2220,7 @@
 
 	//--- begin: show_advanced -----------------------
 
-	if (permission_exists("extension_advanced")) {
+	if ($has_extension_advanced) {
 		echo "<tr>\n";
 		echo "<td style='padding: 0px;' colspan='2' class='' valign='top' align='left' nowrap>\n";
 
@@ -2198,7 +2249,7 @@
 		echo "</td>\n";
 		echo "</tr>\n";
 
-		if (permission_exists("extension_cidr")) {
+		if ($has_extension_cidr) {
 			echo "<tr>\n";
 			echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 			echo "    ".$text['label-cidr']."\n";
@@ -2244,7 +2295,7 @@
 		echo "</td>\n";
 		echo "</tr>\n";
 
-		if (permission_exists('extension_nibble_account')) {
+		if ($has_extension_nibble_account) {
 			echo "<tr>\n";
 			echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 			echo "    ".$text['label-nibble_account']."\n";
@@ -2290,7 +2341,7 @@
 		echo "</td>\n";
 		echo "</tr>\n";
 
-		if (permission_exists('extension_absolute_codec_string')) {
+		if ($has_extension_absolute_codec_string) {
 			echo "<tr>\n";
 			echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 			echo "    ".$text['label-absolute_codec_string']."\n";
@@ -2303,7 +2354,7 @@
 			echo "</tr>\n";
 		}
 
-		if (permission_exists('extension_force_ping')) {
+		if ($has_extension_force_ping) {
 			echo "<tr>\n";
 			echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 			echo "    ".$text['label-force_ping']."\n";
@@ -2326,7 +2377,7 @@
 			echo "</tr>\n";
 		}
 
-		if (permission_exists('extension_dial_string')) {
+		if ($has_extension_dial_string) {
 			echo "<tr>\n";
 			echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
 			echo "    ".$text['label-dial_string']."\n";
@@ -2348,7 +2399,7 @@
 	}
 	//--- end: show_advanced -----------------------
 
-	if (permission_exists('extension_enabled')) {
+	if ($has_extension_enabled) {
 		echo "<tr>\n";
 		echo "<td class='vncellreq' valign='top' align='left' nowrap='nowrap'>\n";
 		echo "    ".$text['label-enabled']."\n";
@@ -2396,7 +2447,7 @@
 	if ($action == "update") {
 		echo "<input type='hidden' name='extension_uuid' value='".escape($extension_uuid)."'>\n";
 		echo "<input type='hidden' name='id' id='id' value='".escape($extension_uuid)."'>";
-		if (!permission_exists('extension_domain')) {
+		if (!$has_extension_domain) {
 			echo "<input type='hidden' name='domain_uuid' id='domain_uuid' value='".$domain_uuid."'>";
 		}
 		echo "<input type='hidden' name='delete_type' id='delete_type' value=''>";

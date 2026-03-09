@@ -34,6 +34,12 @@
 		echo "access denied";
 		exit;
 	}
+	$has_call_center_agent_add    = permission_exists('call_center_agent_add');
+	$has_call_center_agent_delete = permission_exists('call_center_agent_delete');
+	$has_call_center_agent_edit   = permission_exists('call_center_agent_edit');
+	$has_call_center_all          = permission_exists('call_center_all');
+	$has_call_center_imports      = permission_exists('call_center_imports');
+	$has_domain_select            = permission_exists('domain_select');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -52,7 +58,7 @@
 	if (!empty($action) && !empty($call_center_agents)) {
 		switch ($action) {
 			case 'delete':
-				if (permission_exists('call_center_agent_delete')) {
+				if ($has_call_center_agent_delete) {
 					$obj = new call_center;
 					$obj->delete_agents($call_center_agents);
 				}
@@ -73,7 +79,7 @@
 
 //get total call center agent count from the database
 	$sql = "select count(*) from v_call_center_agents ";
-	if ($show == "all" && permission_exists('call_center_all')) {
+	if ($show == "all" && $has_call_center_all) {
 		$sql .= "where true ";
 	}
 	else {
@@ -92,7 +98,7 @@
 //prepare to page the results
 	$rows_per_page = $settings->get('domain', 'paging', 50);
 	$param = "&search=".urlencode($search);
-	if ($show == "all" && permission_exists('call_center_all')) {
+	if ($show == "all" && $has_call_center_all) {
 		$param .= "&show=all";
 	}
 	$page = !empty($_GET['page']) ? $_GET['page'] : 0;
@@ -103,7 +109,7 @@
 //get the list
 	$sql = "select * ";
 	$sql .= "from v_call_center_agents ";
-	if ($show == "all" && permission_exists('call_center_all')) {
+	if ($show == "all" && $has_call_center_all) {
 		$sql .= "where true ";
 	}
 	else {
@@ -135,20 +141,20 @@
 	echo "	<div class='heading'><b>".$text['header-call_center_agents']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','link'=>'call_center_queues.php','style'=>'margin-right: 15px;']);
-	if (permission_exists('call_center_imports')) {
+	if ($has_call_center_imports) {
 		echo button::create(['type'=>'button','label'=>$text['button-import'],'icon'=>$settings->get('theme', 'button_icon_import'),'link'=>PROJECT_PATH.'/app/call_center_imports/call_center_imports.php?import_type=call_center_agents']);
 	}
 	if ($num_rows) {
 		echo button::create(['type'=>'button','label'=>$text['button-status'],'icon'=>'user-clock','style'=>'margin-right: 15px;','link'=>'call_center_agent_status.php']);
 	}
-	if (permission_exists('call_center_agent_add')) {
+	if ($has_call_center_agent_add) {
 		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'call_center_agent_edit.php']);
 	}
-	if (permission_exists('call_center_agent_delete') && $result) {
+	if ($has_call_center_agent_delete && $result) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>";
-	if (permission_exists('call_center_all')) {
+	if ($has_call_center_all) {
 		if (!empty($_GET['show']) && $_GET['show'] == 'all') {
 			echo "		<input type='hidden' name='show' value='all'>";
 		}
@@ -167,7 +173,7 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('call_center_agent_delete') && $result) {
+	if ($has_call_center_agent_delete && $result) {
 		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
@@ -181,12 +187,12 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
-	if (permission_exists('call_center_agent_delete')) {
+	if ($has_call_center_agent_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($result) ?: "style='visibility: hidden;'").">\n";
 		echo "	</th>\n";
 	}
-	if ($show == "all" && permission_exists('call_center_all')) {
+	if ($show == "all" && $has_call_center_all) {
 		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param, "class='shrink'");
 	}
 	//echo th_order_by('domain_uuid', 'domain_uuid', $order_by, $order);
@@ -200,7 +206,7 @@
 	//echo th_order_by('agent_wrap_up_time', $text['label-wrap_up_time'], $order_by, $order);
 	//echo th_order_by('agent_reject_delay_time', $text['label-reject_delay_time'], $order_by, $order);
 	//echo th_order_by('agent_busy_delay_time', $text['label-busy_delay_time'], $order_by, $order);
-	if (permission_exists('call_center_agent_edit') && $list_row_edit_button) {
+	if ($has_call_center_agent_edit && $list_row_edit_button) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -209,20 +215,20 @@
 		$x = 0;
 		foreach($result as $row) {
 			$list_row_url = '';
-			if (permission_exists('call_center_agent_edit')) {
+			if ($has_call_center_agent_edit) {
 				$list_row_url = "call_center_agent_edit.php?id=".urlencode($row['call_center_agent_uuid']);
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
+				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('call_center_agent_delete')) {
+			if ($has_call_center_agent_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='call_center_agents[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='call_center_agents[$x][uuid]' value='".escape($row['call_center_agent_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if ($show == "all" && permission_exists('call_center_all')) {
+			if ($show == "all" && $has_call_center_all) {
 				if (!empty($_SESSION['domains'][$row['domain_uuid']]['domain_name'])) {
 					$domain = $_SESSION['domains'][$row['domain_uuid']]['domain_name'];
 				}
@@ -232,7 +238,7 @@
 				echo "	<td>".escape($domain)."</td>\n";
 			}
 			echo "	<td>";
-			if (permission_exists('call_center_agent_edit')) {
+			if ($has_call_center_agent_edit) {
 				echo "<a href='call_center_agent_edit.php?id=".escape($row['call_center_agent_uuid'])."'>".escape($row['agent_name'])."</a>";
 			}
 			else {
@@ -263,7 +269,7 @@
 			//echo "	<td>".$row[agent_wrap_up_time]."</td>\n";
 			//echo "	<td>".$row[agent_reject_delay_time]."</td>\n";
 			//echo "	<td>".$row[agent_busy_delay_time]."</td>\n";
-			if (permission_exists('call_center_agent_edit') && $list_row_edit_button) {
+			if ($has_call_center_agent_edit && $list_row_edit_button) {
 				echo "	<td class='action-button'>";
 				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 				echo "	</td>\n";

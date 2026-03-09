@@ -33,6 +33,8 @@
 		echo "access denied";
 		exit;
 	}
+	$has_pin_number_add  = permission_exists('pin_number_add');
+	$has_pin_number_edit = permission_exists('pin_number_edit');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -88,7 +90,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 
 	//add or update the database
 		if (empty($_POST["persistformvar"]) || $_POST["persistformvar"] != "true") {
-			if ($action == "add" && permission_exists('pin_number_add')) {
+			if ($action == "add" && $has_pin_number_add) {
 				//begin array
 					$pin_number_uuid = uuid();
 					$array['pin_numbers'][0]['pin_number_uuid'] = $pin_number_uuid;
@@ -96,7 +98,7 @@ if (!empty($_POST) && empty($_POST["persistformvar"])) {
 					message::add($text['message-add']);
 			}
 
-			if ($action == "update" && permission_exists('pin_number_edit')) {
+			if ($action == "update" && $has_pin_number_edit) {
 				//begin array
 					$array['pin_numbers'][0]['pin_number_uuid'] = $pin_number_uuid;
 				//set message

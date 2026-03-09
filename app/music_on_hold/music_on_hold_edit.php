@@ -33,6 +33,10 @@
 		echo "access denied";
 		exit;
 	}
+	$has_music_on_hold_add    = permission_exists('music_on_hold_add');
+	$has_music_on_hold_domain = permission_exists('music_on_hold_domain');
+	$has_music_on_hold_edit   = permission_exists('music_on_hold_edit');
+	$has_music_on_hold_path   = permission_exists('music_on_hold_path');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -48,7 +52,7 @@
 
 //get http post variables and set them to php variables
 	if (count($_POST) > 0) {
-		if (permission_exists('music_on_hold_domain')) {
+		if ($has_music_on_hold_domain) {
 			$domain_uuid = $_POST["domain_uuid"];
 		}
 		$music_on_hold_name = $_POST["music_on_hold_name"];
@@ -106,14 +110,14 @@
 
 		//add or update the database
 			if (empty($_POST["persistformvar"])) {
-				if ($action == "add" && permission_exists('music_on_hold_add')) {
+				if ($action == "add" && $has_music_on_hold_add) {
 					//begin insert array
 						$array['music_on_hold'][0]['music_on_hold_uuid'] = uuid();
 					//set message
 						message::add($text['message-add']);
 				}
 
-				if ($action == "update" && permission_exists('music_on_hold_edit')) {
+				if ($action == "update" && $has_music_on_hold_edit) {
 					//begin update array
 						$array['music_on_hold'][0]['music_on_hold_uuid'] = $music_on_hold_uuid;
 
@@ -124,7 +128,7 @@
 				if (is_array($array) && @sizeof($array) != 0) {
 
 					//add common array elements
-						if (permission_exists('music_on_hold_domain')) {
+						if ($has_music_on_hold_domain) {
 							$array['music_on_hold'][0]['domain_uuid'] = is_uuid($domain_uuid) ? $domain_uuid : null;
 						}
 						else {
@@ -343,7 +347,7 @@
 	echo "	".$text['label-chime_list']."\n";
 	echo "</td>\n";
 	echo "<td class='vtable' align='left'>\n";
-	echo "	<select name='music_on_hold_chime_list' class='formfld' style='width: 350px;' ".((permission_exists('music_on_hold_path')) ? "onchange='changeToInput(this);'" : null).">\n";
+	echo "	<select name='music_on_hold_chime_list' class='formfld' style='width: 350px;' ".(($has_music_on_hold_path) ? "onchange='changeToInput(this);'" : null).">\n";
 	echo "		<option value=''></option>\n";
 	//misc optgroup
 		/*
@@ -463,7 +467,7 @@
 	echo "</td>\n";
 	echo "</tr>\n";
 
-	if (permission_exists('music_on_hold_domain')) {
+	if ($has_music_on_hold_domain) {
 		echo "<tr>\n";
 		echo "<td class='vncell' valign='top' nowrap='nowrap'>\n";
 		echo "	".$text['label-domain']."\n";

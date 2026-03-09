@@ -31,6 +31,11 @@
 		echo "access denied";
 		exit;
 	}
+	$has_fifo_add           = permission_exists('fifo_add');
+	$has_fifo_delete        = permission_exists('fifo_delete');
+	$has_fifo_member_delete = permission_exists('fifo_member_delete');
+	$has_fifo_member_edit   = permission_exists('fifo_member_edit');
+	$has_fifo_update        = permission_exists('fifo_update');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -111,17 +116,17 @@
 				//send the array to the database class
 				switch ($_POST['action']) {
 					case 'copy':
-						if (permission_exists('fifo_add')) {
+						if ($has_fifo_add) {
 							$database->copy($array);
 						}
 						break;
 					case 'delete':
-						if (permission_exists('fifo_delete')) {
+						if ($has_fifo_delete) {
 							$database->delete($array);
 						}
 						break;
 					case 'toggle':
-						if (permission_exists('fifo_update')) {
+						if ($has_fifo_update) {
 							$database->toggle($array);
 						}
 						break;
@@ -511,7 +516,7 @@
 	echo "	<div class='actions'>\n";
 	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$button_icon_back,'id'=>'btn_back','collapse'=>'hide-xs','style'=>'margin-right: 15px;','link'=>'fifo.php']);
  	if ($action == 'update') {
- 		if (permission_exists('fifo_member_delete')) {
+ 		if ($has_fifo_member_delete) {
  			echo button::create(['type'=>'submit','label'=>$text['button-delete'],'icon'=>$button_icon_delete,'id'=>'btn_delete','name'=>'action','value'=>'delete','style'=>'display: none; margin-right: 15px;']);
  		}
  	}
@@ -524,10 +529,10 @@
 	echo "<br /><br />\n";
 
 // 	if ($action == 'update') {
-// 		if (permission_exists('fifo_add')) {
+// 		if ($has_fifo_add) {
 // 			echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'copy','onclick'=>"modal_close();"])]);
 // 		}
-// 		if (permission_exists('fifo_delete')) {
+// 		if ($has_fifo_delete) {
 // 			echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'submit','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','name'=>'action','value'=>'delete','onclick'=>"modal_close();"])]);
 // 		}
 // 	}
@@ -605,7 +610,7 @@
 	//echo "			<th class='vtablereq'>".$text['label-member_simultaneous']."</th>\n";
 	echo "			<th class='vtablereq'>".$text['label-member_wrap_up_time']."</th>\n";
 	echo "			<th class='vtablereq'>".$text['label-member_enabled']."</th>\n";
-	if ($show_option_delete && is_array($fifo_members) && @sizeof($fifo_members) > 1 && permission_exists('fifo_member_delete')) {
+	if ($show_option_delete && is_array($fifo_members) && @sizeof($fifo_members) > 1 && $has_fifo_member_delete) {
 		echo "			<td class='vtable edit_delete_checkbox_all' onmouseover=\"swap_display('delete_label_details', 'delete_toggle_details');\" onmouseout=\"swap_display('delete_label_details', 'delete_toggle_details');\">\n";
 		echo "				<span id='delete_label_details'>".$text['label-delete']."</span>\n";
 		echo "				<span id='delete_toggle_details'><input type='checkbox' id='checkbox_all_details' name='checkbox_all' onclick=\"edit_all_toggle('details'); checkbox_on_change(this);\"></span>\n";
@@ -614,7 +619,7 @@
 	echo "		</tr>\n";
 
 	$x = 0;
-	if (permission_exists('fifo_member_edit')) {
+	if ($has_fifo_member_edit) {
 		foreach($fifo_members as $row) {
 			$member_contact = $destination->select('user_contact', 'fifo_members['.$x.'][member_contact]', $row['member_contact'] ?? null);
 			if (empty($row["member_call_timeout"])) { $row["member_call_timeout"] = '20'; }
@@ -650,7 +655,7 @@
 				echo "	</span>\n";
 			}
 			echo "			</td>\n";
-			if ($show_option_delete && is_array($fifo_members) && @sizeof($fifo_members) > 1 && permission_exists('fifo_member_delete')) {
+			if ($show_option_delete && is_array($fifo_members) && @sizeof($fifo_members) > 1 && $has_fifo_member_delete) {
 				if (!empty($row['member_contact'])) {
 					echo "		<td style='text-align: center; padding-bottom: 3px;'>\n";
 					echo "			<input type='checkbox' name='fifo_members[".$x."][checked]' value='true' class='chk_delete checkbox_details' onclick=\"checkbox_on_change(this);\">\n";

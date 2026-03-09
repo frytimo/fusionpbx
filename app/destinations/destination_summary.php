@@ -34,6 +34,9 @@
 		echo "access denied";
 		exit;
 	}
+	$has_destination_summary_all = permission_exists('destination_summary_all');
+	$has_number_alias            = permission_exists('number_alias');
+	$has_xml_cdr_search          = permission_exists('xml_cdr_search');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -130,7 +133,7 @@
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['title-destination_summary']."</b></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('destination_summary_all') && $_GET['show'] != 'all') {
+	if ($has_destination_summary_all && $_GET['show'] != 'all') {
 		echo button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'collapse'=>'hide-sm-dn','link'=>'destination_summary.php?show=all']);
 	}
 	echo button::create(['type'=>'button','label'=>$text['button-download_csv'],'icon'=>$settings->get('theme', 'button_icon_download'),'collapse'=>'hide-sm-dn','link'=>'destination_summary.php?'.(!empty($_SERVER["QUERY_STRING"]) ? $_SERVER["QUERY_STRING"].'&' : null).'type=csv']);
@@ -140,7 +143,7 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('xml_cdr_search')) {
+	if ($has_xml_cdr_search) {
 		echo "<form name='frm' id='frm' method='get'>\n";
 
 		echo "<div class='card' style='margin-bottom: 30px;'>\n";
@@ -197,7 +200,7 @@
 		echo "</div>\n";
 		echo "</div>\n";
 
-		if (!empty($_GET['show']) && $_GET['show'] == 'all' && permission_exists('destination_summary_all')) {
+		if (!empty($_GET['show']) && $_GET['show'] == 'all' && $has_destination_summary_all) {
 			echo "<input type='hidden' name='show' value='all'>";
 		}
 
@@ -208,11 +211,11 @@
 	echo "<div class='card'>\n";
 	echo "<table class='list'>\n";
 	echo "	<tr class='list-header'>\n";
-	if (!empty($_GET['show']) && $_GET['show'] === "all" && permission_exists('destination_summary_all')) {
+	if (!empty($_GET['show']) && $_GET['show'] === "all" && $has_destination_summary_all) {
 		echo "		<th>".$text['label-domain']."</th>\n";
 	}
 	echo "		<th>".$text['label-destination_number']."</th>\n";
-	if (permission_exists('number_alias')) {
+	if ($has_number_alias) {
 		echo "		<th>".$text['label-number_alias']."</th>\n";
 	}
 	echo "		<th class='center'>".$text['label-answered']."</th>\n";
@@ -225,11 +228,11 @@
 	if (!empty($summary) && is_array($summary)) {
 		foreach ($summary as $key => $row) {
 			echo "<tr class='list-row'>\n";
-			if (!empty($_GET['show']) && $_GET['show'] === "all" && permission_exists('destination_summary_all')) {
+			if (!empty($_GET['show']) && $_GET['show'] === "all" && $has_destination_summary_all) {
 				echo "	<td>".escape($row['domain_name'])."</td>\n";
 			}
 			echo "	<td>".escape($row['destination_number'])."</td>\n";
-			if (permission_exists('number_alias')) {
+			if ($has_number_alias) {
 				echo "	<td>".escape($row['number_alias'])."&nbsp;</td>\n";
 			}
 			echo "	<td class='center'>".escape($row['answered_calls'])."&nbsp;</td>\n";
