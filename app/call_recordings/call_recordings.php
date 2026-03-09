@@ -30,10 +30,17 @@
 	require_once "resources/paging.php";
 
 //check permissions
-	if (!permission_exists('call_recording_view')) {
+	if (!$has_call_recording_view) {
 		echo "access denied";
 		exit;
 	}
+	$has_call_recording_view       = permission_exists('call_recording_view');
+	$has_call_recording_all        = permission_exists('call_recording_all');
+	$has_call_recording_download   = permission_exists('call_recording_download');
+	$has_call_recording_play       = permission_exists('call_recording_play');
+	$has_call_recording_delete     = permission_exists('call_recording_delete');
+	$has_call_recording_transcribe = permission_exists('call_recording_transcribe');
+	$has_xml_cdr_details           = permission_exists('xml_cdr_details');
 
 //add multi-lingual support
 	$text = new text()->get();
@@ -60,19 +67,19 @@
 	if (!empty($action) && is_array($call_recordings) && @sizeof($call_recordings) != 0) {
 		switch ($action) {
 			case 'download':
-				if (permission_exists('call_recording_download')) {
+				if ($has_call_recording_download) {
 					$obj = new call_recordings;
 					$obj->download($call_recordings);
 				}
 				break;
 			case 'transcribe':
-				if (permission_exists('call_recording_transcribe')) {
+				if ($has_call_recording_transcribe) {
 					$obj = new call_recordings;
 					$obj->transcribe($call_recordings);
 				}
 				break;
 			case 'delete':
-				if (permission_exists('call_recording_delete')) {
+				if ($has_call_recording_delete) {
 					$obj = new call_recordings;
 					$obj->delete($call_recordings);
 				}
@@ -113,7 +120,7 @@
 
 //build the where clause (shared between count and list queries)
 	$sql_where = "where true ";
-	if ($show != "all" || !permission_exists('call_recording_all')) {
+	if ($show != "all" || !$has_call_recording_all) {
 		$sql_where .= "and r.domain_uuid = :domain_uuid ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	}
@@ -178,7 +185,7 @@
 
 //build extra url params used by column sort header links
 	$param = !empty($search) ? "&search=".urlencode($search) : '';
-	if ($show == "all" && permission_exists('call_recording_all')) {
+	if ($show == "all" && $has_call_recording_all) {
 		$param .= "&show=all";
 	}
 
@@ -198,22 +205,54 @@
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['title-call_recordings']." </b></div>\n";
 	echo "	<div class='actions'>\n";
-	if (permission_exists('call_recording_download') && !empty($call_recordings)) {
-		echo button::create(['type'=>'button','label'=>$text['button-download'],'icon'=>$settings->get('theme', 'button_icon_download'),'id'=>'btn_download','name'=>'btn_download','style'=>'display: none;','collapse'=>'hide-xs','onclick'=>"list_action_set('download'); list_form_submit('form_list');"]);
+	if ($has_call_recording_download && !empty($call_recordings)) {
+		echo button::create([
+			'type'=>'button'
+			,'label'=>$text['button-download']
+			,'icon'=>$settings->get('theme', 'button_icon_download')
+			,'id'=>'btn_download'
+			,'name'=>'btn_download'
+			,'style'=>'display: none;'
+			,'collapse'=>'hide-xs'
+			,'onclick'=>"list_action_set('download'); list_form_submit('form_list');"
+		]);
 	}
-	if (permission_exists('call_recording_transcribe') && $transcribe_enabled && !empty($transcribe_engine) && !empty($call_recordings)) {
-		echo button::create(['type'=>'button','label'=>$text['button-transcribe'],'icon'=>'quote-right','id'=>'btn_transcribe','name'=>'btn_transcribe','style'=>'display: none;','collapse'=>'hide-xs','onclick'=>"list_action_set('transcribe'); list_form_submit('form_list');"]);
+	if ($has_call_recording_transcribe && $transcribe_enabled && !empty($transcribe_engine) && !empty($call_recordings)) {
+		echo button::create([
+			'type'=>'button'
+			,'label'=>$text['button-transcribe']
+			,'icon'=>$settings->get('theme', 'button_icon_transcribe')
+			,'id'=>'btn_transcribe'
+			,'name'=>'btn_transcribe'
+			,'style'=>'display: none;'
+			,'collapse'=>'hide-xs'
+			,'onclick'=>"list_action_set('transcribe'); list_form_submit('form_list');"
+		]);
 	}
-	if (permission_exists('call_recording_delete') && !empty($call_recordings)) {
-		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none; margin-right: 15px;','collapse'=>'hide-xs','onclick'=>"modal_open('modal-delete','btn_delete');"]);
+	if ($has_call_recording_delete && !empty($call_recordings)) {
+		echo button::create([
+			'type'=>'button'
+			,'label'=>$text['button-delete']
+			,'icon'=>$settings->get('theme', 'button_icon_delete')
+			,'id'=>'btn_delete'
+			,'name'=>'btn_delete'
+			,'style'=>'display: none; margin-right: 15px;'
+			,'collapse'=>'hide-xs'
+			,'onclick'=>"modal_open('modal-delete','btn_delete');"
+		]);
 	}
 	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if (permission_exists('call_recording_all')) {
+	if ($has_call_recording_all) {
 		if ($show == 'all') {
 			echo "		<input type='hidden' name='show' value='all'>";
 		}
 		else {
-			echo button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>'?type='.urlencode($destination_type ?? '').'&show=all'.(!empty($search) ? "&search=".urlencode($search) : null)]);
+			echo button::create([
+				'type'=>'button'
+				,'label'=>$text['button-show_all']
+				,'icon'=>$settings->get('theme', 'button_icon_all')
+				,'link'=>$url_paging->build_relative()
+			]);
 		}
 	}
 	echo 		"<input type='text' class='txt list-search' name='search' id='search' value=\"".escape($search)."\" placeholder=\"".$text['label-search']."\" onkeydown=\"$('#btn_reset').hide(); $('#btn_search').show();\">";
@@ -227,8 +266,19 @@
 	echo "	<div style='clear: both;'></div>\n";
 	echo "</div>\n";
 
-	if (permission_exists('call_recording_delete') && !empty($call_recordings)) {
-		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
+	if ($has_call_recording_delete && !empty($call_recordings)) {
+		echo modal::create([
+			'id'=>'modal-delete'
+			,'type'=>'delete'
+			,'actions'=>button::create([
+				'type'=>'button'
+				,'label'=>$text['button-continue']
+				,'icon'=>'check'
+				,'id'=>'btn_delete'
+				,'style'=>'float: right; margin-left: 15px;'
+				,'collapse'=>'never'
+				,'onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])
+			]);
 	}
 
 	echo $text['title_description-call_recordings']."\n";
@@ -242,16 +292,16 @@
 	echo "<table class='list'>\n";
 	echo "<tr class='list-header'>\n";
 	$col_count = 8;
-	if ($show == "all" && permission_exists('call_recording_all')) {
+	if ($show == "all" && $has_call_recording_all) {
 		$col_count++;
 	}
-	if (permission_exists('call_recording_delete')) {
+	if ($has_call_recording_delete) {
 		echo "	<th class='checkbox'>\n";
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(empty($call_recordings) ? "style='visibility: hidden;'" : null).">\n";
 		echo "	</th>\n";
 		$col_count++;
 	}
-	if ($show == "all" && permission_exists('call_recording_all')) {
+	if ($show == "all" && $has_call_recording_all) {
 		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param, "class='hide-sm-dn shrink'");
 	}
 	echo th_order_by('caller_id_name', $text['label-caller_id_name'], $order_by, $order, null, "class='hide-sm-dn'");
@@ -259,14 +309,14 @@
 	echo th_order_by('caller_destination', $text['label-caller_destination'], $order_by, $order, null, "class='pct-10 hide-sm-dn'");
 	echo th_order_by('destination_number', $text['label-destination_number'], $order_by, $order, null, "class='pct-10'");
 	echo th_order_by('call_recording_name', $text['label-call_recording_name'], $order_by, $order, null, "class='pct-20 hide-sm-dn'");
-	if (permission_exists('call_recording_play') || permission_exists('call_recording_download')) {
+	if ($has_call_recording_play || $has_call_recording_download) {
 		echo "<th class='shrink center'>".$text['label-recording']."</th>\n";
 		$col_count++;
 	}
 	echo th_order_by('call_recording_length', $text['label-call_recording_length'], $order_by, $order, null, "class='right hide-sm-dn shrink'");
 	echo th_order_by('call_recording_date', $text['label-call_recording_date'], $order_by, $order, null, "class='pct-20 center'");
 	echo th_order_by('call_direction', $text['label-call_direction'], $order_by, $order, null, "class='hide-sm-dn shrink'");
-	if (permission_exists('xml_cdr_details')) {
+	if ($has_xml_cdr_details) {
 		echo "	<td class='action-button'>&nbsp;</td>\n";
 	}
 	echo "</tr>\n";
@@ -275,21 +325,21 @@
 		$x = 0;
 		foreach ($call_recordings as $row) {
 			//playback progress bar
-			if (permission_exists('call_recording_play')) {
-				echo "<tr class='list-row' id='recording_progress_bar_".escape($row['call_recording_uuid'])."' style='display: none;' onclick=\"recording_seek(event,'".escape($row['call_recording_uuid'])."')\"><td id='playback_progress_bar_background_".escape($row['call_recording_uuid'])."' class='playback_progress_bar_background' colspan='".$col_count."'><span class='playback_progress_bar' id='recording_progress_".escape($row['call_recording_uuid'])."'></span></td>".(permission_exists('xml_cdr_details') ? "<td class='action-button' style='border-bottom: none !important;'></td>" : null)."</tr>\n";
+			if ($has_call_recording_play) {
+				echo "<tr class='list-row' id='recording_progress_bar_".escape($row['call_recording_uuid'])."' style='display: none;' onclick=\"recording_seek(event,'".escape($row['call_recording_uuid'])."')\"><td id='playback_progress_bar_background_".escape($row['call_recording_uuid'])."' class='playback_progress_bar_background' colspan='".$col_count."'><span class='playback_progress_bar' id='recording_progress_".escape($row['call_recording_uuid'])."'></span></td>".($has_xml_cdr_details ? "<td class='action-button' style='border-bottom: none !important;'></td>" : null)."</tr>\n";
 				echo "<tr class='list-row' style='display: none;'><td></td></tr>\n"; // dummy row to maintain alternating background color
 			}
-			if (permission_exists('call_recording_play')) {
+			if ($has_call_recording_play) {
 				$list_row_url = "javascript:recording_play('".escape($row['call_recording_uuid'])."');";
 			}
 			echo "<tr class='list-row' href=\"".$list_row_url."\">\n";
-			if (permission_exists('call_recording_delete')) {
+			if ($has_call_recording_delete) {
 				echo "	<td class='checkbox'>\n";
 				echo "		<input type='checkbox' name='call_recordings[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
 				echo "		<input type='hidden' name='call_recordings[$x][uuid]' value='".escape($row['call_recording_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if ($show == "all" && permission_exists('call_recording_all')) {
+			if ($show == "all" && $has_call_recording_all) {
 				echo "	<td class='overflow hide-sm-dn shrink'>".escape($row['domain_name'])."</td>\n";
 			}
 			echo "	<td class='hide-sm-dn shrink'>".escape($row['caller_id_name'])."</td>\n";
@@ -297,10 +347,10 @@
 			echo "	<td class='hide-sm-dn shrink'>".escape(format_phone(substr($row['caller_destination'], 0, 20)))."</td>\n";
 			echo "	<td class='shrink'>".escape(format_phone(substr($row['destination_number'], 0, 20)))."</td>\n";
 			echo "	<td class='overflow hide-sm-dn nowrap'>".escape($row['call_recording_name'])."</td>\n";
-			if (permission_exists('call_recording_play') || permission_exists('call_recording_download')) {
+			if ($has_call_recording_play || $has_call_recording_download) {
 				echo "	<td class='middle button center no-link no-wrap'>";
 				if (file_exists($row['call_recording_path'].'/'.$row['call_recording_name'])) {
-					if (permission_exists('call_recording_play')) {
+					if ($has_call_recording_play) {
 						$recording_file_ext = pathinfo($row['call_recording_name'], PATHINFO_EXTENSION);
 						switch ($recording_file_ext) {
 							case "wav" : $recording_type = "audio/wav"; break;
@@ -308,13 +358,29 @@
 							case "ogg" : $recording_type = "audio/ogg"; break;
 						}
 						echo "<audio id='recording_audio_".escape($row['call_recording_uuid'])."' style='display: none;' preload='none' ontimeupdate=\"update_progress('".escape($row['call_recording_uuid'])."')\" onended=\"recording_reset('".escape($row['call_recording_uuid'])."');\" src='download.php?id=".urlencode($row['call_recording_uuid'])."' type='".$recording_type."'></audio>";
-						echo button::create(['type'=>'button','title'=>$text['label-play'].' / '.$text['label-pause'],'icon'=>$settings->get('theme', 'button_icon_play'),'id'=>'recording_button_'.escape($row['call_recording_uuid']),'onclick'=>"recording_play('".escape($row['call_recording_uuid'])."')"]);
+						echo button::create([
+							'type'=>'button'
+							,'title'=>$text['label-play'].' / '.$text['label-pause']
+							,'icon'=>$settings->get('theme', 'button_icon_play')
+							,'id'=>'recording_button_'.escape($row['call_recording_uuid'])
+							,'onclick'=>"recording_play('".escape($row['call_recording_uuid'])."')"]);
 					}
-					if (permission_exists('call_recording_download')) {
-						echo button::create(['type'=>'button','title'=>$text['label-download'],'icon'=>$settings->get('theme', 'button_icon_download'),'link'=>'download.php?id='.urlencode($row['call_recording_uuid']).'&binary']);
+					if ($has_call_recording_download) {
+						echo button::create([
+							'type'=>'button'
+							,'title'=>$text['label-download']
+							,'icon'=>$settings->get('theme', 'button_icon_download')
+							,'link'=>'download.php?id='.urlencode($row['call_recording_uuid']).'&binary'
+						]);
 					}
-					if (permission_exists('call_recording_transcribe') && $transcribe_enabled && !empty($transcribe_engine) && !empty($row['call_recording_transcription'])) {
-						echo button::create(['type'=>'button','title'=>$text['label-transcription'],'icon'=>'quote-right','style'=>'','link'=>PROJECT_PATH.'/app/xml_cdr/xml_cdr_details.php?id='.urlencode($row['call_recording_uuid'])]);
+					if ($has_call_recording_transcribe && $transcribe_enabled && !empty($transcribe_engine) && !empty($row['call_recording_transcription'])) {
+						echo button::create([
+							'type'=>'button'
+							,'title'=>$text['label-transcription']
+							,'icon'=>$settings->get('theme', 'button_icon_transcribe')
+							,'style'=>''
+							,'link'=>PROJECT_PATH.'/app/xml_cdr/xml_cdr_details.php?id='.urlencode($row['call_recording_uuid'])
+						]);
 					}
 				}
 				echo "	</td>\n";
@@ -322,7 +388,7 @@
 			echo "	<td class='right hide-sm-dn shrink'>".escape(gmdate("G:i:s", $row['call_recording_length']))."</td>\n";
 			echo "	<td class='overflow center no-wrap'>".escape($row['call_recording_date_formatted'])." <span class='hide-sm-dn'>".escape($row['call_recording_time_formatted'])."</span></td>\n";
 			echo "	<td class='left hide-sm-dn shrink'>".($row['call_direction'] != '' ? escape($text['label-'.$row['call_direction']]) : null)."</td>\n";
-			if (permission_exists('xml_cdr_details')) {
+			if ($has_xml_cdr_details) {
 				echo "	<td class='action-button'>\n";
 				echo button::create(['type'=>'button','title'=>$text['button-view'],'icon'=>$settings->get('theme', 'button_icon_view'),'link'=>PROJECT_PATH.'/app/xml_cdr/xml_cdr_details.php?id='.urlencode($row['call_recording_uuid'])]);
 				echo "	</td>\n";
