@@ -60,7 +60,7 @@
 //process the http post data by action
 	if (!empty($action) && count($extensions) > 0) {
 		//dispatch pre-action hook
-		app::dispatch_list_pre_action(null, $url, $action, $call_forwards);
+		app::dispatch_list_pre_action(null, $url, $action, $extensions);
 
 		switch ($action) {
 			case 'toggle_call_forward':
@@ -84,7 +84,7 @@
 		}
 
 		//dispatch post-action hook
-		app::dispatch_list_post_action(null, $url, $action, $call_forwards);
+		app::dispatch_list_post_action(null, $url, $action, $extensions);
 
 		header('Location: call_forward.php' . ($search != '' ? '?search=' . urlencode($search) : null));
 		exit;
