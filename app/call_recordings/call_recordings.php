@@ -30,7 +30,7 @@
 	require_once "resources/paging.php";
 
 //check permissions
-	if (!$has_call_recording_view) {
+	if (!permission_exists('call_recording_view')) {
 		echo "access denied";
 		exit;
 	}
