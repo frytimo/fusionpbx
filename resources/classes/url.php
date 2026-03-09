@@ -57,8 +57,10 @@ class url {
 	const BUILD_FORCE_HOST = 2;
 	const BUILD_FORCE_PATH = 4;
 
-	const SAFE = 0;
+	const FILTERED = 0;
 	const UNSAFE = 1;
+	/** @deprecated Use FILTERED instead */
+	const SAFE = self::FILTERED;
 
 	private $parts;
 	private $scheme;
@@ -66,6 +68,8 @@ class url {
 	private $port;
 	private $path;
 	private $params;
+	private $post_params;
+	private $input_params;
 	private $unsafe_params;
 	private $fragment;
 
@@ -83,6 +87,8 @@ class url {
 		$this->path = '';
 		$this->fragment = '';
 		$this->params = [];
+		$this->post_params = [];
+		$this->input_params = [];
 		$url = $url ?? '';
 
 		$parsed = parse_url(urldecode($url));
@@ -138,6 +144,21 @@ class url {
 		// more validation needed here
 		$u->parts = $parts;
 		return $u;
+	}
+
+	/**
+	 * Creates a URL object fully populated from the current HTTP request.
+	 * Reads $_SERVER['REQUEST_URI'] for GET parameters, loads $_POST for
+	 * form values, and also reads php://input for JSON or form-encoded bodies
+	 * (e.g. REST API calls that bypass the traditional POST superglobal).
+	 *
+	 * @return static
+	 */
+	public static function from_request(): static {
+		$url = new static($_SERVER['REQUEST_URI'] ?? '');
+		$url->load_post($_POST);
+		$url->load_input();
+		return $url;
 	}
 
 	/**
@@ -209,11 +230,11 @@ class url {
 	/**
 	 * Query in the link
 	 *
-	 * @param int $unsafe Whether to return the unsafe (original) query parameters or the sanitized ones. Default is self::SAFE (sanitized).
+	 * @param int $unsafe Whether to return the unsafe (original) query parameters or the sanitized ones. Default is self::FILTERED (sanitized).
 	 *
 	 * @return string
 	 */
-	public function get_query(int $unsafe = self::SAFE): string {
+	public function get_query(int $unsafe = self::FILTERED): string {
 		$params = $unsafe ? $this->unsafe_params : $this->params;
 		return implode('&', array_map(function ($param, $key) {
 			return "$key=$param";
@@ -442,14 +463,14 @@ class url {
 			throw new \InvalidArgumentException("Key must not be empty", 500);
 		}
 
-		// Store the unsafe param for reference even if the value is invalid for the safe parameters
+		// Store the unsafe param for reference even if the value is invalid for the filtered parameters
 		$this->params[$key][self::UNSAFE] = $value;
 
 		$filtered = $this->filter_query_modifier($key, $value);
 
-		// Only set the safe param if it is valid after the filter
+		// Only set the filtered param if it is valid after the filter
 		if ($filtered !== null) {
-			$this->params[$key][self::SAFE] = $filtered;
+			$this->params[$key][self::FILTERED] = $filtered;
 		}
 
 		// Allow chaining
@@ -739,5 +760,171 @@ class url {
 		$location = url::from_string($url)->build_absolute();
 		header("Location: $location", true, $status_code);
 		exit();
+	}
+
+	// -------------------------------------------------------------------------
+	// POST, php://input, and combined REQUEST input
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Shared internal helper: sanitizes an array of key/value pairs into a
+	 * two-slot [FILTERED, UNSAFE] parameter store.
+	 *
+	 * Each entry is stored for O(1) indexed access:
+	 *   $store[$key][self::FILTERED] — value after filter_query_modifier()
+	 *   $store[$key][self::UNSAFE]   — original, unsanitized value
+	 *
+	 * Array values have each scalar element sanitized individually; the raw
+	 * array is always preserved in the UNSAFE slot.
+	 *
+	 * @param array $data   Input key/value pairs.
+	 * @param array &$store Reference to the target parameter store property.
+	 */
+	private function import_params(array $data, array &$store): void {
+		foreach ($data as $key => $value) {
+			$key = strtolower((string) $key);
+			if (!strlen($key)) {
+				continue;
+			}
+			// Slot UNSAFE (1): always store the original value as-is
+			$store[$key][self::UNSAFE] = $value;
+
+			if (is_array($value)) {
+				// Slot FILTERED (0): sanitize each scalar element individually
+				$store[$key][self::FILTERED] = array_map(
+					function ($item) use ($key) {
+						return is_scalar($item)
+							? $this->filter_query_modifier($key, $item)
+							: $item;
+					},
+					$value
+				);
+			} else {
+				$filtered = $this->filter_query_modifier($key, $value);
+				if ($filtered !== null) {
+					// Slot FILTERED (0): sanitized scalar
+					$store[$key][self::FILTERED] = $filtered;
+				}
+			}
+		}
+	}
+
+	/**
+	 * Loads POST form data into the object.
+	 *
+	 * @param array $post Typically $_POST, but any associative array is accepted.
+	 * @return static
+	 */
+	public function load_post(array $post): static {
+		$this->import_params($post, $this->post_params);
+		return $this;
+	}
+
+	/**
+	 * Returns a sanitized POST value by key.
+	 *
+	 * @param string $key     POST parameter name (case-insensitive).
+	 * @param mixed  $default Returned when the key is absent.
+	 * @param bool   $unsafe  When true, returns the original unsanitized value.
+	 * @return mixed
+	 */
+	public function post(string $key, mixed $default = null, bool $unsafe = false): mixed {
+		$key = strtolower($key);
+		$slot = $unsafe ? self::UNSAFE : self::FILTERED;
+		return $this->post_params[$key][$slot] ?? $default;
+	}
+
+	/**
+	 * Returns true when the POST parameter was present in the loaded data
+	 * (regardless of whether its filtered value passed validation).
+	 *
+	 * @param string $key POST parameter name (case-insensitive).
+	 * @return bool
+	 */
+	public function has_post(string $key): bool {
+		return isset($this->post_params[strtolower($key)]);
+	}
+
+	/**
+	 * Reads and sanitizes the raw request body from php://input.
+	 *
+	 * - application/json bodies are decoded with json_decode().
+	 * - All other bodies are parsed as form-encoded via parse_str().
+	 *
+	 * The Content-Type header is read automatically from $_SERVER.
+	 * Safe to call multiple times; PHP permits repeated reads of php://input.
+	 *
+	 * @return static
+	 */
+	public function load_input(): static {
+		$raw = file_get_contents('php://input');
+		if ($raw === false || $raw === '') {
+			return $this;
+		}
+		$content_type = strtolower(
+			$_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? ''
+		);
+		if (strpos($content_type, 'application/json') !== false) {
+			$data = json_decode($raw, true);
+			if (is_array($data)) {
+				$this->import_params($data, $this->input_params);
+			}
+		} else {
+			$params = [];
+			parse_str($raw, $params);
+			$this->import_params($params, $this->input_params);
+		}
+		return $this;
+	}
+
+	/**
+	 * Returns a sanitized value from the php://input parameter store.
+	 *
+	 * @param string $key     Parameter name (case-insensitive).
+	 * @param mixed  $default Returned when the key is absent.
+	 * @param bool   $unsafe  When true, returns the original unsanitized value.
+	 * @return mixed
+	 */
+	public function input(string $key, mixed $default = null, bool $unsafe = false): mixed {
+		$key = strtolower($key);
+		$slot = $unsafe ? self::UNSAFE : self::FILTERED;
+		return $this->input_params[$key][$slot] ?? $default;
+	}
+
+	/**
+	 * Returns true when the key exists in the php://input parameter store.
+	 *
+	 * @param string $key Parameter name (case-insensitive).
+	 * @return bool
+	 */
+	public function has_input(string $key): bool {
+		return isset($this->input_params[strtolower($key)]);
+	}
+
+	/**
+	 * Mirrors PHP's $_REQUEST superglobal: searches GET parameters first,
+	 * then POST form values, then php://input body values, returning the
+	 * first match found.
+	 *
+	 * Use the specific get() / post() / input() methods when the source
+	 * of a parameter must be certain.
+	 *
+	 * @param string $key     Parameter name (case-insensitive).
+	 * @param mixed  $default Returned when not found in any store.
+	 * @param bool   $unsafe  When true, returns the original unsanitized value.
+	 * @return mixed
+	 */
+	public function request(string $key, mixed $default = null, bool $unsafe = false): mixed {
+		$lower = strtolower($key);
+		if (isset($this->params[$lower])) {
+			return $this->get($key, $default, $unsafe);
+		}
+		if (isset($this->post_params[$lower])) {
+			return $this->post($key, $default, $unsafe);
+		}
+		if (isset($this->input_params[$lower])) {
+			return $this->input($key, $default, $unsafe);
+		}
+		return $default;
 	}
 }

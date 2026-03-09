@@ -198,5 +198,9 @@ function paging($num_rows, $param, $rows_per_page, $mini = false, $result_count 
 }
 
 //create a new instance of the url with paging class
-$url_paging = new url_paging($settings);
+// Pass the current request URI so GET parameters are automatically sanitized
+$url_paging = new url_paging($settings, $_SERVER['REQUEST_URI'] ?? '');
+// Load POST form data and php://input (JSON or form-encoded REST bodies)
+$url_paging->load_post($_POST);
+$url_paging->load_input();
 
