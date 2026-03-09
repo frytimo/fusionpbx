@@ -44,15 +44,16 @@
 	$transcribe_engine = $settings->get('transcribe', 'engine', '');
 
 //set additional variables
-	$search = $_GET["search"] ?? '';
-	$show = $_GET["show"] ?? '';
+	// url_paging->get() returns sanitized values via FILTER_SANITIZE_FULL_SPECIAL_CHARS
+	$search = $url_paging->get('search', '');
+	$show = $url_paging->get('show', '');
 	$result_count = 0;
 
 //get the http post data
-	if (!empty($_POST['call_recordings']) && is_array($_POST['call_recordings'])) {
-		$action = $_POST['action'];
-		$search = $_POST['search'] ?? '';
-		$call_recordings = $_POST['call_recordings'];
+	if ($url_paging->has_post('call_recordings') && is_array($url_paging->post('call_recordings'))) {
+		$action = $url_paging->post('action', '');
+		$search = $url_paging->post('search', '');
+		$call_recordings = $url_paging->post('call_recordings', []);
 	}
 
 //process the http post data by action
@@ -84,20 +85,20 @@
 	}
 
 //get order and order by
-	$order_by = $_GET["order_by"] ?? '';
-	$order = $_GET["order"] ?? '';
+	// Additional preg_replace on order_by as an extra defence-in-depth layer for SQL identifier safety
+	$order_by = preg_replace('#[^a-zA-Z0-9_\-]#', '', $url_paging->get('order_by', ''));
+	$order = $url_paging->get('order', '');
 
-//add the search string
+//normalise the search string to lowercase
 	if (!empty($search)) {
-		$search =  strtolower($_GET["search"]);
+		$search = strtolower($search);
 	}
 
 //prepare some of the paging values
-	$rows_per_page = $settings->get('domain', 'paging', 50);
-	$page = filter_input(INPUT_GET, 'page', FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
-	if ($page === false || $page === null) { $page = 0; }
-	$_GET['page'] = $page;
-	$offset = $rows_per_page * $page;
+	// url_paging validates page >= 0 and rows_per_page from settings
+	$rows_per_page = $url_paging->get_rows_per_page();
+	$page = $url_paging->get_page();
+	$offset = $url_paging->offset();
 
 //set the time zone
 	$time_zone = $settings->get('domain', 'time_zone', date_default_timezone_get());
@@ -141,14 +142,12 @@
 		$num_rows = min($num_rows, $settings->get('cdr', 'limit'));
 	}
 
-//clamp page to last valid page to prevent out-of-bounds offset
-	if ($num_rows > 0) {
-		$max_page = (int)ceil($num_rows / $rows_per_page) - 1;
-		if ($page > $max_page) {
-			$page = $max_page;
-			$_GET['page'] = $page;
-			$offset = $rows_per_page * $page;
-		}
+//set total rows on the paging object and clamp page to last valid page
+	$url_paging->set_total_rows($num_rows);
+	if ($num_rows > 0 && $page > ($url_paging->pages() - 1)) {
+		$url_paging->set_page($url_paging->pages() - 1);
+		$page = $url_paging->get_page();
+		$offset = $url_paging->offset();
 	}
 
 //get the list
@@ -177,13 +176,15 @@
 		}
 	}
 
-//prepare to page the results
-	$param = "&search=".urlencode($search);
+//build extra url params used by column sort header links
+	$param = !empty($search) ? "&search=".urlencode($search) : '';
 	if ($show == "all" && permission_exists('call_recording_all')) {
 		$param .= "&show=all";
 	}
-	list($paging_controls_mini, $rows_per_page) = paging($num_rows ?? null, $param, $rows_per_page, true, $result_count); //top
-	list($paging_controls, $rows_per_page) = paging($num_rows ?? null, $param, $rows_per_page, false, $result_count); //bottom
+
+//prepare paging controls using the url_paging object
+	$paging_controls_mini = url_paging::html_paging_mini_controls($url_paging);
+	$paging_controls = url_paging::html_paging_controls($url_paging);
 
 //create token
 	$object = new token;
