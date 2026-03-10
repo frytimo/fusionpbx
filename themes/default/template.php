@@ -1039,6 +1039,32 @@
 		}
 		{/literal}
 
+	//list shift-click multi-select
+		{literal}
+		var list_shift_last_index = null;
+		document.addEventListener('DOMContentLoaded', function() {
+			document.addEventListener('click', function(event) {
+				var checkbox = event.target;
+				if (checkbox.type !== 'checkbox' || !/^checkbox_\d+$/.test(checkbox.id)) { return; }
+				var index = parseInt(checkbox.id.replace('checkbox_', ''), 10);
+				if (isNaN(index)) { return; }
+				if (event.shiftKey && list_shift_last_index !== null) {
+					var start = Math.min(list_shift_last_index, index);
+					var end   = Math.max(list_shift_last_index, index);
+					var state = checkbox.checked;
+					document.querySelectorAll("input[type='checkbox'][id^='checkbox_']").forEach(function(cb) {
+						var i = parseInt(cb.id.replace('checkbox_', ''), 10);
+						if (!isNaN(i) && i >= start && i <= end) { cb.checked = state; }
+					});
+					if (typeof checkbox_on_change === 'function') { checkbox_on_change(checkbox); }
+					var sel = window.getSelection();
+					if (sel) { sel.removeAllRanges(); }
+				}
+				list_shift_last_index = index;
+			});
+		});
+		{/literal}
+
 	//edit page functions
 		{literal}
 		function edit_all_toggle(modifier) {
