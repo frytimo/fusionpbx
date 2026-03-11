@@ -343,6 +343,7 @@ require_once "resources/header.php";
 	display: flex;
 	gap: 0;
 	position: relative;
+	isolation: isolate;
 }
 
 .dialplan-visual-panel {
@@ -351,6 +352,7 @@ require_once "resources/header.php";
 	position: relative;
 	transition: flex 0.3s ease;
 	padding: 10px;
+	isolation: isolate;
 }
 
 .dialplan-xml-panel {
@@ -361,6 +363,7 @@ require_once "resources/header.php";
 	flex-direction: column;
 	border-left: 1px solid var(--border-color, #ccc);
 	position: relative;
+	isolation: isolate;
 }
 
 .dialplan-xml-panel.collapsed {
@@ -379,7 +382,7 @@ require_once "resources/header.php";
 	height: 100%;
 	cursor: col-resize;
 	background: var(--border-color, #ddd);
-	z-index: 15;
+	z-index: 10;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -405,7 +408,7 @@ require_once "resources/header.php";
 	position: sticky;
 	top: 100px;
 	align-self: flex-start;
-	z-index: 10;
+	z-index: 2;
 	background: var(--button-background-color, #f0f0f0);
 	border: 1px solid var(--border-color, #ccc);
 	border-radius: 4px;
@@ -1221,6 +1224,7 @@ require_once "resources/header.php";
 	</div>
 	<div style="clear: both;"></div>
 </div>
+<br><br>
 
 <?php if ($is_migration): ?>
 <div class="migration-warning" id="migration-warning" onclick="dismissMigrationWarning();" title="<?php echo $text['label-click_to_dismiss'] ?? 'Click to dismiss'; ?>">
@@ -1231,7 +1235,6 @@ require_once "resources/header.php";
 <?php endif; ?>
 
 <?php echo $text['description-dialplan-edit-unified'] ?? 'Edit the dialplan using the visual editor. Changes to the visual editor update the XML immediately. To apply XML changes to the visual editor, click Visualize.'; ?>
-<br><br>
 
 <!-- Basic Properties Card (Collapsible) -->
 <div class="properties-card">
@@ -1882,11 +1885,24 @@ require_once "resources/header.php";
 		deleteBtn.className = 'btn btn-sm';
 		deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
 		deleteBtn.title = '<?php echo $text['button-delete'] ?? 'Delete'; ?>';
-		deleteBtn.onclick = function() {
-			parentArray.splice(index, 1);
-			updateXmlFromTree();
-			renderTree();
-		};
+
+		// Disable delete when this is the last <regex> child of a regex condition
+		const isLastRegexChild = node.type === 'regex' &&
+			parentNode && (parentNode.isRegexCondition || (parentNode.attributes && parentNode.attributes.regex)) &&
+			parentArray.filter(function(n) { return n.type === 'regex'; }).length <= 1;
+
+		if (isLastRegexChild) {
+			deleteBtn.disabled = true;
+			deleteBtn.style.opacity = '0.35';
+			deleteBtn.style.cursor = 'not-allowed';
+			deleteBtn.title = '<?php echo $text['message-last_regex'] ?? 'A regex condition requires at least one regex field'; ?>';
+		} else {
+			deleteBtn.onclick = function() {
+				parentArray.splice(index, 1);
+				updateXmlFromTree();
+				renderTree();
+			};
+		}
 		actions.appendChild(deleteBtn);
 		contentRow.appendChild(actions);
 
@@ -2448,6 +2464,7 @@ require_once "resources/header.php";
 
 		const targetNodeData = targetNodeEl._nodeData;
 		const targetParentArray = targetNodeEl._parentArray;
+		const targetParentNode = targetNodeEl._parentNode;
 		const targetIndex = targetNodeEl._nodeIndex;
 
 		// Determine drop position
@@ -2459,20 +2476,45 @@ require_once "resources/header.php";
 		// Regex child elements (type='regex') are NOT containers
 		const isDropContainer = targetNodeData.type === 'condition';
 
+		// Helper: is a given parent node a valid container for a <regex> node?
+		function isRegexContainer(parentNode) {
+			return parentNode && parentNode.type === 'condition' &&
+				(parentNode.isRegexCondition || (parentNode.attributes && parentNode.attributes.regex));
+		}
+
 		// Remove from original position
 		const removedNode = draggedParentArray.splice(draggedIndex, 1)[0];
 
+		let placed = false;
 		if (y < height * 0.25) {
-			// Insert above target
-			targetParentArray.splice(targetIndex, 0, removedNode);
+			// Insert above target — parent of target must be a regex condition for regex nodes
+			if (removedNode.type !== 'regex' || isRegexContainer(targetParentNode)) {
+				targetParentArray.splice(targetIndex, 0, removedNode);
+				placed = true;
+			}
 		} else if (y > height * 0.75 || !isDropContainer) {
-			// Insert below target
-			const newIndex = targetParentArray === draggedParentArray && draggedIndex < targetIndex ? targetIndex : targetIndex + 1;
-			targetParentArray.splice(newIndex, 0, removedNode);
+			// Insert below target — same parent-container rule for regex nodes
+			if (removedNode.type !== 'regex' || isRegexContainer(targetParentNode)) {
+				const newIndex = targetParentArray === draggedParentArray && draggedIndex < targetIndex ? targetIndex : targetIndex + 1;
+				targetParentArray.splice(newIndex, 0, removedNode);
+				placed = true;
+			}
 		} else {
-			// Insert inside condition
-			if (!targetNodeData.children) targetNodeData.children = [];
-			targetNodeData.children.push(removedNode);
+			// Insert inside a condition — only allow regex nodes into regex conditions
+			if (removedNode.type !== 'regex' || isRegexContainer(targetNodeData)) {
+				if (!targetNodeData.children) targetNodeData.children = [];
+				targetNodeData.children.push(removedNode);
+				placed = true;
+			}
+		}
+
+		if (!placed) {
+			// Return node to its original position — invalid drop target for this node type
+			draggedParentArray.splice(draggedIndex, 0, removedNode);
+		} else {
+			// If a regex node was moved out of a regex condition and it was the last one,
+			// remove the now-empty regex condition parent from its own parent array.
+			pruneEmptyRegexCondition(removedNode, draggedParentNode);
 		}
 
 		updateXmlFromTree();
@@ -2536,6 +2578,13 @@ require_once "resources/header.php";
 			return;
 		}
 
+		// Prevent regex nodes from being dropped into non-regex conditions
+		if (draggedNodeData.type === 'regex' &&
+			!(targetParentNode.isRegexCondition || (targetParentNode.attributes && targetParentNode.attributes.regex))) {
+			handleDragEnd(e);
+			return;
+		}
+
 		// Remove from original position
 		const removedNode = draggedParentArray.splice(draggedIndex, 1)[0];
 
@@ -2543,9 +2592,37 @@ require_once "resources/header.php";
 		if (!targetParentNode.children) targetParentNode.children = [];
 		targetParentNode.children.push(removedNode);
 
+		// If a regex node was the last one in its old regex condition, remove that parent.
+		pruneEmptyRegexCondition(removedNode, draggedParentNode);
+
 		updateXmlFromTree();
 		renderTree();
 		handleDragEnd(e);
+	}
+
+	// If a regex node was moved out of a regex condition and no regex children remain,
+	// remove that regex condition from its own parent array.
+	function pruneEmptyRegexCondition(movedNode, oldParent) {
+		if (movedNode.type !== 'regex') return;
+		if (!oldParent || !(oldParent.isRegexCondition || (oldParent.attributes && oldParent.attributes.regex))) return;
+		const remainingRegex = (oldParent.children || []).filter(function(n) { return n.type === 'regex'; });
+		if (remainingRegex.length > 0) return;
+		// Find and remove oldParent from the tree
+		removeNodeFromTree(tree, oldParent);
+	}
+
+	// Recursively remove a specific node object from anywhere in the tree.
+	function removeNodeFromTree(treeNode, target) {
+		if (!treeNode || !treeNode.children) return false;
+		const idx = treeNode.children.indexOf(target);
+		if (idx !== -1) {
+			treeNode.children.splice(idx, 1);
+			return true;
+		}
+		for (var i = 0; i < treeNode.children.length; i++) {
+			if (removeNodeFromTree(treeNode.children[i], target)) return true;
+		}
+		return false;
 	}
 
 	// Update XML from tree (UI -> XML sync)
