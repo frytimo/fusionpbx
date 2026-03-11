@@ -1119,7 +1119,7 @@
 	$template->assign('token',                      $token);
 
 //invoke pre-render hook
-	app::dispatch_list_pre_render('xml_cdr_list_page_hook', 'xml_cdr.php', $template);
+	app::dispatch_list_pre_render('xml_cdr_list_page_hook', $url_paging, $template);
 
 //include the header
 	if ($archive_request) {
@@ -1134,7 +1134,7 @@
 	$html = $template->render('xml_cdr_list.tpl');
 
 //invoke post-render hook
-	app::dispatch_list_post_render('xml_cdr_list_page_hook', 'xml_cdr.php', $html);
+	app::dispatch_list_post_render('xml_cdr_list_page_hook', $url_paging, $html);
 	echo $html;
 
 //store last search/sort query parameters in session

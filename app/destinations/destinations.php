@@ -428,7 +428,7 @@
 	$template->assign('th_destination_description',      $th_destination_description);
 
 //invoke pre-render hook
-	app::dispatch_list_pre_render('destination_list_page_hook', null, $template);
+	app::dispatch_list_pre_render('destination_list_page_hook', $url_paging, $template);
 
 //include the header
 	$document['title'] = $text['title-destinations'];
@@ -438,7 +438,7 @@
 	$html = $template->render('destinations_list.tpl');
 
 //invoke post-render hook
-	app::dispatch_list_post_render('destination_list_page_hook', null, $html);
+	app::dispatch_list_post_render('destination_list_page_hook', $url_paging, $html);
 	echo $html;
 
 //include the footer

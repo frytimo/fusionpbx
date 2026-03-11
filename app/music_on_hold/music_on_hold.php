@@ -590,7 +590,7 @@
 	$template->assign('th_domain_header',         $th_domain_header);
 
 //invoke pre-render hook
-	app::dispatch_list_pre_render('music_on_hold_list_page_hook', null, $template);
+	app::dispatch_list_pre_render('music_on_hold_list_page_hook', $url, $template);
 
 //include the header
 	$document['title'] = $text['title-music_on_hold'];
@@ -600,7 +600,7 @@
 	$html = $template->render('music_on_hold_list.tpl');
 
 //invoke post-render hook
-	app::dispatch_list_post_render('music_on_hold_list_page_hook', null, $html);
+	app::dispatch_list_post_render('music_on_hold_list_page_hook', $url, $html);
 	echo $html;
 
 //include the footer

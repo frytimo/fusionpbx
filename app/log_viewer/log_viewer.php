@@ -299,7 +299,7 @@
 	$template->assign('has_log_view',       $has_log_view);
 
 //invoke pre-render hook
-	app::dispatch_list_pre_render('log_list_page_hook', 'log_viewer.php', $template);
+	app::dispatch_list_pre_render('log_list_page_hook', $url, $template);
 
 //include the header
 	$document['title'] = $text['title-log_viewer'];
@@ -309,7 +309,7 @@
 	$html = $template->render('log_viewer_list.tpl');
 
 //invoke post-render hook
-	app::dispatch_list_post_render('log_list_page_hook', 'log_viewer.php', $html);
+	app::dispatch_list_post_render('log_list_page_hook', $url, $html);
 	echo $html;
 
 //include the footer

@@ -48,7 +48,7 @@
 	$template->assign('request_uri', $_SERVER['REQUEST_URI']);
 
 //invoke pre-render hook
-	app::dispatch_list_pre_render('active_queue_list_page_hook', null, $template);
+	app::dispatch_list_pre_render('active_queue_list_page_hook', $url, $template);
 
 //include the header
 	$document['title'] = $text['title-active_queues'];
@@ -58,7 +58,7 @@
 	$html = $template->render('fifo_list_list.tpl');
 
 //invoke post-render hook
-	app::dispatch_list_post_render('active_queue_list_page_hook', null, $html);
+	app::dispatch_list_post_render('active_queue_list_page_hook', $url, $html);
 	echo $html;
 
 //include the footer

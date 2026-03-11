@@ -135,7 +135,7 @@
 	$template->assign('request_uri',           $_SERVER['REQUEST_URI']);
 
 //invoke pre-render hook
-	app::dispatch_list_pre_render('call_active_list_page_hook', null, $template);
+	app::dispatch_list_pre_render('call_active_list_page_hook', $url, $template);
 
 //include the header
 	$document['title'] = $text['title'];
@@ -145,7 +145,7 @@
 	$html = $template->render('calls_active_list.tpl');
 
 //invoke post-render hook
-	app::dispatch_list_post_render('call_active_list_page_hook', null, $html);
+	app::dispatch_list_post_render('call_active_list_page_hook', $url, $html);
 	echo $html;
 
 //include the footer

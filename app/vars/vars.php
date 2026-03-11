@@ -223,8 +223,10 @@
 
 //set up template
 	$template = new template;
+	$template->engine = 'smarty';
 	$template->template_dir = __DIR__.'/resources/views';
 	$template->cache_dir = sys_get_temp_dir();
+	$template->init();
 	$template->assign('text', $text);
 	$template->assign('vars', $vars);
 	$template->assign('search', $search);
@@ -257,10 +259,11 @@
 	require_once "resources/header.php";
 
 //render the template
-	$template->render('vars_list.tpl');
+	$html = $template->render('vars_list.tpl');
 
 //dispatch post-render hook
-	app::dispatch_list_post_render('var_list_page_hook', $url, $template);
+	app::dispatch_list_post_render('var_list_page_hook', $url, $html);
+	echo $html;
 
 //include the footer
 	require_once "resources/footer.php";

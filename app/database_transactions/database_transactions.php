@@ -204,7 +204,7 @@
 	$template->assign('th_transaction_date',           $th_transaction_date);
 
 //invoke pre-render hook
-	app::dispatch_list_pre_render('database_transaction_list_page_hook', null, $template);
+	app::dispatch_list_pre_render('database_transaction_list_page_hook', $url_paging, $template);
 
 //include the header
 	$document['title'] = $text['title-database_transactions'];
@@ -214,7 +214,7 @@
 	$html = $template->render('database_transactions_list.tpl');
 
 //invoke post-render hook
-	app::dispatch_list_post_render('database_transaction_list_page_hook', null, $html);
+	app::dispatch_list_post_render('database_transaction_list_page_hook', $url_paging, $html);
 	echo $html;
 
 //include the footer

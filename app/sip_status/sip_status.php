@@ -365,7 +365,7 @@
 	$template->assign('switch_status_html',     $switch_status_html);
 
 //invoke pre-render hook
-	app::dispatch_list_pre_render('sip_status_list_page_hook', 'sip_status.php', $template);
+	app::dispatch_list_pre_render('sip_status_list_page_hook', $url, $template);
 
 //include the header
 	$document['title'] = $text['title-sip_status'];
@@ -375,7 +375,7 @@
 	$html = $template->render('sip_status_list.tpl');
 
 //invoke post-render hook
-	app::dispatch_list_post_render('sip_status_list_page_hook', 'sip_status.php', $html);
+	app::dispatch_list_post_render('sip_status_list_page_hook', $url, $html);
 	echo $html;
 
 //include the footer
