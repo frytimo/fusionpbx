@@ -75,10 +75,14 @@ class pgsql_db implements database_provider {
 		return $prep_statement->fetchAll(PDO::FETCH_ASSOC);
 	}
 
-	public function fetch_column(string $sql, ?array $parameters = []): string|false {
+	public function fetch_column(string $sql, ?array $parameters = []): ?string {
 		$prep_statement = $this->db->prepare($sql);
 		try {
 			$prep_statement->execute($parameters);
+			$result = $prep_statement->fetchColumn();
+			if ($result !== false) {
+				return $result;
+			}
 		} catch (PDOException $e) {
 			if ($e->getCode() === '25P02' && $this->db->inTransaction()) {
 				$this->db->rollBack();
@@ -89,7 +93,7 @@ class pgsql_db implements database_provider {
 			}
 		}
 
-		return $prep_statement->fetchColumn();
+		return null;
 	}
 
 	public function type(): string {

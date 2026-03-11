@@ -9,7 +9,7 @@ interface database_provider {
 	public function execute(string $sql, ?array $parameters = []);
 	public function fetch_row(string $sql, ?array $parameters = []): array;
 	public function fetch_all(string $sql, ?array $parameters = []): array;
-	public function fetch_column(string $sql, ?array $parameters = []): string|false;
+	public function fetch_column(string $sql, ?array $parameters = []): ?string;
 	public function get_database_indexes(): array;
 	public function connect(): bool;
 	public function begin_transaction(): bool;
