@@ -78,7 +78,7 @@
 //process the http post data by action
 	if (!empty($action) && !empty($ring_groups)) {
 		//dispatch pre-action hook
-		app::dispatch_list_pre_action(null, $url, $action, $ring_groups);
+		app::dispatch_list_pre_action('ring_group_list_page_hook', $url, $action, $ring_groups);
 
 		switch ($action) {
 			case 'copy':
@@ -96,7 +96,7 @@
 		}
 
 			//dispatch post-action hook
-			app::dispatch_list_post_action(null, $url, $action, $ring_groups);
+			app::dispatch_list_post_action('ring_group_list_page_hook', $url, $action, $ring_groups);
 
 		header('Location: ring_groups.php'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
@@ -104,7 +104,7 @@
 
 //dispatch pre-query hook
 	$query_parameters = [];
-	app::dispatch_list_pre_query(null, $url, $query_parameters);
+	app::dispatch_list_pre_query('ring_group_list_page_hook', $url, $query_parameters);
 
 //get order and order by
 	$order_by = $_GET["order_by"] ?? 'ring_group_name';
@@ -200,156 +200,144 @@
 	$sql .= limit_offset($rows_per_page, $offset);
 	$ring_groups = $database->select($sql, $parameters, 'all');
 	//dispatch post-query hook
-	app::dispatch_list_post_query(null, $url, $ring_groups);
+	app::dispatch_list_post_query('ring_group_list_page_hook', $url, $ring_groups);
 	unset($sql, $parameters);
 
 //create token
 	$object = new token;
 	$token = $object->create($_SERVER['PHP_SELF']);
 
-//additional includes
+//set from session variables
+	$list_row_edit_button = $settings->get('theme', 'list_row_edit_button', false);
+
+//build the action bar buttons
+	$btn_add = '';
+	if ($has_ring_group_add) {
+		$btn_add = button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'ring_group_edit.php']);
+	}
+	$btn_copy = '';
+	if ($has_ring_group_add && $ring_groups) {
+		$btn_copy = button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
+	}
+	$btn_toggle = '';
+	if ($has_ring_group_edit && $ring_groups) {
+		$btn_toggle = button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
+	}
+	$btn_delete = '';
+	if ($has_ring_group_delete && $ring_groups) {
+		$btn_delete = button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
+	}
+	$btn_show_all = '';
+	if ($has_ring_group_all && $show !== 'all') {
+		$btn_show_all = button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>'?show=all']);
+	}
+	$btn_search = button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
+
+//build the modals
+	$modal_copy = '';
+	if ($has_ring_group_add && $ring_groups) {
+		$modal_copy = modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
+	}
+	$modal_toggle = '';
+	if ($has_ring_group_edit && $ring_groups) {
+		$modal_toggle = modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
+	}
+	$modal_delete = '';
+	if ($has_ring_group_delete && $ring_groups) {
+		$modal_delete = modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
+	}
+
+//build the table header columns
+	$th_domain_name = '';
+	if ($show == 'all' && $has_ring_group_all) {
+		$th_domain_name = th_order_by('domain_name', $text['label-domain'], $order_by, $order);
+	}
+	$th_ring_group_name        = th_order_by('ring_group_name', $text['label-name'], $order_by, $order);
+	$th_ring_group_extension   = th_order_by('ring_group_extension', $text['label-extension'], $order_by, $order);
+	$th_ring_group_strategy    = th_order_by('ring_group_strategy', $text['label-strategy'], $order_by, $order);
+	$th_ring_group_forward     = th_order_by('ring_group_forward_enabled', $text['label-forwarding'], $order_by, $order);
+	$th_ring_group_enabled     = th_order_by('ring_group_enabled', $text['label-enabled'], $order_by, $order, null, "class='center'");
+	$th_ring_group_description = th_order_by('ring_group_description', $text['header-description'], $order_by, $order, null, "class='hide-sm-dn'");
+
+//build the row data
+	$x = 0;
+	foreach ($ring_groups as &$row) {
+		app::dispatch_list_render_row('ring_group_list_page_hook', $url, $row, $x);
+		$list_row_url = '';
+		if ($has_ring_group_edit) {
+			$list_row_url = "ring_group_edit.php?id=".urlencode($row['ring_group_uuid']);
+			if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
+				$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
+			}
+		}
+		$row['_list_row_url']       = $list_row_url;
+		$row['_enabled_label']      = $text['label-'.$row['ring_group_enabled']];
+		$row['_strategy_label']     = $text['option-'.$row['ring_group_strategy']] ?? '';
+		$row['_forward_display']    = ($row['ring_group_forward_enabled'] === true && !empty($row['ring_group_forward_destination'])) ? format_phone($row['ring_group_forward_destination']) : '';
+		$row['_domain_name']        = $_SESSION['domains'][$row['domain_uuid']]['domain_name'] ?? '';
+		$row['_toggle_button']      = '';
+		if ($has_ring_group_edit) {
+			$row['_toggle_button'] = button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['ring_group_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_{$x}'); list_action_set('toggle'); list_form_submit('form_list')"]);
+		}
+		$row['_edit_button'] = '';
+		if ($has_ring_group_edit && $list_row_edit_button) {
+			$row['_edit_button'] = button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
+		}
+		$x++;
+	}
+	unset($row);
+
+//build the template
+	$template = new template();
+	$template->engine = 'smarty';
+	$template->template_dir = __DIR__.'/resources/views';
+	$template->cache_dir = sys_get_temp_dir();
+	$template->init();
+
+//assign the template variables
+	$template->assign('text',                      $text);
+	$template->assign('num_rows',                  $num_rows);
+	$template->assign('ring_groups',               $ring_groups ?? []);
+	$template->assign('search',                    $search);
+	$template->assign('show',                      $show);
+	$template->assign('paging_controls',           $paging_controls);
+	$template->assign('paging_controls_mini',      $paging_controls_mini);
+	$template->assign('token',                     $token);
+	$template->assign('has_ring_group_add',        $has_ring_group_add);
+	$template->assign('has_ring_group_all',        $has_ring_group_all);
+	$template->assign('has_ring_group_delete',     $has_ring_group_delete);
+	$template->assign('has_ring_group_edit',       $has_ring_group_edit);
+	$template->assign('list_row_edit_button',      $list_row_edit_button);
+	$template->assign('btn_add',                   $btn_add);
+	$template->assign('btn_copy',                  $btn_copy);
+	$template->assign('btn_toggle',                $btn_toggle);
+	$template->assign('btn_delete',                $btn_delete);
+	$template->assign('btn_show_all',              $btn_show_all);
+	$template->assign('btn_search',                $btn_search);
+	$template->assign('modal_copy',                $modal_copy);
+	$template->assign('modal_toggle',              $modal_toggle);
+	$template->assign('modal_delete',              $modal_delete);
+	$template->assign('th_domain_name',            $th_domain_name);
+	$template->assign('th_ring_group_name',        $th_ring_group_name);
+	$template->assign('th_ring_group_extension',   $th_ring_group_extension);
+	$template->assign('th_ring_group_strategy',    $th_ring_group_strategy);
+	$template->assign('th_ring_group_forward',     $th_ring_group_forward);
+	$template->assign('th_ring_group_enabled',     $th_ring_group_enabled);
+	$template->assign('th_ring_group_description', $th_ring_group_description);
+
+//invoke pre-render hook
+	app::dispatch_list_pre_render('ring_group_list_page_hook', $url, $template);
+
+//include the header
 	$document['title'] = $text['title-ring_groups'];
 	require_once "resources/header.php";
 
-//show the content
-	echo "<div class='action_bar' id='action_bar'>\n";
-	echo "	<div class='heading'><b>".$text['title-ring_groups']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
-	echo "	<div class='actions'>\n";
-	if ($has_ring_group_add) {
-		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'ring_group_edit.php']);
-	}
-	if ($has_ring_group_add && $ring_groups) {
-		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
-	}
-	if ($has_ring_group_edit && $ring_groups) {
-		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
-	}
-	if ($has_ring_group_delete && $ring_groups) {
-		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
-	}
-	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if ($has_ring_group_all) {
-		if ($show == 'all') {
-			echo "		<input type='hidden' name='show' value='all'>";
-		}
-		else {
-			echo button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>'?show=all']);
-		}
-	}
-	echo 		"<input type='text' class='txt list-search' name='search' id='search' value=\"".escape($search)."\" placeholder=\"".$text['label-search']."\" onkeydown=''>";
-	echo button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
-	//echo button::create(['label'=>$text['button-reset'],'icon'=>$settings->get('theme', 'button_icon_reset'),'type'=>'button','id'=>'btn_reset','link'=>'ring_groups.php','style'=>($search == '' ? 'display: none;' : null)]);
-	if ($paging_controls_mini != '') {
-		echo 	"<span style='margin-left: 15px;'>".$paging_controls_mini."</span>";
-	}
-	echo "		</form>\n";
-	echo "	</div>\n";
-	echo "	<div style='clear: both;'></div>\n";
-	echo "</div>\n";
+//render the template
+	$html = $template->render('ring_groups_list.tpl');
 
-	if ($has_ring_group_add && $ring_groups) {
-		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
-	}
-	if ($has_ring_group_edit && $ring_groups) {
-		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
-	}
-	if ($has_ring_group_delete && $ring_groups) {
-		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
-	}
-
-	echo $text['description']."\n";
-	echo "<br /><br />\n";
-
-	echo "<form id='form_list' method='post'>\n";
-	echo "<input type='hidden' id='action' name='action' value=''>\n";
-	echo "<input type='hidden' name='search' value=\"".escape($search)."\">\n";
-
-	echo "<div class='card'>\n";
-	echo "<table class='list'>\n";
-	echo "<tr class='list-header'>\n";
-	if ($has_ring_group_add || $has_ring_group_edit || $has_ring_group_delete) {
-		echo "	<th class='checkbox'>\n";
-		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".!empty($ring_groups ?: "style='visibility: hidden;'").">\n";
-		echo "	</th>\n";
-	}
-	if ($show == "all" && $has_ring_group_all) {
-		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order);
-	}
-	echo th_order_by('ring_group_name', $text['label-name'], $order_by, $order);
-	echo th_order_by('ring_group_extension', $text['label-extension'], $order_by, $order);
-	echo th_order_by('ring_group_strategy', $text['label-strategy'], $order_by, $order);
-	echo th_order_by('ring_group_forward_enabled', $text['label-forwarding'], $order_by, $order);
-	echo th_order_by('ring_group_enabled', $text['label-enabled'], $order_by, $order, null, "class='center'");
-	echo th_order_by('ring_group_description', $text['header-description'], $order_by, $order, null, "class='hide-sm-dn'");
-	if ($has_ring_group_edit && $settings->get('theme', 'list_row_edit_button', false)) {
-		echo "	<td class='action-button'>&nbsp;</td>\n";
-	}
-	echo "</tr>\n";
-
-	if (is_array($ring_groups) && @sizeof($ring_groups) != 0) {
-		$x = 0;
-		foreach ($ring_groups as $row) {
-			//dispatch render-row hook
-			app::dispatch_list_render_row(null, $url, $row, $x);
-			$list_row_url = '';
-			if ($has_ring_group_edit) {
-				$list_row_url = "ring_group_edit.php?id=".urlencode($row['ring_group_uuid']);
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
-					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
-				}
-			}
-			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if ($has_ring_group_add || $has_ring_group_edit || $has_ring_group_delete) {
-				echo "	<td class='checkbox'>\n";
-				echo "		<input type='checkbox' name='ring_groups[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
-				echo "		<input type='hidden' name='ring_groups[$x][uuid]' value='".escape($row['ring_group_uuid'])."' />\n";
-				echo "	</td>\n";
-			}
-			if ($show == "all" && $has_ring_group_all) {
-				echo "	<td>".escape($_SESSION['domains'][$row['domain_uuid']]['domain_name'])."</td>\n";
-			}
-			echo "	<td>";
-			if ($has_ring_group_edit) {
-				echo "<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['ring_group_name'])."</a>";
-			}
-			else {
-				echo escape($row['ring_group_name']);
-			}
-			echo "	</td>\n";
-			echo "	<td>".escape($row['ring_group_extension'])."&nbsp;</td>\n";
-			echo "	<td>".$text['option-'.escape($row['ring_group_strategy'])]."&nbsp;</td>\n";
-			echo "	<td>".($row['ring_group_forward_enabled'] === true && !empty($row['ring_group_forward_destination']) ? format_phone(escape($row['ring_group_forward_destination'])) : null)."&nbsp;</td>\n";
-			if ($has_ring_group_edit) {
-				echo "	<td class='no-link center'>";
-				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['ring_group_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
-			}
-			else {
-				echo "	<td class='center'>";
-				echo $text['label-'.$row['ring_group_enabled']];
-			}
-			echo "	</td>\n";
-			echo "	<td class='description overflow hide-sm-dn'>".escape($row['ring_group_description'])."&nbsp;</td>\n";
-			if ($has_ring_group_edit && $settings->get('theme', 'list_row_edit_button', false)) {
-				echo "	<td class='action-button'>";
-				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
-				echo "	</td>\n";
-			}
-			echo "</tr>\n";
-			$x++;
-		}
-		unset($ring_groups);
-	}
-
-	echo "</table>\n";
-	echo "</div>\n";
-	echo "<br />\n";
-	echo "<div align='center'>".$paging_controls."</div>\n";
-
-	echo "<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
-
-	echo "</form>\n";
+//invoke post-render hook
+	app::dispatch_list_post_render('ring_group_list_page_hook', $url, $html);
+	echo $html;
 
 //include the footer
 	require_once "resources/footer.php";
-
-

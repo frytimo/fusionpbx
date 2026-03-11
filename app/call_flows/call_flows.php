@@ -65,7 +65,7 @@
 //process the http post data by action
 	if (!empty($action) && !empty($call_flows)) {
 		//dispatch pre-action hook
-		app::dispatch_list_pre_action(null, $url, $action, $call_flows);
+		app::dispatch_list_pre_action('call_flow_list_page_hook', $url, $action, $call_flows);
 
 		switch ($action) {
 			case 'copy':
@@ -90,7 +90,7 @@
 		}
 
 		//dispatch post-action hook
-		app::dispatch_list_post_action(null, $url, $action, $call_flows);
+		app::dispatch_list_post_action('call_flow_list_page_hook', $url, $action, $call_flows);
 
 		header('Location: call_flows.php'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
@@ -98,7 +98,7 @@
 
 //dispatch pre-query hook
 	$query_parameters = [];
-	app::dispatch_list_pre_query(null, $url, $query_parameters);
+	app::dispatch_list_pre_query('call_flow_list_page_hook', $url, $query_parameters);
 
 //get variables used to control the order
 	$order_by = $_GET["order_by"] ?? '';
@@ -175,116 +175,76 @@
 	$sql .= limit_offset($rows_per_page, $offset);
 	$call_flows = $database->select($sql, $parameters ?? null, 'all');
 	//dispatch post-query hook
-	app::dispatch_list_post_query(null, $url, $call_flows);
+	app::dispatch_list_post_query('call_flow_list_page_hook', $url, $call_flows);
 	unset($sql, $parameters);
 
 //create token
 	$object = new token;
 	$token = $object->create($_SERVER['PHP_SELF']);
 
-//include header
-	$document['title'] = $text['title-call_flows'];
-	require_once "resources/header.php";
-
-//javascript for toggle select box
-	echo "<script language='javascript' type='text/javascript'>\n";
-	echo "	function toggle_select() {\n";
-	echo "		$('#call_flow_feature').fadeToggle(400, function() {\n";
-	echo "			document.getElementById('call_flow_feature').selectedIndex = 0;\n";
-	echo "			document.getElementById('call_flow_feature').focus();\n";
-	echo "		});\n";
-	echo "	}\n";
-	echo "</script>\n";
-
-//show the content
-	echo "<div class='action_bar' id='action_bar'>\n";
-	echo "	<div class='heading'><b>".$text['title-call_flows']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
-	echo "	<div class='actions'>\n";
+//build the action bar buttons
+	$btn_add = '';
 	if ($has_call_flow_add) {
-		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'call_flow_edit.php']);
+		$btn_add = button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'call_flow_edit.php']);
 	}
+	$btn_copy = '';
 	if ($has_call_flow_add && $call_flows) {
-		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
+		$btn_copy = button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 	}
+	$btn_toggle = '';
 	if ($has_call_flow_edit && $call_flows) {
-		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"toggle_select(); this.blur();"]);
-		echo 		"<select class='formfld' style='display: none; width: auto;' id='call_flow_feature' onchange=\"if (this.selectedIndex != 0) { modal_open('modal-toggle','btn_toggle'); }\">";
-		echo "			<option value='' selected='selected'>".$text['label-select']."</option>";
-		echo "			<option value='call_flow_status'>".$text['label-call_flow_status']."</option>";
-		echo "			<option value='call_flow_enabled'>".$text['label-enabled']."</option>";
-		echo "		</select>";
+		$btn_toggle = button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"toggle_select(); this.blur();"]);
+		$btn_toggle .= "<select class='formfld' style='display: none; width: auto;' id='call_flow_feature' onchange=\"if (this.selectedIndex != 0) { modal_open('modal-toggle','btn_toggle'); }\">";
+		$btn_toggle .= "<option value='' selected='selected'>".$text['label-select']."</option>";
+		$btn_toggle .= "<option value='call_flow_status'>".$text['label-call_flow_status']."</option>";
+		$btn_toggle .= "<option value='call_flow_enabled'>".$text['label-enabled']."</option>";
+		$btn_toggle .= "</select>";
 	}
+	$btn_delete = '';
 	if ($has_call_flow_delete && $call_flows) {
-		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
+		$btn_delete = button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
-	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if ($has_call_flow_all) {
-		if ($show == 'all') {
-			echo "		<input type='hidden' name='show' value='all'>";
-		}
-		else {
-			echo button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>'?type=&show=all'.($search != '' ? "&search=".urlencode($search) : null)]);
-		}
+	$btn_show_all = '';
+	if ($has_call_flow_all && $show !== 'all') {
+		$btn_show_all = button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>'?type=&show=all'.($search != '' ? "&search=".urlencode($search) : null)]);
 	}
-	echo 		"<input type='text' class='txt list-search' name='search' id='search' value=\"".escape($search)."\" placeholder=\"".$text['label-search']."\" onkeydown=''>";
-	echo button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
-	//echo button::create(['label'=>$text['button-reset'],'icon'=>$settings->get('theme', 'button_icon_reset'),'type'=>'button','id'=>'btn_reset','link'=>'call_flows.php','style'=>($search == '' ? 'display: none;' : null)]);
-	if ($paging_controls_mini != '') {
-		echo 	"<span style='margin-left: 15px;'>".$paging_controls_mini."</span>";
-	}
-	echo "		</form>\n";
-	echo "	</div>\n";
-	echo "	<div style='clear: both;'></div>\n";
-	echo "</div>\n";
+	$btn_search = button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
 
+//build the modals
+	$modal_copy = '';
 	if ($has_call_flow_add && $call_flows) {
-		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
+		$modal_copy = modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 	}
+	$modal_toggle = '';
 	if ($has_call_flow_edit && $call_flows) {
-		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); document.getElementById('toggle_field').value = document.getElementById('call_flow_feature').options[document.getElementById('call_flow_feature').selectedIndex].value; list_action_set('toggle'); list_form_submit('form_list');"])]);
+		$modal_toggle = modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); document.getElementById('toggle_field').value = document.getElementById('call_flow_feature').options[document.getElementById('call_flow_feature').selectedIndex].value; list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
+	$modal_delete = '';
 	if ($has_call_flow_delete && $call_flows) {
-		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
+		$modal_delete = modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
-	echo $text['description-call_flows']."\n";
-	echo "<br /><br />\n";
-
-	echo "<form id='form_list' method='post'>\n";
-	echo "<input type='hidden' id='action' name='action' value=''>\n";
-	echo "<input type='hidden' id='toggle_field' name='toggle_field' value=''>\n";
-	echo "<input type='hidden' name='search' value=\"".escape($search)."\">\n";
-
-	echo "<div class='card'>\n";
-	echo "<table class='list'>\n";
-	echo "<tr class='list-header'>\n";
-	if ($has_call_flow_add || $has_call_flow_edit || $has_call_flow_delete) {
-		echo "	<th class='checkbox'>\n";
-		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($call_flows) ?: "style='visibility: hidden;'").">\n";
-		echo "	</th>\n";
+//build the table header columns
+	$th_domain_name = '';
+	if ($show == 'all' && $has_call_flow_all) {
+		$th_domain_name = th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param, "class='shrink'");
 	}
-	if ($show == "all" && $has_call_flow_all) {
-		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param, "class='shrink'");
-	}
-	echo th_order_by('call_flow_name', $text['label-call_flow_name'], $order_by, $order);
-	echo th_order_by('call_flow_extension', $text['label-call_flow_extension'], $order_by, $order);
-	echo th_order_by('call_flow_feature_code', $text['label-call_flow_feature_code'], $order_by, $order);
-	echo th_order_by('call_flow_status', $text['label-call_flow_status'], $order_by, $order);
+	$th_call_flow_name         = th_order_by('call_flow_name', $text['label-call_flow_name'], $order_by, $order);
+	$th_call_flow_extension    = th_order_by('call_flow_extension', $text['label-call_flow_extension'], $order_by, $order);
+	$th_call_flow_feature_code = th_order_by('call_flow_feature_code', $text['label-call_flow_feature_code'], $order_by, $order);
+	$th_call_flow_status       = th_order_by('call_flow_status', $text['label-call_flow_status'], $order_by, $order);
+	$th_call_flow_context      = '';
 	if ($has_call_flow_context) {
-		echo th_order_by('call_flow_context', $text['label-call_flow_context'], $order_by, $order);
+		$th_call_flow_context = th_order_by('call_flow_context', $text['label-call_flow_context'], $order_by, $order);
 	}
-	echo th_order_by('call_flow_enabled', $text['label-enabled'], $order_by, $order, null, "class='center'");
-	echo th_order_by('call_flow_description', $text['label-call_flow_description'], $order_by, $order, null, "class='hide-sm-dn'");
-	if ($has_call_flow_edit && $list_row_edit_button) {
-		echo "	<td class='action-button'>&nbsp;</td>\n";
-	}
-	echo "</tr>\n";
+	$th_call_flow_enabled      = th_order_by('call_flow_enabled', $text['label-enabled'], $order_by, $order, null, "class='center'");
+	$th_call_flow_description  = th_order_by('call_flow_description', $text['label-call_flow_description'], $order_by, $order, null, "class='hide-sm-dn'");
 
+//build the row data
+	$x = 0;
 	if (!empty($call_flows)) {
-		$x = 0;
-		foreach ($call_flows as $row) {
-			//dispatch render-row hook
-			app::dispatch_list_render_row(null, $url, $row, $x);
+		foreach ($call_flows as &$row) {
+			app::dispatch_list_render_row('call_flow_list_page_hook', $url, $row, $x);
 			$list_row_url = '';
 			if ($has_call_flow_edit) {
 				$list_row_url = "call_flow_edit.php?id=".urlencode($row['call_flow_uuid']);
@@ -292,66 +252,84 @@
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
-			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if ($has_call_flow_add || $has_call_flow_edit || $has_call_flow_delete) {
-				echo "	<td class='checkbox'>\n";
-				echo "		<input type='checkbox' name='call_flows[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
-				echo "		<input type='hidden' name='call_flows[$x][uuid]' value='".escape($row['call_flow_uuid'])."' />\n";
-				echo "	</td>\n";
-			}
-			if ($show == "all" && $has_call_flow_all) {
-				if (!empty($_SESSION['domains'][$row['domain_uuid']]['domain_name'])) {
-					$domain = $_SESSION['domains'][$row['domain_uuid']]['domain_name'];
-				}
-				else {
-					$domain = $text['label-global'];
-				}
-				echo "	<td>".escape($domain)."</td>\n";
-			}
-			echo "	<td><a href='".$list_row_url."'>".escape($row['call_flow_name'])."</a>&nbsp;</td>\n";
-			echo "	<td>".escape($row['call_flow_extension'])."&nbsp;</td>\n";
-			echo "	<td>".escape($row['call_flow_feature_code'])."&nbsp;</td>\n";
+			$row['_list_row_url'] = $list_row_url;
 			$status_label = $row['call_flow_status'] != 'false' ? $row['call_flow_label'] : $row['call_flow_alternate_label'];
+			$row['_status_label'] = escape($status_label);
+			$row['_status_toggle_button'] = '';
 			if ($has_call_flow_edit) {
-				echo "	<td class='no-link'>";
-				echo button::create(['type'=>'submit','class'=>'link','label'=>escape($status_label),'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); document.getElementById('toggle_field').value = 'call_flow_status'; list_form_submit('form_list')"]);
+				$row['_status_toggle_button'] = button::create(['type'=>'submit','class'=>'link','label'=>escape($status_label),'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_{$x}'); list_action_set('toggle'); document.getElementById('toggle_field').value = 'call_flow_status'; list_form_submit('form_list')"]);
 			}
-			else {
-				echo "	<td>";
-				echo escape($status_label);
-			}
-			echo "	</td>\n";
-			if ($has_call_flow_context) {
-				echo "	<td>".escape($row['call_flow_context'])."&nbsp;</td>\n";
-			}
+			$row['_enabled_label'] = $text['label-'.($row['call_flow_enabled'] == 'true' ? 'true' : 'false')];
+			$row['_enabled_toggle_button'] = '';
 			if ($has_call_flow_edit) {
-				echo "	<td class='no-link center'>";
-				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.($row['call_flow_enabled'] == "true" ? 'true' : 'false')],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); document.getElementById('toggle_field').value = 'call_flow_enabled'; list_form_submit('form_list')"]);
+				$row['_enabled_toggle_button'] = button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.($row['call_flow_enabled'] == 'true' ? 'true' : 'false')],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_{$x}'); list_action_set('toggle'); document.getElementById('toggle_field').value = 'call_flow_enabled'; list_form_submit('form_list')"]);
 			}
-			else {
-				echo "	<td class='center'>";
-				echo escape($row['call_flow_enabled']);
+			$row['_domain_display'] = '';
+			if (!empty($show) && $show == 'all' && $has_call_flow_all) {
+				$row['_domain_display'] = !empty($_SESSION['domains'][$row['domain_uuid']]['domain_name']) ? escape($_SESSION['domains'][$row['domain_uuid']]['domain_name']) : $text['label-global'];
 			}
-			echo "	<td class='description overflow hide-sm-dn'>".escape($row['call_flow_description'])."&nbsp;</td>\n";
+			$row['_edit_button'] = '';
 			if ($has_call_flow_edit && $list_row_edit_button) {
-				echo "	<td class='action-button'>";
-				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
-				echo "	</td>\n";
+				$row['_edit_button'] = button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 			}
-			echo "</tr>\n";
 			$x++;
 		}
-		unset($call_flows);
+		unset($row);
 	}
 
-	echo "</table>\n";
-	echo "</div>\n";
-	echo "<br />\n";
-	echo "<div align='center'>".$paging_controls."</div>\n";
+//build the template
+	$template = new template();
+	$template->engine = 'smarty';
+	$template->template_dir = __DIR__.'/resources/views';
+	$template->cache_dir = sys_get_temp_dir();
+	$template->init();
 
-	echo "<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
+//assign the template variables
+	$template->assign('text',                    $text);
+	$template->assign('num_rows',                $num_rows);
+	$template->assign('rows',                    $call_flows ?? []);
+	$template->assign('search',                  $search);
+	$template->assign('show',                    $show);
+	$template->assign('paging_controls',         $paging_controls);
+	$template->assign('paging_controls_mini',    $paging_controls_mini);
+	$template->assign('token',                   $token);
+	$template->assign('has_call_flow_add',        $has_call_flow_add);
+	$template->assign('has_call_flow_all',        $has_call_flow_all);
+	$template->assign('has_call_flow_context',    $has_call_flow_context);
+	$template->assign('has_call_flow_delete',     $has_call_flow_delete);
+	$template->assign('has_call_flow_edit',       $has_call_flow_edit);
+	$template->assign('list_row_edit_button',     $list_row_edit_button);
+	$template->assign('btn_add',                  $btn_add);
+	$template->assign('btn_copy',                 $btn_copy);
+	$template->assign('btn_toggle',               $btn_toggle);
+	$template->assign('btn_delete',               $btn_delete);
+	$template->assign('btn_show_all',             $btn_show_all);
+	$template->assign('btn_search',               $btn_search);
+	$template->assign('modal_copy',               $modal_copy);
+	$template->assign('modal_toggle',             $modal_toggle);
+	$template->assign('modal_delete',             $modal_delete);
+	$template->assign('th_domain_name',           $th_domain_name);
+	$template->assign('th_call_flow_name',        $th_call_flow_name);
+	$template->assign('th_call_flow_extension',   $th_call_flow_extension);
+	$template->assign('th_call_flow_feature_code',$th_call_flow_feature_code);
+	$template->assign('th_call_flow_status',      $th_call_flow_status);
+	$template->assign('th_call_flow_context',     $th_call_flow_context);
+	$template->assign('th_call_flow_enabled',     $th_call_flow_enabled);
+	$template->assign('th_call_flow_description', $th_call_flow_description);
 
-	echo "</form>\n";
+//invoke pre-render hook
+	app::dispatch_list_pre_render('call_flow_list_page_hook', $url, $template);
+
+//include header
+	$document['title'] = $text['title-call_flows'];
+	require_once "resources/header.php";
+
+//render the template
+	$html = $template->render('call_flows_list.tpl');
+
+//invoke post-render hook
+	app::dispatch_list_post_render('call_flow_list_page_hook', $url, $html);
+	echo $html;
 
 //include the footer
 	require_once "resources/footer.php";

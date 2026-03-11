@@ -68,7 +68,7 @@
 //process the http post data by action
 	if (!empty($action) && !empty($voicemails)) {
 		//dispatch pre-action hook
-		app::dispatch_list_pre_action(null, $url, $action, $voicemails);
+		app::dispatch_list_pre_action('voicemail_list_page_hook', $url, $action, $voicemails);
 
 		switch ($action) {
 			case 'toggle':
@@ -86,7 +86,7 @@
 		}
 
 		//dispatch post-action hook
-		app::dispatch_list_post_action(null, $url, $action, $voicemails);
+		app::dispatch_list_post_action('voicemail_list_page_hook', $url, $action, $voicemails);
 
 		header('Location: voicemails.php'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
@@ -94,7 +94,7 @@
 
 //dispatch pre-query hook
 	$query_parameters = [];
-	app::dispatch_list_pre_query(null, $url, $query_parameters);
+	app::dispatch_list_pre_query('voicemail_list_page_hook', $url, $query_parameters);
 
 //set the voicemail uuid array
 	if (isset($_SESSION['user']['voicemail'])) {
@@ -213,7 +213,7 @@
 	$sql .= limit_offset($rows_per_page, $offset);
 	$voicemails = $database->select($sql, $parameters, 'all');
 	//dispatch post-query hook
-	app::dispatch_list_post_query(null, $url, $voicemails);
+	app::dispatch_list_post_query('voicemail_list_page_hook', $url, $voicemails);
 	unset($sql, $parameters);
 
 //get vm count for each mailbox
@@ -258,172 +258,160 @@
 	$object = new token;
 	$token = $object->create($_SERVER['PHP_SELF']);
 
-//additional includes
-	$document['title'] = $text['title-voicemails'];
-	require_once "resources/header.php";
+//build the action bar buttons
+$btn_import = '';
+if ($has_voicemail_import) {
+$btn_import = button::create(['type'=>'button','label'=>$text['button-import'],'icon'=>$settings->get('theme', 'button_icon_import'),'style'=>'','link'=>'voicemail_imports.php']);
+}
+$btn_export = '';
+if ($has_voicemail_export) {
+$btn_export = button::create(['type'=>'button','label'=>$text['button-export'],'icon'=>$settings->get('theme', 'button_icon_export'),'style'=>'margin-right: 15px;','link'=>'voicemail_export.php']);
+}
+$btn_add = '';
+if ($has_voicemail_add) {
+$btn_add = button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'voicemail_edit.php']);
+}
+$btn_toggle = '';
+if ($has_voicemail_edit && $voicemails) {
+$btn_toggle = button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
+}
+$btn_delete = '';
+if ($has_voicemail_delete && $voicemails) {
+$btn_delete = button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
+}
+$btn_show_all = '';
+if ($has_voicemail_all && $show !== 'all') {
+$btn_show_all = button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>'?type=&show=all'.($search != '' ? "&search=".urlencode($search) : null)]);
+}
+$btn_search = button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
 
-//show the content
-	echo "<div class='action_bar' id='action_bar'>\n";
-	echo "	<div class='heading'><b>".$text['title-voicemails']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
-	echo "	<div class='actions'>\n";
-	if ($has_voicemail_import) {
-		echo button::create(['type'=>'button','label'=>$text['button-import'],'icon'=>$settings->get('theme', 'button_icon_import'),'style'=>'','link'=>'voicemail_imports.php']);
-	}
-	if ($has_voicemail_export) {
-		echo button::create(['type'=>'button','label'=>$text['button-export'],'icon'=>$settings->get('theme', 'button_icon_export'),'style'=>'margin-right: 15px;','link'=>'voicemail_export.php']);
-	}
-	if ($has_voicemail_add) {
-		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'voicemail_edit.php']);
-	}
-	if ($has_voicemail_edit && $voicemails) {
-		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
-	}
-	if ($has_voicemail_delete && $voicemails) {
-		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
-	}
-	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if ($has_voicemail_all) {
-		if ($show == 'all') {
-			echo "		<input type='hidden' name='show' value='all'>";
-		}
-		else {
-			echo button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>'?type=&show=all'.($search != '' ? "&search=".urlencode($search) : null)]);
-		}
-	}
-	echo 		"<input type='text' class='txt list-search' name='search' id='search' value=\"".escape($search)."\" placeholder=\"".$text['label-search']."\" onkeydown=''>";
-	echo button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
-	//echo button::create(['label'=>$text['button-reset'],'icon'=>$settings->get('theme', 'button_icon_reset'),'type'=>'button','id'=>'btn_reset','link'=>'voicemails.php','style'=>($search == '' ? 'display: none;' : null)]);
-	if (!empty($paging_controls_mini)) {
-		echo 	"<span style='margin-left: 15px;'>".$paging_controls_mini."</span>\n";
-	}
-	echo "		</form>\n";
-	echo "	</div>\n";
-	echo "	<div style='clear: both;'></div>\n";
-	echo "</div>\n";
+//build the modals
+$modal_toggle = '';
+if ($has_voicemail_edit && $voicemails) {
+$modal_toggle = modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
+}
+$modal_delete = '';
+if ($has_voicemail_delete && $voicemails) {
+$modal_delete = modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
+}
 
-	if ($has_voicemail_edit && $voicemails) {
-		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
-	}
-	if ($has_voicemail_delete && $voicemails) {
-		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
-	}
+//build the table header columns
+$th_domain_name = '';
+if ($show == 'all' && $has_voicemail_all) {
+$th_domain_name = th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param, "class='shrink'");
+}
+$th_voicemail_id             = th_order_by('voicemail_id', $text['label-voicemail_id'], $order_by, $order, null, "style='width: 1%;'");
+$th_voicemail_mail_to        = th_order_by('voicemail_mail_to', $text['label-voicemail_mail_to'], $order_by, $order, null, "class='hide-sm-dn'");
+$th_voicemail_file           = th_order_by('voicemail_file', $text['label-voicemail_file_attached'], $order_by, $order, null, "class='center hide-md-dn' style='width: 1%;'");
+$th_voicemail_local_after_email = th_order_by('voicemail_local_after_email', $text['label-voicemail_local_after_email'], $order_by, $order, null, "class='center hide-md-dn' style='width: 1%;'");
+$show_transcription_col = $has_voicemail_transcription_enabled && $settings->get('transcribe', 'enabled', false) === true;
+$th_transcription = '';
+if ($show_transcription_col) {
+$th_transcription = th_order_by('voicemail_transcription_enabled', $text['label-voicemail_transcription_enabled'], $order_by, $order, null, "class='center' style='width: 1%;'");
+}
+$th_tools = '';
+if ($has_voicemail_message_view || $has_voicemail_greeting_view) {
+$th_tools = "<th style='width: 17%;'>".$text['label-tools']."</th>\n";
+}
+$th_voicemail_enabled     = th_order_by('voicemail_enabled', $text['label-voicemail_enabled'], $order_by, $order, null, "class='center' style='width: 1%;'");
+$th_voicemail_description = th_order_by('voicemail_description', $text['label-voicemail_description'], $order_by, $order, null, "class='hide-sm-dn'");
 
-	echo $text['description-voicemail']."\n";
-	echo "<br /><br />\n";
+//build the row data
+$x = 0;
+foreach ($voicemails as &$row) {
+app::dispatch_list_render_row('voicemail_list_page_hook', $url, $row, $x);
+$list_row_url = '';
+if ($has_voicemail_edit) {
+$list_row_url = "voicemail_edit.php?id=".urlencode($row['voicemail_uuid']);
+if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
+$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
+}
+}
+$row['_list_row_url']             = $list_row_url;
+$row['_domain_name']              = !empty($_SESSION['domains'][$row['domain_uuid']]['domain_name']) ? $_SESSION['domains'][$row['domain_uuid']]['domain_name'] : $text['label-global'];
+$row['_file_attached_label']      = ($row['voicemail_file'] == 'attach') ? $text['label-true'] : $text['label-false'];
+$row['_local_after_email_display']= ucwords($row['voicemail_local_after_email'] ?? '');
+$row['_transcription_display']    = ucwords($row['voicemail_transcription_enabled'] ?? '');
+$row['_enabled_label']            = $text['label-'.$row['voicemail_enabled']];
+$tools = '';
+if ($has_voicemail_greeting_view) {
+$tools .= "<a href='".PROJECT_PATH."/app/voicemail_greetings/voicemail_greetings.php?id=".escape($row['voicemail_id'])."&back=".urlencode($_SERVER["REQUEST_URI"])."' style='margin-right: 15px;'>".$text['label-greetings']." (".($voicemail_greetings_count[$row['voicemail_id']] ?? 0).")</a>\n";
+}
+if ($has_voicemail_message_view) {
+$tmp = array_key_exists($row['voicemail_uuid'], $voicemails_count ?? []) ? " (".$voicemails_count[$row['voicemail_uuid']].")" : " (0)";
+$tools .= "<a href='voicemail_messages.php?id=".escape($row['voicemail_uuid'])."&back=".urlencode($_SERVER["REQUEST_URI"])."'>".$text['label-messages'].$tmp."</a>\n";
+}
+$row['_tools_html']    = $tools;
+$row['_toggle_button'] = '';
+if ($has_voicemail_edit) {
+$row['_toggle_button'] = button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['voicemail_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_{$x}'); list_action_set('toggle'); list_form_submit('form_list')"]);
+}
+$row['_edit_button'] = '';
+if ($has_voicemail_edit && $list_row_edit_button) {
+$row['_edit_button'] = button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
+}
+$x++;
+}
+unset($row);
 
-	echo "<form id='form_list' method='post'>\n";
-	echo "<input type='hidden' id='action' name='action' value=''>\n";
-	echo "<input type='hidden' name='search' value=\"".escape($search)."\">\n";
+//build the template
+$template = new template();
+$template->engine = 'smarty';
+$template->template_dir = __DIR__.'/resources/views';
+$template->cache_dir = sys_get_temp_dir();
+$template->init();
 
-	echo "<div class='card'>\n";
-	echo "<table class='list'>\n";
-	echo "<tr class='list-header'>\n";
-	if ($has_voicemail_edit || $has_voicemail_delete) {
-		echo "	<th class='checkbox'>\n";
-		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($voicemails) ?: "style='visibility: hidden;'").">\n";
-		echo "	</th>\n";
-	}
-	if ($show == "all" && $has_voicemail_all) {
-		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param, "class='shrink'");
-	}
-	echo th_order_by('voicemail_id', $text['label-voicemail_id'], $order_by, $order, null, "style='width: 1%;'");
-	echo th_order_by('voicemail_mail_to', $text['label-voicemail_mail_to'], $order_by, $order, null, "class='hide-sm-dn'");
-	echo th_order_by('voicemail_file', $text['label-voicemail_file_attached'], $order_by, $order, null, "class='center hide-md-dn' style='width: 1%;'");
-	echo th_order_by('voicemail_local_after_email', $text['label-voicemail_local_after_email'], $order_by, $order, null, "class='center hide-md-dn' style='width: 1%;'");
-	if ($has_voicemail_transcription_enabled && $settings->get('transcribe', 'enabled', false) === true) {
-		echo th_order_by('voicemail_transcription_enabled', $text['label-voicemail_transcription_enabled'], $order_by, $order, null, "class='center' style='width: 1%;'");
-	}
-	if ($has_voicemail_message_view || $has_voicemail_greeting_view) {
-		echo "<th style='width: 17%;'>".$text['label-tools']."</th>\n";
-	}
-	echo th_order_by('voicemail_enabled', $text['label-voicemail_enabled'], $order_by, $order, null, "class='center' style='width: 1%;'");
-	echo th_order_by('voicemail_description', $text['label-voicemail_description'], $order_by, $order, null, "class='hide-sm-dn'");
-	if ($has_voicemail_edit && $list_row_edit_button) {
-		echo "	<td class='action-button'>&nbsp;</td>\n";
-	}
-	echo "</tr>\n";
+//assign the template variables
+$template->assign('text',                      $text);
+$template->assign('num_rows',                  $num_rows);
+$template->assign('voicemails',                $voicemails ?? []);
+$template->assign('search',                    $search);
+$template->assign('show',                      $show);
+$template->assign('paging_controls',           $paging_controls);
+$template->assign('paging_controls_mini',      $paging_controls_mini);
+$template->assign('token',                     $token);
+$template->assign('has_voicemail_add',         $has_voicemail_add);
+$template->assign('has_voicemail_all',         $has_voicemail_all);
+$template->assign('has_voicemail_delete',      $has_voicemail_delete);
+$template->assign('has_voicemail_edit',        $has_voicemail_edit);
+$template->assign('has_voicemail_import',      $has_voicemail_import);
+$template->assign('has_voicemail_export',      $has_voicemail_export);
+$template->assign('has_voicemail_greeting_view', $has_voicemail_greeting_view);
+$template->assign('has_voicemail_message_view',  $has_voicemail_message_view);
+$template->assign('list_row_edit_button',      $list_row_edit_button);
+$template->assign('show_transcription_col',    $show_transcription_col);
+$template->assign('btn_import',                $btn_import);
+$template->assign('btn_export',                $btn_export);
+$template->assign('btn_add',                   $btn_add);
+$template->assign('btn_toggle',                $btn_toggle);
+$template->assign('btn_delete',                $btn_delete);
+$template->assign('btn_show_all',              $btn_show_all);
+$template->assign('btn_search',                $btn_search);
+$template->assign('modal_toggle',              $modal_toggle);
+$template->assign('modal_delete',              $modal_delete);
+$template->assign('th_domain_name',            $th_domain_name);
+$template->assign('th_voicemail_id',           $th_voicemail_id);
+$template->assign('th_voicemail_mail_to',      $th_voicemail_mail_to);
+$template->assign('th_voicemail_file',         $th_voicemail_file);
+$template->assign('th_voicemail_local_after_email', $th_voicemail_local_after_email);
+$template->assign('th_transcription',          $th_transcription);
+$template->assign('th_tools',                  $th_tools);
+$template->assign('th_voicemail_enabled',      $th_voicemail_enabled);
+$template->assign('th_voicemail_description',  $th_voicemail_description);
 
-	if (is_array($voicemails) && sizeof($voicemails) != 0) {
-		$x = 0;
-		foreach ($voicemails as $row) {
-			//dispatch render-row hook
-			app::dispatch_list_render_row(null, $url, $row, $x);
-			$list_row_url = '';
-			if ($has_voicemail_edit) {
-				$list_row_url = "voicemail_edit.php?id=".urlencode($row['voicemail_uuid']);
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
-					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
-				}
-			}
-			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if ($has_voicemail_edit || $has_voicemail_delete) {
-				echo "	<td class='checkbox'>\n";
-				echo "		<input type='checkbox' name='voicemails[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
-				echo "		<input type='hidden' name='voicemails[$x][uuid]' value='".escape($row['voicemail_uuid'])."' />\n";
-				echo "	</td>\n";
-			}
-			if ($show == "all" && $has_voicemail_all) {
-				if (!empty($_SESSION['domains'][$row['domain_uuid']]['domain_name'])) {
-					$domain = $_SESSION['domains'][$row['domain_uuid']]['domain_name'];
-				}
-				else {
-					$domain = $text['label-global'];
-				}
-				echo "	<td>".escape($domain)."</td>\n";
-			}
-			echo "	<td>\n";
-			if ($has_voicemail_edit) {
-				echo "	<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['voicemail_id'])."</a>\n";
-			}
-			else {
-				echo "	".escape($row['voicemail_id']);
-			}
-			echo "	</td>\n";
+//invoke pre-render hook
+app::dispatch_list_pre_render('voicemail_list_page_hook', $url, $template);
 
-			echo "	<td class='hide-sm-dn overflow' style='max-width: 175px;'>".escape($row['voicemail_mail_to'])."&nbsp;</td>\n";
-			echo "	<td class='center hide-md-dn'>".($row['voicemail_file'] == 'attach' ? $text['label-true'] : $text['label-false'])."</td>\n";
-			echo "	<td class='center hide-md-dn'>".ucwords(escape($row['voicemail_local_after_email']))."&nbsp;</td>\n";
-			if ($has_voicemail_transcription_enabled && $settings->get('transcribe', 'enabled', false) === true) {
-				echo "	<td class='center'>".ucwords(escape($row['voicemail_transcription_enabled']))."&nbsp;</td>\n";
-			}
-			if ($has_voicemail_message_view || $has_voicemail_greeting_view) {
-				echo "	<td class='no-link no-wrap'>\n";
-				if ($has_voicemail_greeting_view) {
-					echo "	<a href='".PROJECT_PATH."/app/voicemail_greetings/voicemail_greetings.php?id=".$row['voicemail_id']."&back=".urlencode($_SERVER["REQUEST_URI"])."' style='margin-right: 15px;'>".$text['label-greetings']." (".($voicemail_greetings_count[$row['voicemail_id']] ?? 0).")</a>\n";
-				}
-				if ($has_voicemail_message_view) {
-					$tmp_voicemail_string = (array_key_exists($row['voicemail_uuid'], $voicemails_count)) ? " (" . $voicemails_count[$row['voicemail_uuid']] . ")" : " (0)";
-					echo "	<a href='voicemail_messages.php?id=".escape($row['voicemail_uuid'])."&back=".urlencode($_SERVER["REQUEST_URI"])."'>".$text['label-messages'].$tmp_voicemail_string."</a>\n";
-				}
-				echo "	</td>\n";
-			}
-			if ($has_voicemail_edit) {
-				echo "	<td class='no-link center'>\n";
-				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['voicemail_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
-			}
-			else {
-				echo "	<td class='center'>\n";
-				echo $text['label-'.$row['voicemail_enabled']];
-			}
-			echo "	</td>\n";
-			echo "	<td class='description overflow hide-sm-dn'>".escape($row['voicemail_description'])."&nbsp;</td>\n";
-			if ($has_voicemail_edit && $list_row_edit_button) {
-				echo "	<td class='action-button'>\n";
-				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
-				echo "	</td>\n";
-			}
-			echo "</tr>\n";
-			$x++;
-		}
-	}
-	unset($voicemails);
+//include the header
+$document['title'] = $text['title-voicemails'];
+require_once "resources/header.php";
 
-	echo "</table>\n";
-	echo "</div>\n";
-	echo "<br />\n";
-	echo "<div align='center'>".$paging_controls."</div>\n";
-	echo "<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
-	echo "</form>\n";
+//render the template
+$html = $template->render('voicemails_list.tpl');
+
+//invoke post-render hook
+app::dispatch_list_post_render('voicemail_list_page_hook', $url, $html);
+echo $html;
 
 //include the footer
-	require_once "resources/footer.php";
+require_once "resources/footer.php";

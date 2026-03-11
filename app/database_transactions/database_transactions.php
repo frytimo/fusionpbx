@@ -139,86 +139,83 @@
 	}
 	unset($sql, $parameters, $rows, $row);
 
-//additional includes
+//create token
+	$object = new token;
+	$token = $object->create($_SERVER['PHP_SELF']);
+
+//build the action bar buttons
+	$btn_search = button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
+
+//build the table header columns
+	$th_domain_name         = th_order_by('domain_name', $text['label-domain'], $order_by, $order);
+	$th_username            = th_order_by('username', $text['label-user_uuid'], $order_by, $order);
+	$th_app_name            = th_order_by('app_name', $text['label-app_name'], $order_by, $order);
+	$th_transaction_code    = th_order_by('transaction_code', $text['label-transaction_code'], $order_by, $order);
+	$th_transaction_address = th_order_by('transaction_address', $text['label-transaction_address'], $order_by, $order);
+	$th_transaction_type    = th_order_by('transaction_type', $text['label-transaction_type'], $order_by, $order);
+	$th_transaction_date    = th_order_by('transaction_date', $text['label-transaction_date'], $order_by, $order);
+
+//build the row data
+	$x = 0;
+	foreach ($transactions as &$row) {
+		if (empty($row['domain_name'])) { $row['domain_name'] = $text['label-global']; }
+		$list_row_url = '';
+		if ($has_database_transaction_edit) {
+			$list_row_url = "database_transaction_edit.php?id=".urlencode($row['database_transaction_uuid']).(!empty($page) ? "&page=".urlencode($page) : null).(!empty($search) ? "&search=".urlencode($search) : null);
+			if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
+				$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid'] ?? '').'&domain_change=true';
+			}
+		}
+		$row['_list_row_url'] = $list_row_url;
+		$row['_edit_button'] = '';
+		if ($has_database_transaction_edit && $list_row_edit_button) {
+			$row['_edit_button'] = button::create(['type'=>'button','title'=>$text['button-view'],'icon'=>$button_icon_view,'link'=>$list_row_url]);
+		}
+		$x++;
+	}
+	unset($row);
+
+//build the template
+	$template = new template();
+	$template->engine = 'smarty';
+	$template->template_dir = __DIR__.'/resources/views';
+	$template->cache_dir = sys_get_temp_dir();
+	$template->init();
+
+//assign the template variables
+	$template->assign('text',                          $text);
+	$template->assign('num_rows',                      $num_rows);
+	$template->assign('transactions',                  $transactions ?? []);
+	$template->assign('search',                        $search);
+	$template->assign('users',                         $users ?? []);
+	$template->assign('user_uuid',                     $user_uuid);
+	$template->assign('paging_controls',               $paging_controls);
+	$template->assign('paging_controls_mini',          $paging_controls_mini);
+	$template->assign('token',                         $token);
+	$template->assign('has_database_transaction_edit', $has_database_transaction_edit);
+	$template->assign('list_row_edit_button',          $list_row_edit_button);
+	$template->assign('btn_search',                    $btn_search);
+	$template->assign('th_domain_name',                $th_domain_name);
+	$template->assign('th_username',                   $th_username);
+	$template->assign('th_app_name',                   $th_app_name);
+	$template->assign('th_transaction_code',           $th_transaction_code);
+	$template->assign('th_transaction_address',        $th_transaction_address);
+	$template->assign('th_transaction_type',           $th_transaction_type);
+	$template->assign('th_transaction_date',           $th_transaction_date);
+
+//invoke pre-render hook
+	app::dispatch_list_pre_render('database_transaction_list_page_hook', null, $template);
+
+//include the header
 	$document['title'] = $text['title-database_transactions'];
 	require_once "resources/header.php";
 
-//show the content
-	echo "<div class='action_bar' id='action_bar'>\n";
-	echo "	<div class='heading'><b>".$text['title-database_transactions']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
-	echo "	<div class='actions'>\n";
-	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if (is_array($users) && @sizeof($users) != 0) {
-		echo 	"<select class='formfld' name='user_uuid' onchange=\"document.getElementById('form_search').submit();\">\n";
-		echo "		<option value=''>".$text['label-user']."...</option>\n";
-		echo "		<option value=''>".$text['label-all']."</option>\n";
-		foreach ($users as $uuid => $username) {
-			$selected = $user_uuid == $uuid ? "selected='selected'" : null;
-			echo "	<option value='".escape($uuid)."' ".$selected.">".escape($username)."</option>\n";
-		}
-		echo "	</select>";
-	}
-	echo 		"<input type='text' class='txt list-search' name='search' id='search' value=\"".escape($search)."\" placeholder=\"".$text['label-search']."\" onkeydown=''>";
-	echo button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
-	//echo button::create(['label'=>$text['button-reset'],'icon'=>$settings->get('theme', 'button_icon_reset'),'type'=>'button','id'=>'btn_reset','onclick'=>"document.getElementById('search').value = ''; document.getElementById('form_search').submit();",'style'=>(!$search ? 'display: none;' : null)]);
-	if (!empty($paging_controls_mini)) {
-		echo 	"<span style='margin-left: 15px;'>".$paging_controls_mini."</span>";
-	}
-	echo "		</form>\n";
-	echo "	</div>\n";
-	echo "	<div style='clear: both;'></div>\n";
-	echo "</div>\n";
+//render the template
+	$html = $template->render('database_transactions_list.tpl');
 
-	echo $text['description-database_transactions']."\n";
-	echo "<br /><br />\n";
-
-	echo "<div class='card'>\n";
-	echo "<table class='list'>\n";
-	echo "<tr class='list-header'>\n";
-	echo th_order_by('domain_name', $text['label-domain'], $order_by, $order);
-	echo th_order_by('username', $text['label-user_uuid'], $order_by, $order);
-	echo th_order_by('app_name', $text['label-app_name'], $order_by, $order);
-	echo th_order_by('transaction_code', $text['label-transaction_code'], $order_by, $order);
-	echo th_order_by('transaction_address', $text['label-transaction_address'], $order_by, $order);
-	echo th_order_by('transaction_type', $text['label-transaction_type'], $order_by, $order);
-	echo th_order_by('transaction_date', $text['label-transaction_date'], $order_by, $order);
-	if ($has_database_transaction_edit && $list_row_edit_button) {
-		echo "	<td class='action-button'>&nbsp;</td>\n";
-	}
-	echo "</tr>\n";
-	if (!empty($transactions)) {
-		$x = 0;
-		foreach($transactions as $row) {
-			if (empty($row['domain_name'])) { $row['domain_name'] = $text['label-global']; }
-			$list_row_url = '';
-			if ($has_database_transaction_edit) {
-				$list_row_url = "database_transaction_edit.php?id=".urlencode($row['database_transaction_uuid']).(!empty($page) ? "&page=".urlencode($page) : null).(!empty($search) ? "&search=".urlencode($search) : null);
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
-					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid'] ?? '').'&domain_change=true';
-				}
-			}
-			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			echo "	<td>".escape($row['domain_name'])."&nbsp;</td>\n";
-			echo "	<td>".escape($row['username'])."&nbsp;</td>\n";
-			echo "	<td><a href='".$list_row_url."'>".escape($row['app_name'])."</a>&nbsp;</td>\n";
-			echo "	<td>".escape($row['transaction_code'])."&nbsp;</td>\n";
-			echo "	<td>".escape($row['transaction_address'])."&nbsp;</td>\n";
-			echo "	<td>".escape($row['transaction_type'])."&nbsp;</td>\n";
-			echo "	<td>".escape($row['transaction_date'])."&nbsp;</td>\n";
-			if ($has_database_transaction_edit && $list_row_edit_button) {
-				echo "	<td class='action-button'>\n";
-				echo button::create(['type'=>'button','title'=>$text['button-view'],'icon'=>$settings->get('theme', 'button_icon_view'),'link'=>$list_row_url]);
-				echo "	</td>\n";
-			}
-			echo "</tr>\n";
-			$x++;
-		}
-	}
-
-	echo "</table>\n";
-	echo "</div>\n";
-	echo "<br />\n";
-	echo "<div align='center'>".$paging_controls."</div>\n";
+//invoke post-render hook
+	app::dispatch_list_post_render('database_transaction_list_page_hook', null, $html);
+	echo $html;
 
 //include the footer
 	require_once "resources/footer.php";

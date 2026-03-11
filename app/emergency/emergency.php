@@ -155,9 +155,126 @@ unset($sql, $parameters);
 $object = new token;
 $token = $object->create($_SERVER['PHP_SELF']);
 
-//additional includes
+//set permission variables
+$has_emergency_logs_view_all    = permission_exists('emergency_logs_view_all');
+$has_xml_cdr_recording          = $permission['xml_cdr_recording'];
+$has_xml_cdr_recording_play     = $permission['xml_cdr_recording_play'];
+$has_xml_cdr_recording_download = $permission['xml_cdr_recording_download'];
+$has_xml_cdr_status             = $permission['xml_cdr_status'];
+$has_xml_cdr_hangup_cause       = $permission['xml_cdr_hangup_cause'];
+$has_call_recording_play        = permission_exists('call_recording_play');
+$has_call_recording_download    = permission_exists('call_recording_download');
+
+//build the action bar buttons
+$btn_delete = '';
+if ($emergency_logs) {
+	$btn_delete = button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display:none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
+}
+$btn_show_all = '';
+if ($has_emergency_logs_view_all && $show !== 'all') {
+	$btn_show_all = button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>'?show=all&search='.$search]);
+}
+$btn_search = button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
+
+//build the modals
+$modal_delete = '';
+if ($emergency_logs) {
+	$modal_delete = modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
+}
+
+//build the table header columns
+$th_domain_name = '';
+if (!empty($show) && $show == 'all' && $has_emergency_logs_view_all) {
+	$th_domain_name = th_order_by('domain_name', $text['label-domain'], $order_by, $order);
+}
+
+//build the row data
+$x = 0;
+if (!empty($emergency_logs) && is_array($emergency_logs)) {
+	foreach ($emergency_logs as &$row) {
+		$row['_domain_name'] = $_SESSION['domains'][$row['domain_uuid']]['domain_name'] ?? '';
+		$row['_recording_button'] = '';
+		$row['_download_button'] = '';
+		if ($has_xml_cdr_recording && ($has_xml_cdr_recording_play || $has_xml_cdr_recording_download)) {
+			if (($has_call_recording_play || $has_call_recording_download) && $row['recording'] !== '/') {
+				if ($has_call_recording_play) {
+					$recording_file_ext = pathinfo($row['call_recording_name'], PATHINFO_EXTENSION);
+					switch ($recording_file_ext) {
+						case "wav" : $recording_type = "audio/wav"; break;
+						case "mp3" : $recording_type = "audio/mpeg"; break;
+						case "ogg" : $recording_type = "audio/ogg"; break;
+						default    : $recording_type = "audio/wav"; break;
+					}
+					$row['_recording_button'] = "<audio id='recording_audio_".escape($row['emergency_log_uuid'])."' style='display: none;' preload='none' ontimeupdate=\"update_progress('".escape($row['emergency_log_uuid'])."')\" onended=\"recording_reset('".escape($row['emergency_log_uuid'])."');\" src='download.php?id=".urlencode($row['emergency_log_uuid'])."' type='".$recording_type."'></audio>";
+					$row['_recording_button'] .= button::create(['type'=>'button','title'=>$text['label-play'].' / '.$text['label-pause'],'icon'=>$settings->get('theme', 'button_icon_play'),'id'=>'recording_button_'.escape($row['emergency_log_uuid']),'onclick'=>"recording_play('".escape($row['emergency_log_uuid'])."')"]);
+				}
+				if ($has_call_recording_download) {
+					$row['_download_button'] = button::create(['type'=>'button','title'=>$text['label-download'],'icon'=>$settings->get('theme', 'button_icon_download'),'link'=>'download.php?id='.urlencode($row['emergency_log_uuid']).'&binary']);
+				}
+			}
+		}
+		$row['_status_link'] = '&nbsp;';
+		if (($has_xml_cdr_status || $has_xml_cdr_hangup_cause) && isset($row['status']) && $row['status'] !== '') {
+			$domain_name = $row['_domain_name'];
+			if ($show == 'all' && $has_emergency_logs_view_all) {
+				$row['_status_link'] = "<a href='https://{$domain_name}/app/xml_cdr/xml_cdr_details.php?id=".urlencode($row['emergency_log_uuid'])."&show=all' target='_blank'>".escape($row['status'])."</a>";
+			} else {
+				$row['_status_link'] = "<a href='https://{$domain_name}/app/xml_cdr/xml_cdr_details.php?id=".urlencode($row['emergency_log_uuid'])."' target='_blank'>".escape($row['status'])."</a>";
+			}
+		}
+		$x++;
+	}
+	unset($row);
+}
+
+//build the template
+$template = new template();
+$template->engine = 'smarty';
+$template->template_dir = __DIR__.'/resources/views';
+$template->cache_dir = sys_get_temp_dir();
+$template->init();
+
+//assign the template variables
+$template->assign('text',                           $text);
+$template->assign('num_rows',                       $num_rows);
+$template->assign('emergency_logs',                 $emergency_logs ?? []);
+$template->assign('search',                         $search);
+$template->assign('show',                           $show);
+$template->assign('paging_controls',                $paging_controls);
+$template->assign('paging_controls_mini',           $paging_controls_mini);
+$template->assign('token',                          $token);
+$template->assign('has_emergency_logs_view_all',    $has_emergency_logs_view_all);
+$template->assign('has_xml_cdr_recording',          $has_xml_cdr_recording);
+$template->assign('has_xml_cdr_recording_play',     $has_xml_cdr_recording_play);
+$template->assign('has_xml_cdr_recording_download', $has_xml_cdr_recording_download);
+$template->assign('has_xml_cdr_status',             $has_xml_cdr_status);
+$template->assign('has_xml_cdr_hangup_cause',       $has_xml_cdr_hangup_cause);
+$template->assign('has_call_recording_play',        $has_call_recording_play);
+$template->assign('has_call_recording_download',    $has_call_recording_download);
+$template->assign('btn_delete',                     $btn_delete);
+$template->assign('btn_show_all',                   $btn_show_all);
+$template->assign('btn_search',                     $btn_search);
+$template->assign('modal_delete',                   $modal_delete);
+$template->assign('th_domain_name',                 $th_domain_name);
+
+//invoke pre-render hook
+$url = new url();
+app::dispatch_list_pre_render('emergency_logs_list_page_hook', $url, $template);
+
+//include the header
 $document['title'] = $text['title-emergency_logs'];
 require_once "resources/header.php";
+
+//render the template
+$html = $template->render('emergency_list.tpl');
+
+//invoke post-render hook
+app::dispatch_list_post_render('emergency_logs_list_page_hook', $url, $html);
+echo $html;
+
+//include the footer
+require_once "resources/footer.php";
+exit;
 
 //show the content
 echo "<div class='action_bar' id='action_bar'>\n";

@@ -276,192 +276,170 @@
 	$object = new token;
 	$token = $object->create($_SERVER['PHP_SELF']);
 
+//build the action bar buttons
+	$btn_inbound = button::create(['type'=>'button','label'=>$text['button-inbound'],'icon'=>'location-arrow fa-rotate-90','link'=>'?type=inbound'.($show == 'all' ? '&show=all' : null).($search != '' ? "&search=".urlencode($search) : null)]);
+	$btn_outbound = button::create(['type'=>'button','label'=>$text['button-outbound'],'icon'=>'location-arrow','link'=>'?type=outbound'.($show == 'all' ? '&show=all' : null).($search != '' ? "&search=".urlencode($search) : null)]);
+	$btn_local = '';
+	if ($has_destination_local) {
+		$btn_local = button::create(['type'=>'button','label'=>$text['button-local'],'icon'=>'vector-square','link'=>'?type=local'.($show == 'all' ? '&show=all' : null).($search != '' ? "&search=".urlencode($search) : null)]);
+	}
+	$btn_import = '';
+	if ($has_destination_import) {
+		$btn_import = button::create(['type'=>'button','label'=>$text['button-import'],'icon'=>$settings->get('theme', 'button_icon_import'),'link'=>'destination_imports.php']);
+	}
+	$btn_export = '';
+	if ($has_destination_export) {
+		$btn_export = button::create(['type'=>'button','label'=>$text['button-export'],'icon'=>$settings->get('theme', 'button_icon_export'),'link'=>'destination_download.php']);
+	}
+	$btn_add = '';
+	if ($has_destination_add) {
+		$btn_add = button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','style'=>'margin-left: 15px;','link'=>'destination_edit.php?type='.urlencode($destination_type)]);
+	}
+	$btn_delete = '';
+	if ($has_destination_delete && $destinations) {
+		$btn_delete = button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
+	}
+	$btn_show_all = '';
+	if ($has_destination_all && $show != 'all') {
+		$btn_show_all = button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>'?type='.urlencode($destination_type).'&show=all'.($search != '' ? "&search=".urlencode($search) : null)]);
+	}
+	$btn_search = button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
+
+//build the modals
+	$modal_delete = '';
+	if ($has_destination_delete && $destinations) {
+		$modal_delete = modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
+	}
+
+//build the table header columns
+	$th_domain_name = '';
+	if ($show == 'all' && $has_destination_all) {
+		$th_domain_name = th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param, "class='shrink'");
+	}
+	$th_destination_type   = th_order_by('destination_type', $text['label-destination_type'], $order_by, $order, $param, "class='shrink'");
+	$th_destination_prefix = th_order_by('destination_prefix', $text['label-destination_prefix'], $order_by, $order, $param, "class='shrink center'");
+	$th_destination_trunk_prefix = '';
+	if ($has_destination_trunk_prefix) {
+		$th_destination_trunk_prefix = th_order_by('destination_trunk_prefix', $text['label-destination_trunk_prefix'], $order_by, $order, $param, "class='shrink'");
+	}
+	$th_destination_area_code = '';
+	if ($has_destination_area_code) {
+		$th_destination_area_code = th_order_by('destination_area_code', $text['label-destination_area_code'], $order_by, $order, $param, "class='shrink'");
+	}
+	$th_destination_number  = th_order_by('destination_number', $text['label-destination_number'], $order_by, $order, $param, "class='shrink'");
+	$th_destination_actions = '';
+	if ($show != 'all') {
+		$th_destination_actions = "<th>".$text['label-destination_actions']."</th>";
+	}
+	$th_destination_cid_name_prefix = '';
+	if ($has_destination_cid_name_prefix) {
+		$th_destination_cid_name_prefix = th_order_by('destination_cid_name_prefix', $text['label-destination_cid_name_prefix'], $order_by, $order, $param);
+	}
+	$th_destination_context = '';
+	if ($has_destination_context) {
+		$th_destination_context = th_order_by('destination_context', $text['label-destination_context'], $order_by, $order, $param);
+	}
+	$th_destination_caller_id_name   = '';
+	$th_destination_caller_id_number = '';
+	if ($has_outbound_caller_id_select) {
+		$th_destination_caller_id_name   = th_order_by('destination_caller_id_name', $text['label-destination_caller_id_name'], $order_by, $order, $param);
+		$th_destination_caller_id_number = th_order_by('destination_caller_id_number', $text['label-destination_caller_id_number'], $order_by, $order, $param);
+	}
+	$th_destination_enabled     = th_order_by('destination_enabled', $text['label-destination_enabled'], $order_by, $order, $param);
+	$th_destination_description = th_order_by('destination_description', $text['label-destination_description'], $order_by, $order, $param, "class='hide-sm-dn'");
+
+//build the row data
+	$x = 0;
+	foreach ($destinations as &$row) {
+		$list_row_url = '';
+		if ($has_destination_edit) {
+			$list_row_url = "destination_edit.php?id=".urlencode($row['destination_uuid']);
+			if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
+				$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
+			}
+		}
+		$row['_list_row_url'] = $list_row_url;
+		$domain_label = '';
+		if ($show == 'all' && $has_destination_all) {
+			$domain_label = !empty($row['domain_name']) ? $row['domain_name'] : $text['label-global'];
+		}
+		$row['_domain_label']      = $domain_label;
+		$row['_formatted_number']  = format_phone($row['destination_number']);
+		$row['_type_label']        = $text['option-'.$row['destination_type']];
+		$row['_enabled_label']     = $text['label-'.$row['destination_enabled']];
+		$row['_edit_button'] = '';
+		if ($has_destination_edit && $list_row_edit_button) {
+			$row['_edit_button'] = button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
+		}
+		$x++;
+	}
+	unset($row);
+
+//build the template
+	$template = new template();
+	$template->engine = 'smarty';
+	$template->template_dir = __DIR__.'/resources/views';
+	$template->cache_dir = sys_get_temp_dir();
+	$template->init();
+
+//assign the template variables
+	$template->assign('text',                            $text);
+	$template->assign('num_rows',                        $num_rows);
+	$template->assign('destinations',                    $destinations ?? []);
+	$template->assign('search',                          $search);
+	$template->assign('show',                            $show);
+	$template->assign('destination_type',                $destination_type);
+	$template->assign('paging_controls',                 $paging_controls);
+	$template->assign('paging_controls_mini',            $paging_controls_mini);
+	$template->assign('token',                           $token);
+	$template->assign('has_destination_add',             $has_destination_add);
+	$template->assign('has_destination_all',             $has_destination_all);
+	$template->assign('has_destination_area_code',       $has_destination_area_code);
+	$template->assign('has_destination_cid_name_prefix', $has_destination_cid_name_prefix);
+	$template->assign('has_destination_context',         $has_destination_context);
+	$template->assign('has_destination_delete',          $has_destination_delete);
+	$template->assign('has_destination_edit',            $has_destination_edit);
+	$template->assign('has_destination_local',           $has_destination_local);
+	$template->assign('has_destination_trunk_prefix',    $has_destination_trunk_prefix);
+	$template->assign('has_outbound_caller_id_select',   $has_outbound_caller_id_select);
+	$template->assign('list_row_edit_button',            $list_row_edit_button);
+	$template->assign('btn_inbound',                     $btn_inbound);
+	$template->assign('btn_outbound',                    $btn_outbound);
+	$template->assign('btn_local',                       $btn_local);
+	$template->assign('btn_import',                      $btn_import);
+	$template->assign('btn_export',                      $btn_export);
+	$template->assign('btn_add',                         $btn_add);
+	$template->assign('btn_delete',                      $btn_delete);
+	$template->assign('btn_show_all',                    $btn_show_all);
+	$template->assign('btn_search',                      $btn_search);
+	$template->assign('modal_delete',                    $modal_delete);
+	$template->assign('th_domain_name',                  $th_domain_name);
+	$template->assign('th_destination_type',             $th_destination_type);
+	$template->assign('th_destination_prefix',           $th_destination_prefix);
+	$template->assign('th_destination_trunk_prefix',     $th_destination_trunk_prefix);
+	$template->assign('th_destination_area_code',        $th_destination_area_code);
+	$template->assign('th_destination_number',           $th_destination_number);
+	$template->assign('th_destination_actions',          $th_destination_actions);
+	$template->assign('th_destination_cid_name_prefix',  $th_destination_cid_name_prefix);
+	$template->assign('th_destination_context',          $th_destination_context);
+	$template->assign('th_destination_caller_id_name',   $th_destination_caller_id_name);
+	$template->assign('th_destination_caller_id_number', $th_destination_caller_id_number);
+	$template->assign('th_destination_enabled',          $th_destination_enabled);
+	$template->assign('th_destination_description',      $th_destination_description);
+
+//invoke pre-render hook
+	app::dispatch_list_pre_render('destination_list_page_hook', null, $template);
+
 //include the header
 	$document['title'] = $text['title-destinations'];
 	require_once "resources/header.php";
 
-//show the content
-	echo "<div class='action_bar' id='action_bar'>\n";
-	echo "	<div class='heading'><b>".$text['title-destinations']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
-	echo "	<div class='actions'>\n";
-	echo button::create(['type'=>'button','label'=>$text['button-inbound'],'icon'=>'location-arrow fa-rotate-90','link'=>'?type=inbound'.($show == 'all' ? '&show=all' : null).($search != '' ? "&search=".urlencode($search) : null)]);
-	echo button::create(['type'=>'button','label'=>$text['button-outbound'],'icon'=>'location-arrow','link'=>'?type=outbound'.($show == 'all' ? '&show=all' : null).($search != '' ? "&search=".urlencode($search) : null)]);
-	if ($has_destination_local) {
-		echo button::create(['type'=>'button','label'=>$text['button-local'],'icon'=>'vector-square','link'=>'?type=local'.($show == 'all' ? '&show=all' : null).($search != '' ? "&search=".urlencode($search) : null)]);
-	}
-	if ($has_destination_import) {
-		echo button::create(['type'=>'button','label'=>$text['button-import'],'icon'=>$settings->get('theme', 'button_icon_import'),'link'=>'destination_imports.php']);
-	}
-	if ($has_destination_export) {
-		echo button::create(['type'=>'button','label'=>$text['button-export'],'icon'=>$settings->get('theme', 'button_icon_export'),'link'=>'destination_download.php']);
-	}
-	if ($has_destination_add) {
-		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','style'=>'margin-left: 15px;','link'=>'destination_edit.php?type='.urlencode($destination_type)]);
-	}
-	if ($has_destination_delete && $destinations) {
-		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
-	}
-	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if ($has_destination_all) {
-		if ($show == 'all') {
-			echo "		<input type='hidden' name='show' value='all'>";
-		}
-		else {
-			echo button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>'?type='.urlencode($destination_type).'&show=all'.($search != '' ? "&search=".urlencode($search) : null)]);
-		}
-	}
-	echo "		<input type='hidden' name='type' value=\"".escape($destination_type)."\">\n";
-	echo "		<input type='text' class='txt list-search' name='search' id='search' value=\"".escape($search)."\" placeholder=\"".$text['label-search']."\" onkeydown=''>";
-	echo button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
-	//echo button::create(['label'=>$text['button-reset'],'icon'=>$settings->get('theme', 'button_icon_reset'),'type'=>'button','id'=>'btn_reset','link'=>'destinations.php','style'=>($search == '' ? 'display: none;' : null)]);
-	if ($paging_controls_mini != '') {
-		echo 	"<span style='margin-left: 15px;'>".$paging_controls_mini."</span>";
-	}
-	echo "		</form>\n";
-	echo "	</div>\n";
-	echo "	<div style='clear: both;'></div>\n";
-	echo "</div>\n";
+//render the template
+	$html = $template->render('destinations_list.tpl');
 
-	if ($has_destination_delete && $destinations) {
-		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
-	}
-
-	echo $text['description-destinations']."\n";
-	echo "<br /><br />\n";
-
-	echo "<form id='form_list' method='POST'>\n";
-	echo "<input type='hidden' id='action' name='action' value=''>\n";
-	echo "<input type='hidden' name='type' value=\"".escape($destination_type)."\">\n";
-	echo "<input type='hidden' name='search' value=\"".escape($search)."\">\n";
-
-	echo "<div class='card'>\n";
-	echo "<table class='list'>\n";
-	echo "<tr class='list-header'>\n";
-	if ($has_destination_delete) {
-		echo "	<th class='checkbox'>\n";
-		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($destinations) ?: "style='visibility: hidden;'").">\n";
-		echo "	</th>\n";
-	}
-	if ($show == "all" && $has_destination_all) {
-		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param, "class='shrink'");
-	}
-	echo th_order_by('destination_type', $text['label-destination_type'], $order_by, $order, $param, "class='shrink'");
-	echo th_order_by('destination_prefix', $text['label-destination_prefix'], $order_by, $order, $param, "class='shrink center'");
-	if ($has_destination_trunk_prefix) {
-		echo th_order_by('destination_trunk_prefix', $text['label-destination_trunk_prefix'], $order_by, $order, $param, "class='shrink'");
-	}
-	if ($has_destination_area_code) {
-		echo th_order_by('destination_area_code', $text['label-destination_area_code'], $order_by, $order, $param, "class='shrink'");
-	}
-	echo th_order_by('destination_number', $text['label-destination_number'], $order_by, $order, $param, "class='shrink'");
-	if (!$show == "all") {
-		echo  "<th>". $text['label-destination_actions']."</th>";
-	}
-	if ($has_destination_cid_name_prefix) {
-	    echo th_order_by('destination_cid_name_prefix', $text['label-destination_cid_name_prefix'], $order_by, $order, $param);
-	}
-	if ($has_destination_context) {
-		echo th_order_by('destination_context', $text['label-destination_context'], $order_by, $order, $param);
-	}
-	if ($has_outbound_caller_id_select) {
-		echo th_order_by('destination_caller_id_name', $text['label-destination_caller_id_name'], $order_by, $order, $param);
-		echo th_order_by('destination_caller_id_number', $text['label-destination_caller_id_number'], $order_by, $order, $param);
-	}
-	echo th_order_by('destination_enabled', $text['label-destination_enabled'], $order_by, $order, $param);
-	echo th_order_by('destination_description', $text['label-destination_description'], $order_by, $order, $param, "class='hide-sm-dn'");
-	if ($has_destination_edit && $list_row_edit_button) {
-		echo "	<td class='action-button'>&nbsp;</td>\n";
-	}
-	echo "</tr>\n";
-
-	if (!empty($destinations)) {
-		$x = 0;
-		foreach ($destinations as $row) {
-
-			//create the row link
-			$list_row_url = '';
-			if ($has_destination_edit) {
-				$list_row_url = "destination_edit.php?id=".urlencode($row['destination_uuid']);
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
-					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
-				}
-			}
-
-			//show the data
-			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if ($has_destination_delete) {
-				echo "	<td class='checkbox'>\n";
-				echo "		<input type='checkbox' name='destinations[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
-				echo "		<input type='hidden' name='destinations[$x][uuid]' value='".escape($row['destination_uuid'])."' />\n";
-				echo "	</td>\n";
-			}
-			if ($show == "all" && $has_destination_all) {
-				if (!empty($row['domain_name'])) {
-					$domain = $row['domain_name'];
-				}
-				else {
-					$domain = $text['label-global'];
-				}
-				echo "	<td>".escape($domain)."</td>\n";
-			}
-			echo "	<td>".escape($text['option-'.$row['destination_type']])."&nbsp;</td>\n";
-
-			echo "	<td class='center'>".escape($row['destination_prefix'])."&nbsp;</td>\n";
-			if ($has_destination_trunk_prefix) {
-				echo "	<td>".escape($row['destination_trunk_prefix'])."&nbsp;</td>\n";
-			}
-			if ($has_destination_area_code) {
-				echo "	<td>".escape($row['destination_area_code'])."&nbsp;</td>\n";
-			}
-
-			echo "	<td class='no-wrap'>\n";
-			if ($has_destination_edit) {
-				echo "		<a href='".$list_row_url."'>".escape(format_phone($row['destination_number']))."</a>\n";
-			}
-			else {
-				echo "		".escape(format_phone($row['destination_number']));
-			}
-			echo "	</td>\n";
-
-			if (!$show == "all") {
-				echo "	<td class='overflow' style='min-width: 125px;'>".$row['actions']."&nbsp;</td>\n";
-			}
-			if ($has_destination_cid_name_prefix) {
-				echo "	<td>".escape($row['destination_cid_name_prefix'])."&nbsp;</td>\n";
-			}
-			if ($has_destination_context) {
-				echo "	<td>".escape($row['destination_context'])."&nbsp;</td>\n";
-			}
-			if ($has_outbound_caller_id_select) {
-				echo "	<td>".escape($row['destination_caller_id_name'])."&nbsp;</td>\n";
-				echo "	<td>".escape($row['destination_caller_id_number'])."&nbsp;</td>\n";
-			}
-			echo "	<td>".escape($text['label-'.$row['destination_enabled']])."&nbsp;</td>\n";
-			echo "	<td class='description overflow hide-sm-dn'>".escape($row['destination_description'])."&nbsp;</td>\n";
-			if ($has_destination_edit && $list_row_edit_button) {
-				echo "	<td class='action-button'>";
-				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
-				echo "	</td>\n";
-			}
-			echo "</tr>\n";
-
-			//unset the destination app and data array
-			unset($destination_app_data);
-
-			//increment the id
-			$x++;
-		}
-		unset($destinations);
-	}
-
-	echo "</table>\n";
-	echo "</div>\n";
-	echo "<br />\n";
-	echo "<div align='center'>".$paging_controls."</div>\n";
-
-	echo "<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
-
-	echo "</form>\n";
+//invoke post-render hook
+	app::dispatch_list_post_render('destination_list_page_hook', null, $html);
+	echo $html;
 
 //include the footer
 	require_once "resources/footer.php";

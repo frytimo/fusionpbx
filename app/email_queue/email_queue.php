@@ -191,96 +191,26 @@
 	$object = new token;
 	$token = $object->create('/app/email_queue/email_queue.php');
 
-//additional includes
-	$document['title'] = $text['title-email_queue'];
-	require_once "resources/header.php";
+//set from session variables
+	$list_row_edit_button = $settings->get('theme', 'list_row_edit_button', false);
 
-//test result layer
-	echo "<style>\n";
-	echo "	#test_result_layer {\n";
-	echo "		z-index: 999999;\n";
-	echo "		position: absolute;\n";
-	echo "		left: 0px;\n";
-	echo "		top: 0px;\n";
-	echo "		right: 0px;\n";
-	echo "		bottom: 0px;\n";
-	echo "		text-align: center;\n";
-	echo "		vertical-align: middle;\n";
-	echo "		}\n";
-	echo "	#test_result_container {\n";
-	echo "		display: block;\n";
-	echo "		overflow: auto;\n";
-	echo "		background-color: #fff;\n";
-	echo "		padding: 25px 25px;\n";
-	if (http_user_agent('mobile')) {
-		echo "	margin: 0;\n";
-	}
-	else {
-		echo "	margin: auto 10%;\n";
-	}
-	echo "		text-align: left;\n";
-	echo "		-webkit-box-shadow: 0px 1px 20px #888;\n";
-	echo "		-moz-box-shadow: 0px 1px 20px #888;\n";
-	echo "		box-shadow: 0px 1px 20px #888;\n";
-	echo "		}\n";
-	echo "</style>\n";
-
-	echo "<div id='test_result_layer' style='display: none;'>\n";
-	echo "	<table cellpadding='0' cellspacing='0' border='0' width='100%' height='100%'>\n";
-	echo "		<tr>\n";
-	echo "			<td align='center' valign='middle'>\n";
-	echo "				<span id='test_result_container'></span>\n";
-	echo "			</td>\n";
-	echo "		</tr>\n";
-	echo "	</table>\n";
-	echo "</div>\n";
-
-//show the content
-	echo "<div class='action_bar' id='action_bar'>\n";
-	echo "	<div class='heading'><b>".$text['title-email_queue']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
-	echo "	<div class='actions'>\n";
-	echo 		"<form id='form_test' class='inline' method='post' action='email_test.php' target='_blank'>\n";
-	echo button::create(['label'=>$text['button-test'],'icon'=>'tools','type'=>'button','id'=>'test_button','onclick'=>"$(this).fadeOut(400, function(){ $('span#form_test').fadeIn(400); $('#to').trigger('focus'); });"]);
-	echo "		<span id='form_test' style='display: none;'>\n";
-	echo "			<input type='text' class='txt' style='width: 150px;' name='to' id='to' placeholder='recipient@domain.com'>";
-	echo button::create(['label'=>$text['button-send'],'icon'=>'envelope','type'=>'submit','id'=>'send_button']);
-	echo "		</span>\n";
-	echo "		</form>";
+//build the action bar buttons
+	$btn_test = button::create(['label'=>$text['button-test'],'icon'=>'tools','type'=>'button','id'=>'test_button','onclick'=>"$(this).fadeOut(400, function(){ \$('span#form_test').fadeIn(400); \$('#to').trigger('focus'); });"]);
+	$btn_send = button::create(['label'=>$text['button-send'],'icon'=>'envelope','type'=>'submit','id'=>'send_button']);
+	$btn_resend = '';
 	if ($has_email_queue_edit && $email_queue) {
-		echo button::create(['type'=>'button','label'=>$text['button-resend'],'icon'=>$settings->get('theme', 'button_icon_email'),'id'=>'btn_resend','name'=>'btn_resend','collapse'=>'hide-xs','style'=>'display: none; margin-left: 15px;','class'=>'+revealed','onclick'=>"modal_open('modal-resend','btn_resend');"]);
+		$btn_resend = button::create(['type'=>'button','label'=>$text['button-resend'],'icon'=>$settings->get('theme', 'button_icon_email'),'id'=>'btn_resend','name'=>'btn_resend','collapse'=>'hide-xs','style'=>'display: none; margin-left: 15px;','class'=>'+revealed','onclick'=>"modal_open('modal-resend','btn_resend');"]);
 	}
+	$btn_delete = '';
 	if ($has_email_queue_delete && $email_queue) {
-		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display:none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
+		$btn_delete = button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display:none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
-	echo "		<form id='form_search' class='inline' method='get'>\n";
-	echo "		<select class='formfld' style='margin-left: 15px;' name='email_status'>\n";
-    echo "			<option value='' selected='selected' disabled hidden>".$text['label-email_status']."...</option>";
-	echo "			<option value=''></option>\n";
-	echo "			<option value='waiting' ".(!empty($_GET["email_status"]) && $_GET["email_status"] == "waiting" ? "selected='selected'" : null).">".ucwords($text['label-waiting'])."</option>\n";
-	echo "			<option value='trying' ".(!empty($_GET["email_status"]) && $_GET["email_status"] == "trying" ? "selected='selected'" : null).">".ucwords($text['label-trying'])."</option>\n";
-	echo "			<option value='sent' ".(!empty($_GET["email_status"]) && $_GET["email_status"] == "sent" ? "selected='selected'" : null).">".ucwords($text['label-sent'])."</option>\n";
-	echo "			<option value='failed' ".(!empty($_GET["email_status"]) && $_GET["email_status"] == "failed" ? "selected='selected'" : null).">".ucwords($text['label-failed'])."</option>\n";
-	echo "		</select>\n";
-	//if ($has_email_queue_all) {
-	//	if ($_GET['show'] == 'all') {
-	//		echo "		<input type='hidden' name='show' value='all'>\n";
-	//	}
-	//	else {
-	//		echo button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>'?show=all']);
-	//	}
-	//}
-	echo 		"<input type='text' class='txt list-search' style='margin-left: 0;' name='search' id='search' value=\"".escape($search ?? '')."\" placeholder=\"".$text['label-search']."\" />";
-	echo button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
-	if ($paging_controls_mini != '') {
-		echo 	"<span style='margin-left: 15px;'>".$paging_controls_mini."</span>\n";
-	}
-	echo "		</form>\n";
-	echo "	</div>\n";
-	echo "	<div style='clear: both;'></div>\n";
-	echo "</div>\n";
+	$btn_search = button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
 
+//build the modals
+	$modal_resend = '';
 	if ($has_email_queue_edit && $email_queue) {
-		echo modal::create([
+		$modal_resend = modal::create([
 			'id'=>'modal-resend',
 			'title'=>$text['modal_title-resend'],
 			'message'=>$text['modal_message-resend'],
@@ -289,120 +219,97 @@
 				button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','collapse'=>'never','style'=>'float: right;','onclick'=>"modal_close(); list_action_set('resend'); list_form_submit('form_list');"])
 			]);
 	}
+	$modal_delete = '';
 	if ($has_email_queue_delete && $email_queue) {
-		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
+		$modal_delete = modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
-	echo "<form id='form_list' method='post'>\n";
-	echo "<input type='hidden' id='action' name='action' value=''>\n";
-	echo "<input type='hidden' name='search' value=\"".escape($search ?? '')."\">\n";
+//build the table header columns
+	$th_email_to          = th_order_by('email_to', $text['label-email_to'], $order_by, $order);
+	$th_email_subject     = th_order_by('email_subject', $text['label-email_subject'], $order_by, $order);
+	$th_email_status      = th_order_by('email_status', $text['label-email_status'], $order_by, $order);
+	$th_email_retry_count = th_order_by('email_retry_count', $text['label-email_retry_count'], $order_by, $order);
 
-	echo "<div class='card'>\n";
-	echo "<table class='list'>\n";
-	echo "<tr class='list-header'>\n";
-	if ($has_email_queue_add || $has_email_queue_edit || $has_email_queue_delete) {
-		echo "	<th class='checkbox'>\n";
-		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(empty($email_queue) ? "style='visibility: hidden;'" : null).">\n";
-		echo "	</th>\n";
-	}
-	//if ($_GET['show'] == 'all' && $has_email_queue_all) {
-	//	echo th_order_by('domain_name', $text['label-domain'], $order_by, $order);
-	//}
-	//echo th_order_by('email_date', $text['label-email_date'], $order_by, $order);
-	echo "<th class='center shrink'>".$text['label-date']."</th>\n";
-	echo "<th class='center shrink hide-md-dn'>".$text['label-time']."</th>\n";
-	echo "<th class='shrink hide-md-dn'>".$text['label-hostname']."</th>\n";
-	echo "<th class='shrink hide-md-dn'>".$text['label-email_from']."</th>\n";
-	echo th_order_by('email_to', $text['label-email_to'], $order_by, $order);
-	echo th_order_by('email_subject', $text['label-email_subject'], $order_by, $order);
-	echo th_order_by('email_status', $text['label-email_status'], $order_by, $order);
-	echo th_order_by('email_retry_count', $text['label-email_retry_count'], $order_by, $order);
-	//echo th_order_by('email_action_before', $text['label-email_action_before'], $order_by, $order);
-	echo "<th class='hide-md-dn'>".$text['label-email_action_after']."</th>\n";
-	if ($has_email_queue_edit && $settings->get('theme', 'list_row_edit_button', false)) {
-		echo "	<td class='action-button'>&nbsp;</td>\n";
-	}
-	echo "</tr>\n";
+//build the email status options
+	$email_status_filter = $_GET['email_status'] ?? '';
+	$email_status_options_html  = "<option value='' selected='selected' disabled hidden>".$text['label-email_status']."...</option>";
+	$email_status_options_html .= "<option value=''></option>";
+	$email_status_options_html .= "<option value='waiting' ".($email_status_filter == 'waiting' ? "selected='selected'" : null).">".ucwords($text['label-waiting'])."</option>";
+	$email_status_options_html .= "<option value='trying' ".($email_status_filter == 'trying' ? "selected='selected'" : null).">".ucwords($text['label-trying'])."</option>";
+	$email_status_options_html .= "<option value='sent' ".($email_status_filter == 'sent' ? "selected='selected'" : null).">".ucwords($text['label-sent'])."</option>";
+	$email_status_options_html .= "<option value='failed' ".($email_status_filter == 'failed' ? "selected='selected'" : null).">".ucwords($text['label-failed'])."</option>";
 
-	if (is_array($email_queue) && @sizeof($email_queue) != 0) {
-		$x = 0;
-		foreach ($email_queue as $row) {
-			$list_row_url = '';
-			if ($has_email_queue_edit) {
-				$list_row_url = "email_queue_edit.php?id=".urlencode($row['email_queue_uuid']);
-				if (!empty($row['domain_uuid']) && $row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
-					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
-				}
+//build the row data
+	$x = 0;
+	foreach ($email_queue as &$row) {
+		$list_row_url = '';
+		if ($has_email_queue_edit) {
+			$list_row_url = "email_queue_edit.php?id=".urlencode($row['email_queue_uuid']);
+			if (!empty($row['domain_uuid']) && $row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
+				$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 			}
-			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if ($has_email_queue_add || $has_email_queue_edit || $has_email_queue_delete) {
-				echo "	<td class='checkbox'>\n";
-				echo "		<input type='checkbox' name='email_queue[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
-				echo "		<input type='hidden' name='email_queue[$x][email_queue_uuid]' value='".escape($row['email_queue_uuid'])."' />\n";
-				echo "	</td>\n";
-			}
-			//if ($_GET['show'] == 'all' && $has_email_queue_all) {
-			//	echo "	<td>".escape($_SESSION['domains'][$row['domain_uuid']]['domain_name'])."</td>\n";
-			//}
-			if ($has_email_queue_edit) {
-				//echo "	<td><a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['email_date'])."</a></td>\n";
-				echo "	<td nowrap='nowrap'><a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['email_date_formatted'])."</a></td>\n";
-				echo "	<td nowrap='nowrap' class='center shrink hide-md-dn'><a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['email_time_formatted'])."</a></td>\n";
-			}
-			else {
-				//echo "	<td>".escape($row['email_date'])."	</td>\n";
-				echo "	<td nowrap='nowrap'>".escape($row['email_date_formatted'])."	</td>\n";
-				echo "	<td nowrap='nowrap'>".escape($row['email_time_formatted'])."	</td>\n";
-			}
-			echo "	<td class='hide-md-dn'>".escape($row['hostname'])."</td>\n";
-			echo "	<td class='shrink hide-md-dn'>".escape($row['email_from'])."</td>\n";
-			echo "	<td class='overflow' style='width: 20%; max-width: 200px;'>".escape($row['email_to'])."</td>\n";
-			echo "	<td class='overflow' style='width: 30%; max-width: 200px;'>".iconv_mime_decode($row['email_subject'] ?? '')."</td>\n";
-// 			echo "	<td class='hide-md-dn'>".escape($row['email_body'])."</td>\n";
-			echo "	<td>".ucwords($text['label-'.$row['email_status']])."</td>\n";
-			echo "	<td>".escape($row['email_retry_count'])."</td>\n";
-			//echo "	<td>".escape($row['email_action_before'])."</td>\n";
-			echo "	<td class='hide-md-dn'>".escape($row['email_action_after'])."</td>\n";
-			if ($has_email_queue_edit && $settings->get('theme', 'list_row_edit_button', false)) {
-				echo "	<td class='action-button'>\n";
-				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
-				echo "	</td>\n";
-			}
-			echo "</tr>\n";
-			$x++;
 		}
-		unset($email_queue);
+		$row['_list_row_url']           = $list_row_url;
+		$row['_email_subject_decoded']  = iconv_mime_decode($row['email_subject'] ?? '');
+		$row['_email_status_label']     = ucwords($text['label-'.$row['email_status']]);
+		$row['_edit_button'] = '';
+		if ($has_email_queue_edit && $list_row_edit_button) {
+			$row['_edit_button'] = button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
+		}
+		$x++;
 	}
+	unset($row);
 
-	echo "</table>\n";
-	echo "</div>\n";
-	echo "<br />\n";
-	echo "<div align='center'>".$paging_controls."</div>\n";
-	echo "<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
-	echo "</form>\n";
+//build the template
+	$template = new template();
+	$template->engine = 'smarty';
+	$template->template_dir = __DIR__.'/resources/views';
+	$template->cache_dir = sys_get_temp_dir();
+	$template->init();
 
-//test script
-	echo "<script>\n";
-	echo "	$('#form_test').submit(function(event) {\n";
-	echo "		event.preventDefault();\n";
-	echo "		$.ajax({\n";
-	echo "			url: $(this).attr('action'),\n";
-	echo "			type: $(this).attr('method'),\n";
-	echo "			data: new FormData(this),\n";
-	echo "			processData: false,\n";
-	echo "			contentType: false,\n";
-	echo "			cache: false,\n";
-	echo "			success: function(response){\n";
-	echo "				$('#test_result_container').html(response);\n";
-	echo "				$('#test_result_layer').fadeIn(400);\n";
-	echo "				$('span#form_test').fadeOut(400, function(){\n";
-	echo "					$('#test_button').fadeIn(400);\n";
-	echo "					$('#to').val('');\n";
-	echo "				});\n";
-	echo "			}\n";
-	echo "		});\n";
-	echo "	});\n";
-	echo "</script>\n";
+//assign the template variables
+	$template->assign('text',                     $text);
+	$template->assign('num_rows',                 $num_rows);
+	$template->assign('email_queue',              $email_queue ?? []);
+	$template->assign('search',                   $search ?? '');
+	$template->assign('paging_controls',          $paging_controls);
+	$template->assign('paging_controls_mini',     $paging_controls_mini);
+	$template->assign('token',                    $token);
+	$template->assign('has_email_queue_add',      $has_email_queue_add);
+	$template->assign('has_email_queue_edit',     $has_email_queue_edit);
+	$template->assign('has_email_queue_delete',   $has_email_queue_delete);
+	$template->assign('list_row_edit_button',     $list_row_edit_button);
+	$template->assign('is_mobile',               http_user_agent('mobile'));
+	$template->assign('btn_test',                $btn_test);
+	$template->assign('btn_send',                $btn_send);
+	$template->assign('btn_resend',              $btn_resend);
+	$template->assign('btn_delete',              $btn_delete);
+	$template->assign('btn_search',              $btn_search);
+	$template->assign('modal_resend',            $modal_resend);
+	$template->assign('modal_delete',            $modal_delete);
+	$template->assign('th_email_to',             $th_email_to);
+	$template->assign('th_email_subject',        $th_email_subject);
+	$template->assign('th_email_status',         $th_email_status);
+	$template->assign('th_email_retry_count',    $th_email_retry_count);
+	$template->assign('email_status_options_html', $email_status_options_html);
+
+//invoke pre-render hook
+	app::dispatch_list_pre_render('email_queue_list_page_hook', 'email_queue.php', $template);
+
+//include the header
+	$document['title'] = $text['title-email_queue'];
+	require_once "resources/header.php";
+
+//render the template
+	$html = $template->render('email_queue_list.tpl');
+
+//invoke post-render hook
+	app::dispatch_list_post_render('email_queue_list_page_hook', 'email_queue.php', $html);
+	echo $html;
 
 //include the footer
 	require_once "resources/footer.php";
+
+	echo "	#test_result_layer {\n";
+	echo "		z-index: 999999;\n";
+	echo "		position: absolute;\n";

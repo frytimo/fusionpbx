@@ -138,110 +138,96 @@
 	$object = new token;
 	$token = $object->create($_SERVER['PHP_SELF']);
 
-//additional includes
+//build the action bar buttons
+	$btn_reload = button::create(['label'=>$text['button-reload'],'icon'=>$settings->get('theme', 'button_icon_reload'),'type'=>'button','id'=>'button_reload','link'=>'access_controls_reload.php'.(!empty($search) ? '?search='.urlencode($search) : ''),'style'=>'margin-right: 15px;']);
+	$btn_add = '';
+	if ($has_access_control_add) {
+		$btn_add = button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','name'=>'btn_add','link'=>'access_control_edit.php']);
+	}
+	$btn_copy = '';
+	if ($has_access_control_add && $access_controls) {
+		$btn_copy = button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display:none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
+	}
+	$btn_delete = '';
+	if ($has_access_control_delete && $access_controls) {
+		$btn_delete = button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display:none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
+	}
+	$btn_search = button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
+
+//build the modals
+	$modal_copy = '';
+	if ($has_access_control_add && $access_controls) {
+		$modal_copy = modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
+	}
+	$modal_delete = '';
+	if ($has_access_control_delete && $access_controls) {
+		$modal_delete = modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
+	}
+
+//build the table header columns
+	$th_access_control_name    = th_order_by('access_control_name', $text['label-access_control_name'], $order_by, $order);
+	$th_access_control_default = th_order_by('access_control_default', $text['label-access_control_default'], $order_by, $order);
+
+//build the row data
+	$x = 0;
+	foreach ($access_controls as &$row) {
+		app::dispatch_list_render_row('access_control_list_page_hook', $url, $row, $x);
+		$list_row_url = '';
+		if ($has_access_control_view) {
+			$list_row_url = "access_control_edit.php?id=".urlencode($row['access_control_uuid']);
+			if (!empty($row['domain_uuid']) && $row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
+				$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
+			}
+		}
+		$row['_list_row_url'] = $list_row_url;
+		$row['_edit_button'] = '';
+		if ($has_access_control_edit && $list_row_edit_button == 'true') {
+			$row['_edit_button'] = button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
+		}
+		$x++;
+	}
+	unset($row);
+
+//build the template
+	$template = new template();
+	$template->engine = 'smarty';
+	$template->template_dir = __DIR__.'/resources/views';
+	$template->cache_dir = sys_get_temp_dir();
+	$template->init();
+
+//assign the template variables
+	$template->assign('text',                      $text);
+	$template->assign('num_rows',                  $num_rows);
+	$template->assign('access_controls',           $access_controls ?? []);
+	$template->assign('search',                    $search);
+	$template->assign('token',                     $token);
+	$template->assign('has_access_control_add',    $has_access_control_add);
+	$template->assign('has_access_control_delete', $has_access_control_delete);
+	$template->assign('has_access_control_edit',   $has_access_control_edit);
+	$template->assign('list_row_edit_button',      $list_row_edit_button);
+	$template->assign('btn_reload',                $btn_reload);
+	$template->assign('btn_add',                   $btn_add);
+	$template->assign('btn_copy',                  $btn_copy);
+	$template->assign('btn_delete',                $btn_delete);
+	$template->assign('btn_search',                $btn_search);
+	$template->assign('modal_copy',                $modal_copy);
+	$template->assign('modal_delete',              $modal_delete);
+	$template->assign('th_access_control_name',    $th_access_control_name);
+	$template->assign('th_access_control_default', $th_access_control_default);
+
+//invoke pre-render hook
+	app::dispatch_list_pre_render('access_control_list_page_hook', $url, $template);
+
+//include the header
 	$document['title'] = $text['title-access_controls'];
 	require_once "resources/header.php";
 
-//show the content
-	echo "<div class='action_bar' id='action_bar'>\n";
-	echo "	<div class='heading'><b>".$text['title-access_controls']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
-	echo "	<div class='actions'>\n";
-	echo button::create(['label'=>$text['button-reload'],'icon'=>$settings->get('theme', 'button_icon_reload'),'type'=>'button','id'=>'button_reload','link'=>'access_controls_reload.php'.(!empty($search) ? '?search='.urlencode($search) : ''),'style'=>'margin-right: 15px;']);
-	if ($has_access_control_add) {
-		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','name'=>'btn_add','link'=>'access_control_edit.php']);
-	}
-	if ($has_access_control_add && $access_controls) {
-		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display:none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
-	}
-	if ($has_access_control_delete && $access_controls) {
-		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display:none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
-	}
-	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	echo 		"<input type='text' class='txt list-search' name='search' id='search' value=\"".escape($search)."\" placeholder=\"".$text['label-search']."\" onkeydown=''>";
-	echo button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
-	//echo button::create(['label'=>$text['button-reset'],'icon'=>$settings->get('theme', 'button_icon_reset'),'type'=>'button','id'=>'btn_reset','link'=>'access_controls.php','style'=>($search == '' ? 'display: none;' : null)]);
-	echo "		</form>\n";
-	echo "	</div>\n";
-	echo "	<div style='clear: both;'></div>\n";
-	echo "</div>\n";
+//render the template
+	$html = $template->render('access_controls_list.tpl');
 
-	if ($has_access_control_add && $access_controls) {
-		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
-	}
-	if ($has_access_control_delete && $access_controls) {
-		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
-	}
-
-	echo $text['title_description-access_controls']."\n";
-	echo "<br /><br />\n";
-
-	echo "<form id='form_list' method='post'>\n";
-	echo "<input type='hidden' id='action' name='action' value=''>\n";
-	echo "<input type='hidden' name='search' value=\"".escape($search)."\">\n";
-
-	echo "<div class='card'>\n";
-	echo "<table class='list'>\n";
-	echo "<tr class='list-header'>\n";
-	if ($has_access_control_add || $has_access_control_edit || $has_access_control_delete) {
-		echo "	<th class='checkbox'>\n";
-		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($access_controls) ?: "style='visibility: hidden;'").">\n";
-		echo "	</th>\n";
-	}
-	echo th_order_by('access_control_name', $text['label-access_control_name'], $order_by, $order);
-	echo th_order_by('access_control_default', $text['label-access_control_default'], $order_by, $order);
-	echo "	<th class='hide-sm-dn'>".$text['label-access_control_description']."</th>\n";
-	if ($has_access_control_edit && $list_row_edit_button == 'true') {
-		echo "	<td class='action-button'>&nbsp;</td>\n";
-	}
-	echo "</tr>\n";
-
-	if (!empty($access_controls) && count($access_controls) > 0) {
-		$x = 0;
-		foreach ($access_controls as $row) {
-			//dispatch render-row hook
-			app::dispatch_list_render_row(null, $url, $row, $x);
-			$list_row_url = '';
-			if ($has_access_control_view) {
-				$list_row_url = "access_control_edit.php?id=".urlencode($row['access_control_uuid']);
-				if (!empty($row['domain_uuid']) && $row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
-					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
-				}
-			}
-			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if ($has_access_control_add || $has_access_control_edit || $has_access_control_delete) {
-				echo "	<td class='checkbox'>\n";
-				echo "		<input type='checkbox' name='access_controls[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
-				echo "		<input type='hidden' name='access_controls[$x][uuid]' value='".escape($row['access_control_uuid'])."' />\n";
-				echo "	</td>\n";
-			}
-			echo "	<td>\n";
-			if ($has_access_control_edit) {
-				echo "	<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['access_control_name'])."</a>\n";
-			}
-			else {
-				echo "	".escape($row['access_control_name']);
-			}
-			echo "	</td>\n";
-			echo "	<td>".escape($row['access_control_default'])."</td>\n";
-			echo "	<td class='description overflow hide-sm-dn'>".escape($row['access_control_description'])."</td>\n";
-			if ($has_access_control_edit && $list_row_edit_button == 'true') {
-				echo "	<td class='action-button'>\n";
-				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
-				echo "	</td>\n";
-			}
-			echo "</tr>\n";
-			$x++;
-		}
-		unset($access_controls);
-	}
-
-	echo "</table>\n";
-	echo "</div>\n";
-	echo "<br />\n";
-
-	echo "<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
-
-	echo "</form>\n";
+//invoke post-render hook
+	app::dispatch_list_post_render('access_control_list_page_hook', $url, $html);
+	echo $html;
 
 //include the footer
 	require_once "resources/footer.php";

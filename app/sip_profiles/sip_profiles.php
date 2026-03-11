@@ -59,7 +59,7 @@
 //process the http post data by action
 	if (!empty($action) && !empty($sip_profiles) && @sizeof($sip_profiles) != 0) {
 		//dispatch pre-action hook
-		app::dispatch_list_pre_action(null, $url, $action, $sip_profiles);
+		app::dispatch_list_pre_action('sip_profile_list_page_hook', $url, $action, $sip_profiles);
 
 		switch ($action) {
 			case 'toggle':
@@ -77,7 +77,7 @@
 		}
 
 		//dispatch post-action hook
-		app::dispatch_list_post_action(null, $url, $action, $sip_profiles);
+		app::dispatch_list_post_action('sip_profile_list_page_hook', $url, $action, $sip_profiles);
 
 		header('Location: sip_profiles.php'.(!empty($search) ? '?search='.urlencode($search) : ''));
 		exit;
@@ -85,7 +85,7 @@
 
 //dispatch pre-query hook
 	$query_parameters = [];
-	app::dispatch_list_pre_query(null, $url, $query_parameters);
+	app::dispatch_list_pre_query('sip_profile_list_page_hook', $url, $query_parameters);
 
 //set from session variables
 	$list_row_edit_button = $settings->get('theme', 'list_row_edit_button', false);
@@ -127,129 +127,116 @@
 	$sql .= limit_offset($rows_per_page, $offset);
 	$sip_profiles = $database->select($sql, $parameters ?? null, 'all');
 	//dispatch post-query hook
-	app::dispatch_list_post_query(null, $url, $sip_profiles);
+	app::dispatch_list_post_query('sip_profile_list_page_hook', $url, $sip_profiles);
 	unset($sql, $parameters);
 
 //create token
 	$object = new token;
 	$token = $object->create($_SERVER['PHP_SELF']);
 
-//additional includes
+//build the action bar buttons
+	$btn_add = '';
+	if ($has_sip_profile_add) {
+		$btn_add = button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'sip_profile_edit.php']);
+	}
+	$btn_toggle = '';
+	if ($has_sip_profile_edit && $sip_profiles) {
+		$btn_toggle = button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
+	}
+	$btn_delete = '';
+	if ($has_sip_profile_delete && $sip_profiles) {
+		$btn_delete = button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
+	}
+	$btn_settings = '';
+	if ($has_sofia_global_setting_view) {
+		$btn_settings = button::create(['type'=>'button','label'=>$text['button-settings'],'icon'=>'code','collapse'=>'hide-xs','link'=>'/app/sofia_global_settings/sofia_global_settings.php']);
+	}
+	$btn_search = button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
+
+//build the modals
+	$modal_toggle = '';
+	if ($has_sip_profile_edit && $sip_profiles) {
+		$modal_toggle = modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
+	}
+	$modal_delete = '';
+	if ($has_sip_profile_delete && $sip_profiles) {
+		$modal_delete = modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
+	}
+
+//build the table header columns
+	$th_sip_profile_name        = th_order_by('sip_profile_name', $text['label-sip_profile_name'], $order_by, $order);
+	$th_sip_profile_hostname    = th_order_by('sip_profile_hostname', $text['label-sip_profile_hostname'], $order_by, $order);
+	$th_sip_profile_enabled     = th_order_by('sip_profile_enabled', $text['label-sip_profile_enabled'], $order_by, $order, null, "class='center'");
+	$th_sip_profile_description = th_order_by('sip_profile_description', $text['label-sip_profile_description'], $order_by, $order, null, "class='hide-sm-dn pct-70'");
+
+//build the row data
+	$x = 0;
+	foreach ($sip_profiles as &$row) {
+		app::dispatch_list_render_row('sip_profile_list_page_hook', $url, $row, $x);
+		$list_row_url = '';
+		if ($has_sip_profile_edit) {
+			$list_row_url = "sip_profile_edit.php?id=".urlencode($row['sip_profile_uuid']);
+		}
+		$row['_list_row_url']     = $list_row_url;
+		$row['_enabled_label']    = $text['label-'.$row['sip_profile_enabled']];
+		$row['_toggle_button']    = '';
+		$row['_row_toggle_modal'] = '';
+		if ($has_sip_profile_edit) {
+			$row['_toggle_button']    = button::create(['type'=>'button','class'=>'link','label'=>$text['label-'.$row['sip_profile_enabled']],'title'=>$text['button-toggle'],'id'=>'btn_toggle_enabled','name'=>'btn_toggle_enabled','onclick'=>"list_self_check('checkbox_{$x}'); modal_open('modal-toggle_enabled','btn_toggle_enabled');"]);
+			$row['_row_toggle_modal'] = modal::create(['id'=>'modal-toggle_enabled','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle_enabled','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
+		}
+		$row['_edit_button'] = '';
+		if ($has_sip_profile_edit && $list_row_edit_button) {
+			$row['_edit_button'] = button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
+		}
+		$x++;
+	}
+	unset($row);
+
+//build the template
+	$template = new template();
+	$template->engine = 'smarty';
+	$template->template_dir = __DIR__.'/resources/views';
+	$template->cache_dir = sys_get_temp_dir();
+	$template->init();
+
+//assign the template variables
+	$template->assign('text',                       $text);
+	$template->assign('num_rows',                   $num_rows);
+	$template->assign('sip_profiles',               $sip_profiles ?? []);
+	$template->assign('search',                     $search);
+	$template->assign('paging_controls',            $paging_controls);
+	$template->assign('paging_controls_mini',       $paging_controls_mini);
+	$template->assign('token',                      $token);
+	$template->assign('has_sip_profile_add',        $has_sip_profile_add);
+	$template->assign('has_sip_profile_delete',     $has_sip_profile_delete);
+	$template->assign('has_sip_profile_edit',       $has_sip_profile_edit);
+	$template->assign('list_row_edit_button',       $list_row_edit_button);
+	$template->assign('btn_add',                    $btn_add);
+	$template->assign('btn_toggle',                 $btn_toggle);
+	$template->assign('btn_delete',                 $btn_delete);
+	$template->assign('btn_settings',               $btn_settings);
+	$template->assign('btn_search',                 $btn_search);
+	$template->assign('modal_toggle',               $modal_toggle);
+	$template->assign('modal_delete',               $modal_delete);
+	$template->assign('th_sip_profile_name',        $th_sip_profile_name);
+	$template->assign('th_sip_profile_hostname',    $th_sip_profile_hostname);
+	$template->assign('th_sip_profile_enabled',     $th_sip_profile_enabled);
+	$template->assign('th_sip_profile_description', $th_sip_profile_description);
+
+//invoke pre-render hook
+	app::dispatch_list_pre_render('sip_profile_list_page_hook', $url, $template);
+
+//include the header
 	$document['title'] = $text['title-sip_profiles'];
 	require_once "resources/header.php";
 
-//show the content
-	echo "<div class='action_bar' id='action_bar'>\n";
-	echo "	<div class='heading'><b>".$text['title-sip_profiles']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
-	echo "	<div class='actions'>\n";
-	if ($has_sip_profile_add) {
-		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'sip_profile_edit.php']);
-	}
-	if ($has_sip_profile_edit && $sip_profiles) {
-		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
-	}
-	if ($has_sip_profile_delete && $sip_profiles) {
-		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
-	}
-	if ($has_sofia_global_setting_view) {
-		echo button::create(['type'=>'button','label'=>$text['button-settings'],'icon'=>'code','collapse'=>'hide-xs','link'=>'/app/sofia_global_settings/sofia_global_settings.php']);
-	}
-	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	echo 		"<input type='text' class='txt list-search' name='search' id='search' value=\"".escape($search)."\" placeholder=\"".$text['label-search']."\" onkeydown=''>";
-	echo button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
-	//echo button::create(['label'=>$text['button-reset'],'icon'=>$settings->get('theme', 'button_icon_reset'),'type'=>'button','id'=>'btn_reset','link'=>'sip_profiles.php','style'=>(empty($search) ? 'display: none;' : null)]);
-	if (!empty($paging_controls_mini)) {
-		echo 	"<span style='margin-left: 15px;'>".$paging_controls_mini."</span>\n";
-	}
-	echo "		</form>\n";
-	echo "	</div>\n";
-	echo "	<div style='clear: both;'></div>\n";
-	echo "</div>\n";
+//render the template
+	$html = $template->render('sip_profiles_list.tpl');
 
-	if ($has_sip_profile_edit && $sip_profiles) {
-		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
-	}
-	if ($has_sip_profile_delete && $sip_profiles) {
-		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
-	}
-
-	echo $text['description-sip_profiles']."\n";
-	echo "<br /><br />\n";
-
-	echo "<form id='form_list' method='post'>\n";
-	echo "<input type='hidden' id='action' name='action' value=''>\n";
-	echo "<input type='hidden' name='search' value=\"".escape($search)."\">\n";
-
-	echo "<div class='card'>\n";
-	echo "<table class='list'>\n";
-	echo "<tr class='list-header'>\n";
-	if ($has_sip_profile_add || $has_sip_profile_edit || $has_sip_profile_delete) {
-		echo "	<th class='checkbox'>\n";
-		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($sip_profiles) ?: "style='visibility: hidden;'").">\n";
-		echo "	</th>\n";
-	}
-	echo th_order_by('sip_profile_name', $text['label-sip_profile_name'], $order_by, $order);
-	echo th_order_by('sip_profile_hostname', $text['label-sip_profile_hostname'], $order_by, $order);
-	echo th_order_by('sip_profile_enabled', $text['label-sip_profile_enabled'], $order_by, $order, null, "class='center'");
-	echo th_order_by('sip_profile_description', $text['label-sip_profile_description'], $order_by, $order, null, "class='hide-sm-dn pct-70'");
-	if ($has_sip_profile_edit && $list_row_edit_button) {
-		echo "	<td class='action-button'>&nbsp;</td>\n";
-	}
-	echo "</tr>\n";
-
-	if (!empty($sip_profiles) && @sizeof($sip_profiles) != 0) {
-		$x = 0;
-		foreach ($sip_profiles as $row) {
-			//dispatch render-row hook
-			app::dispatch_list_render_row(null, $url, $row, $x);
-			$list_row_url = '';
-			if ($has_sip_profile_edit) {
-				$list_row_url = "sip_profile_edit.php?id=".urlencode($row['sip_profile_uuid']);
-			}
-			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if ($has_sip_profile_add || $has_sip_profile_edit || $has_sip_profile_delete) {
-				echo "	<td class='checkbox'>\n";
-				echo "		<input type='checkbox' name='sip_profiles[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
-				echo "		<input type='hidden' name='sip_profiles[$x][uuid]' value='".escape($row['sip_profile_uuid'])."' />\n";
-				echo "	</td>\n";
-			}
-			echo "	<td class='no-wrap'>\n";
-			if ($has_sip_profile_edit) {
-				echo "	<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['sip_profile_name'])."</a>\n";
-			}
-			else {
-				echo "	".escape($row['sip_profile_name']);
-			}
-			echo "	</td>\n";
-			echo "	<td>".escape($row['sip_profile_hostname'])."&nbsp;</td>\n";
-			if ($has_sip_profile_edit) {
-				echo "	<td class='no-link center'>\n";
-				echo button::create(['type'=>'button','class'=>'link','label'=>$text['label-'.$row['sip_profile_enabled']],'title'=>$text['button-toggle'],'id'=>'btn_toggle_enabled','name'=>'btn_toggle_enabled','onclick'=>"list_self_check('checkbox_".$x."'); modal_open('modal-toggle_enabled','btn_toggle_enabled');"]);
-				echo modal::create(['id'=>'modal-toggle_enabled','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle_enabled','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
-			}
-			else {
-				echo "	<td class='center'>\n";
-				echo $text['label-'.$row['sip_profile_enabled']];
-			}
-			echo "	</td>\n";
-			echo "	<td class='description overflow hide-sm-dn'>".escape($row['sip_profile_description'])."&nbsp;</td>\n";
-			if ($has_sip_profile_edit && $list_row_edit_button) {
-				echo "	<td class='action-button'>\n";
-				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
-				echo "	</td>\n";
-			}
-			echo "</tr>\n";
-			$x++;
-		}
-		unset($sip_profiles);
-	}
-
-	echo "</table>\n";
-	echo "</div>\n";
-	echo "<br />\n";
-	echo "<div align='center'>".$paging_controls."</div>\n";
-	echo "<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
-	echo "</form>\n";
+//invoke post-render hook
+	app::dispatch_list_post_render('sip_profile_list_page_hook', $url, $html);
+	echo $html;
 
 //include the footer
 	require_once "resources/footer.php";

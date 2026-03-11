@@ -73,7 +73,7 @@
 //process the http post data by action
 	if (!empty($action) && !empty($extensions) && is_array($extensions) && @sizeof($extensions) != 0) {
 		//dispatch pre-action hook
-		app::dispatch_list_pre_action(null, $url, $action, $extensions);
+		app::dispatch_list_pre_action('extension_list_page_hook', $url, $action, $extensions);
 
 		switch ($action) {
 			case 'toggle':
@@ -95,7 +95,7 @@
 		}
 
 		//dispatch post-action hook
-		app::dispatch_list_post_action(null, $url, $action, $extensions);
+		app::dispatch_list_post_action('extension_list_page_hook', $url, $action, $extensions);
 
 		header('Location: extensions.php?'.(!empty($order_by) ? '&order_by='.$order_by.'&order='.$order : null).(is_numeric($page) ? '&page='.urlencode($page) : null).($search != '' ? '&search='.urlencode($search) : ''));
 		exit;
@@ -103,7 +103,7 @@
 
 //dispatch pre-query hook
 	$query_parameters = [];
-	app::dispatch_list_pre_query(null, $url, $query_parameters);
+	app::dispatch_list_pre_query('extension_list_page_hook', $url, $query_parameters);
 
 //get total extension count for domain
 	if (!empty($settings->get('limit', 'extensions'))) {
@@ -290,7 +290,7 @@
 	$sql .= limit_offset($rows_per_page, $offset);
 	$extensions = $database->select($sql, $parameters ?? null, 'all');
 	//dispatch post-query hook
-	app::dispatch_list_post_query(null, $url, $extensions);
+	app::dispatch_list_post_query('extension_list_page_hook', $url, $extensions);
 	unset($sql, $parameters);
 
 //get the registrations

@@ -68,7 +68,7 @@
 //process the http post data by action
 	if (!empty($action) && !empty($call_blocks)) {
 		//dispatch pre-action hook
-		app::dispatch_list_pre_action(null, $url, $action, $call_blocks);
+		app::dispatch_list_pre_action('call_block_list_page_hook', $url, $action, $call_blocks);
 
 		switch ($action) {
 			case 'copy':
@@ -92,7 +92,7 @@
 		}
 
 		//dispatch post-action hook
-		app::dispatch_list_post_action(null, $url, $action, $call_blocks);
+		app::dispatch_list_post_action('call_block_list_page_hook', $url, $action, $call_blocks);
 
 		header('Location: call_block.php'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
@@ -100,7 +100,7 @@
 
 //dispatch pre-query hook
 	$query_parameters = [];
-	app::dispatch_list_pre_query(null, $url, $query_parameters);
+	app::dispatch_list_pre_query('call_block_list_page_hook', $url, $query_parameters);
 
 //get variables used to control the order
 	$order_by = $_GET["order_by"] ?? '';
@@ -223,7 +223,7 @@
 	$parameters['time_zone'] = $time_zone;
 	$result = $database->select($sql, $parameters ?? null, 'all');
 	//dispatch post-query hook
-	app::dispatch_list_post_query(null, $url, $result);
+	app::dispatch_list_post_query('call_block_list_page_hook', $url, $result);
 	unset($sql, $parameters);
 
 //determine if any global
@@ -238,97 +238,66 @@
 	$object = new token;
 	$token = $object->create($_SERVER['PHP_SELF']);
 
-//include the header
-	$document['title'] = $text['title-call_block'];
-	require_once "resources/header.php";
-
-//show the content
-	echo "<div class='action_bar' id='action_bar'>\n";
-	echo "	<div class='heading'><b>".$text['title-call_block']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
-	echo "	<div class='actions'>\n";
+//build the action bar buttons
+	$btn_add = '';
 	if ($has_call_block_add) {
-		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'call_block_edit.php']);
+		$btn_add = button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'call_block_edit.php']);
 	}
+	$btn_copy = '';
 	if ($has_call_block_add && $result) {
-		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
+		$btn_copy = button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 	}
+	$btn_toggle = '';
 	if ($has_call_block_edit && $result) {
-		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
+		$btn_toggle = button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
+	$btn_delete = '';
 	if ($has_call_block_delete && $result) {
-		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
+		$btn_delete = button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
-	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if ($has_call_block_all) {
-		if ($show == 'all') {
-			echo "		<input type='hidden' name='show' value='all'>";
-		}
-		else {
-			echo button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>'?type='.urlencode($destination_type ?? '').'&show=all'.($search != '' ? "&search=".urlencode($search ?? '') : null)]);
-		}
+	$btn_show_all = '';
+	if ($has_call_block_all && $show !== 'all') {
+		$btn_show_all = button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>'?type='.urlencode($destination_type ?? '').'&show=all'.($search != '' ? "&search=".urlencode($search ?? '') : null)]);
 	}
-	echo 		"<input type='text' class='txt list-search' name='search' id='search' value=\"".escape($search)."\" placeholder=\"".$text['label-search']."\" onkeydown=''>";
-	echo button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
-	//echo button::create(['label'=>$text['button-reset'],'icon'=>$settings->get('theme', 'button_icon_reset'),'type'=>'button','id'=>'btn_reset','link'=>'call_block.php','style'=>($search == '' ? 'display: none;' : null)]);
-	if (!empty($paging_controls_mini)) {
-		echo 	"<span style='margin-left: 15px;'>".$paging_controls_mini."</span>";
-	}
-	echo "		</form>\n";
-	echo "	</div>\n";
-	echo "	<div style='clear: both;'></div>\n";
-	echo "</div>\n";
+	$btn_search = button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
 
+//build the modals
+	$modal_copy = '';
 	if ($has_call_block_add && $result) {
-		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
+		$modal_copy = modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 	}
+	$modal_toggle = '';
 	if ($has_call_block_edit && $result) {
-		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
+		$modal_toggle = modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
+	$modal_delete = '';
 	if ($has_call_block_delete && $result) {
-		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
+		$modal_delete = modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
-	echo $text['description-call-block']."\n";
-	echo "<br /><br />\n";
+//build the table header columns
+	$th_domain_name = '';
+	if (!empty($show) && $show == 'all' && $has_domain_all) {
+		$th_domain_name = th_order_by('domain_name', $text['label-domain'], $order_by, $order);
+	} elseif ($has_call_block_domain && $global_call_blocks) {
+		$th_domain_name = th_order_by('domain_uuid', $text['label-domain'], $order_by, $order, null, "style='width: 1%;' class='center'");
+	}
+	$th_direction    = th_order_by('call_block_direction', $text['label-direction'], $order_by, $order, null, "style='width: 1%;' class='center'");
+	$th_extension    = th_order_by('extension', $text['label-extension'], $order_by, $order, null, "class='center'");
+	$th_name         = th_order_by('call_block_name', $text['label-caller_id_name'], $order_by, $order);
+	$th_country_code = th_order_by('call_block_country_code', $text['label-country_code'], $order_by, $order);
+	$th_number       = th_order_by('call_block_number', $text['label-number'], $order_by, $order);
+	$th_count        = th_order_by('call_block_count', $text['label-count'], $order_by, $order, '', "class='center hide-sm-dn'");
+	$th_action       = th_order_by('call_block_action', $text['label-action'], $order_by, $order);
+	$th_enabled      = th_order_by('call_block_enabled', $text['label-enabled'], $order_by, $order, null, "class='center'");
+	$th_date         = th_order_by('insert_date', $text['label-date-added'], $order_by, $order, null, "class='shrink no-wrap'");
 
-	echo "<form id='form_list' method='post'>\n";
-	echo "<input type='hidden' id='action' name='action' value=''>\n";
-	echo "<input type='hidden' name='search' value=\"".escape($search)."\">\n";
-
-	echo "<div class='card'>\n";
-	echo "<table class='list'>\n";
-	echo "<tr class='list-header'>\n";
-	if ($has_call_block_add || $has_call_block_edit || $has_call_block_delete) {
-		echo "	<th class='checkbox'>\n";
-		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($result) ?: "style='visibility: hidden;'").">\n";
-		echo "	</th>\n";
-	}
-	if ($show == 'all' && $has_domain_all) {
-		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order);
-	}
-	else if ($has_call_block_domain && $global_call_blocks) {
-		echo th_order_by('domain_uuid', $text['label-domain'], $order_by, $order, null, "style='width: 1%;' class='center'");
-	}
-	echo th_order_by('call_block_direction', $text['label-direction'], $order_by, $order, null, "style='width: 1%;' class='center'");
-	echo th_order_by('extension', $text['label-extension'], $order_by, $order, null, "class='center'");
-	echo th_order_by('call_block_name', $text['label-caller_id_name'], $order_by, $order);
-	echo th_order_by('call_block_country_code', $text['label-country_code'], $order_by, $order);
-	echo th_order_by('call_block_number', $text['label-number'], $order_by, $order);
-	echo th_order_by('call_block_count', $text['label-count'], $order_by, $order, '', "class='center hide-sm-dn'");
-	echo th_order_by('call_block_action', $text['label-action'], $order_by, $order);
-	echo th_order_by('call_block_enabled', $text['label-enabled'], $order_by, $order, null, "class='center'");
-	echo th_order_by('insert_date', $text['label-date-added'], $order_by, $order, null, "class='shrink no-wrap'");
-	echo "<th class='hide-md-dn pct-20'>".$text['label-description']."</th>\n";
-	if ($has_call_block_edit && $list_row_edit_button) {
-		echo "	<td class='action-button'>&nbsp;</td>\n";
-	}
-	echo "</tr>\n";
-
+//build the row data
+	$x = 0;
+	$template_dir = $settings->get('domain', 'template', 'default');
 	if (!empty($result)) {
-		$x = 0;
-		foreach ($result as $row) {
-			//dispatch render-row hook
-			app::dispatch_list_render_row(null, $url, $row, $x);
+		foreach ($result as &$row) {
+			app::dispatch_list_render_row('call_block_list_page_hook', $url, $row, $x);
 			$list_row_url = '';
 			if ($has_call_block_edit) {
 				$list_row_url = "call_block_edit.php?id=".urlencode($row['call_block_uuid']);
@@ -336,94 +305,104 @@
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid'] ?? '').'&domain_change=true';
 				}
 			}
-			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if ($has_call_block_add || $has_call_block_edit || $has_call_block_delete) {
-				echo "	<td class='checkbox'>\n";
-				echo "		<input type='checkbox' name='call_blocks[".$x."][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
-				echo "		<input type='hidden' name='call_blocks[".$x."][uuid]' value='".escape($row['call_block_uuid'])."' />\n";
-				echo "	</td>\n";
+			$row['_list_row_url'] = $list_row_url;
+			$row['_direction_image'] = '';
+			switch ($row['call_block_direction']) {
+				case 'inbound':
+					$row['_direction_image'] = "<img src='/themes/".$template_dir."/images/icon_cdr_inbound_answered.png' style='border: none;' title='".$text['label-inbound']."'>";
+					break;
+				case 'outbound':
+					$row['_direction_image'] = "<img src='/themes/".$template_dir."/images/icon_cdr_outbound_answered.png' style='border: none;' title='".$text['label-outbound']."'>";
+					break;
 			}
+			$row['_extension_display'] = !empty($row['extension']) ? escape($row['extension']) : $text['label-all'];
+			$row['_number_formatted']  = escape(format_phone($row['call_block_number']));
+			$row['_action_display']    = $text['label-'.$row['call_block_app']]." ".escape($row['call_block_data']);
+			$row['_enabled_label'] = $text['label-'.$row['call_block_enabled']];
+			$row['_toggle_button'] = '';
+			if ($has_call_block_edit) {
+				$row['_toggle_button'] = button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['call_block_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_{$x}'); list_action_set('toggle'); list_form_submit('form_list')"]);
+			}
+			$row['_edit_button'] = '';
+			if ($has_call_block_edit && $list_row_edit_button) {
+				$row['_edit_button'] = button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
+			}
+			$row['_domain_cell'] = '';
 			if (!empty($show) && $show == 'all' && $has_domain_all) {
 				if (!empty($row['domain_uuid']) && is_uuid($row['domain_uuid'])) {
-					echo "	<td>".escape($_SESSION['domains'][$row['domain_uuid']]['domain_name'])."</td>\n";
+					$row['_domain_cell'] = "<td>".escape($_SESSION['domains'][$row['domain_uuid']]['domain_name'])."</td>";
+				} else {
+					$row['_domain_cell'] = "<td>".$text['label-global']."</td>";
 				}
-				else {
-					echo "	<td>".$text['label-global']."</td>\n";
-				}
-			}
-			else if ($global_call_blocks) {
+			} elseif ($global_call_blocks) {
 				if ($has_call_block_domain && !is_uuid($row['domain_uuid'])) {
-					echo "	<td>".$text['label-global'];
+					$row['_domain_cell'] = "<td>".$text['label-global']."</td>";
+				} else {
+					$row['_domain_cell'] = "<td class='overflow'>".escape($_SESSION['domains'][$row['domain_uuid']]['domain_name'])."</td>";
 				}
-				else {
-					echo "	<td class='overflow'>";
-					echo escape($_SESSION['domains'][$row['domain_uuid']]['domain_name']);
-				}
-				echo "</td>\n";
 			}
-			echo "	<td class='center'>";
-			switch ($row['call_block_direction']) {
-				case "inbound": echo "<img src='/themes/".$settings->get('domain', 'template', 'default')."/images/icon_cdr_inbound_answered.png' style='border: none;' title='".$text['label-inbound']."'>\n"; break;
-				case "outbound": echo "<img src='/themes/".$settings->get('domain', 'template', 'default')."/images/icon_cdr_outbound_answered.png' style='border: none;' title='".$text['label-outbound']."'>\n"; break;
-			}
-			echo "	</td>\n";
-			echo "	<td class='center'>";
-			if (empty($row['extension'])) {
-				echo $text['label-all'];
-			}
-			else {
-				echo escape($row['extension']);
-			}
-			echo "	</td>\n";
-			echo "	<td>".escape($row['call_block_name'])."</td>\n";
-			echo "	<td>";
-			if ($has_call_block_edit) {
-				echo "<a href='".$list_row_url."'>".escape($row['call_block_country_code'])."</a>";
-			}
-			else {
-				echo escape($row['call_block_country_code']);
-			}
-			echo "	</td>\n";
-			echo "	<td>";
-			if ($has_call_block_edit) {
-				echo "<a href='".$list_row_url."'>".escape(format_phone($row['call_block_number']))."</a>";
-			}
-			else {
-				echo escape(format_phone($row['call_block_number']));
-			}
-			echo "	</td>\n";
-			echo "	<td class='center hide-sm-dn'>".escape($row['call_block_count'])."</td>\n";
-			echo "	<td>".$text['label-'.$row['call_block_app']]." ".escape($row['call_block_data'])."</td>\n";
-			if ($has_call_block_edit) {
-				echo "	<td class='no-link center'>";
-				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['call_block_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
-			}
-			else {
-				echo "	<td class='center'>";
-				echo $text['label-'.$row['call_block_enabled']];
-			}
-			echo "	</td>\n";
-			echo "	<td class='no-wrap'>".$row['date_formatted']." <span class='hide-sm-dn'>".$row['time_formatted']."</span></td>\n";
-			echo "	<td class='description overflow hide-md-dn'>".escape($row['call_block_description'])."</td>\n";
-			if ($has_call_block_edit && $list_row_edit_button) {
-				echo "	<td class='action-button'>";
-				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
-				echo "	</td>\n";
-			}
-			echo "</tr>\n";
 			$x++;
 		}
-		unset($result);
+		unset($row);
 	}
 
-	echo "</table>\n";
-	echo "</div>\n";
-	echo "<br />\n";
-	echo "<div align='center'>".$paging_controls."</div>\n";
+//build the template
+	$template = new template();
+	$template->engine = 'smarty';
+	$template->template_dir = __DIR__.'/resources/views';
+	$template->cache_dir = sys_get_temp_dir();
+	$template->init();
 
-	echo "<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
+//assign the template variables
+	$template->assign('text',                 $text);
+	$template->assign('num_rows',             $num_rows);
+	$template->assign('rows',                 $result ?? []);
+	$template->assign('search',               $search);
+	$template->assign('show',                 $show);
+	$template->assign('paging_controls',      $paging_controls);
+	$template->assign('paging_controls_mini', $paging_controls_mini);
+	$template->assign('token',                $token);
+	$template->assign('has_call_block_add',    $has_call_block_add);
+	$template->assign('has_call_block_all',    $has_call_block_all);
+	$template->assign('has_call_block_delete', $has_call_block_delete);
+	$template->assign('has_call_block_domain', $has_call_block_domain);
+	$template->assign('has_call_block_edit',   $has_call_block_edit);
+	$template->assign('has_domain_all',        $has_domain_all);
+	$template->assign('list_row_edit_button',  $list_row_edit_button);
+	$template->assign('global_call_blocks',    $global_call_blocks);
+	$template->assign('btn_add',               $btn_add);
+	$template->assign('btn_copy',              $btn_copy);
+	$template->assign('btn_toggle',            $btn_toggle);
+	$template->assign('btn_delete',            $btn_delete);
+	$template->assign('btn_show_all',          $btn_show_all);
+	$template->assign('btn_search',            $btn_search);
+	$template->assign('modal_copy',            $modal_copy);
+	$template->assign('modal_toggle',          $modal_toggle);
+	$template->assign('modal_delete',          $modal_delete);
+	$template->assign('th_domain_name',        $th_domain_name);
+	$template->assign('th_direction',          $th_direction);
+	$template->assign('th_extension',          $th_extension);
+	$template->assign('th_name',               $th_name);
+	$template->assign('th_country_code',       $th_country_code);
+	$template->assign('th_number',             $th_number);
+	$template->assign('th_count',              $th_count);
+	$template->assign('th_action',             $th_action);
+	$template->assign('th_enabled',            $th_enabled);
+	$template->assign('th_date',               $th_date);
 
-	echo "</form>\n";
+//invoke pre-render hook
+	app::dispatch_list_pre_render('call_block_list_page_hook', $url, $template);
+
+//include the header
+	$document['title'] = $text['title-call_block'];
+	require_once "resources/header.php";
+
+//render the template
+	$html = $template->render('call_block_list.tpl');
+
+//invoke post-render hook
+	app::dispatch_list_post_render('call_block_list_page_hook', $url, $html);
+	echo $html;
 
 //include the footer
 	require_once "resources/footer.php";

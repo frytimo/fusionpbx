@@ -62,7 +62,7 @@
 //process the http post data by action
 	if (!empty($action) && is_array($call_broadcasts)) {
 		//dispatch pre-action hook
-		app::dispatch_list_pre_action(null, $url, $action, $call_broadcasts);
+		app::dispatch_list_pre_action('call_broadcast_list_page_hook', $url, $action, $call_broadcasts);
 
 		switch ($action) {
 			case 'copy':
@@ -80,7 +80,7 @@
 		}
 
 		//dispatch post-action hook
-		app::dispatch_list_post_action(null, $url, $action, $call_broadcasts);
+		app::dispatch_list_post_action('call_broadcast_list_page_hook', $url, $action, $call_broadcasts);
 
 		header('Location: call_broadcast.php'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
@@ -88,7 +88,7 @@
 
 //dispatch pre-query hook
 	$query_parameters = [];
-	app::dispatch_list_pre_query(null, $url, $query_parameters);
+	app::dispatch_list_pre_query('call_broadcast_list_page_hook', $url, $query_parameters);
 
 //get the http get variables and set them to php variables
 	$order_by = $_GET["order_by"] ?? '';
@@ -159,89 +159,57 @@
 	$sql .= limit_offset($rows_per_page, $offset);
 	$result = $database->select($sql, $parameters ?? null, 'all');
 	//dispatch post-query hook
-	app::dispatch_list_post_query(null, $url, $result);
+	app::dispatch_list_post_query('call_broadcast_list_page_hook', $url, $result);
 	unset($sql, $parameters);
 
 //create token
 	$object = new token;
 	$token = $object->create($_SERVER['PHP_SELF']);
 
-//include the header
-	$document['title'] = $text['title-call_broadcast'];
-	require_once "resources/header.php";
-
-//show the content
-	echo "<div class='action_bar' id='action_bar'>\n";
-	echo "	<div class='heading'><b>".$text['title-call_broadcast']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
-	echo "	<div class='actions'>\n";
+//build the action bar buttons
+	$btn_add = '';
 	if ($has_call_broadcast_add) {
-		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'call_broadcast_edit.php']);
+		$btn_add = button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'call_broadcast_edit.php']);
 	}
+	$btn_copy = '';
 	if ($has_call_broadcast_add && $result) {
-		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
+		$btn_copy = button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 	}
+	$btn_delete = '';
 	if ($has_call_broadcast_delete && $result) {
-		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
+		$btn_delete = button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
-	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if ($has_call_broadcast_all) {
-		if ($show == 'all') {
-			echo "		<input type='hidden' name='show' value='all'>";
-		}
-		else {
-			echo button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>'?type='.urlencode($destination_type ?? '').'&show=all'.(!empty($search) ? "&search=".urlencode($search ?? '') : null)]);
-		}
+	$btn_show_all = '';
+	if ($has_call_broadcast_all && $show !== 'all') {
+		$btn_show_all = button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>'?type='.urlencode($destination_type ?? '').'&show=all'.(!empty($search) ? "&search=".urlencode($search ?? '') : null)]);
 	}
-	echo 		"<input type='text' class='txt list-search' name='search' id='search' value=\"".escape($search)."\" placeholder=\"".$text['label-search']."\" onkeydown=''>";
-	echo button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
-	//echo button::create(['label'=>$text['button-reset'],'icon'=>$settings->get('theme', 'button_icon_reset'),'type'=>'button','id'=>'btn_reset','link'=>'call_broadcast.php','style'=>($search == '' ? 'display: none;' : null)]);
-	if ($paging_controls_mini != '') {
-		echo 	"<span style='margin-left: 15px;'>".$paging_controls_mini."</span>";
-	}
-	echo "		</form>\n";
-	echo "	</div>\n";
-	echo "	<div style='clear: both;'></div>\n";
-	echo "</div>\n";
+	$btn_search = button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
 
+//build the modals
+	$modal_copy = '';
 	if ($has_call_broadcast_add && $result) {
-		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
+		$modal_copy = modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 	}
+	$modal_delete = '';
 	if ($has_call_broadcast_delete && $result) {
-		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
+		$modal_delete = modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
-	echo $text['title_description-call_broadcast']."\n";
-	echo "<br /><br />\n";
-
-	echo "<form id='form_list' method='post'>\n";
-	echo "<input type='hidden' id='action' name='action' value=''>\n";
-	echo "<input type='hidden' name='search' value=\"".escape($search)."\">\n";
-
-	echo "<div class='card'>\n";
-	echo "<table class='list'>\n";
-	echo "<tr class='list-header'>\n";
-	if ($has_call_broadcast_add || $has_call_broadcast_delete) {
-		echo "	<th class='checkbox'>\n";
-		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($result) ?: "style='visibility: hidden;'").">\n";
-		echo "	</th>\n";
+//build the table header columns
+	$th_domain_name = '';
+	if ($show == 'all' && $has_call_broadcast_all) {
+		$th_domain_name = th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param, "class='shrink'");
 	}
-	if ($show == "all" && $has_call_broadcast_all) {
-		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param, "class='shrink'");
-	}
-	echo th_order_by('broadcast_name', $text['label-name'], $order_by, $order);
-	echo th_order_by('broadcast_concurrent_limit', $text['label-concurrent-limit'], $order_by, $order);
-	echo th_order_by('broadcast_start_time', $text['label-start_time'], $order_by, $order);
-	echo th_order_by('broadcast_description', $text['label-description'], $order_by, $order);
-	if ($has_call_broadcast_edit && $list_row_edit_button) {
-		echo "	<td class='action-button'>&nbsp;</td>\n";
-	}
-	echo "</tr>\n";
+	$th_broadcast_name        = th_order_by('broadcast_name', $text['label-name'], $order_by, $order);
+	$th_broadcast_limit       = th_order_by('broadcast_concurrent_limit', $text['label-concurrent-limit'], $order_by, $order);
+	$th_broadcast_start_time  = th_order_by('broadcast_start_time', $text['label-start_time'], $order_by, $order);
+	$th_broadcast_description = th_order_by('broadcast_description', $text['label-description'], $order_by, $order);
 
+//build the row data
+	$x = 0;
 	if (!empty($result)) {
-		$x = 0;
-		foreach($result as $row) {
-			//dispatch render-row hook
-			app::dispatch_list_render_row(null, $url, $row, $x);
+		foreach ($result as &$row) {
+			app::dispatch_list_render_row('call_broadcast_list_page_hook', $url, $row, $x);
 			$list_row_url = '';
 			if ($has_call_broadcast_edit) {
 				$list_row_url = "call_broadcast_edit.php?id=".urlencode($row['call_broadcast_uuid']);
@@ -249,57 +217,72 @@
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
-			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if ($has_call_broadcast_add || $has_call_broadcast_delete) {
-				echo "	<td class='checkbox'>\n";
-				echo "		<input type='checkbox' name='call_broadcasts[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
-				echo "		<input type='hidden' name='call_broadcasts[$x][uuid]' value='".escape($row['call_broadcast_uuid'])."' />\n";
-				echo "	</td>\n";
+			$row['_list_row_url'] = $list_row_url;
+			$row['_domain_display'] = '';
+			if ($show == 'all' && $has_call_broadcast_all) {
+				$row['_domain_display'] = !empty($_SESSION['domains'][$row['domain_uuid']]['domain_name']) ? escape($_SESSION['domains'][$row['domain_uuid']]['domain_name']) : $text['label-global'];
 			}
-			if ($show == "all" && $has_call_broadcast_all) {
-				if (!empty($_SESSION['domains'][$row['domain_uuid']]['domain_name'])) {
-					$domain = $_SESSION['domains'][$row['domain_uuid']]['domain_name'];
-				}
-				else {
-					$domain = $text['label-global'];
-				}
-				echo "	<td>".escape($domain)."</td>\n";
-			}
-			echo "	<td>";
-			if ($has_call_broadcast_edit) {
-				echo "<a href='".$list_row_url."'>".escape($row['broadcast_name'] ?? '')."</a>";
-			}
-			else {
-				echo escape($row['broadcast_name']);
-			}
-			echo "	</td>\n";
-			echo "	<td>".escape($row['broadcast_concurrent_limit'])."</td>\n";
-			//determine start date and time
 			$broadcast_start_reference = !empty($row['update_date']) ?: !empty($row['insert_date']);
+			$row['_start_time_display'] = '';
 			if ($row['broadcast_start_time'] && $broadcast_start_reference) {
-				$broadcast_start_time = date('Y-m-d H:i', strtotime($broadcast_start_reference) + $row['broadcast_start_time']);
+				$row['_start_time_display'] = escape(date('Y-m-d H:i', strtotime($broadcast_start_reference) + $row['broadcast_start_time']));
 			}
-			echo "	<td>".escape($broadcast_start_time ?? '')."</td>\n";
-			echo "	<td class='description overflow hide-xs'>".escape($row['broadcast_description'])."</td>\n";
+			$row['_edit_button'] = '';
 			if ($has_call_broadcast_edit && $list_row_edit_button) {
-				echo "	<td class='action-button'>";
-				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
-				echo "	</td>\n";
+				$row['_edit_button'] = button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 			}
-			echo "</tr>\n";
 			$x++;
 		}
+		unset($row);
 	}
-	unset($result);
 
-	echo "</table>\n";
-	echo "</div>\n";
-	echo "<br />\n";
-	echo "<div align='center'>".$paging_controls."</div>\n";
+//build the template
+	$template = new template();
+	$template->engine = 'smarty';
+	$template->template_dir = __DIR__.'/resources/views';
+	$template->cache_dir = sys_get_temp_dir();
+	$template->init();
 
-	echo "<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
+//assign the template variables
+	$template->assign('text',                    $text);
+	$template->assign('num_rows',                $num_rows);
+	$template->assign('rows',                    $result ?? []);
+	$template->assign('search',                  $search);
+	$template->assign('show',                    $show);
+	$template->assign('paging_controls',         $paging_controls);
+	$template->assign('paging_controls_mini',    $paging_controls_mini);
+	$template->assign('token',                   $token);
+	$template->assign('has_call_broadcast_add',    $has_call_broadcast_add);
+	$template->assign('has_call_broadcast_all',    $has_call_broadcast_all);
+	$template->assign('has_call_broadcast_delete', $has_call_broadcast_delete);
+	$template->assign('has_call_broadcast_edit',   $has_call_broadcast_edit);
+	$template->assign('list_row_edit_button',      $list_row_edit_button);
+	$template->assign('btn_add',                   $btn_add);
+	$template->assign('btn_copy',                  $btn_copy);
+	$template->assign('btn_delete',                $btn_delete);
+	$template->assign('btn_show_all',              $btn_show_all);
+	$template->assign('btn_search',                $btn_search);
+	$template->assign('modal_copy',                $modal_copy);
+	$template->assign('modal_delete',              $modal_delete);
+	$template->assign('th_domain_name',            $th_domain_name);
+	$template->assign('th_broadcast_name',         $th_broadcast_name);
+	$template->assign('th_broadcast_limit',        $th_broadcast_limit);
+	$template->assign('th_broadcast_start_time',   $th_broadcast_start_time);
+	$template->assign('th_broadcast_description',  $th_broadcast_description);
 
-	echo "</form>\n";
+//invoke pre-render hook
+	app::dispatch_list_pre_render('call_broadcast_list_page_hook', $url, $template);
+
+//include the header
+	$document['title'] = $text['title-call_broadcast'];
+	require_once "resources/header.php";
+
+//render the template
+	$html = $template->render('call_broadcast_list.tpl');
+
+//invoke post-render hook
+	app::dispatch_list_post_render('call_broadcast_list_page_hook', $url, $html);
+	echo $html;
 
 //include the footer
 	require_once "resources/footer.php";

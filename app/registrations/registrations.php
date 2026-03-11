@@ -110,156 +110,131 @@
 //define location url
 	$location = ($reload ? 'registration_reload.php' : 'registrations.php');
 
+//build the action bar buttons
+	$btn_refresh = '';
+	if (!$reload) {
+		$btn_refresh = button::create(['type'=>'button','label'=>$text['button-refresh'],'icon'=>$settings->get('theme', 'button_icon_refresh'),'link'=>$location.(!empty($qs) ? '?'.$qs['show'].$qs['search'].$qs['profile'] : null)]);
+	}
+	$btn_unregister = '';
+	$btn_provision  = '';
+	$btn_reboot     = '';
+	if ($registrations) {
+		$btn_unregister = button::create(['type'=>'button','label'=>$text['button-unregister'],'title'=>$text['button-unregister'],'icon'=>'user-slash','style'=>'margin-left: 15px;','onclick'=>"modal_open('modal-unregister','btn_unregister');"]);
+		$btn_provision  = button::create(['type'=>'button','label'=>$text['button-provision'],'title'=>$text['button-provision'],'icon'=>'fax','onclick'=>"modal_open('modal-provision','btn_provision');"]);
+		$btn_reboot     = button::create(['type'=>'button','label'=>$text['button-reboot'],'title'=>$text['button-reboot'],'icon'=>'power-off','onclick'=>"modal_open('modal-reboot','btn_reboot');"]);
+	}
+	$btn_show_all     = '';
+	$btn_show_local   = '';
+	$btn_all_profiles = '';
+	if ($has_registration_all) {
+		if (!empty($show) && $show == 'all') {
+			$btn_show_local = button::create(['type'=>'button','label'=>$text['button-show_local'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>$location.(($qs['search'] || $qs['profile']) ? '?' : null).$qs['search'].$qs['profile']]);
+		}
+		else {
+			$btn_show_all = button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>$location.'?show=all'.(!empty($qs) ? $qs['search'].$qs['profile'] : null)]);
+		}
+		if (!empty($profile)) {
+			$btn_all_profiles = button::create(['type'=>'button','label'=>$text['button-all_profiles'],'icon'=>'network-wired','style'=>'margin-left: 15px;','link'=>$location.(!empty($qs) && ($qs['show'] || $qs['search']) ? '?'.$qs['show'].$qs['search'] : null)]);
+		}
+	}
+	$btn_search = '';
+	if (!$reload) {
+		$btn_search = button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
+	}
+
+//build the modals
+	$modal_unregister = '';
+	$modal_provision  = '';
+	$modal_reboot     = '';
+	if ($registrations) {
+		$modal_unregister = modal::create(['id'=>'modal-unregister','type'=>'general','message'=>$text['confirm-unregister'],'actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_unregister','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('unregister'); list_form_submit('form_list');"])]);
+		$modal_provision  = modal::create(['id'=>'modal-provision','type'=>'general','message'=>$text['confirm-provision'],'actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_provision','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('provision'); list_form_submit('form_list');"])]);
+		$modal_reboot     = modal::create(['id'=>'modal-reboot','type'=>'general','message'=>$text['confirm-reboot'],'actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_reboot','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('reboot'); list_form_submit('form_list');"])]);
+	}
+
+//filter and decorate the registration rows
+	$filtered_registrations = [];
+	$x = 0;
+	if (is_array($registrations) && @sizeof($registrations) != 0) {
+		foreach ($registrations as $orig_row) {
+			$matches = preg_grep('/'.($search ?? '').'/i', $orig_row);
+			if ($matches != false) {
+				$row = $orig_row;
+				$_user_parts = explode('@', $row['user']);
+				if (isset($_user_parts[1]) && $_user_parts[1] == $_SESSION['domains'][$_SESSION['domain_uuid']]['domain_name']) {
+					$row['_user_html'] = "<span class='hide-sm-dn'>".escape($row['user'])."</span><span class='hide-md-up cursor-help' title='".escape($row['user'])."'>".escape($_user_parts[0])."</span>";
+				}
+				else {
+					$row['_user_html'] = escape($row['user']);
+				}
+				$_status_patterns = ['/(\d{4})-(\d{2})-(\d{2})/', '/(\d{2}):(\d{2}):(\d{2})/', '/unknown/', '/exp\(/', '/\(/', '/\)/', '/\s+/'];
+				$row['_status'] = preg_replace($_status_patterns, ' ', $row['status']);
+				$_contact_parts = explode('"', $row['contact'] ?? '');
+				$row['_contact_display'] = escape($_contact_parts[1] ?? '');
+				$row['_lan_ip_url']      = urlencode($row['lan-ip'] ?? '');
+				$row['_network_ip_url']  = urlencode($row['network-ip'] ?? '');
+				$_row_tools = '';
+				if ($settings->get('registrations', 'list_row_button_unregister', false)) {
+					$_row_tools .= button::create(['type'=>'submit','title'=>$text['button-unregister'],'icon'=>'user-slash fa-fw','style'=>'margin-left: 2px; margin-right: 0;','onclick'=>"list_self_check('checkbox_{$x}'); list_action_set('unregister'); list_form_submit('form_list')"]);
+				}
+				if ($settings->get('registrations', 'list_row_button_provision', false)) {
+					$_row_tools .= button::create(['type'=>'submit','title'=>$text['button-provision'],'icon'=>'fax fa-fw','style'=>'margin-left: 2px; margin-right: 0;','onclick'=>"list_self_check('checkbox_{$x}'); list_action_set('provision'); list_form_submit('form_list')"]);
+				}
+				if ($settings->get('registrations', 'list_row_button_reboot', false)) {
+					$_row_tools .= button::create(['type'=>'submit','title'=>$text['button-reboot'],'icon'=>'power-off fa-fw','style'=>'margin-left: 2px; margin-right: 0;','onclick'=>"list_self_check('checkbox_{$x}'); list_action_set('reboot'); list_form_submit('form_list')"]);
+				}
+				$row['_tools_html'] = $_row_tools;
+				$row['_index']      = $x;
+				$filtered_registrations[] = $row;
+				$x++;
+			}
+		}
+	}
+	unset($registrations, $row);
+
+//build the template
+	$template = new template();
+	$template->engine       = 'smarty';
+	$template->template_dir = __DIR__.'/resources/views';
+	$template->cache_dir    = sys_get_temp_dir();
+	$template->init();
+
+//assign the template variables
+	$template->assign('text',                 $text);
+	$template->assign('num_rows',             $num_rows);
+	$template->assign('registrations',        $filtered_registrations);
+	$template->assign('search',               $search ?? '');
+	$template->assign('show',                 $show ?? '');
+	$template->assign('profile',              $profile ?? '');
+	$template->assign('reload',               $reload);
+	$template->assign('location',             $location);
+	$template->assign('paging_controls',      $paging_controls ?? '');
+	$template->assign('token',                $token);
+	$template->assign('has_registration_all', $has_registration_all);
+	$template->assign('btn_refresh',          $btn_refresh);
+	$template->assign('btn_unregister',       $btn_unregister);
+	$template->assign('btn_provision',        $btn_provision);
+	$template->assign('btn_reboot',           $btn_reboot);
+	$template->assign('btn_show_all',         $btn_show_all);
+	$template->assign('btn_show_local',       $btn_show_local);
+	$template->assign('btn_all_profiles',     $btn_all_profiles);
+	$template->assign('btn_search',           $btn_search);
+	$template->assign('modal_unregister',     $modal_unregister);
+	$template->assign('modal_provision',      $modal_provision);
+	$template->assign('modal_reboot',         $modal_reboot);
+
 //include the header
 	if (!$reload) {
 		$document['title'] = $text['header-registrations'];
 		require_once "resources/header.php";
 	}
 
-//show the content
-	echo "<div class='action_bar' id='action_bar'>\n";
-	echo "	<div class='heading'><b>".$text['header-registrations']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
-	echo "	<div class='actions'>\n";
-	if (!$reload) {
-		echo button::create(['type'=>'button','label'=>$text['button-refresh'],'icon'=>$settings->get('theme', 'button_icon_refresh'),'link'=>$location.(!empty($qs) ? '?'.$qs['show'].$qs['search'].$qs['profile'] : null)]);
-	}
-	if ($registrations) {
-		echo button::create(['type'=>'button','label'=>$text['button-unregister'],'title'=>$text['button-unregister'],'icon'=>'user-slash','style'=>'margin-left: 15px;','onclick'=>"modal_open('modal-unregister','btn_unregister');"]);
-		echo button::create(['type'=>'button','label'=>$text['button-provision'],'title'=>$text['button-provision'],'icon'=>'fax','onclick'=>"modal_open('modal-provision','btn_provision');"]);
-		echo button::create(['type'=>'button','label'=>$text['button-reboot'],'title'=>$text['button-reboot'],'icon'=>'power-off','onclick'=>"modal_open('modal-reboot','btn_reboot');"]);
-	}
-	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if ($has_registration_all) {
-		if (!empty($show) && $show == 'all') {
-			echo 	"<input type='hidden' name='show' value='".escape($show)."'>";
-			echo button::create(['type'=>'button','label'=>$text['button-show_local'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>$location.($qs['search'] || $qs['profile'] ? '?' : null).$qs['search'].$qs['profile']]);
-		}
-		else {
-			echo button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>$location.'?show=all'.(!empty($qs) ? $qs['search'].$qs['profile'] : null)]);
-		}
-		if (!empty($profile)) {
-			echo 	"<input type='hidden' name='profile' value='".escape($profile)."'>";
-			echo button::create(['type'=>'button','label'=>$text['button-all_profiles'],'icon'=>'network-wired','style'=>'margin-left: 15px;','link'=>$location.(!empty($qs) && ($qs['show'] || $qs['search']) ? '?'.$qs['show'].$qs['search'] : null)]);
-		}
-	}
-	if (!$reload) {
-		echo 		"<input type='text' class='txt list-search' name='search' id='search' value=\"".escape($search ?? '')."\" placeholder=\"".$text['label-search']."\" onkeydown=''>";
-		echo button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
-		//echo button::create(['label'=>$text['button-reset'],'icon'=>$settings->get('theme', 'button_icon_reset'),'type'=>'button','id'=>'btn_reset','link'=>$location.($qs['show'] || $qs['profile'] ? '?' : null).$qs['show'].$qs['profile'],'style'=>($search == '' ? 'display: none;' : null)]);
-	}
-	echo "		</form>\n";
-	echo "	</div>\n";
-	echo "	<div style='clear: both;'></div>\n";
-	echo "</div>\n";
+//render the template
+	$html = $template->render('registrations_list.tpl');
+	echo $html;
 
-	if ($registrations) {
-		echo modal::create(['id'=>'modal-unregister','type'=>'general','message'=>$text['confirm-unregister'],'actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_unregister','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('unregister'); list_form_submit('form_list');"])]);
-		echo modal::create(['id'=>'modal-provision','type'=>'general','message'=>$text['confirm-provision'],'actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_provision','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('provision'); list_form_submit('form_list');"])]);
-		echo modal::create(['id'=>'modal-reboot','type'=>'general','message'=>$text['confirm-reboot'],'actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_reboot','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('reboot'); list_form_submit('form_list');"])]);
-	}
-
-	echo $text['description-registrations']."\n";
-	echo "<br /><br />\n";
-
-	echo "<form id='form_list' method='post'>\n";
-	echo "<input type='hidden' id='action' name='action' value=''>\n";
-	echo "<input type='hidden' name='search' value=\"".escape($search ?? '')."\">\n";
-	echo "<input type='hidden' name='profile' value='".escape($profile ?? '')."'>";
-
-	echo "<div class='card'>\n";
-	echo "<table class='list'>\n";
-	echo "<tr class='list-header'>\n";
-	echo "	<th class='checkbox'>\n";
-	echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle();' ".(empty($registrations) ? "style='visibility: hidden;'" : null).">\n";
-	echo "	</th>\n";
-	echo "	<th>".$text['label-user']."</th>\n";
-	echo "	<th class='pct-25'>".$text['label-agent']."</th>\n";
-	echo "	<th class='hide-md-dn'>".$text['label-contact']."</th>\n";
-	echo "	<th class='hide-sm-dn'>".$text['label-lan_ip']."</th>\n";
-	echo "	<th class='hide-sm-dn'>".$text['label-ip']."</th>\n";
-	echo "	<th class='hide-sm-dn'>".$text['label-port']."</th>\n";
-	echo "	<th class='hide-md-dn'>".$text['label-hostname']."</th>\n";
-	echo "	<th class='pct-35' style='width: 35%;'>".$text['label-status']."</th>\n";
-	echo "	<th class='hide-md-dn'>".$text['label-ping']."</th>\n";
-	echo "	<th class='hide-md-dn'>".$text['label-sip_profile_name']."</th>\n";
-	echo "	<td class='action-button'>&nbsp;</td>\n";
-	echo "</tr>\n";
-	if (is_array($registrations) && @sizeof($registrations) != 0) {
-		$x = 0;
-		foreach ($registrations as $row) {
-			$matches = preg_grep('/'.($search ?? '').'/i', $row);
-			if ($matches != false) {
-
-				//prepare the user variable
-				$user = explode('@', $row['user']);
-				if ($user[1] == $_SESSION['domains'][$_SESSION['domain_uuid']]['domain_name']) {
-					$user = "<span class='hide-sm-dn'>".escape($row['user'])."</span><span class='hide-md-up cursor-help' title='".escape($row['user'])."'>".escape($user[0])."</span>";
-				}
-				else {
-					$user = escape($row['user']);
-				}
-
-				//reformat the status
-				$patterns = array();
-				$patterns[] = '/(\d{4})-(\d{2})-(\d{2})/';
-				$patterns[] = '/(\d{2}):(\d{2}):(\d{2})/';
-				$patterns[] = '/unknown/';
-				$patterns[] = '/exp\(/';
-				$patterns[] = '/\(/';
-				$patterns[] = '/\)/';
-				$patterns[] = '/\s+/';
-				$status = preg_replace($patterns, ' ', $row['status']);
-
-				//show the content
-				echo "<tr class='list-row' href='#'>\n";
-				echo "	<td class='checkbox'>\n";
-				echo "		<input type='checkbox' name='registrations[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
-				echo "		<input type='hidden' name='registrations[$x][user]' value='".escape($row['user'])."' />\n";
-				echo "		<input type='hidden' name='registrations[$x][profile]' value='".escape($row['sip_profile_name'])."' />\n";
-				echo "		<input type='hidden' name='registrations[$x][agent]' value='".escape($row['agent'])."' />\n";
-				echo "		<input type='hidden' name='registrations[$x][host]' value='".escape($row['host'])."' />\n";
-				echo "		<input type='hidden' name='registrations[$x][domain]' value='".escape($row['sip-auth-realm'])."' />\n";
-				echo "	</td>\n";
-				echo "	<td class=''>".$user."</td>\n";
-				echo "	<td class='' title=\"".escape($row['agent'])."\"><span class='cursor-help'>".escape($row['agent'])."</span></td>\n";
-				echo "	<td class='hide-md-dn' title='".escape($row['contact'])."'>".escape(explode('"',$row['contact'])[1])."</td>\n";
-				echo "	<td class='hide-sm-dn no-link'><a href='https://".urlencode($row['lan-ip'])."' target='_blank'>".escape($row['lan-ip'])."</a></td>\n";
-				echo "	<td class='hide-sm-dn no-link'><a href='https://".urlencode($row['network-ip'])."' target='_blank'>".escape($row['network-ip'])."</a></td>\n";
-				echo "	<td class='hide-sm-dn'>".escape($row['network-port'])."</td>\n";
-				echo "	<td class='hide-md-dn'>".escape($row['host'])."</td>\n";
-				echo "	<td class='' title=\"".escape($row['status'])."\"><span class='cursor-help'>".escape($status)."</span></td>\n";
-				echo "	<td class='hide-md-dn'>".escape($row['ping-time'])."</td>\n";
-				echo "	<td class='hide-md-dn' nowrap='nowrap'>".escape($row['sip_profile_name'])."</td>\n";
-				echo "	<td class='action-button'>\n";
-				if ($settings->get('registrations', 'list_row_button_unregister', false)) {
-					echo button::create(['type'=>'submit','title'=>$text['button-unregister'],'icon'=>'user-slash fa-fw','style'=>'margin-left: 2px; margin-right: 0;','onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('unregister'); list_form_submit('form_list')"]);
-				}
-				if ($settings->get('registrations', 'list_row_button_provision', false)) {
-					echo button::create(['type'=>'submit','title'=>$text['button-provision'],'icon'=>'fax fa-fw','style'=>'margin-left: 2px; margin-right: 0;','onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('provision'); list_form_submit('form_list')"]);
-				}
-				if ($settings->get('registrations', 'list_row_button_reboot', false)) {
-					echo button::create(['type'=>'submit','title'=>$text['button-reboot'],'icon'=>'power-off fa-fw','style'=>'margin-left: 2px; margin-right: 0;','onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('reboot'); list_form_submit('form_list')"]);
-				}
-				echo 	"</td>\n";
-				echo "</tr>\n";
-				$x++;
-			}
-		}
-	}
-	unset($registrations);
-
-	echo "</table>\n";
-	echo "</div>\n";
-	echo "<br />\n";
-	echo "<div align='center'>".($paging_controls ?? '')."</div>\n";
-
-	echo "<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
-
-	echo "</form>\n";
-
-//get the footer
+//include the footer
 	if (!$reload) {
 		require_once "resources/footer.php";
 	}
-
 

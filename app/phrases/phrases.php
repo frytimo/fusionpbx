@@ -154,151 +154,143 @@
 	$object = new token;
 	$token = $object->create($_SERVER['PHP_SELF']);
 
+//pre-compute permissions
+$has_phrase_add    = permission_exists('phrase_add');
+$has_phrase_all    = permission_exists('phrase_all');
+$has_phrase_delete = permission_exists('phrase_delete');
+$has_phrase_edit   = permission_exists('phrase_edit');
+$has_domain_select = permission_exists('domain_select');
+
+//build the action bar buttons
+$btn_add = '';
+if ($has_phrase_add) {
+$btn_add = button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'phrase_edit.php']);
+}
+$btn_copy = '';
+if ($has_phrase_add && $phrases) {
+$btn_copy = button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
+}
+$btn_toggle = '';
+if ($has_phrase_edit && $phrases) {
+$btn_toggle = button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
+}
+$btn_delete = '';
+if ($has_phrase_delete && $phrases) {
+$btn_delete = button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
+}
+$btn_show_all = '';
+if ($has_phrase_all && $show !== 'all') {
+$btn_show_all = button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>'?type=&show=all'.($search != '' ? "&search=".urlencode($search) : null)]);
+}
+$btn_search = button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
+
+//build the modals
+$modal_copy = '';
+if ($has_phrase_add && $phrases) {
+$modal_copy = modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
+}
+$modal_toggle = '';
+if ($has_phrase_edit && $phrases) {
+$modal_toggle = modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
+}
+$modal_delete = '';
+if ($has_phrase_delete && $phrases) {
+$modal_delete = modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
+}
+
+//build the table header columns
+$th_domain_name      = '';
+if ($show == 'all' && $has_phrase_all) {
+$th_domain_name = th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param, "class='shrink'");
+}
+$th_phrase_name        = th_order_by('phrase_name', $text['label-name'], $order_by, $order);
+$th_phrase_language    = th_order_by('phrase_language', $text['label-language'], $order_by, $order);
+$th_phrase_enabled     = th_order_by('phrase_enabled', $text['label-enabled'], $order_by, $order, null, "class='center'");
+$th_phrase_description = th_order_by('phrase_description', $text['label-description'], $order_by, $order, null, "class='hide-sm-dn' style='min-width: 40%;'");
+
+//build the row data
+if (!empty($phrases)) {
+$x = 0;
+foreach ($phrases as &$row) {
+app::dispatch_list_render_row('phrase_list_page_hook', $url, $row, $x);
+$list_row_url = '';
+if ($has_phrase_edit) {
+$list_row_url = "phrase_edit.php?id=".urlencode($row['phrase_uuid']);
+if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
+$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
+}
+}
+$domain_name = '';
+if ($show == 'all' && $has_phrase_all) {
+$domain_name = !empty($_SESSION['domains'][$row['domain_uuid']]['domain_name'])
+? $_SESSION['domains'][$row['domain_uuid']]['domain_name']
+: $text['label-global'];
+}
+$row['_list_row_url']  = $list_row_url;
+$row['_domain_name']   = $domain_name;
+$row['_enabled_label'] = $text['label-'.$row['phrase_enabled']];
+$row['_toggle_button'] = '';
+if ($has_phrase_edit) {
+$row['_toggle_button'] = button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['phrase_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_{$x}'); list_action_set('toggle'); list_form_submit('form_list')"]);
+}
+$row['_edit_button'] = '';
+if ($has_phrase_edit && $list_row_edit_button) {
+$row['_edit_button'] = button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
+}
+$x++;
+}
+unset($row);
+}
+
+//build the template
+$template = new template();
+$template->engine = 'smarty';
+$template->template_dir = __DIR__.'/resources/views';
+$template->cache_dir = sys_get_temp_dir();
+$template->init();
+
+//assign the template variables
+$template->assign('text',                 $text);
+$template->assign('num_rows',             $num_rows);
+$template->assign('phrases',              $phrases ?? []);
+$template->assign('search',               $search);
+$template->assign('show',                 $show);
+$template->assign('paging_controls',      $paging_controls);
+$template->assign('paging_controls_mini', $paging_controls_mini);
+$template->assign('token',                $token);
+$template->assign('has_phrase_add',       $has_phrase_add);
+$template->assign('has_phrase_all',       $has_phrase_all);
+$template->assign('has_phrase_delete',    $has_phrase_delete);
+$template->assign('has_phrase_edit',      $has_phrase_edit);
+$template->assign('list_row_edit_button', $list_row_edit_button);
+$template->assign('btn_add',              $btn_add);
+$template->assign('btn_copy',             $btn_copy);
+$template->assign('btn_toggle',           $btn_toggle);
+$template->assign('btn_delete',           $btn_delete);
+$template->assign('btn_show_all',         $btn_show_all);
+$template->assign('btn_search',           $btn_search);
+$template->assign('modal_copy',           $modal_copy);
+$template->assign('modal_toggle',         $modal_toggle);
+$template->assign('modal_delete',         $modal_delete);
+$template->assign('th_domain_name',       $th_domain_name);
+$template->assign('th_phrase_name',       $th_phrase_name);
+$template->assign('th_phrase_language',   $th_phrase_language);
+$template->assign('th_phrase_enabled',    $th_phrase_enabled);
+$template->assign('th_phrase_description',$th_phrase_description);
+
+//invoke pre-render hook
+app::dispatch_list_pre_render('phrase_list_page_hook', $url, $template);
+
 //include the header
-	require_once "resources/header.php";
-	$document['title'] = $text['title-phrases'];
+$document['title'] = $text['title-phrases'];
+require_once "resources/header.php";
 
-//begin the content
-	echo "<div class='action_bar' id='action_bar'>\n";
-	echo "	<div class='heading'><b>".$text['header_phrases']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
-	echo "	<div class='actions'>\n";
-	if (permission_exists('phrase_add')) {
-		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'phrase_edit.php']);
-	}
-	if (permission_exists('phrase_add') && $phrases) {
-		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
-	}
-	if (permission_exists('phrase_edit') && $phrases) {
-		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
-	}
-	if (permission_exists('phrase_delete') && $phrases) {
-		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
-	}
-	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if (permission_exists('phrase_all')) {
-		if ($show == 'all') {
-			echo "		<input type='hidden' name='show' value='all'>";
-		}
-		else {
-			echo button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>'?type=&show=all'.($search != '' ? "&search=".urlencode($search) : null)]);
-		}
-	}
-	echo 		"<input type='text' class='txt list-search' name='search' id='search' value=\"".escape($search)."\" placeholder=\"".$text['label-search']."\" onkeydown=''>";
-	echo button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
-	//echo button::create(['label'=>$text['button-reset'],'icon'=>$settings->get('theme', 'button_icon_reset'),'type'=>'button','id'=>'btn_reset','link'=>'phrases.php','style'=>($search == '' ? 'display: none;' : null)]);
-	if ($paging_controls_mini != '') {
-		echo 	"<span style='margin-left: 15px;'>".$paging_controls_mini."</span>";
-	}
-	echo "		</form>\n";
-	echo "	</div>\n";
-	echo "	<div style='clear: both;'></div>\n";
-	echo "</div>\n";
+//render the template
+$html = $template->render('phrases_list.tpl');
 
-	if (permission_exists('phrase_add') && $phrases) {
-		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
-	}
-	if (permission_exists('phrase_edit') && $phrases) {
-		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
-	}
-	if (permission_exists('phrase_delete') && $phrases) {
-		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
-	}
-
-	echo $text['description-phrases']."\n";
-	echo "<br /><br />\n";
-
-	echo "<form id='form_list' method='post'>\n";
-	echo "<input type='hidden' id='action' name='action' value=''>\n";
-	echo "<input type='hidden' name='search' value=\"".escape($search)."\">\n";
-
-	echo "<div class='card'>\n";
-	echo "<table class='list'>\n";
-	echo "<tr class='list-header'>\n";
-	if (permission_exists('phrase_add') || permission_exists('phrase_edit') || permission_exists('phrase_delete')) {
-		echo "	<th class='checkbox'>\n";
-		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(empty($phrases) ? "style='visibility: hidden;'" : null).">\n";
-		echo "	</th>\n";
-	}
-	if ($show == "all" && permission_exists('phrase_all')) {
-		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param, "class='shrink'");
-	}
-	echo th_order_by('phrase_name', $text['label-name'], $order_by, $order);
-	echo th_order_by('phrase_language', $text['label-language'], $order_by, $order);
-	echo th_order_by('phrase_enabled', $text['label-enabled'], $order_by, $order, null, "class='center'");
-	echo th_order_by('phrase_description', $text['label-description'], $order_by, $order, null, "class='hide-sm-dn' style='min-width: 40%;'");
-	if (permission_exists('phrase_edit') && $settings->get('theme', 'list_row_edit_button', false)) {
-		echo "	<td class='action-button'>&nbsp;</td>\n";
-	}
-	echo "</tr>\n";
-
-	if (is_array($phrases) && @sizeof($phrases) != 0) {
-		$x = 0;
-		foreach($phrases as $row) {
-			//dispatch render-row hook
-			app::dispatch_list_render_row(null, $url, $row, $x);
-			$list_row_url = '';
-			if (permission_exists('phrase_edit')) {
-				$list_row_url = "phrase_edit.php?id=".urlencode($row['phrase_uuid']);
-				if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && permission_exists('domain_select')) {
-					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
-				}
-			}
-			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if (permission_exists('phrase_add') || permission_exists('phrase_edit') || permission_exists('phrase_delete')) {
-				echo "	<td class='checkbox'>\n";
-				echo "		<input type='checkbox' name='phrases[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
-				echo "		<input type='hidden' name='phrases[$x][uuid]' value='".escape($row['phrase_uuid'])."' />\n";
-				echo "	</td>\n";
-			}
-			if (!empty($_GET['show']) && $_GET['show'] == "all" && permission_exists('phrase_all')) {
-				if (!empty($_SESSION['domains'][$row['domain_uuid']]['domain_name'])) {
-					$domain = $_SESSION['domains'][$row['domain_uuid']]['domain_name'];
-				}
-				else {
-					$domain = $text['label-global'];
-				}
-				echo "	<td>".escape($domain)."</td>\n";
-			}
-			echo "	<td>";
-			if (permission_exists('phrase_edit')) {
-				echo "<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['phrase_name'])."</a>";
-			}
-			else {
-				echo escape($row['phrase_name']);
-			}
-			echo "	</td>\n";
-			echo "	<td>".escape($row['phrase_language'])."&nbsp;</td>\n";
-			if (permission_exists('phrase_edit')) {
-				echo "	<td class='no-link center'>";
-				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['phrase_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
-			}
-			else {
-				echo "	<td class='center'>";
-				echo $text['label-'.$row['phrase_enabled']];
-			}
-			echo "	</td>\n";
-			echo "	<td class='description overflow hide-sm-dn'>".escape($row['phrase_description'])."&nbsp;</td>\n";
-			if (permission_exists('phrase_edit') && $settings->get('theme', 'list_row_edit_button', false)) {
-				echo "	<td class='action-button'>";
-				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
-				echo "	</td>\n";
-			}
-			echo "</tr>\n";
-			$x++;
-		}
-	}
-	unset($phrases);
-
-	echo "</table>\n";
-	echo "</div>\n";
-	echo "<br />\n";
-	echo "<div align='center'>".$paging_controls."</div>\n";
-
-	echo "<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
-
-	echo "</form>\n";
+//invoke post-render hook
+app::dispatch_list_post_render('phrase_list_page_hook', $url, $html);
+echo $html;
 
 //include the footer
-	require_once "resources/footer.php";
-
-
+require_once "resources/footer.php";

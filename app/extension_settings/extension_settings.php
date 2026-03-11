@@ -177,170 +177,114 @@
 	$object = new token;
 	$token = $object->create($_SERVER['PHP_SELF']);
 
-//additional includes
+//build the action bar buttons
+	$btn_back = button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_add','name'=>'btn_add','style'=>'margin-right: 15px;','link'=>'/app/extensions/extension_edit.php?id='.$extension_uuid]);
+	$btn_add = '';
+	if ($has_extension_setting_add) {
+		$btn_add = button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','name'=>'btn_add','link'=>'extension_setting_edit.php?extension_uuid='.$extension_uuid]);
+	}
+	$btn_copy = '';
+	if ($has_extension_setting_add && $extension_settings) {
+		$btn_copy = button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display:none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
+	}
+	$btn_toggle = '';
+	if ($has_extension_setting_edit && $extension_settings) {
+		$btn_toggle = button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display:none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
+	}
+	$btn_delete = '';
+	if ($has_extension_setting_delete && $extension_settings) {
+		$btn_delete = button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display:none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
+	}
+	$btn_search = button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search','style'=>(!empty($search) ? 'display: none;' : null)]);
+	$btn_reset = button::create(['label'=>$text['button-reset'],'icon'=>$settings->get('theme', 'button_icon_reset'),'type'=>'button','id'=>'btn_reset','link'=>'extension_settings.php?id='.$extension_uuid,'style'=>(empty($search) ? 'display: none;' : null)]);
+
+//build the modals
+	$modal_copy = '';
+	if ($has_extension_setting_add && $extension_settings) {
+		$modal_copy = modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
+	}
+	$modal_toggle = '';
+	if ($has_extension_setting_edit && $extension_settings) {
+		$modal_toggle = modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
+	}
+	$modal_delete = '';
+	if ($has_extension_setting_delete && $extension_settings) {
+		$modal_delete = modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
+	}
+
+//build the row data
+	$previous_extension_setting_type = '';
+	$x = 0;
+	foreach ($extension_settings as &$row) {
+		app::dispatch_list_render_row('extension_setting_list_page_hook', $url, $row, $x);
+		$extension_setting_type_lower = strtolower($row['extension_setting_type']);
+		$label = ucwords(str_replace(['-', '_'], ' ', $row['extension_setting_type']));
+		$row['_show_type_header'] = ($previous_extension_setting_type !== $row['extension_setting_type']);
+		$row['_extension_setting_type_lower'] = $extension_setting_type_lower;
+		$row['_label_extension_setting_type'] = $label;
+		$list_row_url = '';
+		if ($has_extension_setting_edit) {
+			$list_row_url = "extension_setting_edit.php?id=".urlencode($row['extension_setting_uuid'])."&extension_uuid=".urlencode($extension_uuid);
+		}
+		$row['_list_row_url'] = $list_row_url;
+		$row['_toggle_button'] = '';
+		if ($has_extension_setting_edit) {
+			$row['_toggle_button'] = button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['extension_setting_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_{$x}'); list_action_set('toggle'); list_form_submit('form_list')"]);
+		}
+		$row['_enabled_label'] = $text['label-'.$row['extension_setting_enabled']];
+		$row['_edit_button'] = '';
+		if ($has_extension_setting_edit && $list_row_edit_button) {
+			$row['_edit_button'] = button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
+		}
+		$previous_extension_setting_type = $row['extension_setting_type'];
+		$x++;
+	}
+	unset($row);
+
+//build the template
+	$template = new template();
+	$template->engine = 'smarty';
+	$template->template_dir = __DIR__.'/resources/views';
+	$template->cache_dir = sys_get_temp_dir();
+	$template->init();
+
+//assign the template variables
+	$template->assign('text',                         $text);
+	$template->assign('num_rows',                     $num_rows);
+	$template->assign('extension_settings',           $extension_settings ?? []);
+	$template->assign('extension_uuid',               $extension_uuid);
+	$template->assign('search',                       $search);
+	$template->assign('paging_controls',              $paging_controls);
+	$template->assign('paging_controls_mini',         $paging_controls_mini);
+	$template->assign('token',                        $token);
+	$template->assign('has_extension_setting_add',    $has_extension_setting_add);
+	$template->assign('has_extension_setting_delete', $has_extension_setting_delete);
+	$template->assign('has_extension_setting_edit',   $has_extension_setting_edit);
+	$template->assign('list_row_edit_button',         $list_row_edit_button);
+	$template->assign('btn_back',                     $btn_back);
+	$template->assign('btn_add',                      $btn_add);
+	$template->assign('btn_copy',                     $btn_copy);
+	$template->assign('btn_toggle',                   $btn_toggle);
+	$template->assign('btn_delete',                   $btn_delete);
+	$template->assign('btn_search',                   $btn_search);
+	$template->assign('btn_reset',                    $btn_reset);
+	$template->assign('modal_copy',                   $modal_copy);
+	$template->assign('modal_toggle',                 $modal_toggle);
+	$template->assign('modal_delete',                 $modal_delete);
+
+//invoke pre-render hook
+	app::dispatch_list_pre_render('extension_setting_list_page_hook', $url, $template);
+
+//include the header
 	$document['title'] = $text['title-extension_settings'];
 	require_once "resources/header.php";
 
-//show the content
-	echo "<div class='action_bar' id='action_bar'>\n";
-	echo "	<div class='heading'><b>".$text['title-extension_settings']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
-	echo "	<div class='actions'>\n";
+//render the template
+	$html = $template->render('extension_settings_list.tpl');
 
-	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_add','name'=>'btn_add','style'=>'margin-right: 15px;','link'=>'/app/extensions/extension_edit.php?id='.$extension_uuid]);
-
-	if ($has_extension_setting_add) {
-		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','name'=>'btn_add','link'=>'extension_setting_edit.php?extension_uuid='.$extension_uuid]);
-	}
-	if ($has_extension_setting_add && $extension_settings) {
-		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display:none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
-	}
-	if ($has_extension_setting_edit && $extension_settings) {
-		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display:none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
-	}
-	if ($has_extension_setting_delete && $extension_settings) {
-		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display:none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
-	}
-	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	//if ($has_extension_setting_all) {
-	//	if ($_GET['show'] == 'all') {
-	//		echo "		<input type='hidden' name='show' value='all'>\n";
-	//	}
-	//	else {
-	//		echo button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>'?show=all&id='.$extension_uuid]);
-	//	}
-	//}
-	echo 		"<input type='text' class='txt list-search' name='search' id='search' value=\"".escape($search)."\" placeholder=\"".$text['label-search']."\" onkeydown='list_search_reset();'>";
-	echo button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search','style'=>(!empty($search) ? 'display: none;' : null)]);
-	echo button::create(['label'=>$text['button-reset'],'icon'=>$settings->get('theme', 'button_icon_reset'),'type'=>'button','id'=>'btn_reset','link'=>'extension_settings.php?id='.$extension_uuid,'style'=>(empty($search) ? 'display: none;' : null)]);
-	if (!empty($paging_controls_mini)) {
-		echo 	"<span style='margin-left: 15px;'>".$paging_controls_mini."</span>\n";
-	}
-	echo "		<input type='hidden' name='id' value='".$extension_uuid."'>\n";
-	echo "		</form>\n";
-	echo "	</div>\n";
-	echo "	<div style='clear: both;'></div>\n";
-	echo "</div>\n";
-
-	if ($has_extension_setting_add && $extension_settings) {
-		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
-	}
-	if ($has_extension_setting_edit && $extension_settings) {
-		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
-	}
-	if ($has_extension_setting_delete && $extension_settings) {
-		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
-	}
-
-	echo $text['title_description-extension_settings']."\n";
-	echo "<br /><br />\n";
-
-	echo "<form id='form_list' method='post'>\n";
-	echo "<input type='hidden' id='action' name='action' value=''>\n";
-	echo "<input type='hidden' name='search' value=\"".escape($search)."\">\n";
-
-	echo "<div class='card'>\n";
-	echo "<table class='list'>\n";
-	if (!empty($extension_settings)) {
-		//define the variable
-		$previous_extension_setting_type = '';
-
-		//set the initial value
-		$x = 0;
-
-		//show the extension settings
-		foreach ($extension_settings as $row) {
-			//dispatch render-row hook
-			app::dispatch_list_render_row(null, $url, $row, $x);
-			$extension_setting_type = $row['extension_setting_type'];
-			$extension_setting_type = strtolower($extension_setting_type);
-
-			$label_extension_setting_type = $row['extension_setting_type'];
-			$label_extension_setting_type = str_replace("_", " ", $label_extension_setting_type);
-			$label_extension_setting_type = str_replace("-", " ", $label_extension_setting_type);
-			$label_extension_setting_type = ucwords($label_extension_setting_type);
-
-			if ($previous_extension_setting_type !== $row['extension_setting_type']) {
-				echo "		<tr>";
-				echo "			<td align='left' colspan='999'>&nbsp;</td>\n";
-				echo "		</tr>";
-				echo "		<tr>";
-				echo "			<td align='left' colspan='999' nowrap='nowrap'><b>".escape($label_extension_setting_type)."</b></td>\n";
-				echo "		</tr>";
-				echo "<tr class='list-header'>\n";
-				if ($has_extension_setting_add || $has_extension_setting_edit || $has_extension_setting_delete) {
-					echo "	<th class='checkbox'>\n";
-					echo "		<input type='checkbox' id='checkbox_all_".$extension_setting_type."' name='checkbox_all' onclick=\"list_all_toggle('".$extension_setting_type."'); checkbox_on_change(this);\">\n";
-					echo "	</th>\n";
-				}
-				//if ($_GET['show'] == 'all' && $has_extension_setting_all) {
-				//	echo th_order_by('domain_name', $text['label-domain'], $order_by, $order);
-				//}
-
-				//echo th_order_by('extension_setting_type', $text['label-extension_setting_type'], $order_by, $order);
-				//echo th_order_by('extension_setting_name', $text['label-extension_setting_name'], $order_by, $order);
-				//echo th_order_by('extension_setting_value', $text['label-extension_setting_value'], $order_by, $order);
-				//echo th_order_by('extension_setting_enabled', $text['label-extension_setting_enabled'], $order_by, $order, null, "class='center'");
-				echo "	<th>".$text['label-extension_setting_type']."</th>\n";
-				echo "	<th>".$text['label-extension_setting_name']."</th>\n";
-				echo "	<th>".$text['label-extension_setting_value']."</th>\n";
-				echo "	<th class='center'>".$text['label-extension_setting_enabled']."</th>\n";
-
-				echo "	<th class='hide-sm-dn'>".$text['label-extension_setting_description']."</th>\n";
-				if ($has_extension_setting_edit && $list_row_edit_button) {
-					echo "	<td class='action-button'>&nbsp;</td>\n";
-				}
-				echo "</tr>\n";
-
-			}
-			if ($has_extension_setting_edit) {
-				$list_row_url = "extension_setting_edit.php?id=".urlencode($row['extension_setting_uuid'])."&extension_uuid=".urlencode($extension_uuid);
-			}
-			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if ($has_extension_setting_add || $has_extension_setting_edit || $has_extension_setting_delete) {
-				echo "	<td class='checkbox'>\n";
-				echo "		<input type='checkbox' name='extension_settings[$x][checked]' id='checkbox_".$x."' class='checkbox_".$extension_setting_type."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all_".$extension_setting_type."').checked = false; }\">\n";
-				echo "		<input type='hidden' name='extension_settings[$x][uuid]' value='".escape($row['extension_setting_uuid'])."' />\n";
-				echo "	</td>\n";
-			}
-			//if ($_GET['show'] == 'all' && $has_extension_setting_all) {
-			//	echo "	<td>".escape($row['domain_name'])."</td>\n";
-			//}
-			echo "	<td>".escape($row['extension_setting_type'])."</td>\n";
-			echo "	<td>".escape($row['extension_setting_name'])."</td>\n";
-			echo "	<td>".escape($row['extension_setting_value'])."</td>\n";
-			if ($has_extension_setting_edit) {
-				echo "	<td class='no-link center'>\n";
-				echo "		<input type='hidden' name='number_translations[$x][extension_setting_enabled]' value='".escape($row['extension_setting_enabled'])."' />\n";
-				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['extension_setting_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
-			}
-			else {
-				echo "	<td class='center'>\n";
-				echo $text['label-'.$row['extension_setting_enabled']];
-			}
-			echo "	</td>\n";
-			echo "	<td class='description overflow hide-sm-dn'>".escape($row['extension_setting_description'])."</td>\n";
-			if ($has_extension_setting_edit && $list_row_edit_button) {
-				echo "	<td class='action-button'>\n";
-				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
-				echo "	</td>\n";
-			}
-			echo "</tr>\n";
-
-			//set the previous category
-			$previous_extension_setting_type = $row['extension_setting_type'];
-			$x++;
-		}
-		unset($extension_settings);
-	}
-
-	echo "</table>\n";
-	echo "</div>\n";
-	echo "<br />\n";
-
-	echo "<div align='center'>".$paging_controls."</div>\n";
-	echo "<input type='hidden' name='".$id."' value='".$extension_uuid."'>\n";
-	echo "<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
-	echo "</form>\n";
+//invoke post-render hook
+	app::dispatch_list_post_render('extension_setting_list_page_hook', $url, $html);
+	echo $html;
 
 //include the footer
 	require_once "resources/footer.php";

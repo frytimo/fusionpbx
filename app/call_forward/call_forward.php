@@ -60,7 +60,7 @@
 //process the http post data by action
 	if (!empty($action) && count($extensions) > 0) {
 		//dispatch pre-action hook
-		app::dispatch_list_pre_action(null, $url, $action, $extensions);
+		app::dispatch_list_pre_action('call_forward_list_page_hook', $url, $action, $extensions);
 
 		switch ($action) {
 			case 'toggle_call_forward':
@@ -84,7 +84,7 @@
 		}
 
 		//dispatch post-action hook
-		app::dispatch_list_post_action(null, $url, $action, $extensions);
+		app::dispatch_list_post_action('call_forward_list_page_hook', $url, $action, $extensions);
 
 		header('Location: call_forward.php' . ($search != '' ? '?search=' . urlencode($search) : null));
 		exit;
@@ -92,7 +92,7 @@
 
 //dispatch pre-query hook
 	$query_parameters = [];
-	app::dispatch_list_pre_query(null, $url, $query_parameters);
+	app::dispatch_list_pre_query('call_forward_list_page_hook', $url, $query_parameters);
 
 //get order and order by
 	$order_by = $_GET["order_by"] ?? 'extension';
@@ -207,7 +207,7 @@
 	$sql .= limit_offset($rows_per_page, $offset);
 	$extensions = $database->select($sql, $parameters ?? null, 'all');
 	//dispatch post-query hook
-	app::dispatch_list_post_query(null, $url, $extensions);
+	app::dispatch_list_post_query('call_forward_list_page_hook', $url, $extensions);
 	unset($parameters);
 
 	//if there are no extensions then set to empty array
@@ -219,6 +219,130 @@
 	$object = new token;
 	$token = $object->create($_SERVER['PHP_SELF']);
 
+//build the action bar buttons
+	$btn_call_forward = '';
+	if (count($extensions) > 0 && $has_call_forward) {
+		$btn_call_forward = button::create(['type' => 'button', 'label' => $text['label-call_forward'], 'icon' => $settings->get('theme', 'button_icon_toggle'), 'collapse' => false, 'name' => 'btn_toggle_cfwd', 'onclick' => "list_action_set('toggle_call_forward'); modal_open('modal-toggle','btn_toggle');"]);
+	}
+	$btn_follow_me = '';
+	if (count($extensions) > 0 && $has_follow_me) {
+		$btn_follow_me = button::create(['type' => 'button', 'label' => $text['label-follow_me'], 'icon' => $settings->get('theme', 'button_icon_toggle'), 'collapse' => false, 'name' => 'btn_toggle_follow', 'onclick' => "list_action_set('toggle_follow_me'); modal_open('modal-toggle','btn_toggle');"]);
+	}
+	$btn_dnd = '';
+	if (count($extensions) > 0 && $has_do_not_disturb) {
+		$btn_dnd = button::create(['type' => 'button', 'label' => $text['label-dnd'], 'icon' => $settings->get('theme', 'button_icon_toggle'), 'collapse' => false, 'name' => 'btn_toggle_dnd', 'onclick' => "list_action_set('toggle_do_not_disturb'); modal_open('modal-toggle','btn_toggle');"]);
+	}
+	$btn_show_all = '';
+	if ($show !== 'all' && $has_call_forward_all) {
+		$btn_show_all = button::create(['type' => 'button', 'label' => $text['button-show_all'], 'icon' => $settings->get('theme', 'button_icon_all'), 'link' => '?show=all' . (!empty($param) ? '&'.$param : null)]);
+	}
+	$btn_view_all = '';
+	if ($is_included && $num_rows > 10) {
+		$btn_view_all = button::create(['type' => 'button', 'label' => $text['button-view_all'], 'icon' => 'diagram-project', 'collapse' => false, 'link' => PROJECT_PATH . '/app/call_forward/call_forward.php']);
+	}
+	$btn_search = button::create(['label' => $text['button-search'], 'icon' => $settings->get('theme', 'button_icon_search'), 'type' => 'submit', 'id' => 'btn_search']);
+
+//build the modals
+	$modal_toggle = '';
+	if (count($extensions) > 0) {
+		$modal_toggle = modal::create(['id' => 'modal-toggle', 'type' => 'toggle', 'actions' => button::create(['type' => 'button', 'label' => $text['button-continue'], 'icon' => 'check', 'id' => 'btn_toggle', 'style' => 'float: right; margin-left: 15px;', 'collapse' => 'never', 'onclick' => "modal_close(); list_form_submit('form_list');"])]);
+	}
+
+//build the table header columns
+	$th_domain_name = '';
+	if (!$is_included && $show == 'all' && $has_call_forward_all) {
+		$th_domain_name = "<th>".$text['label-domain']."</th>";
+	}
+	$th_extension    = th_order_by('extension', $text['label-extension'], $order_by, $order);
+	$th_call_forward = '';
+	if ($has_call_forward) {
+		$th_call_forward = "<th>".$text['label-call_forward']."</th>";
+	}
+	$th_follow_me = '';
+	if ($has_follow_me) {
+		$th_follow_me = "<th>".$text['label-follow_me']."</th>";
+	}
+	$th_dnd = '';
+	if ($has_do_not_disturb) {
+		$th_dnd = "<th>".$text['label-dnd']."</th>";
+	}
+
+//build the row data
+	$x = 0;
+	if (!empty($extensions)) {
+		foreach ($extensions as &$row) {
+			app::dispatch_list_render_row('call_forward_list_page_hook', $url, $row, $x);
+			$list_row_url = PROJECT_PATH . "/app/call_forward/call_forward_edit.php?id=".$row['extension_uuid'];
+			if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
+				$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
+			}
+			$row['_list_row_url'] = $list_row_url;
+			$row['_forward_all_display'] = $row['forward_all_enabled'] == true ? escape(format_phone($row['forward_all_destination'])) : '';
+			$row['_follow_me_display'] = '';
+			if ($has_follow_me && $row['follow_me_enabled'] == true && is_uuid($row['follow_me_uuid'])) {
+				$sql = "select count(*) from v_follow_me_destinations ";
+				$sql .= "where follow_me_uuid = :follow_me_uuid ";
+				$sql .= "and domain_uuid = :domain_uuid ";
+				$fm_params['follow_me_uuid'] = $row['follow_me_uuid'];
+				$fm_params['domain_uuid'] = $_SESSION['domain_uuid'];
+				$follow_me_destination_count = $database->select($sql, $fm_params, 'column');
+				unset($sql, $fm_params);
+				if ($follow_me_destination_count) {
+					$row['_follow_me_display'] = $text['label-enabled'] . ' (' . $follow_me_destination_count . ')';
+				}
+			}
+			$row['_dnd_display'] = $row['do_not_disturb'] == 'true' ? $text['label-enabled'] : '';
+			$row['_domain_display'] = '';
+			if (!empty($show) && $show == 'all' && $has_call_forward_all) {
+				$row['_domain_display'] = !empty($_SESSION['domains'][$row['domain_uuid']]['domain_name']) ? escape($_SESSION['domains'][$row['domain_uuid']]['domain_name']) : $text['label-global'];
+			}
+			$row['_edit_button'] = '';
+			if ($list_row_edit_button) {
+				$row['_edit_button'] = button::create(['type' => 'button', 'title' => $text['button-edit'], 'icon' => $settings->get('theme', 'button_icon_edit'), 'link' => $list_row_url]);
+			}
+			$x++;
+		}
+		unset($row);
+	}
+
+//build the template
+	$template = new template();
+	$template->engine = 'smarty';
+	$template->template_dir = __DIR__.'/resources/views';
+	$template->cache_dir = sys_get_temp_dir();
+	$template->init();
+
+//assign the template variables
+	$template->assign('text',                 $text);
+	$template->assign('num_rows',             $num_rows);
+	$template->assign('rows',                 $extensions ?? []);
+	$template->assign('search',               $search);
+	$template->assign('show',                 $show);
+	$template->assign('paging_controls',      $paging_controls);
+	$template->assign('paging_controls_mini', $paging_controls_mini);
+	$template->assign('token',                $token);
+	$template->assign('is_included',          $is_included);
+	$template->assign('has_call_forward',     $has_call_forward);
+	$template->assign('has_call_forward_all', $has_call_forward_all);
+	$template->assign('has_do_not_disturb',   $has_do_not_disturb);
+	$template->assign('has_follow_me',        $has_follow_me);
+	$template->assign('list_row_edit_button', $list_row_edit_button);
+	$template->assign('btn_call_forward',     $btn_call_forward);
+	$template->assign('btn_follow_me',        $btn_follow_me);
+	$template->assign('btn_dnd',              $btn_dnd);
+	$template->assign('btn_show_all',         $btn_show_all);
+	$template->assign('btn_view_all',         $btn_view_all);
+	$template->assign('btn_search',           $btn_search);
+	$template->assign('modal_toggle',         $modal_toggle);
+	$template->assign('th_domain_name',       $th_domain_name);
+	$template->assign('th_extension',         $th_extension);
+	$template->assign('th_call_forward',      $th_call_forward);
+	$template->assign('th_follow_me',         $th_follow_me);
+	$template->assign('th_dnd',               $th_dnd);
+
+//invoke pre-render hook
+	app::dispatch_list_pre_render('call_forward_list_page_hook', $url, $template);
+
 //include header
 	if (!$is_included) {
 		$document['title'] = $text['title-call_forward'];
@@ -228,217 +352,13 @@
 //set the back button
 	$_SESSION['call_forward_back'] = $_SERVER['PHP_SELF'];
 
-//show the content
-	if ($is_included) {
-		echo "<div class='action_bar sub'>\n";
-		echo "	<div class='heading'><b>" . $text['header-call_forward'] . "</b></div>\n";
-		echo "	<div class='actions'>\n";
-		if ($num_rows > 10) {
-			echo button::create(['type' => 'button', 'label' => $text['button-view_all'], 'icon' => 'diagram-project', 'collapse' => false, 'link' => PROJECT_PATH . '/app/call_forward/call_forward.php']);
-		}
-		echo "	</div>\n";
-		echo "	<div style='clear: both;'></div>\n";
-		echo "</div>\n";
-	}
-	else {
-		echo "<div class='action_bar' id='action_bar'>\n";
-		echo "	<div class='heading'><b>" . $text['header-call_forward'] . "</b><div class='count'>".number_format($num_rows)."</div></div>\n";
-		echo "	<div class='actions'>\n";
+//render the template
+	$html = $template->render('call_forward_list.tpl');
 
-		if (count($extensions) > 0) {
-			if ($has_call_forward) {
-				echo button::create(['type' => 'button', 'label' => $text['label-call_forward'], 'icon' => $settings->get('theme', 'button_icon_toggle'), 'collapse' => false, 'name' => 'btn_toggle_cfwd', 'onclick' => "list_action_set('toggle_call_forward'); modal_open('modal-toggle','btn_toggle');"]);
-			}
-			if ($has_follow_me) {
-				echo button::create(['type' => 'button', 'label' => $text['label-follow_me'], 'icon' => $settings->get('theme', 'button_icon_toggle'), 'collapse' => false, 'name' => 'btn_toggle_follow', 'onclick' => "list_action_set('toggle_follow_me'); modal_open('modal-toggle','btn_toggle');"]);
-			}
-			if ($has_do_not_disturb) {
-				echo button::create(['type' => 'button', 'label' => $text['label-dnd'], 'icon' => $settings->get('theme', 'button_icon_toggle'), 'collapse' => false, 'name' => 'btn_toggle_dnd', 'onclick' => "list_action_set('toggle_do_not_disturb'); modal_open('modal-toggle','btn_toggle');"]);
-			}
-		}
-		if ($show !== 'all' && $has_call_forward_all) {
-			echo button::create(['type' => 'button', 'label' => $text['button-show_all'], 'icon' => $settings->get('theme', 'button_icon_all'), 'link' => '?show=all' . (!empty($params) ? '&'.implode('&', $params) : null)]);
-		}
-		echo "<form id='form_search' class='inline' method='get'>\n";
-		if ($show == 'all' && $has_call_forward_all) {
-			echo "		<input type='hidden' name='show' value='all'>";
-		}
-		echo "<input type='text' class='txt list-search' name='search' id='search' value=\"" . escape($search) . "\" placeholder=\"" . $text['label-search'] . "\" onkeydown=''>";
-		echo button::create(['label' => $text['button-search'], 'icon' => $settings->get('theme', 'button_icon_search'), 'type' => 'submit', 'id' => 'btn_search']);
-		//echo button::create(['label'=>$text['button-reset'],'icon'=>$settings->get('theme', 'button_icon_reset'),'type'=>'button','id'=>'btn_reset','link'=>'call_forward.php','style'=>($search == '' ? 'display: none;' : null)]);
-		if (!empty($paging_controls_mini)) {
-			echo "<span style='margin-left: 15px;'>" . $paging_controls_mini . "</span>";
-		}
-		echo "		</form>\n";
-		echo "	</div>\n";
-		echo "	<div style='clear: both;'></div>\n";
-		echo "</div>\n";
-
-		if (count($extensions) > 0) {
-			echo modal::create(['id' => 'modal-toggle', 'type' => 'toggle', 'actions' => button::create(['type' => 'button', 'label' => $text['button-continue'], 'icon' => 'check', 'id' => 'btn_toggle', 'style' => 'float: right; margin-left: 15px;', 'collapse' => 'never', 'onclick' => "modal_close(); list_form_submit('form_list');"])]);
-		}
-
-		echo $text['description-call_routing'] . "\n";
-		echo "<br /><br />\n";
-
-		echo "<form id='form_list' method='post'>\n";
-		if ($show == 'all' && $has_call_forward_all) {
-			echo "		<input type='hidden' name='show' value='all'>";
-		}
-		echo "<input type='hidden' id='action' name='action' value=''>\n";
-		echo "<input type='hidden' name='search' value=\"" . escape($search) . "\">\n";
-	}
-
-	echo "<div class='card'>\n";
-	echo "<table class='list'>\n";
-	echo "<tr class='list-header'>\n";
-	if (!$is_included) {
-		echo "	<th class='checkbox'>\n";
-		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle();' " . (empty($extensions) ?: "style='visibility: hidden;'") . ">\n";
-		echo "	</th>\n";
-		if ($show == "all" && $has_call_forward_all) {
-			echo "<th>" . $text['label-domain'] . "</th>\n";
-		}
-	}
-	echo th_order_by('extension', $text['label-extension'], $order_by, $order);
-// 	echo "	<th>" . $text['label-extension'] . "</th>\n";
-	if ($has_call_forward) {
-		echo "	<th>" . $text['label-call_forward'] . "</th>\n";
-	}
-	if ($has_follow_me) {
-		echo "	<th>" . $text['label-follow_me'] . "</th>\n";
-	}
-	if ($has_do_not_disturb) {
-		echo "	<th>" . $text['label-dnd'] . "</th>\n";
-	}
-	echo "	<th class='" . ($is_included ? 'hide-md-dn' : 'hide-sm-dn') . "'>" . $text['label-description'] . "</th>\n";
-	$list_row_edit_button = $settings->get('theme', 'list_row_edit_button', false);
-	if ($list_row_edit_button) {
-		echo "	<td class='action-button'>&nbsp;</td>\n";
-	}
-	echo "</tr>\n";
-
-	if (!empty($extensions)) {
-		$x = 0;
-		foreach ($extensions as $row) {
-			//dispatch render-row hook
-			app::dispatch_list_render_row(null, $url, $row, $x);
-			$list_row_url = PROJECT_PATH . "/app/call_forward/call_forward_edit.php?id=".$row['extension_uuid'];
-			if ($row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
-				$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
-			}
-			echo "<tr class='list-row' href='" . $list_row_url . "'>\n";
-			if (!$is_included && $extensions) {
-				echo "	<td class='checkbox'>\n";
-				echo "		<input type='checkbox' name='extensions[$x][checked]' id='checkbox_" . $x . "' value='true' onclick=\"if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
-				echo "		<input type='hidden' name='extensions[$x][uuid]' value='" . escape($row['extension_uuid']) . "' />\n";
-				echo "	</td>\n";
-
-				if ($show == "all" && $has_call_forward_all) {
-					if (!empty($_SESSION['domains'][$row['domain_uuid']]['domain_name'])) {
-						$domain = $_SESSION['domains'][$row['domain_uuid']]['domain_name'];
-					} else {
-						$domain = $text['label-global'];
-					}
-					echo "	<td>" . escape($domain) . "</td>\n";
-				}
-			}
-			echo "	<td><a href='" . $list_row_url . "' title=\"" . $text['button-edit'] . "\">" . escape($row['extension']) . "</a></td>\n";
-			if ($has_call_forward) {
-				//-- inline toggle -----------------
-				//$button_label = $row['forward_all_enabled'] == 'true' ? ($row['forward_all_destination'] != '' ? escape(format_phone($row['forward_all_destination'])) : '('.$text['label-invalid'].')') : null;
-				//if (!$is_included) {
-				//	echo "	<td class='no-link'>";
-				//	echo button::create(['type'=>'submit','class'=>'link','label'=>($button_label != '' ? $button_label : $text['label-disabled']),'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle_call_forward'); list_form_submit('form_list')"]);
-				//	echo "	</td>\n";
-				//}
-				//else {
-				//	echo "	<td>".$button_label."</td>";
-				//}
-				//unset($button_label);
-				//----------------------------------
-
-				echo "	<td>\n";
-				echo $row['forward_all_enabled'] == true ? escape(format_phone($row['forward_all_destination'])) : '&nbsp;';
-				echo "	</td>\n";
-			}
-			if ($has_follow_me) {
-				//-- inline toggle -----------------
-				//get destination count
-				//if ($row['follow_me_enabled'] == true && is_uuid($row['follow_me_uuid'])) {
-				//	$sql = "select count(*) from v_follow_me_destinations ";
-				//	$sql .= "where follow_me_uuid = :follow_me_uuid ";
-				//	$sql .= "and domain_uuid = :domain_uuid ";
-				//	$parameters['follow_me_uuid'] = $row['follow_me_uuid'];
-				//	$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-				//	$follow_me_destination_count = $database->select($sql, $parameters, 'column');
-				//	$button_label = $follow_me_destination_count ? $text['label-enabled'].' ('.$follow_me_destination_count.')' : $text['label-invalid'];
-				//	unset($sql, $parameters);
-				//}
-				//if (!$is_included) {
-				//	echo "	<td class='no-link'>\n";
-				//	echo button::create(['type'=>'submit','class'=>'link','label'=>($button_label != '' ? $button_label : $text['label-disabled']),'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle_follow_me'); list_form_submit('form_list')"]);
-				//	echo "	</td>\n";
-				//}
-				//else {
-				//	echo "	<td>".$button_label."</td>";
-				//}
-				//unset($button_label);
-				//----------------------------------
-				//get destination count
-				$follow_me_destination_count = 0;
-				if ($row['follow_me_enabled'] == true && is_uuid($row['follow_me_uuid'])) {
-					$sql = "select count(*) from v_follow_me_destinations ";
-					$sql .= "where follow_me_uuid = :follow_me_uuid ";
-					$sql .= "and domain_uuid = :domain_uuid ";
-					$parameters['follow_me_uuid'] = $row['follow_me_uuid'];
-					$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
-					$follow_me_destination_count = $database->select($sql, $parameters ?? null, 'column');
-					unset($sql, $parameters);
-				}
-				echo "	<td>\n";
-				echo $follow_me_destination_count ? $text['label-enabled'] . ' (' . $follow_me_destination_count . ')' : '&nbsp;';
-				echo "	</td>\n";
-			}
-			if ($has_do_not_disturb) {
-				//-- inline toggle -----------------
-				//$button_label = $row['do_not_disturb'] == 'true' ? $text['label-enabled'] : null;
-				//if (!$is_included) {
-				//	echo "	<td class='no-link'>";
-				//	echo button::create(['type'=>'submit','class'=>'link','label'=>($button_label != '' ? $button_label : $text['label-disabled']),'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle_do_not_disturb'); list_form_submit('form_list')"]);
-				//	echo "	</td>\n";
-				//}
-				//else {
-				//	echo "	<td>".$button_label."</td>";
-				//}
-				//----------------------------------
-
-				echo "	<td>\n";
-				echo $row['do_not_disturb'] == 'true' ? $text['label-enabled'] : '&nbsp;';
-				echo "	</td>\n";
-			}
-			echo "	<td class='description overflow " . ($is_included ? 'hide-md-dn' : 'hide-sm-dn') . "'>" . escape($row['description']) . "&nbsp;</td>\n";
-			if ($list_row_edit_button) {
-				echo "	<td class='action-button'>";
-				echo button::create(['type' => 'button', 'title' => $text['button-edit'], 'icon' => $settings->get('theme', 'button_icon_edit'), 'link' => $list_row_url]);
-				echo "	</td>\n";
-			}
-			echo "</tr>\n";
-			$x++;
-		}
-		unset($extensions);
-	}
-
-	echo "</table>\n";
-	echo "</div>\n";
+//invoke post-render hook
+	app::dispatch_list_post_render('call_forward_list_page_hook', $url, $html);
+	echo $html;
 
 	if (!$is_included) {
-		echo "<br />\n";
-		echo "<div align='center'>" . $paging_controls . "</div>\n";
-
-		echo "<input type='hidden' name='" . $token['name'] . "' value='" . $token['hash'] . "'>\n";
-
-		echo "</form>\n";
-
 		require_once "resources/footer.php";
 	}

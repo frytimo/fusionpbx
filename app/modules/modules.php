@@ -137,177 +137,131 @@
 	$object = new token;
 	$token = $object->create($_SERVER['PHP_SELF']);
 
-//get includes and the title
-	$document['title'] = $text['title-modules'];
-	require_once "resources/header.php";
-
-//show the content
-	echo "<div class='action_bar' id='action_bar'>\n";
-	echo "	<div class='heading'><b>".$text['header-modules']."</b><div class='count'>".number_format($module_count)."</div></div>\n";
-	echo "	<div class='actions'>\n";
-	if ($has_module_edit && $modules && $esl->is_connected()) {
-		echo button::create(['type'=>'button','label'=>$text['button-stop'],'icon'=>$settings->get('theme', 'button_icon_stop'),'onclick'=>"modal_open('modal-stop','btn_stop');"]);
-		echo button::create(['type'=>'button','label'=>$text['button-start'],'icon'=>$settings->get('theme', 'button_icon_start'),'onclick'=>"modal_open('modal-start','btn_start');"]);
+//build the action bar buttons
+	$esl_connected = $esl->is_connected();
+	$btn_stop = '';
+	$btn_start = '';
+	if ($has_module_edit && $modules && $esl_connected) {
+		$btn_stop  = button::create(['type'=>'button','label'=>$text['button-stop'],'icon'=>$settings->get('theme', 'button_icon_stop'),'onclick'=>"modal_open('modal-stop','btn_stop');"]);
+		$btn_start = button::create(['type'=>'button','label'=>$text['button-start'],'icon'=>$settings->get('theme', 'button_icon_start'),'onclick'=>"modal_open('modal-start','btn_start');"]);
 	}
-	echo button::create(['type'=>'button','label'=>$text['button-refresh'],'icon'=>$settings->get('theme', 'button_icon_refresh'),'style'=>'margin-right: 15px;','link'=>'modules.php']);
+	$btn_refresh = button::create(['type'=>'button','label'=>$text['button-refresh'],'icon'=>$settings->get('theme', 'button_icon_refresh'),'style'=>'margin-right: 15px;','link'=>'modules.php']);
+	$btn_add = '';
 	if ($has_module_add) {
-		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'module_edit.php']);
+		$btn_add = button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'module_edit.php']);
 	}
+	$btn_toggle = '';
 	if ($has_module_edit && $modules) {
-		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
+		$btn_toggle = button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
+	$btn_delete = '';
 	if ($has_module_delete && $modules) {
-		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
+		$btn_delete = button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
-	echo "	</div>\n";
-	echo "	<div style='clear: both;'></div>\n";
-	echo "</div>\n";
 
-	if ($has_module_edit && !empty($modules) && $esl->is_connected()) {
-		echo modal::create(['id'=>'modal-stop','type'=>'general','message'=>$text['confirm-stop_modules'],'actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_stop','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('stop'); list_form_submit('form_list');"])]);
-		echo modal::create(['id'=>'modal-start','type'=>'general','message'=>$text['confirm-start_modules'],'actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_start','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('start'); list_form_submit('form_list');"])]);
+//build the modals
+	$modal_stop = '';
+	$modal_start = '';
+	if ($has_module_edit && !empty($modules) && $esl_connected) {
+		$modal_stop  = modal::create(['id'=>'modal-stop','type'=>'general','message'=>$text['confirm-stop_modules'],'actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_stop','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('stop'); list_form_submit('form_list');"])]);
+		$modal_start = modal::create(['id'=>'modal-start','type'=>'general','message'=>$text['confirm-start_modules'],'actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_start','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('start'); list_form_submit('form_list');"])]);
 	}
+	$modal_toggle = '';
 	if ($has_module_edit && $modules) {
-		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
+		$modal_toggle = modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
+	$modal_delete = '';
 	if ($has_module_delete && $modules) {
-		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
+		$modal_delete = modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
-	echo $text['description-modules']."\n";
-	echo "<br /><br />\n";
-
-	echo "<form id='form_list' method='post'>\n";
-	echo "<input type='hidden' id='action' name='action' value=''>\n";
-	echo "<input type='hidden' name='search' value=\"".escape($search)."\">\n";
-
-	echo "<div class='card'>\n";
-	echo "<table class='list'>\n";
-	/**
-	 * Writes the header for a list of modules.
-	 *
-	 * @param string $modifier The modifier to use in the checkbox ID and other attributes.
-	 */
-	function write_header($modifier) {
-		global $text, $modules, $list_row_edit_button;
-		$modifier = str_replace('/', '', $modifier);
-		$modifier = str_replace('  ', ' ', $modifier);
-		$modifier = str_replace(' ', '_', $modifier);
-		$modifier = strtolower(trim($modifier));
-		echo "\n";
-		echo "<tr class='list-header'>\n";
-		if ($has_module_edit || $has_module_delete) {
-			echo "	<th class='checkbox'>\n";
-			echo "		<input type='checkbox' id='checkbox_all_".$modifier."' name='checkbox_all' onclick=\"list_all_toggle('".$modifier."'); checkbox_on_change(this);\" ".(!empty($modules) ?: "style='visibility: hidden;'").">\n";
-			echo "	</th>\n";
-		}
-		echo "<th>".$text['label-label']."</th>\n";
-		echo "<th class='hide-xs'>".$text['label-status']."</th>\n";
-		$esl = event_socket::create();
-		if ($esl->is_connected()) {
-			echo "<th class='center'>".$text['label-action']."</th>\n";
-		}
-		echo "<th class='center'>".$text['label-enabled']."</th>\n";
-		echo "<th class='hide-sm-dn' style='min-width: 40%;'>".$text['label-description']."</th>\n";
-		if ($has_module_edit && $list_row_edit_button) {
-			echo "<td class='action-button'>&nbsp;</td>\n";
-		}
-		echo "</tr>\n";
-	}
-	if (is_array($modules) && @sizeof($modules) != 0) {
-		$previous_category = '';
-		foreach ($modules as $x => $row) {
-			//dispatch render-row hook
-			app::dispatch_list_render_row(null, $url, $row, $x);
-			//write category and column headings
-			if ($previous_category != $row["module_category"]) {
-				echo "<tr>\n";
-				echo "<td colspan='7' class='no-link'>\n";
-				echo ($previous_category != '' ? '<br />' : null)."<b>".$row["module_category"]."</b>";
-				echo "</td>\n";
-				echo "</tr>\n";
-				write_header($row["module_category"]);
-			}
-
+//build the row data
+	if (is_array($modules)) {
+		foreach ($modules as $x => &$row) {
+			app::dispatch_list_render_row('module_list_page_hook', $url, $row, $x);
 			$list_row_url = '';
 			if ($has_module_edit) {
 				$list_row_url = "module_edit.php?id=".urlencode($row['module_uuid']);
 			}
-			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if ($has_module_edit || $has_module_delete) {
-				$modifier = strtolower(trim($row["module_category"]));
-				$modifier = str_replace('/', '', $modifier);
-				$modifier = str_replace('  ', ' ', $modifier);
-				$modifier = str_replace(' ', '_', $modifier);
-				echo "	<td class='checkbox'>\n";
-				echo "		<input type='checkbox' name='modules[$x][checked]' id='checkbox_".$x."' class='checkbox_".$modifier."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all_".$modifier."').checked = false; }\">\n";
-				echo "		<input type='hidden' name='modules[$x][uuid]' value='".escape($row['module_uuid'])."' />\n";
-				echo "	</td>\n";
-			}
-			echo "   <td>";
-			if ($has_module_edit) {
-				echo "<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['module_label'])."</a>";
-			}
-			else {
-				echo escape($row['module_label']);
-			}
-			echo "	</td>\n";
-			if ($esl->is_connected()) {
-				if ($module->active($row["module_name"])) {
-					echo "	<td class='hide-xs'>".$text['label-running']."</td>\n";
+			$modifier = strtolower(trim($row['module_category']));
+			$modifier = str_replace('/', '', $modifier);
+			$modifier = str_replace('  ', ' ', $modifier);
+			$modifier = str_replace(' ', '_', $modifier);
+			$row['_list_row_url'] = $list_row_url;
+			$row['_modifier']     = $modifier;
+			if ($esl_connected) {
+				if ($module->active($row['module_name'])) {
+					$row['_status_html']   = $text['label-running'];
+					$row['_action_button'] = '';
 					if ($has_module_edit) {
-						echo "	<td class='no-link center'>";
-						echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-stop'],'title'=>$text['button-stop'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('stop'); list_form_submit('form_list')"]);
-						echo "	</td>\n";
+						$row['_action_button'] = button::create(['type'=>'submit','class'=>'link','label'=>$text['label-stop'],'title'=>$text['button-stop'],'onclick'=>"list_self_check('checkbox_{$x}'); list_action_set('stop'); list_form_submit('form_list')"]);
+					}
+				} else {
+					$row['_status_html']   = $row['module_enabled'] === true ? "<strong style='color: red;'>".$text['label-stopped']."</strong>" : $text['label-stopped'];
+					$row['_action_button'] = '';
+					if ($has_module_edit) {
+						$row['_action_button'] = button::create(['type'=>'submit','class'=>'link','label'=>$text['label-start'],'title'=>$text['button-start'],'onclick'=>"list_self_check('checkbox_{$x}'); list_action_set('start'); list_form_submit('form_list')"]);
 					}
 				}
-				else {
-					echo "	<td class='hide-xs'>\n";
-					echo $row['module_enabled'] === true ? "<strong style='color: red;'>".$text['label-stopped']."</strong>" : $text['label-stopped']." ".escape($notice ?? null);
-					echo "	</td>\n";
-					if ($has_module_edit) {
-						echo "	<td class='no-link center'>";
-						echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-start'],'title'=>$text['button-start'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('start'); list_form_submit('form_list')"]);
-						echo "	</td>\n";
-					}
-				}
+			} else {
+				$row['_status_html']   = $text['label-unknown'];
+				$row['_action_button'] = '';
 			}
-			else{
-				echo "   <td class='hide-xs'>".$text['label-unknown']."</td>\n";
-			}
+			$row['_enabled_label'] = $text['label-'.($row['module_enabled'] ? 'true' : 'false')];
+			$row['_toggle_button'] = '';
 			if ($has_module_edit) {
-				echo "	<td class='no-link center'>";
-				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.($row['module_enabled'] ? 'true' : 'false')],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
+				$row['_toggle_button'] = button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.($row['module_enabled'] ? 'true' : 'false')],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_{$x}'); list_action_set('toggle'); list_form_submit('form_list')"]);
 			}
-			else {
-				echo "	<td class='center'>";
-				echo $text['label-'.($row['module_enabled'] ? 'true' : 'false')];
-			}
-			echo "	</td>\n";
-			echo "	<td class='description overflow hide-sm-dn'>".escape($row["module_description"])."&nbsp;</td>\n";
+			$row['_edit_button'] = '';
 			if ($has_module_edit && $list_row_edit_button) {
-				echo "	<td class='action-button'>";
-				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
-				echo "	</td>\n";
+				$row['_edit_button'] = button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 			}
-			echo "</tr>\n";
-
-			$previous_category = $row["module_category"];
-
-			$x++;
 		}
+		unset($row);
 	}
-	unset($modules);
 
-	echo "</table>\n";
-	echo "</div>\n";
-	echo "<br />\n";
+//build the template
+	$template = new template();
+	$template->engine = 'smarty';
+	$template->template_dir = __DIR__.'/resources/views';
+	$template->cache_dir = sys_get_temp_dir();
+	$template->init();
 
-	echo "<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
+//assign the template variables
+	$template->assign('text',                 $text);
+	$template->assign('module_count',         $module_count);
+	$template->assign('modules',              $modules ?? []);
+	$template->assign('search',               $search);
+	$template->assign('token',                $token);
+	$template->assign('has_module_add',       $has_module_add);
+	$template->assign('has_module_delete',    $has_module_delete);
+	$template->assign('has_module_edit',      $has_module_edit);
+	$template->assign('esl_connected',        $esl_connected);
+	$template->assign('list_row_edit_button', $list_row_edit_button);
+	$template->assign('btn_stop',             $btn_stop);
+	$template->assign('btn_start',            $btn_start);
+	$template->assign('btn_refresh',          $btn_refresh);
+	$template->assign('btn_add',              $btn_add);
+	$template->assign('btn_toggle',           $btn_toggle);
+	$template->assign('btn_delete',           $btn_delete);
+	$template->assign('modal_stop',           $modal_stop);
+	$template->assign('modal_start',          $modal_start);
+	$template->assign('modal_toggle',         $modal_toggle);
+	$template->assign('modal_delete',         $modal_delete);
 
-	echo "</form>\n";
+//invoke pre-render hook
+	app::dispatch_list_pre_render('module_list_page_hook', $url, $template);
+
+//include the header
+	$document['title'] = $text['title-modules'];
+	require_once "resources/header.php";
+
+//render the template
+	$html = $template->render('modules_list.tpl');
+
+//invoke post-render hook
+	app::dispatch_list_post_render('module_list_page_hook', $url, $html);
+	echo $html;
 
 //include the footer
 	require_once "resources/footer.php";
-
-

@@ -196,223 +196,150 @@
 	$object = new token;
 	$token = $object->create($_SERVER['PHP_SELF']);
 
+//build the action bar buttons
+	$btn_download = '';
+	if ($has_call_recording_download && !empty($call_recordings)) {
+		$btn_download = button::create(['type'=>'button','label'=>$text['button-download'],'icon'=>$settings->get('theme', 'button_icon_download'),'id'=>'btn_download','name'=>'btn_download','style'=>'display: none;','collapse'=>'hide-xs','onclick'=>"list_action_set('download'); list_form_submit('form_list');"]);
+	}
+	$btn_transcribe = '';
+	if ($has_call_recording_transcribe && $transcribe_enabled && !empty($transcribe_engine) && !empty($call_recordings)) {
+		$btn_transcribe = button::create(['type'=>'button','label'=>$text['button-transcribe'],'icon'=>$settings->get('theme', 'button_icon_transcribe'),'id'=>'btn_transcribe','name'=>'btn_transcribe','style'=>'display: none;','collapse'=>'hide-xs','onclick'=>"list_action_set('transcribe'); list_form_submit('form_list');"]);
+	}
+	$btn_delete = '';
+	if ($has_call_recording_delete && !empty($call_recordings)) {
+		$btn_delete = button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none; margin-right: 15px;','collapse'=>'hide-xs','onclick'=>"modal_open('modal-delete','btn_delete');"]);
+	}
+	$btn_show_all = '';
+	if ($has_call_recording_all && $show != 'all') {
+		$btn_show_all = button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>$url_paging->build_relative()]);
+	}
+	$btn_search = button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search','style'=>(!empty($search) ? 'display: none;' : null),'collapse'=>'hide-xs']);
+	$btn_reset  = button::create(['label'=>$text['button-reset'],'icon'=>$settings->get('theme', 'button_icon_reset'),'type'=>'button','id'=>'btn_reset','link'=>'call_recordings.php','style'=>(empty($search) ? 'display: none;' : null),'collapse'=>'hide-xs']);
+
+//build the modals
+	$modal_delete = '';
+	if ($has_call_recording_delete && !empty($call_recordings)) {
+		$modal_delete = modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
+	}
+
+//build the table header columns
+	$th_domain_name          = '';
+	if ($show == "all" && $has_call_recording_all) {
+		$th_domain_name = th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param, "class='hide-sm-dn shrink'");
+	}
+	$th_caller_id_name       = th_order_by('caller_id_name', $text['label-caller_id_name'], $order_by, $order, null, "class='hide-sm-dn'");
+	$th_caller_id_number     = th_order_by('caller_id_number', $text['label-caller_id_number'], $order_by, $order, null, "class='pct-15'");
+	$th_caller_destination   = th_order_by('caller_destination', $text['label-caller_destination'], $order_by, $order, null, "class='pct-10 hide-sm-dn'");
+	$th_destination_number   = th_order_by('destination_number', $text['label-destination_number'], $order_by, $order, null, "class='pct-10'");
+	$th_call_recording_name  = th_order_by('call_recording_name', $text['label-call_recording_name'], $order_by, $order, null, "class='pct-20 hide-sm-dn'");
+	$th_call_recording_length = th_order_by('call_recording_length', $text['label-call_recording_length'], $order_by, $order, null, "class='right hide-sm-dn shrink'");
+	$th_call_recording_date  = th_order_by('call_recording_date', $text['label-call_recording_date'], $order_by, $order, null, "class='pct-20 center'");
+	$th_call_direction       = th_order_by('call_direction', $text['label-call_direction'], $order_by, $order, null, "class='hide-sm-dn shrink'");
+
+//compute column count for progress bar colspan
+	$col_count = 8;	// caller_id_name caller_id_number caller_destination destination_number call_recording_name length date direction
+	if ($show == "all" && $has_call_recording_all)                           { $col_count++; }
+	if ($has_call_recording_delete)                                          { $col_count++; }
+	if ($has_call_recording_play || $has_call_recording_download)            { $col_count++; }
+
+//build the row data
+	$x = 0;
+	if (is_array($call_recordings) && @sizeof($call_recordings) != 0) {
+		foreach ($call_recordings as &$row) {
+			$_list_row_url = '';
+			if ($has_call_recording_play) {
+				$_list_row_url = "javascript:recording_play('".escape($row['call_recording_uuid'])."');";
+			}
+			$row['_list_row_url'] = $_list_row_url;
+			$row['_caller_id_number_fmt']  = escape(format_phone(substr($row['caller_id_number'], 0, 20)));
+			$row['_caller_destination_fmt'] = escape(format_phone(substr($row['caller_destination'], 0, 20)));
+			$row['_destination_number_fmt'] = escape(format_phone(substr($row['destination_number'], 0, 20)));
+			$row['_duration']              = escape(gmdate("G:i:s", $row['call_recording_length']));
+			$row['_direction_label']       = ($row['call_direction'] != '' ? escape($text['label-'.$row['call_direction']] ?? $row['call_direction']) : '');
+			$_tools_html = '';
+			if ($has_call_recording_play || $has_call_recording_download) {
+				if (file_exists($row['call_recording_path'].'/'.$row['call_recording_name'])) {
+					if ($has_call_recording_play) {
+						$_rec_ext  = pathinfo($row['call_recording_name'], PATHINFO_EXTENSION);
+						$_rec_type = ($_rec_ext == 'mp3') ? 'audio/mpeg' : (($_rec_ext == 'ogg') ? 'audio/ogg' : 'audio/wav');
+						$_tools_html .= "<audio id='recording_audio_".escape($row['call_recording_uuid'])."' style='display: none;' preload='none' ontimeupdate=\"update_progress('".escape($row['call_recording_uuid'])."')\" onended=\"recording_reset('".escape($row['call_recording_uuid'])."');\" src='download.php?id=".urlencode($row['call_recording_uuid'])."' type='".$_rec_type."'></audio>";
+						$_tools_html .= button::create(['type'=>'button','title'=>$text['label-play'].' / '.$text['label-pause'],'icon'=>$settings->get('theme', 'button_icon_play'),'id'=>'recording_button_'.escape($row['call_recording_uuid']),'onclick'=>"recording_play('".escape($row['call_recording_uuid'])."')"]);
+					}
+					if ($has_call_recording_download) {
+						$_tools_html .= button::create(['type'=>'button','title'=>$text['label-download'],'icon'=>$settings->get('theme', 'button_icon_download'),'link'=>'download.php?id='.urlencode($row['call_recording_uuid']).'&binary']);
+					}
+					if ($has_call_recording_transcribe && $transcribe_enabled && !empty($transcribe_engine) && !empty($row['call_recording_transcription'])) {
+						$_tools_html .= button::create(['type'=>'button','title'=>$text['label-transcription'],'icon'=>$settings->get('theme', 'button_icon_transcribe'),'style'=>'','link'=>PROJECT_PATH.'/app/xml_cdr/xml_cdr_details.php?id='.urlencode($row['call_recording_uuid'])]);
+					}
+				}
+			}
+			$row['_tools_html'] = $_tools_html;
+			$_progress_html = '';
+			if ($has_call_recording_play) {
+				$_progress_html .= "<tr class='list-row' id='recording_progress_bar_".escape($row['call_recording_uuid'])."' style='display: none;' onclick=\"recording_seek(event,'".escape($row['call_recording_uuid'])."')\"><td id='playback_progress_bar_background_".escape($row['call_recording_uuid'])."' class='playback_progress_bar_background' colspan='".$col_count."'><span class='playback_progress_bar' id='recording_progress_".escape($row['call_recording_uuid'])."'></span></td>".($has_xml_cdr_details ? "<td class='action-button' style='border-bottom: none !important;'></td>" : null)."</tr>\n";
+				$_progress_html .= "<tr class='list-row' style='display: none;'><td></td></tr>\n";
+			}
+			$row['_progress_bar_html'] = $_progress_html;
+			$row['_cdr_button'] = '';
+			if ($has_xml_cdr_details) {
+				$row['_cdr_button'] = button::create(['type'=>'button','title'=>$text['button-view'],'icon'=>$settings->get('theme', 'button_icon_view'),'link'=>PROJECT_PATH.'/app/xml_cdr/xml_cdr_details.php?id='.urlencode($row['call_recording_uuid'])]);
+			}
+			$x++;
+		}
+		unset($row);
+	}
+
+//build the template
+	$template = new template();
+	$template->engine       = 'smarty';
+	$template->template_dir = __DIR__.'/resources/views';
+	$template->cache_dir    = sys_get_temp_dir();
+	$template->init();
+
+//assign the template variables
+	$template->assign('text',                       $text);
+	$template->assign('num_rows',                   $num_rows);
+	$template->assign('call_recordings',            $call_recordings ?? []);
+	$template->assign('search',                     $search);
+	$template->assign('show',                       $show);
+	$template->assign('paging_controls',            $paging_controls);
+	$template->assign('paging_controls_mini',       $paging_controls_mini);
+	$template->assign('token',                      $token);
+	$template->assign('has_call_recording_all',     $has_call_recording_all);
+	$template->assign('has_call_recording_delete',  $has_call_recording_delete);
+	$template->assign('has_call_recording_download',$has_call_recording_download);
+	$template->assign('has_call_recording_play',    $has_call_recording_play);
+	$template->assign('has_xml_cdr_details',        $has_xml_cdr_details);
+	$template->assign('btn_download',               $btn_download);
+	$template->assign('btn_transcribe',             $btn_transcribe);
+	$template->assign('btn_delete',                 $btn_delete);
+	$template->assign('btn_show_all',               $btn_show_all);
+	$template->assign('btn_search',                 $btn_search);
+	$template->assign('btn_reset',                  $btn_reset);
+	$template->assign('modal_delete',               $modal_delete);
+	$template->assign('th_domain_name',             $th_domain_name);
+	$template->assign('th_caller_id_name',          $th_caller_id_name);
+	$template->assign('th_caller_id_number',        $th_caller_id_number);
+	$template->assign('th_caller_destination',      $th_caller_destination);
+	$template->assign('th_destination_number',      $th_destination_number);
+	$template->assign('th_call_recording_name',     $th_call_recording_name);
+	$template->assign('th_call_recording_length',   $th_call_recording_length);
+	$template->assign('th_call_recording_date',     $th_call_recording_date);
+	$template->assign('th_call_direction',          $th_call_direction);
+
+//invoke pre-render hook
+	app::dispatch_list_pre_render('call_recording_list_page_hook', $url_paging, $template);
+
 //include the header
 	$document['title'] = $text['title-call_recordings'];
 	require_once "resources/header.php";
 
-//show the content
-	echo "<div class='action_bar' id='action_bar'>\n";
-	echo "	<div class='heading'><b>".$text['title-call_recordings']." </b></div>\n";
-	echo "	<div class='actions'>\n";
-	if ($has_call_recording_download && !empty($call_recordings)) {
-		echo button::create([
-			'type'=>'button'
-			,'label'=>$text['button-download']
-			,'icon'=>$settings->get('theme', 'button_icon_download')
-			,'id'=>'btn_download'
-			,'name'=>'btn_download'
-			,'style'=>'display: none;'
-			,'collapse'=>'hide-xs'
-			,'onclick'=>"list_action_set('download'); list_form_submit('form_list');"
-		]);
-	}
-	if ($has_call_recording_transcribe && $transcribe_enabled && !empty($transcribe_engine) && !empty($call_recordings)) {
-		echo button::create([
-			'type'=>'button'
-			,'label'=>$text['button-transcribe']
-			,'icon'=>$settings->get('theme', 'button_icon_transcribe')
-			,'id'=>'btn_transcribe'
-			,'name'=>'btn_transcribe'
-			,'style'=>'display: none;'
-			,'collapse'=>'hide-xs'
-			,'onclick'=>"list_action_set('transcribe'); list_form_submit('form_list');"
-		]);
-	}
-	if ($has_call_recording_delete && !empty($call_recordings)) {
-		echo button::create([
-			'type'=>'button'
-			,'label'=>$text['button-delete']
-			,'icon'=>$settings->get('theme', 'button_icon_delete')
-			,'id'=>'btn_delete'
-			,'name'=>'btn_delete'
-			,'style'=>'display: none; margin-right: 15px;'
-			,'collapse'=>'hide-xs'
-			,'onclick'=>"modal_open('modal-delete','btn_delete');"
-		]);
-	}
-	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if ($has_call_recording_all) {
-		if ($show == 'all') {
-			echo "		<input type='hidden' name='show' value='all'>";
-		}
-		else {
-			echo button::create([
-				'type'=>'button'
-				,'label'=>$text['button-show_all']
-				,'icon'=>$settings->get('theme', 'button_icon_all')
-				,'link'=>$url_paging->build_relative()
-			]);
-		}
-	}
-	echo 		"<input type='text' class='txt list-search' name='search' id='search' value=\"".escape($search)."\" placeholder=\"".$text['label-search']."\" onkeydown=\"$('#btn_reset').hide(); $('#btn_search').show();\">";
-	echo button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search','style'=>(!empty($search) ? 'display: none;' : null),'collapse'=>'hide-xs']);
-	echo button::create(['label'=>$text['button-reset'],'icon'=>$settings->get('theme', 'button_icon_reset'),'type'=>'button','id'=>'btn_reset','link'=>'call_recordings.php','style'=>(empty($search) ? 'display: none;' : null),'collapse'=>'hide-xs']);
-	if (!empty($paging_controls_mini)) {
-		echo 	"<span style='margin-left: 15px;'>".$paging_controls_mini."</span>\n";
-	}
-	echo "		</form>\n";
-	echo "	</div>\n";
-	echo "	<div style='clear: both;'></div>\n";
-	echo "</div>\n";
+//render the template
+	$html = $template->render('call_recordings_list.tpl');
 
-	if ($has_call_recording_delete && !empty($call_recordings)) {
-		echo modal::create([
-			'id'=>'modal-delete'
-			,'type'=>'delete'
-			,'actions'=>button::create([
-				'type'=>'button'
-				,'label'=>$text['button-continue']
-				,'icon'=>'check'
-				,'id'=>'btn_delete'
-				,'style'=>'float: right; margin-left: 15px;'
-				,'collapse'=>'never'
-				,'onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])
-			]);
-	}
-
-	echo $text['title_description-call_recordings']."\n";
-	echo "<br /><br />\n";
-
-	echo "<form id='form_list' method='post'>\n";
-	echo "<input type='hidden' id='action' name='action' value=''>\n";
-	echo "<input type='hidden' name='search' value=\"".escape($search)."\">\n";
-
-	echo "<div class='card'>\n";
-	echo "<table class='list'>\n";
-	echo "<tr class='list-header'>\n";
-	$col_count = 8;
-	if ($show == "all" && $has_call_recording_all) {
-		$col_count++;
-	}
-	if ($has_call_recording_delete) {
-		echo "	<th class='checkbox'>\n";
-		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(empty($call_recordings) ? "style='visibility: hidden;'" : null).">\n";
-		echo "	</th>\n";
-		$col_count++;
-	}
-	if ($show == "all" && $has_call_recording_all) {
-		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param, "class='hide-sm-dn shrink'");
-	}
-	echo th_order_by('caller_id_name', $text['label-caller_id_name'], $order_by, $order, null, "class='hide-sm-dn'");
-	echo th_order_by('caller_id_number', $text['label-caller_id_number'], $order_by, $order, null, "class='pct-15'");
-	echo th_order_by('caller_destination', $text['label-caller_destination'], $order_by, $order, null, "class='pct-10 hide-sm-dn'");
-	echo th_order_by('destination_number', $text['label-destination_number'], $order_by, $order, null, "class='pct-10'");
-	echo th_order_by('call_recording_name', $text['label-call_recording_name'], $order_by, $order, null, "class='pct-20 hide-sm-dn'");
-	if ($has_call_recording_play || $has_call_recording_download) {
-		echo "<th class='shrink center'>".$text['label-recording']."</th>\n";
-		$col_count++;
-	}
-	echo th_order_by('call_recording_length', $text['label-call_recording_length'], $order_by, $order, null, "class='right hide-sm-dn shrink'");
-	echo th_order_by('call_recording_date', $text['label-call_recording_date'], $order_by, $order, null, "class='pct-20 center'");
-	echo th_order_by('call_direction', $text['label-call_direction'], $order_by, $order, null, "class='hide-sm-dn shrink'");
-	if ($has_xml_cdr_details) {
-		echo "	<td class='action-button'>&nbsp;</td>\n";
-	}
-	echo "</tr>\n";
-
-	if (is_array($call_recordings) && @sizeof($call_recordings) != 0) {
-		$x = 0;
-		foreach ($call_recordings as $row) {
-			//playback progress bar
-			if ($has_call_recording_play) {
-				echo "<tr class='list-row' id='recording_progress_bar_".escape($row['call_recording_uuid'])."' style='display: none;' onclick=\"recording_seek(event,'".escape($row['call_recording_uuid'])."')\"><td id='playback_progress_bar_background_".escape($row['call_recording_uuid'])."' class='playback_progress_bar_background' colspan='".$col_count."'><span class='playback_progress_bar' id='recording_progress_".escape($row['call_recording_uuid'])."'></span></td>".($has_xml_cdr_details ? "<td class='action-button' style='border-bottom: none !important;'></td>" : null)."</tr>\n";
-				echo "<tr class='list-row' style='display: none;'><td></td></tr>\n"; // dummy row to maintain alternating background color
-			}
-			if ($has_call_recording_play) {
-				$list_row_url = "javascript:recording_play('".escape($row['call_recording_uuid'])."');";
-			}
-			echo "<tr class='list-row' href=\"".$list_row_url."\">\n";
-			if ($has_call_recording_delete) {
-				echo "	<td class='checkbox'>\n";
-				echo "		<input type='checkbox' name='call_recordings[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
-				echo "		<input type='hidden' name='call_recordings[$x][uuid]' value='".escape($row['call_recording_uuid'])."' />\n";
-				echo "	</td>\n";
-			}
-			if ($show == "all" && $has_call_recording_all) {
-				echo "	<td class='overflow hide-sm-dn shrink'>".escape($row['domain_name'])."</td>\n";
-			}
-			echo "	<td class='hide-sm-dn shrink'>".escape($row['caller_id_name'])."</td>\n";
-			echo "	<td class='shrink'>".escape(format_phone(substr($row['caller_id_number'], 0, 20)))."</td>\n";
-			echo "	<td class='hide-sm-dn shrink'>".escape(format_phone(substr($row['caller_destination'], 0, 20)))."</td>\n";
-			echo "	<td class='shrink'>".escape(format_phone(substr($row['destination_number'], 0, 20)))."</td>\n";
-			echo "	<td class='overflow hide-sm-dn nowrap'>".escape($row['call_recording_name'])."</td>\n";
-			if ($has_call_recording_play || $has_call_recording_download) {
-				echo "	<td class='middle button center no-link no-wrap'>";
-				if (file_exists($row['call_recording_path'].'/'.$row['call_recording_name'])) {
-					if ($has_call_recording_play) {
-						$recording_file_ext = pathinfo($row['call_recording_name'], PATHINFO_EXTENSION);
-						switch ($recording_file_ext) {
-							case "wav" : $recording_type = "audio/wav"; break;
-							case "mp3" : $recording_type = "audio/mpeg"; break;
-							case "ogg" : $recording_type = "audio/ogg"; break;
-						}
-						echo "<audio id='recording_audio_".escape($row['call_recording_uuid'])."' style='display: none;' preload='none' ontimeupdate=\"update_progress('".escape($row['call_recording_uuid'])."')\" onended=\"recording_reset('".escape($row['call_recording_uuid'])."');\" src='download.php?id=".urlencode($row['call_recording_uuid'])."' type='".$recording_type."'></audio>";
-						echo button::create([
-							'type'=>'button'
-							,'title'=>$text['label-play'].' / '.$text['label-pause']
-							,'icon'=>$settings->get('theme', 'button_icon_play')
-							,'id'=>'recording_button_'.escape($row['call_recording_uuid'])
-							,'onclick'=>"recording_play('".escape($row['call_recording_uuid'])."')"]);
-					}
-					if ($has_call_recording_download) {
-						echo button::create([
-							'type'=>'button'
-							,'title'=>$text['label-download']
-							,'icon'=>$settings->get('theme', 'button_icon_download')
-							,'link'=>'download.php?id='.urlencode($row['call_recording_uuid']).'&binary'
-						]);
-					}
-					if ($has_call_recording_transcribe && $transcribe_enabled && !empty($transcribe_engine) && !empty($row['call_recording_transcription'])) {
-						echo button::create([
-							'type'=>'button'
-							,'title'=>$text['label-transcription']
-							,'icon'=>$settings->get('theme', 'button_icon_transcribe')
-							,'style'=>''
-							,'link'=>PROJECT_PATH.'/app/xml_cdr/xml_cdr_details.php?id='.urlencode($row['call_recording_uuid'])
-						]);
-					}
-				}
-				echo "	</td>\n";
-			}
-			echo "	<td class='right hide-sm-dn shrink'>".escape(gmdate("G:i:s", $row['call_recording_length']))."</td>\n";
-			echo "	<td class='overflow center no-wrap'>".escape($row['call_recording_date_formatted'])." <span class='hide-sm-dn'>".escape($row['call_recording_time_formatted'])."</span></td>\n";
-			echo "	<td class='left hide-sm-dn shrink'>".($row['call_direction'] != '' ? escape($text['label-'.$row['call_direction']]) : null)."</td>\n";
-			if ($has_xml_cdr_details) {
-				echo "	<td class='action-button'>\n";
-				echo button::create(['type'=>'button','title'=>$text['button-view'],'icon'=>$settings->get('theme', 'button_icon_view'),'link'=>PROJECT_PATH.'/app/xml_cdr/xml_cdr_details.php?id='.urlencode($row['call_recording_uuid'])]);
-				echo "	</td>\n";
-			}
-			echo "</tr>\n";
-			// if (permission_exists('call_recording_transcribe') && $transcribe_enabled && !empty($transcribe_engine) && !empty($row['call_recording_transcription'])) {
-			// 	echo "<tr style='display: none;'><td></td></tr>\n"; // dummy row to maintain same background color for transcription row
-			// 	echo "<tr id='transcription_".$row['call_recording_uuid']."' class='list-row' style='display: none;'>\n";
-			// 	echo "	<td style='padding: 10px 20px 15px 20px;' colspan='".$col_count."'>\n";
-			// 	echo "		<strong style='display: inline-block; font-size: 90%; margin-bottom: 10px;'>".$text['label-transcription']."...</strong><br />\n";
-			// 	echo 		escape($row['call_recording_transcription'])."\n";
-			// 	echo "	</td>\n";
-			// 	echo "</tr>\n";
-			// }
-			$x++;
-		}
-		unset($call_recordings);
-	}
-
-	echo "</table>\n";
-	echo "</div>\n";
-	echo "<br />\n";
-	echo "<div align='center'>".$paging_controls."</div>\n";
-	echo "<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
-	echo "</form>\n";
+//invoke post-render hook
+	app::dispatch_list_post_render('call_recording_list_page_hook', $url_paging, $html);
+	echo $html;
 
 //include the footer
 	require_once "resources/footer.php";

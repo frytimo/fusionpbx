@@ -57,7 +57,7 @@
 //process the http post data by action
 	if (!empty($action)) {
 		//dispatch pre-action hook
-		app::dispatch_list_pre_action(null, $url, $action, $vars);
+		app::dispatch_list_pre_action('var_list_page_hook', $url, $action, $vars);
 
 		switch ($action) {
 			case 'copy':
@@ -81,7 +81,7 @@
 		}
 
 		//dispatch post-action hook
-		app::dispatch_list_post_action(null, $url, $action, $vars);
+		app::dispatch_list_post_action('var_list_page_hook', $url, $action, $vars);
 
 		header('Location: vars.php'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
@@ -89,7 +89,7 @@
 
 //dispatch pre-query hook
 	$query_parameters = [];
-	app::dispatch_list_pre_query(null, $url, $query_parameters);
+	app::dispatch_list_pre_query('var_list_page_hook', $url, $query_parameters);
 
 //get order and order by
 	$order_by = $_GET["order_by"] ?? '';
@@ -149,165 +149,118 @@
 	$sql .= limit_offset($rows_per_page, $offset);
 	$vars = $database->select($sql, $parameters ?? null, 'all');
 	//dispatch post-query hook
-	app::dispatch_list_post_query(null, $url, $vars);
+	app::dispatch_list_post_query('var_list_page_hook', $url, $vars);
 	unset($sql);
 
 //create token
 	$object = new token;
 	$token = $object->create($_SERVER['PHP_SELF']);
 
-//include the header
-	$document['title'] = $text['title-variables'];
-	require_once "resources/header.php";
-
-//show the content
-	echo "<div class='action_bar' id='action_bar'>\n";
-	echo "	<div class='heading'><b>".$text['header-variables']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
-	echo "	<div class='actions'>\n";
+//build action bar buttons
 	if ($has_var_add) {
-		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'var_edit.php']);
+		$btn_add = button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'var_edit.php']);
 	}
 	if ($has_var_add && $vars) {
-		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
+		$btn_copy = button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
 	}
 	if ($has_var_edit && $vars) {
-		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
+		$btn_toggle = button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
 	}
 	if ($has_var_delete && $vars) {
-		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
+		$btn_delete = button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
-	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	echo 		"<input type='text' class='txt list-search' name='search' id='search' value=\"".escape($search)."\" placeholder=\"".$text['label-search']."\" onkeydown=''>";
-	echo button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
-	//echo button::create(['label'=>$text['button-reset'],'icon'=>$settings->get('theme', 'button_icon_reset'),'type'=>'button','id'=>'btn_reset','link'=>'vars.php','style'=>($search == '' ? 'display: none;' : null)]);
-	if ($paging_controls_mini != '') {
-		echo 	"<span style='margin-left: 15px;'>".$paging_controls_mini."</span>\n";
-	}
-	echo "		</form>\n";
-	echo "	</div>\n";
-	echo "	<div style='clear: both;'></div>\n";
-	echo "</div>\n";
 
+//build modals
 	if ($has_var_add && $vars) {
-		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
+		$modal_copy = modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
 	}
 	if ($has_var_edit && $vars) {
-		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
+		$modal_toggle = modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
 	}
 	if ($has_var_delete && $vars) {
-		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
+		$modal_delete = modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
-	echo $text['description-variables']."\n";
-	echo "<br /><br />\n";
+//build column headings
+	$th_var_name = th_order_by('var_name', $text['label-name'], $order_by, $order, null, "class='pct-30'");
+	$th_var_value = th_order_by('var_value', $text['label-value'], $order_by, $order, null, "class='pct-40'");
+	$th_var_hostname = th_order_by('var_hostname', $text['label-hostname'], $order_by, $order, null, "class='hide-sm-dn'");
+	$th_var_enabled = th_order_by('var_enabled', $text['label-enabled'], $order_by, $order, null, "class='center'");
 
-	echo "<form id='form_list' method='post'>\n";
-	echo "<input type='hidden' id='action' name='action' value=''>\n";
-	echo "<input type='hidden' name='search' value=\"".escape($search)."\">\n";
-
-	echo "<div class='card'>\n";
-	echo "<table class='list'>\n";
-	/**
-	 * Writes the header for a list of variables.
-	 *
-	 * @param string $modifier The modifier to be used in the header, with slashes and extra spaces removed.
-	 *
-	 * @return void
-	 */
-	function write_header($modifier) {
-		global $text, $order_by, $order, $vars, $list_row_edit_button;
+//pre-render rows
+	$previous_category = '';
+	foreach ($vars as $x => &$row) {
+		//dispatch render-row hook
+		app::dispatch_list_render_row('var_list_page_hook', $url, $row, $x);
+		//compute category modifier
+		$modifier = strtolower(trim($row['var_category']));
 		$modifier = str_replace('/', '', $modifier);
 		$modifier = str_replace('  ', ' ', $modifier);
 		$modifier = str_replace(' ', '_', $modifier);
 		$modifier = str_replace(':', '', $modifier);
-		$modifier = strtolower(trim($modifier));
-		echo "\n";
-		echo "<tr class='list-header'>\n";
-		if ($has_var_edit || $has_var_delete) {
-			echo "	<th class='checkbox'>\n";
-			echo "		<input type='checkbox' id='checkbox_all_".$modifier."' name='checkbox_all' onclick=\"list_all_toggle('".$modifier."'); checkbox_on_change(this);\" ".(!empty($vars) ?: "style='visibility: hidden;'").">\n";
-			echo "	</th>\n";
+		$row['_show_category_header'] = ($previous_category != $row['var_category']);
+		$row['_category_needs_br'] = ($previous_category != '');
+		$row['_category_modifier'] = $modifier;
+		//build row url
+		$list_row_url = '';
+		if ($has_var_edit) {
+			$list_row_url = 'var_edit.php?id='.urlencode($row['var_uuid']);
 		}
-		echo th_order_by('var_name', $text['label-name'], $order_by, $order, null, "class='pct-30'");
-		echo th_order_by('var_value', $text['label-value'], $order_by, $order, null, "class='pct-40'");
-		echo th_order_by('var_hostname', $text['label-hostname'], $order_by, $order, null, "class='hide-sm-dn'");
-		echo th_order_by('var_enabled', $text['label-enabled'], $order_by, $order, null, "class='center'");
-		echo "<th class='hide-sm-dn'>".$text['label-description']."</th>\n";
+		$row['_list_row_url'] = $list_row_url;
+		//build enabled label
+		$row['_enabled_label'] = $text['label-'.($row['var_enabled'] ?? 'false')];
+		//build toggle button
+		if ($has_var_edit) {
+			$row['_toggle_button'] = button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.($row['var_enabled'] ?? 'false')],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
+		}
+		//build edit button
 		if ($has_var_edit && $list_row_edit_button) {
-			echo "<td class='action-button'>&nbsp;</td>\n";
+			$row['_edit_button'] = button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 		}
-		echo "</tr>\n";
+		$previous_category = $row['var_category'];
 	}
-	if (!empty($vars)) {
-		$previous_category = '';
-		foreach ($vars as $x => $row) {
-			//dispatch render-row hook
-			app::dispatch_list_render_row(null, $url, $row, $x);
-			//write category and column headings
-			if ($previous_category != $row["var_category"]) {
-				echo "<tr>\n";
-				echo "<td colspan='7' class='no-link'>\n";
-				echo ($previous_category != '' ? '<br />' : null)."<b>".$row["var_category"]."</b>";
-				echo "</td>\n";
-				echo "</tr>\n";
-				write_header($row["var_category"]);
-			}
+	unset($row);
 
-			$list_row_url = '';
-			if ($has_var_edit) {
-				$list_row_url = "var_edit.php?id=".urlencode($row['var_uuid']);
-			}
-			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if ($has_var_add || $has_var_edit || $has_var_delete) {
-				$modifier = strtolower(trim($row["var_category"]));
-				$modifier = str_replace('/', '', $modifier);
-				$modifier = str_replace('  ', ' ', $modifier);
-				$modifier = str_replace(' ', '_', $modifier);
-				$modifier = str_replace(':', '', $modifier);
-				echo "	<td class='checkbox'>\n";
-				echo "		<input type='checkbox' name='vars[$x][checked]' id='checkbox_".$x."' class='checkbox_".$modifier."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all_".$modifier."').checked = false; }\">\n";
-				echo "		<input type='hidden' name='vars[$x][uuid]' value='".escape($row['var_uuid'])."' />\n";
-				echo "	</td>\n";
-			}
-			echo "   <td class='overflow'>";
-			if ($has_var_edit) {
-				echo "<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['var_name'])."</a>";
-			}
-			else {
-				echo escape($row['var_name']);
-			}
-			echo "	</td>\n";
-			echo "	<td class='overflow'>".$row['var_value']."</td>\n";
-			echo "	<td class='hide-sm-dn'>".$row['var_hostname']."&nbsp;</td>\n";
-			if ($has_var_edit) {
-				echo "	<td class='no-link center'>\n";
-				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['var_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
-			}
-			else {
-				echo "	<td class='center'>\n";
-				echo $text['label-'.$row['var_enabled']];
-			}
-			echo "	</td>\n";
-			echo "	<td class='description overflow hide-sm-dn'>".escape($row['var_description'] ?? '')."</td>\n";
-			if ($has_var_edit && $list_row_edit_button) {
-				echo "	<td class='action-button'>\n";
-				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
-				echo "	</td>\n";
-			}
-			echo "</tr>\n";
+//set up template
+	$template = new template;
+	$template->template_dir = __DIR__.'/resources/views';
+	$template->cache_dir = sys_get_temp_dir();
+	$template->assign('text', $text);
+	$template->assign('vars', $vars);
+	$template->assign('search', $search);
+	$template->assign('token', $token);
+	$template->assign('paging_controls', $paging_controls);
+	$template->assign('paging_controls_mini', $paging_controls_mini);
+	$template->assign('num_rows', $num_rows);
+	$template->assign('btn_add', $btn_add ?? '');
+	$template->assign('btn_copy', $btn_copy ?? '');
+	$template->assign('btn_toggle', $btn_toggle ?? '');
+	$template->assign('btn_delete', $btn_delete ?? '');
+	$template->assign('btn_search', button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']));
+	$template->assign('modal_copy', $modal_copy ?? '');
+	$template->assign('modal_toggle', $modal_toggle ?? '');
+	$template->assign('modal_delete', $modal_delete ?? '');
+	$template->assign('th_var_name', $th_var_name);
+	$template->assign('th_var_value', $th_var_value);
+	$template->assign('th_var_hostname', $th_var_hostname);
+	$template->assign('th_var_enabled', $th_var_enabled);
+	$template->assign('has_var_add', $has_var_add);
+	$template->assign('has_var_edit', $has_var_edit);
+	$template->assign('has_var_delete', $has_var_delete);
+	$template->assign('list_row_edit_button', $list_row_edit_button);
 
-			$previous_category = $row["var_category"];
+//dispatch pre-render hook
+	app::dispatch_list_pre_render('var_list_page_hook', $url, $template);
 
-			$x++;
-		}
-	}
+//include the header
+	$document['title'] = $text['title-variables'];
+	require_once "resources/header.php";
 
-	echo "</table>\n";
-	echo "</div>\n";
-	echo "<br />\n";
-	echo "<div align='center'>".$paging_controls."</div>\n";
-	echo "<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
-	echo "</form>\n";
+//render the template
+	$template->render('vars_list.tpl');
+
+//dispatch post-render hook
+	app::dispatch_list_post_render('var_list_page_hook', $url, $template);
 
 //include the footer
 	require_once "resources/footer.php";

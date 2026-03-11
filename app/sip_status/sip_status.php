@@ -137,131 +137,121 @@
 	$registration = new registrations;
 	$registration->show = 'all';
 
-//include the header
-	$document['title'] = $text['title-sip_status'];
-	require_once "resources/header.php";
 
-//show the content
-	echo "<div class='action_bar' id='action_bar'>\n";
-	echo "	<div class='heading'><b>".$text['title-sip_status']."</b></div>\n";
-	echo "	<div class='actions'>\n";
+//build the action bar buttons
+	$btn_flush_cache = '';
 	if ($has_sip_status_flush_cache) {
-		echo button::create(['type'=>'button','label'=>$text['button-flush_cache'],'icon'=>'eraser','collapse'=>'hide-xs','link'=>'cmd.php?action=cache-flush']);
+		$btn_flush_cache = button::create(['type'=>'button','label'=>$text['button-flush_cache'],'icon'=>'eraser','collapse'=>'hide-xs','link'=>'cmd.php?action=cache-flush']);
 	}
+	$btn_reload_acl = '';
+	$btn_reload_xml = '';
 	if ($has_sip_status_command) {
-		echo button::create(['type'=>'button','label'=>$text['button-reload_acl'],'icon'=>'shield-alt','collapse'=>'hide-xs','link'=>'cmd.php?action=reloadacl']);
-		echo button::create(['type'=>'button','label'=>$text['button-reload_xml'],'icon'=>'code','collapse'=>'hide-xs','link'=>'cmd.php?action=reloadxml']);
+		$btn_reload_acl = button::create(['type'=>'button','label'=>$text['button-reload_acl'],'icon'=>'shield-alt','collapse'=>'hide-xs','link'=>'cmd.php?action=reloadacl']);
+		$btn_reload_xml = button::create(['type'=>'button','label'=>$text['button-reload_xml'],'icon'=>'code','collapse'=>'hide-xs','link'=>'cmd.php?action=reloadxml']);
 	}
-	echo button::create(['type'=>'button','label'=>$text['button-refresh'],'icon'=>$settings->get('theme', 'button_icon_refresh'),'collapse'=>'hide-xs','style'=>'margin-left: 15px;','link'=>'sip_status.php']);
-	echo "	</div>\n";
-	echo "	<div style='clear: both;'></div>\n";
-	echo "</div>\n";
+	$btn_refresh = button::create(['type'=>'button','label'=>$text['button-refresh'],'icon'=>$settings->get('theme', 'button_icon_refresh'),'collapse'=>'hide-xs','style'=>'margin-left: 15px;','link'=>'sip_status.php']);
 
-	echo $text['description-sip_status']."\n";
-	echo "<br /><br />\n";
-
+//build the sofia status html
+	$sofia_status_html = '';
 	if ($has_system_status_sofia_status) {
-		echo "<b><a href='javascript:void(0);' onclick=\"$('#sofia_status').slideToggle();\">".$text['title-sofia-status']."</a></b>\n";
-		echo "<br />\n";
+		$sofia_status_html .= "<b><a href='javascript:void(0);' onclick=\"$('#sofia_status').slideToggle();\">".$text['title-sofia-status']."</a></b>\n";
+		$sofia_status_html .= "<br />\n";
+		$sofia_status_html .= "<div id='sofia_status' style='margin-top: 20px; margin-bottom: 40px;'>";
+		$sofia_status_html .= "<div class='card'>\n";
+		$sofia_status_html .= "<table class='list'>\n";
+		$sofia_status_html .= "<tr class='list-header'>\n";
+		$sofia_status_html .= "	<th>".$text['label-name']."</th>\n";
+		$sofia_status_html .= "	<th>".$text['label-type']."</th>\n";
+		$sofia_status_html .= "	<th class='hide-sm-dn'>".$text['label-data']."</th>\n";
+		$sofia_status_html .= "	<th>".$text['label-state']."</th>\n";
+		$sofia_status_html .= "	<th class='center'>".$text['label-action']."</th>\n";
+		$sofia_status_html .= "</tr>\n";
 
-		echo "<div id='sofia_status' style='margin-top: 20px; margin-bottom: 40px;'>";
-
-		echo "<div class='card'>\n";
-		echo "<table class='list'>\n";
-		echo "<tr class='list-header'>\n";
-		echo "	<th>".$text['label-name']."</th>\n";
-		echo "	<th>".$text['label-type']."</th>\n";
-		echo "	<th class='hide-sm-dn'>".$text['label-data']."</th>\n";
-		echo "	<th>".$text['label-state']."</th>\n";
-		echo "	<th class='center'>".$text['label-action']."</th>\n";
-		echo "</tr>\n";
-
-		//profiles
-			if (!empty($xml) && $xml->profile) {
-				foreach ($xml->profile as $row) {
-					unset($list_row_url);
-					$profile_name = (string) $row->name;
-					$list_row_url = is_uuid($sip_profiles[$profile_name] ?? '') && $has_sip_profile_edit ? PROJECT_PATH."/app/sip_profiles/sip_profile_edit.php?id=".$sip_profiles[$profile_name] : null;
-					echo "<tr class='list-row' href='".$list_row_url."'>\n";
-					echo "	<td>";
-					if ($list_row_url) {
-						echo "<a href='".$list_row_url."'>".escape($profile_name)."</a>";
-					}
-					else {
-						echo escape($profile_name);
-					}
-					echo "	</td>\n";
-					echo "	<td>".($row->type == 'profile' ? $text['label-profile'] : escape($row->type))."</td>\n";
-					echo "	<td class='hide-sm-dn'>".escape($row->data)."</td>\n";
-					echo "	<td class='no-wrap'>".escape($row->state)."</td>\n";
-					echo "	<td>&nbsp;</td>\n";
-					echo "</tr>\n";
+	//profiles
+		if (!empty($xml) && $xml->profile) {
+			foreach ($xml->profile as $row) {
+				unset($list_row_url);
+				$profile_name = (string) $row->name;
+				$list_row_url = is_uuid($sip_profiles[$profile_name] ?? '') && $has_sip_profile_edit ? PROJECT_PATH."/app/sip_profiles/sip_profile_edit.php?id=".$sip_profiles[$profile_name] : null;
+				$sofia_status_html .= "<tr class='list-row' href='".$list_row_url."'>\n";
+				$sofia_status_html .= "	<td>";
+				if ($list_row_url) {
+					$sofia_status_html .= "<a href='".$list_row_url."'>".escape($profile_name)."</a>";
 				}
+				else {
+					$sofia_status_html .= escape($profile_name);
+				}
+				$sofia_status_html .= "	</td>\n";
+				$sofia_status_html .= "	<td>".($row->type == 'profile' ? $text['label-profile'] : escape($row->type))."</td>\n";
+				$sofia_status_html .= "	<td class='hide-sm-dn'>".escape($row->data)."</td>\n";
+				$sofia_status_html .= "	<td class='no-wrap'>".escape($row->state)."</td>\n";
+				$sofia_status_html .= "	<td>&nbsp;</td>\n";
+				$sofia_status_html .= "</tr>\n";
 			}
+		}
 
-		//gateways
-			if (!empty($xml_gateways) && $xml_gateways->gateway) {
-				foreach ($xml_gateways->gateway as $row) {
-					unset($gateway_name, $gateway_domain_name, $list_row_url);
-
-					if (is_array($gateways) && @sizeof($gateways) != 0) {
-						foreach($gateways as $field) {
-							if ($field["gateway_uuid"] == strtolower($row->name)) {
-								$gateway_uuid = $field["gateway_uuid"];
-								$gateway_name = $field["gateway"];
-								$gateway_domain_name = $field["domain_name"];
-								break;
-							}
+	//gateways
+		if (!empty($xml_gateways) && $xml_gateways->gateway) {
+			foreach ($xml_gateways->gateway as $row) {
+				unset($gateway_name, $gateway_domain_name, $list_row_url);
+				if (is_array($gateways) && @sizeof($gateways) != 0) {
+					foreach($gateways as $field) {
+						if ($field["gateway_uuid"] == strtolower($row->name)) {
+							$gateway_uuid = $field["gateway_uuid"];
+							$gateway_name = $field["gateway"];
+							$gateway_domain_name = $field["domain_name"];
+							break;
 						}
 					}
-					$list_row_url = !empty($gateway_domain_name) && $_SESSION["domain_name"] == $gateway_domain_name ? PROJECT_PATH."/app/gateways/gateway_edit.php?id=".strtolower(escape($row->name)) : null;
-					echo "<tr class='list-row' href='".$list_row_url."'>\n";
-					echo "	<td>";
-					if (!empty($gateway_domain_name) && $_SESSION["domain_name"] == $gateway_domain_name) {
-						echo "<a class='hide-sm-dn' href='".$list_row_url."'>".escape($gateway_name)."@".escape($gateway_domain_name)."</a>";
-						echo "<a class='hide-md-up' href='".$list_row_url."'>".escape($gateway_name)."@...</a>";
-					}
-					else if (empty($gateway_domain_name)) {
-						echo !empty($gateway_name) ? escape($gateway_name) : $row->name;
-					}
-					else {
-						echo escape($gateway_name."@".$gateway_domain_name);
-					}
-					echo "	</td>\n";
-					echo "	<td>".$text['label-gateway']."</td>\n";
-					echo "	<td class='hide-sm-dn'>".escape($row->to)."</td>\n";
-					echo "	<td class='no-wrap'>".escape($row->state)."</td>\n";
-					echo "	<td class='center no-link'>";
-					echo button::create(['type'=>'button','class'=>'link','label'=>$text['button-stop'],'link'=>"cmd.php?profile=".urlencode($row->profile)."&gateway=".urlencode((!empty($gateway_uuid) ? $gateway_uuid : $row->name))."&action=killgw"]);
-					echo "	</td>\n";
-					echo "</tr>\n";
 				}
-			}
-
-		//aliases
-			if (!empty($xml) && $xml->alias) {
-				foreach ($xml->alias as $row) {
-					echo "<tr class='list-row'>\n";
-					echo "	<td>".escape($row->name)."</td>\n";
-					echo "	<td>".escape($row->type)."</td>\n";
-					echo "	<td class='hide-sm-dn'>".escape($row->data)."</td>\n";
-					echo "	<td class='no-wrap'>".escape($row->state)."</td>\n";
-					echo "	<td>&nbsp;</td>\n";
-					echo "</tr>\n";
+				$list_row_url = !empty($gateway_domain_name) && $_SESSION["domain_name"] == $gateway_domain_name ? PROJECT_PATH."/app/gateways/gateway_edit.php?id=".strtolower(escape($row->name)) : null;
+				$sofia_status_html .= "<tr class='list-row' href='".$list_row_url."'>\n";
+				$sofia_status_html .= "	<td>";
+				if (!empty($gateway_domain_name) && $_SESSION["domain_name"] == $gateway_domain_name) {
+					$sofia_status_html .= "<a class='hide-sm-dn' href='".$list_row_url."'>".escape($gateway_name)."@".escape($gateway_domain_name)."</a>";
+					$sofia_status_html .= "<a class='hide-md-up' href='".$list_row_url."'>".escape($gateway_name)."@...</a>";
 				}
+				else if (empty($gateway_domain_name)) {
+					$sofia_status_html .= !empty($gateway_name) ? escape($gateway_name) : escape($row->name);
+				}
+				else {
+					$sofia_status_html .= escape($gateway_name."@".$gateway_domain_name);
+				}
+				$sofia_status_html .= "	</td>\n";
+				$sofia_status_html .= "	<td>".$text['label-gateway']."</td>\n";
+				$sofia_status_html .= "	<td class='hide-sm-dn'>".escape($row->to)."</td>\n";
+				$sofia_status_html .= "	<td class='no-wrap'>".escape($row->state)."</td>\n";
+				$sofia_status_html .= "	<td class='center no-link'>";
+				$sofia_status_html .= button::create(['type'=>'button','class'=>'link','label'=>$text['button-stop'],'link'=>"cmd.php?profile=".urlencode($row->profile)."&gateway=".urlencode((!empty($gateway_uuid) ? $gateway_uuid : $row->name))."&action=killgw"]);
+				$sofia_status_html .= "	</td>\n";
+				$sofia_status_html .= "</tr>\n";
 			}
+		}
 
-		echo "</table>\n";
-		echo "</div>\n";
-		echo "</div>\n";
+	//aliases
+		if (!empty($xml) && $xml->alias) {
+			foreach ($xml->alias as $row) {
+				$sofia_status_html .= "<tr class='list-row'>\n";
+				$sofia_status_html .= "	<td>".escape($row->name)."</td>\n";
+				$sofia_status_html .= "	<td>".escape($row->type)."</td>\n";
+				$sofia_status_html .= "	<td class='hide-sm-dn'>".escape($row->data)."</td>\n";
+				$sofia_status_html .= "	<td class='no-wrap'>".escape($row->state)."</td>\n";
+				$sofia_status_html .= "	<td>&nbsp;</td>\n";
+				$sofia_status_html .= "</tr>\n";
+			}
+		}
+
+		$sofia_status_html .= "</table>\n";
+		$sofia_status_html .= "</div>\n";
+		$sofia_status_html .= "</div>\n";
 		unset($gateways, $xml, $xml_gateways);
 	}
 
-//sofia status profile
+//build the profile sections html
+	$profile_sections_html = '';
 	if ($event_socket && $has_system_status_sofia_status_profile) {
 		foreach ($sip_profiles as $sip_profile_name => $sip_profile_uuid) {
 			$xml_response = trim($event_socket->request("api sofia xmlstatus profile ".$sip_profile_name));
-
 			if ($xml_response == "Invalid Profile!") {
 				$xml_response = "<error_msg>Invalid Profile!</error_msg>";
 				$profile_state = 'stopped';
@@ -275,90 +265,118 @@
 				$xml = new SimpleXMLElement($xml_response);
 			}
 			catch(Exception $e) {
-				echo $e->getMessage();
+				$profile_sections_html .= escape($e->getMessage());
 			}
-
-			echo "<div class='action_bar sub'>\n";
-			echo "	<div class='heading'><b><a href='javascript:void(0);' onclick=\"$('#".escape($sip_profile_name)."').slideToggle();\">".$text['title-sofia-status-profile']." ".urlencode($sip_profile_name)."</a></b></div>\n";
-			echo "	<div class='actions'>\n";
-			echo button::create(['type'=>'button','label'=>$text['button-flush_registrations'],'icon'=>'eraser','collapse'=>'hide-xs','link'=>'cmd.php?profile='.urlencode($sip_profile_name).'&action=flush_inbound_reg']);
-			echo button::create(['type'=>'button','label'=>$text['button-registrations'].' ('.$registration->count($sip_profile_name).')','icon'=>'phone-alt','collapse'=>'hide-xs','link'=>PROJECT_PATH.'/app/registrations/registrations.php?profile='.urlencode($sip_profile_name)]);
+			$profile_sections_html .= "<div class='action_bar sub'>\n";
+			$profile_sections_html .= "	<div class='heading'><b><a href='javascript:void(0);' onclick=\"$('#".escape($sip_profile_name)."').slideToggle();\">".$text['title-sofia-status-profile']." ".urlencode($sip_profile_name)."</a></b></div>\n";
+			$profile_sections_html .= "	<div class='actions'>\n";
+			$profile_sections_html .= button::create(['type'=>'button','label'=>$text['button-flush_registrations'],'icon'=>'eraser','collapse'=>'hide-xs','link'=>'cmd.php?profile='.urlencode($sip_profile_name).'&action=flush_inbound_reg']);
+			$profile_sections_html .= button::create(['type'=>'button','label'=>$text['button-registrations'].' ('.$registration->count($sip_profile_name).')','icon'=>'phone-alt','collapse'=>'hide-xs','link'=>PROJECT_PATH.'/app/registrations/registrations.php?profile='.urlencode($sip_profile_name)]);
 			if ($profile_state == 'stopped') {
-				echo button::create(['type'=>'button','label'=>$text['button-start'],'icon'=>$settings->get('theme', 'button_icon_start'),'collapse'=>'hide-xs','link'=>'cmd.php?profile='.urlencode($sip_profile_name).'&action=start']);
+				$profile_sections_html .= button::create(['type'=>'button','label'=>$text['button-start'],'icon'=>$settings->get('theme', 'button_icon_start'),'collapse'=>'hide-xs','link'=>'cmd.php?profile='.urlencode($sip_profile_name).'&action=start']);
 			}
 			if ($profile_state == 'running') {
-				echo button::create(['type'=>'button','label'=>$text['button-stop'],'icon'=>$settings->get('theme', 'button_icon_stop'),'collapse'=>'hide-xs','link'=>'cmd.php?profile='.urlencode($sip_profile_name).'&action=stop']);
+				$profile_sections_html .= button::create(['type'=>'button','label'=>$text['button-stop'],'icon'=>$settings->get('theme', 'button_icon_stop'),'collapse'=>'hide-xs','link'=>'cmd.php?profile='.urlencode($sip_profile_name).'&action=stop']);
 			}
-			echo button::create(['type'=>'button','label'=>$text['button-restart'],'icon'=>$settings->get('theme', 'button_icon_reload'),'collapse'=>'hide-xs','link'=>'cmd.php?profile='.urlencode($sip_profile_name).'&action=restart']);
-			echo button::create(['type'=>'button','label'=>$text['button-rescan'],'icon'=>$settings->get('theme', 'button_icon_search'),'collapse'=>'hide-xs','link'=>'cmd.php?profile='.urlencode($sip_profile_name).'&action=rescan']);
-			echo "	</div>\n";
-			echo "	<div style='clear: both;'></div>\n";
-			echo "</div>\n";
-
-			echo "<div id='".escape($sip_profile_name)."' style='display: none; margin-bottom: 30px;'>";
-
-			echo "<div class='card'>\n";
-			echo "<table width='100%' cellspacing='0' cellpadding='5'>\n";
-			echo "<tr><th colspan='2' style='font-size: 1px; padding: 0;'>&nbsp;</th></tr>\n";
-
+			$profile_sections_html .= button::create(['type'=>'button','label'=>$text['button-restart'],'icon'=>$settings->get('theme', 'button_icon_reload'),'collapse'=>'hide-xs','link'=>'cmd.php?profile='.urlencode($sip_profile_name).'&action=restart']);
+			$profile_sections_html .= button::create(['type'=>'button','label'=>$text['button-rescan'],'icon'=>$settings->get('theme', 'button_icon_search'),'collapse'=>'hide-xs','link'=>'cmd.php?profile='.urlencode($sip_profile_name).'&action=rescan']);
+			$profile_sections_html .= "	</div>\n";
+			$profile_sections_html .= "	<div style='clear: both;'></div>\n";
+			$profile_sections_html .= "</div>\n";
+			$profile_sections_html .= "<div id='".escape($sip_profile_name)."' style='display: none; margin-bottom: 30px;'>";
+			$profile_sections_html .= "<div class='card'>\n";
+			$profile_sections_html .= "<table width='100%' cellspacing='0' cellpadding='5'>\n";
+			$profile_sections_html .= "<tr><th colspan='2' style='font-size: 1px; padding: 0;'>&nbsp;</th></tr>\n";
 			foreach ($xml->profile_info as $row) {
-				echo "	<tr><td class='vncell'>name</td><td class='vtable'>&nbsp; &nbsp;".escape($row->name)."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>domain-name</td><td class='vtable'>&nbsp; &nbsp;".escape($row->{'domain-name'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>auto-nat</td><td class='vtable'>&nbsp;".escape($row->{'auto-nat'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>db-name</td><td class='vtable'>&nbsp;".escape($row->{'db-name'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>pres-hosts</td><td class='vtable'>&nbsp;".escape($row->{'pres-hosts'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>dialplan</td><td class='vtable'>&nbsp;".escape($row->dialplan)."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>context</td><td class='vtable'>&nbsp;".escape($row->context)."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>challenge-realm</td><td class='vtable'>&nbsp;".escape($row->{'challenge-realm'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>rtp-ip</td><td class='vtable'>&nbsp;".escape($row->{'rtp-ip'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>ext-rtp-ip</td><td class='vtable'>&nbsp;".escape($row->{'ext-rtp-ip'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>sip-ip</td><td class='vtable'>&nbsp;".escape($row->{'sip-ip'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>ext-sip-ip</td><td class='vtable'>&nbsp;".escape($row->{'ext-sip-ip'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>url</td><td class='vtable'>&nbsp;".escape($row->url)."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>bind-url</td><td class='vtable'>&nbsp;".escape($row->{'bind-url'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>tls-url</td><td class='vtable'>&nbsp;".escape($row->{'tls-url'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>tls-bind-url</td><td class='vtable'>&nbsp;".escape($row->{'tls-bind-url'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>hold-music</td><td class='vtable'>&nbsp;".escape($row->{'hold-music'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>outbound-proxy</td><td class='vtable'>&nbsp;".escape($row->{'outbound-proxy'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>inbound-codecs</td><td class='vtable'>&nbsp;".escape($row->{'inbound-codecs'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>outbound-codecs</td><td class='vtable'>&nbsp;".$row->{'outbound-codecs'}."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>tel-event</td><td class='vtable'>&nbsp;".escape($row->{'tel-event'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>dtmf-mode</td><td class='vtable'>&nbsp;".escape($row->{'dtmf-mode'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>cng</td><td class='vtable'>&nbsp;".escape($row->cng)."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>session-to</td><td class='vtable'>&nbsp;".escape($row->{'session-to'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>max-dialog</td><td class='vtable'>&nbsp;".escape($row->{'max-dialog'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>nomedia</td><td class='vtable'>&nbsp;".escape($row->{'nomedia'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>late-neg</td><td class='vtable'>&nbsp;".escape($row->{'late-neg'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>proxy-media</td><td class='vtable'>&nbsp;".escape($row->{'proxy-media'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>aggressive-nat</td><td class='vtable'>&nbsp;".escape($row->{'aggressive-nat'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>stun-enabled</td><td class='vtable'>&nbsp;".escape($row->{'stun-enabled'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>stun-auto-disable</td><td class='vtable'>&nbsp;".escape($row->{'stun-auto-disable'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>user-agent-filter</td><td class='vtable'>&nbsp;".escape($row->{'user-agent-filter'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>max-registrations-per-extension</td><td class='vtable'>&nbsp;".escape($row->{'max-registrations-per-extension'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>calls-in</td><td class='vtable'>&nbsp;".escape($row->{'calls-in'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>calls-out</td><td class='vtable'>&nbsp;".escape($row->{'calls-out'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>failed-calls-in</td><td class='vtable'>&nbsp;".escape($row->{'failed-calls-in'})."&nbsp;</td></tr>\n";
-				echo "	<tr><td class='vncell'>failed-calls-out</td><td class='vtable'>&nbsp;".escape($row->{'failed-calls-out'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>name</td><td class='vtable'>&nbsp; &nbsp;".escape($row->name)."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>domain-name</td><td class='vtable'>&nbsp; &nbsp;".escape($row->{'domain-name'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>auto-nat</td><td class='vtable'>&nbsp;".escape($row->{'auto-nat'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>db-name</td><td class='vtable'>&nbsp;".escape($row->{'db-name'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>pres-hosts</td><td class='vtable'>&nbsp;".escape($row->{'pres-hosts'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>dialplan</td><td class='vtable'>&nbsp;".escape($row->dialplan)."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>context</td><td class='vtable'>&nbsp;".escape($row->context)."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>challenge-realm</td><td class='vtable'>&nbsp;".escape($row->{'challenge-realm'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>rtp-ip</td><td class='vtable'>&nbsp;".escape($row->{'rtp-ip'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>ext-rtp-ip</td><td class='vtable'>&nbsp;".escape($row->{'ext-rtp-ip'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>sip-ip</td><td class='vtable'>&nbsp;".escape($row->{'sip-ip'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>ext-sip-ip</td><td class='vtable'>&nbsp;".escape($row->{'ext-sip-ip'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>url</td><td class='vtable'>&nbsp;".escape($row->url)."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>bind-url</td><td class='vtable'>&nbsp;".escape($row->{'bind-url'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>tls-url</td><td class='vtable'>&nbsp;".escape($row->{'tls-url'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>tls-bind-url</td><td class='vtable'>&nbsp;".escape($row->{'tls-bind-url'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>hold-music</td><td class='vtable'>&nbsp;".escape($row->{'hold-music'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>outbound-proxy</td><td class='vtable'>&nbsp;".escape($row->{'outbound-proxy'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>inbound-codecs</td><td class='vtable'>&nbsp;".escape($row->{'inbound-codecs'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>outbound-codecs</td><td class='vtable'>&nbsp;".escape($row->{'outbound-codecs'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>tel-event</td><td class='vtable'>&nbsp;".escape($row->{'tel-event'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>dtmf-mode</td><td class='vtable'>&nbsp;".escape($row->{'dtmf-mode'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>cng</td><td class='vtable'>&nbsp;".escape($row->cng)."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>session-to</td><td class='vtable'>&nbsp;".escape($row->{'session-to'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>max-dialog</td><td class='vtable'>&nbsp;".escape($row->{'max-dialog'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>nomedia</td><td class='vtable'>&nbsp;".escape($row->{'nomedia'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>late-neg</td><td class='vtable'>&nbsp;".escape($row->{'late-neg'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>proxy-media</td><td class='vtable'>&nbsp;".escape($row->{'proxy-media'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>aggressive-nat</td><td class='vtable'>&nbsp;".escape($row->{'aggressive-nat'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>stun-enabled</td><td class='vtable'>&nbsp;".escape($row->{'stun-enabled'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>stun-auto-disable</td><td class='vtable'>&nbsp;".escape($row->{'stun-auto-disable'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>user-agent-filter</td><td class='vtable'>&nbsp;".escape($row->{'user-agent-filter'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>max-registrations-per-extension</td><td class='vtable'>&nbsp;".escape($row->{'max-registrations-per-extension'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>calls-in</td><td class='vtable'>&nbsp;".escape($row->{'calls-in'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>calls-out</td><td class='vtable'>&nbsp;".escape($row->{'calls-out'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>failed-calls-in</td><td class='vtable'>&nbsp;".escape($row->{'failed-calls-in'})."&nbsp;</td></tr>\n";
+				$profile_sections_html .= "	<tr><td class='vncell'>failed-calls-out</td><td class='vtable'>&nbsp;".escape($row->{'failed-calls-out'})."&nbsp;</td></tr>\n";
 			}
-			echo "</table>\n";
-			echo "</div>";
-			echo "</div>";
+			$profile_sections_html .= "</table>\n";
+			$profile_sections_html .= "</div>";
+			$profile_sections_html .= "</div>";
 			unset($xml);
 		}
 	}
 
-//status
+//build the switch status html
+	$switch_status_html = '';
 	if ($event_socket->is_connected() && $has_sip_status_switch_status) {
 		$response = $event_socket->request("api status");
-		echo "<b><a href='javascript:void(0);' onclick=\"$('#status').slideToggle();\">".$text['title-status']."</a></b>\n";
-		echo "<div id='status' style='margin-top: 20px; font-size: 9pt;'>";
-		echo "<div class='card'>\n";
-		echo "<pre style='margin-bottom: 0;'>";
-		echo trim(escape($response));
-		echo "</pre>\n";
-		echo "</div>";
-		echo "</div>";
+		$switch_status_html .= "<b><a href='javascript:void(0);' onclick=\"$('#status').slideToggle();\">".$text['title-status']."</a></b>\n";
+		$switch_status_html .= "<div id='status' style='margin-top: 20px; font-size: 9pt;'>";
+		$switch_status_html .= "<div class='card'>\n";
+		$switch_status_html .= "<pre style='margin-bottom: 0;'>";
+		$switch_status_html .= trim(escape($response));
+		$switch_status_html .= "</pre>\n";
+		$switch_status_html .= "</div>";
+		$switch_status_html .= "</div>";
 	}
+
+//build the template
+	$template = new template();
+	$template->engine = 'smarty';
+	$template->template_dir = __DIR__.'/resources/views';
+	$template->cache_dir = sys_get_temp_dir();
+	$template->init();
+
+//assign the template variables
+	$template->assign('text',                  $text);
+	$template->assign('btn_flush_cache',        $btn_flush_cache);
+	$template->assign('btn_reload_acl',         $btn_reload_acl);
+	$template->assign('btn_reload_xml',         $btn_reload_xml);
+	$template->assign('btn_refresh',            $btn_refresh);
+	$template->assign('sofia_status_html',      $sofia_status_html);
+	$template->assign('profile_sections_html',  $profile_sections_html);
+	$template->assign('switch_status_html',     $switch_status_html);
+
+//invoke pre-render hook
+	app::dispatch_list_pre_render('sip_status_list_page_hook', 'sip_status.php', $template);
+
+//include the header
+	$document['title'] = $text['title-sip_status'];
+	require_once "resources/header.php";
+
+//render the template
+	$html = $template->render('sip_status_list.tpl');
+
+//invoke post-render hook
+	app::dispatch_list_post_render('sip_status_list_page_hook', 'sip_status.php', $html);
+	echo $html;
 
 //include the footer
 	require_once "resources/footer.php";

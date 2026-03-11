@@ -277,96 +277,73 @@
 		exit;
 	}
 
-//include header
+//build the action bar components
+	$btn_export = '';
+	if ($has_feature_codes_export) {
+		$btn_export  = button::create(['type'=>'button','label'=>$text['button-export'],'icon'=>$settings->get('theme', 'button_icon_export'),'onclick'=>"toggle_select('export_format'); this.blur();"]);
+		$btn_export .= "<select class='formfld' style='display: none; width: auto;' name='export_format' id='export_format' onchange=\"toggle_select('export_format'); window.location.href='feature_codes.php?export=' + this.value;\">\n";
+		$btn_export .= "<option value='' disabled='disabled' selected='selected'>".$text['label-format']."</option>\n";
+		$btn_export .= "<option value='pdf'>PDF</option>\n";
+		$btn_export .= "</select>\n";
+	}
+
+//build the table header columns
+	$th_feature_code = th_order_by('dialplan_number', $text['label-feature_code'], $order_by, $order);
+	$th_feature_name = th_order_by('dialplan_name', $text['label-feature_name'], $order_by, $order);
+
+//build the row data
+	$x = 0;
+	if (is_array($features) && count($features) > 0) {
+		foreach ($features as &$row) {
+			$feature_code = $row['dialplan_number'] ?? '';
+			$dialplan_name = $row['dialplan_name'] ?? '';
+			$array_key = str_replace(['-',' '], '_', $dialplan_name);
+			$row['_feature_code']        = $feature_code;
+			$row['_feature_name']        = format_feature_name($dialplan_text['label-dialplan_'.$array_key] ?? $dialplan_name);
+			$feature_description         = $row['dialplan_description'] ?? $dialplan_text['description-dialplan_'.$array_key] ?? '';
+			$row['_feature_description'] = str_replace('${number}', $feature_code, $feature_description);
+			$row['_raw_display'] = '';
+			if ($has_feature_codes_raw) {
+				$row['_raw_display'] = isset($row['dialplan_xml']) ? substr($row['dialplan_xml'], 0, 100) : '';
+				if (isset($row['dialplan_xml']) && strlen($row['dialplan_xml']) > 100) {
+					$row['_raw_display'] .= '...';
+				}
+			}
+			$x++;
+		}
+		unset($row);
+	}
+
+//build the template
+	$template = new template();
+	$template->engine = 'smarty';
+	$template->template_dir = __DIR__.'/resources/views';
+	$template->cache_dir = sys_get_temp_dir();
+	$template->init();
+
+//assign the template variables
+	$template->assign('text',                     $text);
+	$template->assign('features',                 $features ?? []);
+	$template->assign('has_feature_codes_raw',    $has_feature_codes_raw);
+	$template->assign('has_feature_codes_export', $has_feature_codes_export);
+	$template->assign('btn_export',               $btn_export);
+	$template->assign('th_feature_code',          $th_feature_code);
+	$template->assign('th_feature_name',          $th_feature_name);
+
+//invoke pre-render hook
+	$url = new url();
+	app::dispatch_list_pre_render('feature_codes_list_page_hook', $url, $template);
+
+//include the header
 	$document['title'] = $text['title-feature_codes'];
 	require_once "resources/header.php";
 
-//javascript to toggle export select box
-	echo "<script language='javascript' type='text/javascript'>";
-	echo "	var fade_speed = 400;";
-	echo "	function toggle_select(select_id) {";
-	echo "		$('#'+select_id).fadeToggle(fade_speed, function() {";
-	echo "			document.getElementById(select_id).selectedIndex = 0;";
-	echo "			document.getElementById(select_id).focus();";
-	echo "		});";
-	echo "	}";
-	echo "</script>";
+//render the template
+	$html = $template->render('feature_codes_list.tpl');
 
-//content
-	echo "<div class='action_bar' id='action_bar'>\n";
-	echo "	<div class='heading'><b>".$text['title-feature_codes']."</b></div>\n";
-	echo "	<div class='actions'>\n";
-
-	if ($has_feature_codes_export) {
-		echo button::create(array('type'=>'button','label'=>$text['button-export'],'icon'=>$settings->get('theme', 'button_icon_export'),'onclick'=>"toggle_select('export_format'); this.blur();"));
-		echo "		<select class='formfld' style='display: none; width: auto;' name='export_format' id='export_format' onchange=\"toggle_select('export_format'); window.location.href='feature_codes.php?export=' + this.value;\">\n";
-		echo "			<option value='' disabled='disabled' selected='selected'>".$text['label-format']."</option>\n";
-		echo "			<option value='pdf'>PDF</option>\n";
-		echo "		</select>\n";
-	}
-
-	echo "	</div>\n";
-	echo "	<div style='clear: both;'></div>\n";
-	echo "</div>\n";
-
-	echo $text['description-feature_codes']."\n";
-	echo "<br /><br />\n";
-
-	echo "<div class='card'>\n";
-	echo "<table class='list'>\n";
-	echo "<tr class='list-header'>\n";
-	echo th_order_by('dialplan_number', $text['label-feature_code'], $order_by, $order);
-	echo th_order_by('dialplan_name', $text['label-feature_name'], $order_by, $order);
-	echo "	<th class='hide-sm-dn'>".$text['label-description']."</th>\n";
-	if ($has_feature_codes_raw) {
-		echo "	<th class='hide-sm-dn'>".$text['label-raw_dialplan']."</th>\n";
-	}
-	echo "</tr>\n";
-
-	if (is_array($features) && count($features) > 0) {
-		foreach ($features as $row) {
-			//set the feature dialing code eg. *67
-			$feature_code = $row['dialplan_number'] ?? '';
-
-			$dialplan_name = $row['dialplan_name'] ?? '';
-
-			//set the dialplan name to use underscores for the text array lookup
-			$array_key = str_replace(['-',' '],'_', $row['dialplan_name'] ?? '');
-
-			//set the feature code name to be the internationalized name when possible
-			$feature_name = format_feature_name($dialplan_text['label-dialplan_'.$array_key] ?? $dialplan_name);
-
-			//set the dialplan description
-			$feature_description = $row['dialplan_description'] ?? $dialplan_text['description-dialplan_'.$array_key] ?? '';
-
-			//replace the ${number} variable in the description with the dialed number used to activate the dialplan
-			$feature_description = str_replace('${number}', $feature_code, $feature_description);
-
-			//output the row
-			echo "<tr class='list-row'>\n";
-			echo "	<td>".escape($feature_code)."</td>\n";
-			echo "	<td>".escape($feature_name)."</td>\n";
-			echo "	<td class='description hide-sm-dn'>".escape($feature_description)."</td>\n";
-
-			//when raw permissions are enabled output the raw dialplan xml (first 100 characters) column
-			if ($has_feature_codes_raw) {
-				$raw_display = isset($row['dialplan_xml']) ? htmlspecialchars(substr($row['dialplan_xml'], 0, 100)) : '';
-				if (isset($row['dialplan_xml']) && strlen($row['dialplan_xml']) > 100) {
-					$raw_display .= '...';
-				}
-				echo "	<td class='description hide-sm-dn'><code>".$raw_display."</code></td>\n";
-			}
-			echo "</tr>\n";
-		}
-	} else {
-		$colspan = $has_feature_codes_raw ? 4 : 3;
-		echo "<tr class='list-row'>\n";
-		echo "	<td colspan='".$colspan."' style='text-align: center;'>".$text['label-no_features']."</td>\n";
-		echo "</tr>\n";
-	}
-
-	echo "</table>\n";
-	echo "</div>\n";
+//invoke post-render hook
+	app::dispatch_list_post_render('feature_codes_list_page_hook', $url, $html);
+	echo $html;
 
 //include footer
 	require_once "resources/footer.php";

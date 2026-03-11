@@ -56,7 +56,7 @@
 //process the http post data by action
 	if (!empty($action) && !empty($conference_controls)) {
 		//dispatch pre-action hook
-		app::dispatch_list_pre_action(null, $url, $action, $conference_controls);
+		app::dispatch_list_pre_action('conference_control_list_page_hook', $url, $action, $conference_controls);
 
 		switch ($action) {
 			case 'copy':
@@ -80,7 +80,7 @@
 		}
 
 		//dispatch post-action hook
-		app::dispatch_list_post_action(null, $url, $action, $conference_controls);
+		app::dispatch_list_post_action('conference_control_list_page_hook', $url, $action, $conference_controls);
 
 		header('Location: conference_controls.php'.(!empty($search) ? '?search='.urlencode($search) : ''));
 		exit;
@@ -88,7 +88,7 @@
 
 //dispatch pre-query hook
 	$query_parameters = [];
-	app::dispatch_list_pre_query(null, $url, $query_parameters);
+	app::dispatch_list_pre_query('conference_control_list_page_hook', $url, $query_parameters);
 
 //get order and order by
 	$order_by = $_GET["order_by"] ?? '';
@@ -130,129 +130,117 @@
 	$sql .= limit_offset($rows_per_page, $offset);
 	$conference_controls = $database->select($sql, $parameters ?? null, 'all');
 	//dispatch post-query hook
-	app::dispatch_list_post_query(null, $url, $conference_controls);
+	app::dispatch_list_post_query('conference_control_list_page_hook', $url, $conference_controls);
 	unset($sql, $parameters);
 
 //create token
 	$object = new token;
 	$token = $object->create($_SERVER['PHP_SELF']);
 
+//build the action bar buttons
+	$btn_add = '';
+	if ($has_conference_control_add) {
+		$btn_add = button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'conference_control_edit.php']);
+	}
+	$btn_copy = '';
+	if ($has_conference_control_add && $conference_controls) {
+		$btn_copy = button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
+	}
+	$btn_toggle = '';
+	if ($has_conference_control_edit && $conference_controls) {
+		$btn_toggle = button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
+	}
+	$btn_delete = '';
+	if ($has_conference_control_delete && $conference_controls) {
+		$btn_delete = button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
+	}
+	$btn_search = button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
+
+//build the modals
+	$modal_copy = '';
+	if ($has_conference_control_add && $conference_controls) {
+		$modal_copy = modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
+	}
+	$modal_toggle = '';
+	if ($has_conference_control_edit && $conference_controls) {
+		$modal_toggle = modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
+	}
+	$modal_delete = '';
+	if ($has_conference_control_delete && $conference_controls) {
+		$modal_delete = modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
+	}
+
+//build the table header columns
+	$th_control_name    = th_order_by('control_name', $text['label-control_name'], $order_by, $order);
+	$th_control_enabled = th_order_by('control_enabled', $text['label-control_enabled'], $order_by, $order, null, "class='center shrink'");
+
+//build the row data
+	$x = 0;
+	if (!empty($conference_controls)) {
+		foreach ($conference_controls as &$row) {
+			app::dispatch_list_render_row('conference_control_list_page_hook', $url, $row, $x);
+			$list_row_url = '';
+			if ($has_conference_control_edit) {
+				$list_row_url = "conference_control_edit.php?id=".urlencode($row['conference_control_uuid']);
+			}
+			$row['_list_row_url'] = $list_row_url;
+			$row['_enabled_label'] = $text['label-'.$row['control_enabled']];
+			$row['_toggle_button'] = '';
+			if ($has_conference_control_edit) {
+				$row['_toggle_button'] = button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['control_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_{$x}'); list_action_set('toggle'); list_form_submit('form_list')"]);
+			}
+			$row['_edit_button'] = '';
+			if ($has_conference_control_edit && $list_row_edit_button) {
+				$row['_edit_button'] = button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
+			}
+			$x++;
+		}
+		unset($row);
+	}
+
+//build the template
+	$template = new template();
+	$template->engine = 'smarty';
+	$template->template_dir = __DIR__.'/resources/views';
+	$template->cache_dir = sys_get_temp_dir();
+	$template->init();
+
+//assign the template variables
+	$template->assign('text',                         $text);
+	$template->assign('num_rows',                     $num_rows);
+	$template->assign('rows',                         $conference_controls ?? []);
+	$template->assign('search',                       $search);
+	$template->assign('paging_controls',              $paging_controls);
+	$template->assign('paging_controls_mini',         $paging_controls_mini);
+	$template->assign('token',                        $token);
+	$template->assign('has_conference_control_add',    $has_conference_control_add);
+	$template->assign('has_conference_control_delete', $has_conference_control_delete);
+	$template->assign('has_conference_control_edit',   $has_conference_control_edit);
+	$template->assign('list_row_edit_button',          $list_row_edit_button);
+	$template->assign('btn_add',                       $btn_add);
+	$template->assign('btn_copy',                      $btn_copy);
+	$template->assign('btn_toggle',                    $btn_toggle);
+	$template->assign('btn_delete',                    $btn_delete);
+	$template->assign('btn_search',                    $btn_search);
+	$template->assign('modal_copy',                    $modal_copy);
+	$template->assign('modal_toggle',                  $modal_toggle);
+	$template->assign('modal_delete',                  $modal_delete);
+	$template->assign('th_control_name',               $th_control_name);
+	$template->assign('th_control_enabled',            $th_control_enabled);
+
+//invoke pre-render hook
+	app::dispatch_list_pre_render('conference_control_list_page_hook', $url, $template);
+
 //include the header
 	$document['title'] = $text['title-conference_controls'];
 	require_once "resources/header.php";
 
-//show the content
-	echo "<div class='action_bar' id='action_bar'>\n";
-	echo "	<div class='heading'><b>".$text['title-conference_controls']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
-	echo "	<div class='actions'>\n";
-	if ($has_conference_control_add) {
-		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'conference_control_edit.php']);
-	}
-	if ($has_conference_control_add && $conference_controls) {
-		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
-	}
-	if ($has_conference_control_edit && $conference_controls) {
-		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
-	}
-	if ($has_conference_control_delete && $conference_controls) {
-		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
-	}
-	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	echo 		"<input type='text' class='txt list-search' name='search' id='search' value=\"".escape($search)."\" placeholder=\"".$text['label-search']."\" onkeydown=''>";
-	echo button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
-	//echo button::create(['label'=>$text['button-reset'],'icon'=>$settings->get('theme', 'button_icon_reset'),'type'=>'button','id'=>'btn_reset','link'=>'conference_controls.php','style'=>($search == '' ? 'display: none;' : null)]);
-	if ($paging_controls_mini != '') {
-		echo 	"<span style='margin-left: 15px;'>".$paging_controls_mini."</span>\n";
-	}
-	echo "		</form>\n";
-	echo "	</div>\n";
-	echo "	<div style='clear: both;'></div>\n";
-	echo "</div>\n";
+//render the template
+	$html = $template->render('conference_controls_list.tpl');
 
-	if ($has_conference_control_add && $conference_controls) {
-		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
-	}
-	if ($has_conference_control_edit && $conference_controls) {
-		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
-	}
-	if ($has_conference_control_delete && $conference_controls) {
-		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
-	}
-
-	echo $text['description-conference_controls']."\n";
-	echo "<br /><br />\n";
-
-	echo "<form id='form_list' method='post'>\n";
-	echo "<input type='hidden' id='action' name='action' value=''>\n";
-	echo "<input type='hidden' name='search' value=\"".escape($search)."\">\n";
-
-	echo "<div class='card'>\n";
-	echo "<table class='list'>\n";
-	echo "<tr class='list-header'>\n";
-	if ($has_conference_control_add || $has_conference_control_edit || $has_conference_control_delete) {
-		echo "	<th class='checkbox'>\n";
-		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($conference_controls) ?: "style='visibility: hidden;'").">\n";
-		echo "	</th>\n";
-	}
-	echo th_order_by('control_name', $text['label-control_name'], $order_by, $order);
-	echo th_order_by('control_enabled', $text['label-control_enabled'], $order_by, $order, null, "class='center shrink'");
-	echo "	<th class='hide-sm-dn'>".$text['label-control_description']."</th>\n";
-	if ($has_conference_control_edit && $list_row_edit_button) {
-		echo "	<td class='action-button'>&nbsp;</td>\n";
-	}
-	echo "</tr>\n";
-
-	if (!empty($conference_controls)) {
-		$x = 0;
-		foreach ($conference_controls as $row) {
-			//dispatch render-row hook
-			app::dispatch_list_render_row(null, $url, $row, $x);
-			if ($has_conference_control_edit) {
-				$list_row_url = "conference_control_edit.php?id=".urlencode($row['conference_control_uuid']);
-			}
-			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if ($has_conference_control_add || $has_conference_control_edit || $has_conference_control_delete) {
-				echo "	<td class='checkbox'>\n";
-				echo "		<input type='checkbox' name='conference_controls[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
-				echo "		<input type='hidden' name='conference_controls[$x][uuid]' value='".escape($row['conference_control_uuid'])."' />\n";
-				echo "	</td>\n";
-			}
-			echo "	<td>\n";
-			if ($has_conference_control_edit) {
-				echo "	<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['control_name'])."</a>\n";
-			}
-			else {
-				echo "	".escape($row['control_name']);
-			}
-			echo "	</td>\n";
-			if ($has_conference_control_edit) {
-				echo "	<td class='no-link center'>\n";
-				echo button::create(['type'=>'submit','class'=>'link','label'=>$text['label-'.$row['control_enabled']],'title'=>$text['button-toggle'],'onclick'=>"list_self_check('checkbox_".$x."'); list_action_set('toggle'); list_form_submit('form_list')"]);
-			}
-			else {
-				echo "	<td class='center'>\n";
-				echo $text['label-'.$row['control_enabled']];
-			}
-			echo "	</td>\n";
-			echo "	<td class='description overflow hide-sm-dn'>".escape($row['control_description'])."</td>\n";
-			if ($has_conference_control_edit && $list_row_edit_button) {
-				echo "	<td class='action-button'>\n";
-				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
-				echo "	</td>\n";
-			}
-			echo "</tr>\n";
-			$x++;
-		}
-		unset($conference_controls);
-	}
-
-	echo "</table>\n";
-	echo "</div>";
-	echo "<br />\n";
-	echo "<div align='center'>".$paging_controls."</div>\n";
-	echo "<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
-	echo "</form>\n";
+//invoke post-render hook
+	app::dispatch_list_post_render('conference_control_list_page_hook', $url, $html);
+	echo $html;
 
 //include the footer
 	require_once "resources/footer.php";
-

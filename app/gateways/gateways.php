@@ -70,7 +70,7 @@
 //process the http post data by action
 	if (!empty($action) && !empty($gateways)) {
 		//dispatch pre-action hook
-		app::dispatch_list_pre_action(null, $url, $action, $gateways);
+		app::dispatch_list_pre_action('gateway_list_page_hook', $url, $action, $gateways);
 
 		switch ($action) {
 			case 'copy':
@@ -107,7 +107,7 @@
 		}
 
 			//dispatch post-action hook
-			app::dispatch_list_post_action(null, $url, $action, $gateways);
+			app::dispatch_list_post_action('gateway_list_page_hook', $url, $action, $gateways);
 
 		header('Location: gateways.php'.($search != '' ? '?search='.urlencode($search) : ''));
 		exit;
@@ -115,7 +115,7 @@
 
 //dispatch pre-query hook
 	$query_parameters = [];
-	app::dispatch_list_pre_query(null, $url, $query_parameters);
+	app::dispatch_list_pre_query('gateway_list_page_hook', $url, $query_parameters);
 
 //connect to event socket
 	$esl = event_socket::create();
@@ -233,223 +233,210 @@
 	$sql .= limit_offset($rows_per_page, $offset);
 	$gateways = $database->select($sql, $parameters ?? [], 'all');
 	//dispatch post-query hook
-	app::dispatch_list_post_query(null, $url, $gateways);
+	app::dispatch_list_post_query('gateway_list_page_hook', $url, $gateways);
 	unset($sql, $parameters);
 
 //create token
 	$object = new token;
 	$token = $object->create($_SERVER['PHP_SELF']);
 
-//additional includes
-	$document['title'] = $text['title-gateways'];
-	require_once "resources/header.php";
+//build the action bar buttons
+$btn_stop = '';
+$btn_start = '';
+if ($has_gateway_edit && $gateways) {
+$btn_stop = button::create(['type'=>'button','label'=>$text['button-stop'],'icon'=>$settings->get('theme', 'button_icon_stop'),'onclick'=>"modal_open('modal-stop','btn_stop');"]);
+$btn_start = button::create(['type'=>'button','label'=>$text['button-start'],'icon'=>$settings->get('theme', 'button_icon_start'),'onclick'=>"modal_open('modal-start','btn_start');"]);
+}
+$btn_refresh = button::create(['type'=>'button','label'=>$text['button-refresh'],'icon'=>$settings->get('theme', 'button_icon_refresh'),'style'=>'margin-right: 15px;','link'=>'gateways.php']);
+$btn_add = '';
+if ($has_gateway_add) {
+$btn_add = button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'gateway_edit.php']);
+}
+$btn_copy = '';
+if ($has_gateway_add && $gateways) {
+$btn_copy = button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
+}
+$btn_toggle = '';
+if ($has_gateway_edit && $gateways) {
+$btn_toggle = button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
+}
+$btn_delete = '';
+if ($has_gateway_delete && $gateways) {
+$btn_delete = button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
+}
+$btn_show_all = '';
+if ($has_gateway_all && $show !== 'all') {
+$btn_show_all = button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>'?show=all']);
+}
+$btn_search = button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
 
-//show the content
-	echo "<div class='action_bar' id='action_bar'>\n";
-	echo "	<div class='heading'><b>".$text['title-gateways']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
-	echo "	<div class='actions'>\n";
-	if ($has_gateway_edit && $gateways) {
-		echo button::create(['type'=>'button','label'=>$text['button-stop'],'icon'=>$settings->get('theme', 'button_icon_stop'),'onclick'=>"modal_open('modal-stop','btn_stop');"]);
-		echo button::create(['type'=>'button','label'=>$text['button-start'],'icon'=>$settings->get('theme', 'button_icon_start'),'onclick'=>"modal_open('modal-start','btn_start');"]);
-	}
-	echo button::create(['type'=>'button','label'=>$text['button-refresh'],'icon'=>$settings->get('theme', 'button_icon_refresh'),'style'=>'margin-right: 15px;','link'=>'gateways.php']);
-	if ($has_gateway_add) {
-		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','link'=>'gateway_edit.php']);
-	}
-	if ($has_gateway_add && $gateways) {
-		echo button::create(['type'=>'button','label'=>$text['button-copy'],'icon'=>$settings->get('theme', 'button_icon_copy'),'id'=>'btn_copy','name'=>'btn_copy','style'=>'display: none;','onclick'=>"modal_open('modal-copy','btn_copy');"]);
-	}
-	if ($has_gateway_edit && $gateways) {
-		echo button::create(['type'=>'button','label'=>$text['button-toggle'],'icon'=>$settings->get('theme', 'button_icon_toggle'),'id'=>'btn_toggle','name'=>'btn_toggle','style'=>'display: none;','onclick'=>"modal_open('modal-toggle','btn_toggle');"]);
-	}
-	if ($has_gateway_delete && $gateways) {
-		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
-	}
-	echo 		"<form id='form_search' class='inline' method='get'>\n";
-	if ($has_gateway_all) {
-		if ($show == 'all') {
-			echo "		<input type='hidden' name='show' value='all'>";
-		}
-		else {
-			echo button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>'?show=all']);
-		}
-	}
-	echo 		"<input type='text' class='txt list-search' name='search' id='search' value=\"".escape($search)."\" placeholder=\"".$text['label-search']."\" onkeydown=''>";
-	echo button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search']);
-	//echo button::create(['label'=>$text['button-reset'],'icon'=>$settings->get('theme', 'button_icon_reset'),'type'=>'button','id'=>'btn_reset','link'=>'gateways.php','style'=>($search == '' ? 'display: none;' : null)]);
-	if ($paging_controls_mini != '') {
-		echo 	"<span style='margin-left: 15px;'>".$paging_controls_mini."</span>";
-	}
-	echo "		</form>\n";
-	echo "	</div>\n";
-	echo "	<div style='clear: both;'></div>\n";
-	echo "</div>\n";
+//build the modals
+$modal_stop = '';
+$modal_start = '';
+if ($has_gateway_edit && $gateways) {
+$modal_stop = modal::create(['id'=>'modal-stop','type'=>'general','message'=>$text['confirm-stop_gateways'],'actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_stop','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('stop'); list_form_submit('form_list');"])]);
+$modal_start = modal::create(['id'=>'modal-start','type'=>'general','message'=>$text['confirm-start_gateways'],'actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_start','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('start'); list_form_submit('form_list');"])]);
+}
+$modal_copy = '';
+if ($has_gateway_add && $gateways) {
+$modal_copy = modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
+}
+$modal_toggle = '';
+if ($has_gateway_edit && $gateways) {
+$modal_toggle = modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
+}
+$modal_delete = '';
+if ($has_gateway_delete && $gateways) {
+$modal_delete = modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
+}
 
-	if ($has_gateway_edit && $gateways) {
-		echo modal::create(['id'=>'modal-stop','type'=>'general','message'=>$text['confirm-stop_gateways'],'actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_stop','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('stop'); list_form_submit('form_list');"])]);
-		echo modal::create(['id'=>'modal-start','type'=>'general','message'=>$text['confirm-start_gateways'],'actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_start','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('start'); list_form_submit('form_list');"])]);
-	}
-	if ($has_gateway_add && $gateways) {
-		echo modal::create(['id'=>'modal-copy','type'=>'copy','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_copy','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('copy'); list_form_submit('form_list');"])]);
-	}
-	if ($has_gateway_edit && $gateways) {
-		echo modal::create(['id'=>'modal-toggle','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
-	}
-	if ($has_gateway_delete && $gateways) {
-		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
-	}
+//build the table header columns
+$th_domain_name = '';
+if ($show == 'all' && $has_gateway_all) {
+$th_domain_name = th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param);
+}
+$th_gateway     = th_order_by('gateway', $text['label-gateway'], $order_by, $order);
+$th_context     = th_order_by('context', $text['label-context'], $order_by, $order);
+$th_register    = th_order_by('register', $text['label-register'], $order_by, $order);
+$th_hostname    = th_order_by('hostname', $text['label-hostname'], $order_by, $order, null, "class='hide-sm-dn'");
+$th_enabled     = th_order_by('enabled', $text['label-enabled'], $order_by, $order, null, "class='center'");
+$th_description = th_order_by('description', $text['label-description'], $order_by, $order, null, "class='hide-sm-dn'");
+$th_esl_status  = '';
+$th_esl_action  = '';
+$th_esl_state   = '';
+if ($esl->is_connected()) {
+$th_esl_status = "<th class='hide-sm-dn'>".$text['label-status']."</th>\n";
+if ($has_gateway_edit) {
+$th_esl_action = "<th class='center'>".$text['label-action']."</th>\n";
+}
+$th_esl_state = "<th>".$text['label-state']."</th>\n";
+}
 
-	echo $text['description-gateway']."\n";
-	echo "<br /><br />\n";
+//build the row data
+$x = 0;
+foreach ($gateways as &$row) {
+app::dispatch_list_render_row('gateway_list_page_hook', $url, $row, $x);
+$list_row_url = '';
+if ($has_gateway_edit) {
+$list_row_url = "gateway_edit.php?id=".urlencode($row['gateway_uuid']);
+if (!empty($row['domain_uuid']) && $row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
+$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
+}
+}
+$row['_list_row_url']     = $list_row_url;
+$row['_domain_name']      = is_uuid($row['domain_uuid']) ? ($_SESSION['domains'][$row['domain_uuid']]['domain_name'] ?? '') : $text['label-global'];
+$row['_register_display'] = ucwords(escape($row['register']));
+$row['_enabled_label']    = $text['label-'.$row['enabled']];
+$esl_cells = '';
+if ($esl->is_connected()) {
+if ($row['enabled'] == 'true') {
+$response = switch_gateway_status($row['gateway_uuid']);
+if ($response == 'Invalid Gateway!') {
+$esl_cells .= "<td class='hide-sm-dn'>".$text['label-status-stopped']."</td>\n";
+if ($has_gateway_edit) {
+$esl_cells .= "<td class='no-link center'>";
+$esl_cells .= button::create(['type'=>'button','class'=>'link','label'=>$text['label-action-start'],'title'=>$text['button-start'],'id'=>'btn_toggle_start','name'=>'btn_toggle_start','onclick'=>"list_self_check('checkbox_{$x}'); modal_open('modal-toggle_start','btn_toggle_start');"]);
+$esl_cells .= modal::create(['id'=>'modal-toggle_start','type'=>'start','message'=>$text['confirm-start_gateway'],'actions'=>button::create(['type'=>'button','label'=>$text['button-start'],'icon'=>'check','id'=>'btn_toggle_start','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('start'); list_form_submit('form_list');"])]);
+$esl_cells .= "</td>\n";
+}
+$esl_cells .= "<td>&nbsp;</td>\n";
+} else {
+try {
+$xml = new SimpleXMLElement($response);
+$state = $xml->state;
+$esl_cells .= "<td class='hide-sm-dn'>".$text['label-status-running']."</td>\n";
+if ($has_gateway_edit) {
+$esl_cells .= "<td class='no-link center'>";
+$esl_cells .= button::create(['type'=>'button','class'=>'link','label'=>$text['label-action-stop'],'title'=>$text['button-stop'],'id'=>'btn_toggle_stop','name'=>'btn_toggle_stop','onclick'=>"list_self_check('checkbox_{$x}'); modal_open('modal-toggle_stop','btn_toggle_stop');"]);
+$esl_cells .= modal::create(['id'=>'modal-toggle_stop','type'=>'general','message'=>$text['confirm-stop_gateway'],'actions'=>button::create(['type'=>'button','label'=>$text['button-stop'],'icon'=>'check','id'=>'btn_toggle_stop','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('stop'); list_form_submit('form_list');"])]);
+$esl_cells .= "</td>\n";
+}
+$esl_cells .= "<td>".escape($state)."</td>\n";
+} catch (Exception $e) {
+//ignore
+}
+}
+} else {
+$esl_cells .= "<td class='hide-sm-dn'>&nbsp;</td>\n";
+if ($has_gateway_edit) {
+$esl_cells .= "<td>&nbsp;</td>\n";
+}
+$esl_cells .= "<td>&nbsp;</td>\n";
+}
+}
+$row['_esl_cells']    = $esl_cells;
+$row['_toggle_button'] = '';
+if ($has_gateway_edit) {
+$row['_toggle_button'] = button::create(['type'=>'button','class'=>'link','label'=>$text['label-'.$row['enabled']],'title'=>$text['button-toggle'],'id'=>'btn_toggle_enabled','name'=>'btn_toggle_enabled','onclick'=>"list_self_check('checkbox_{$x}'); modal_open('modal-toggle_enabled','btn_toggle_enabled');"]);
+$row['_toggle_button'] .= modal::create(['id'=>'modal-toggle_enabled','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle_enabled','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
+}
+$row['_edit_button'] = '';
+if ($has_gateway_edit && $list_row_edit_button) {
+$row['_edit_button'] = button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
+}
+$x++;
+}
+unset($row);
 
-	echo "<form id='form_list' method='post'>\n";
-	echo "<input type='hidden' id='action' name='action' value=''>\n";
-	echo "<input type='hidden' name='search' value=\"".escape($search)."\">\n";
+//build the template
+$template = new template();
+$template->engine = 'smarty';
+$template->template_dir = __DIR__.'/resources/views';
+$template->cache_dir = sys_get_temp_dir();
+$template->init();
 
-	echo "<div class='card'>\n";
-	echo "<table class='list'>\n";
-	echo "<tr class='list-header'>\n";
-	if ($has_gateway_add || $has_gateway_edit || $has_gateway_delete) {
-		echo "	<th class='checkbox'>\n";
-		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(!empty($gateways) ?: "style='visibility: hidden;'").">\n";
-		echo "	</th>\n";
-	}
-	if ($show == "all" && $has_gateway_all) {
-		echo th_order_by('domain_name', $text['label-domain'], $order_by, $order, $param);
-	}
-	echo th_order_by('gateway', $text['label-gateway'], $order_by, $order);
-	echo "<th class='hide-sm-dn'>".$text['label-proxy']."</th>\n";
-	echo th_order_by('context', $text['label-context'], $order_by, $order);
-	echo th_order_by('register', $text['label-register'], $order_by, $order);
-	if ($esl->is_connected()) {
-		echo "<th class='hide-sm-dn'>".$text['label-status']."</th>\n";
-		if ($has_gateway_edit) {
-			echo "<th class='center'>".$text['label-action']."</th>\n";
-		}
-		echo "<th>".$text['label-state']."</th>\n";
-	}
-	echo th_order_by('hostname', $text['label-hostname'], $order_by, $order, null, "class='hide-sm-dn'");
-	echo th_order_by('enabled', $text['label-enabled'], $order_by, $order, null, "class='center'");
-	echo th_order_by('description', $text['label-description'], $order_by, $order, null, "class='hide-sm-dn'");
-	if ($has_gateway_edit && $list_row_edit_button) {
-		echo "	<td class='action-button'>&nbsp;</td>\n";
-	}
-	echo "</tr>\n";
+//assign the template variables
+$template->assign('text',                 $text);
+$template->assign('num_rows',             $num_rows);
+$template->assign('gateways',             $gateways ?? []);
+$template->assign('search',               $search);
+$template->assign('show',                 $show);
+$template->assign('paging_controls',      $paging_controls);
+$template->assign('paging_controls_mini', $paging_controls_mini);
+$template->assign('token',                $token);
+$template->assign('has_gateway_add',      $has_gateway_add);
+$template->assign('has_gateway_all',      $has_gateway_all);
+$template->assign('has_gateway_delete',   $has_gateway_delete);
+$template->assign('has_gateway_edit',     $has_gateway_edit);
+$template->assign('list_row_edit_button', $list_row_edit_button);
+$template->assign('btn_stop',             $btn_stop);
+$template->assign('btn_start',            $btn_start);
+$template->assign('btn_refresh',          $btn_refresh);
+$template->assign('btn_add',              $btn_add);
+$template->assign('btn_copy',             $btn_copy);
+$template->assign('btn_toggle',           $btn_toggle);
+$template->assign('btn_delete',           $btn_delete);
+$template->assign('btn_show_all',         $btn_show_all);
+$template->assign('btn_search',           $btn_search);
+$template->assign('modal_stop',           $modal_stop);
+$template->assign('modal_start',          $modal_start);
+$template->assign('modal_copy',           $modal_copy);
+$template->assign('modal_toggle',         $modal_toggle);
+$template->assign('modal_delete',         $modal_delete);
+$template->assign('th_domain_name',       $th_domain_name);
+$template->assign('th_gateway',           $th_gateway);
+$template->assign('th_context',           $th_context);
+$template->assign('th_register',          $th_register);
+$template->assign('th_hostname',          $th_hostname);
+$template->assign('th_enabled',           $th_enabled);
+$template->assign('th_description',       $th_description);
+$template->assign('th_esl_status',        $th_esl_status);
+$template->assign('th_esl_action',        $th_esl_action);
+$template->assign('th_esl_state',         $th_esl_state);
 
-	if (!empty($gateways)) {
-		$x = 0;
-		foreach($gateways as $row) {
-			//dispatch render-row hook
-			app::dispatch_list_render_row(null, $url, $row, $x);
-			$list_row_url = '';
-			if ($has_gateway_edit) {
-				$list_row_url = "gateway_edit.php?id=".urlencode($row['gateway_uuid']);
-				if (!empty($row['domain_uuid']) && $row['domain_uuid'] != $_SESSION['domain_uuid'] && $has_domain_select) {
-					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
-				}
-			}
-			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if ($has_gateway_add || $has_gateway_edit || $has_gateway_delete) {
-				echo "	<td class='checkbox'>\n";
-				echo "		<input type='checkbox' name='gateways[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all').checked = false; }\">\n";
-				echo "		<input type='hidden' name='gateways[$x][uuid]' value='".escape($row['gateway_uuid'])."' />\n";
-				echo "	</td>\n";
-			}
-			if ($show == "all" && $has_gateway_all) {
-				echo "	<td>";
-				if (is_uuid($row['domain_uuid'])) {
-					echo escape($_SESSION['domains'][$row['domain_uuid']]['domain_name']);
-				}
-				else {
-					echo $text['label-global'];
-				}
-				echo "</td>\n";
-			}
-			echo "	<td>";
-			if ($has_gateway_edit) {
-				echo "<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['gateway'])."</a>";
-			}
-			else {
-				echo escape($row['gateway']);
-			}
-			echo "	</td>\n";
-			echo "	<td>".escape($row["proxy"])."</td>\n";
-			echo "	<td>".escape($row["context"])."</td>\n";
-			echo "	<td>".ucwords(escape($row["register"]))."</td>\n";
-			if ($esl->is_connected()) {
-				if ($row["enabled"] == "true") {
-					$response = switch_gateway_status($row["gateway_uuid"]);
-					if ($response == "Invalid Gateway!") {
-						//not running
-						echo "	<td class='hide-sm-dn'>".$text['label-status-stopped']."</td>\n";
-						if ($has_gateway_edit) {
-							echo "	<td class='no-link center'>";
-							echo button::create(['type'=>'button','class'=>'link','label'=>$text['label-action-start'],'title'=>$text['button-start'],'id'=>'btn_toggle_start','name'=>'btn_toggle_start','onclick'=>"list_self_check('checkbox_".$x."'); modal_open('modal-toggle_start','btn_toggle_start');"]);
-							echo modal::create(['id'=>'modal-toggle_start','type'=>'start','message'=>$text['confirm-start_gateway'],'actions'=>button::create(['type'=>'button','label'=>$text['button-start'],'icon'=>'check','id'=>'btn_toggle_start','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('start'); list_form_submit('form_list');"])]);
-							echo "	</td>\n";
-						}
-						echo "	<td>&nbsp;</td>\n";
-					}
-					else {
-						//running
-						try {
-							$xml = new SimpleXMLElement($response);
-							$state = $xml->state;
-							echo "	<td class='hide-sm-dn'>".$text['label-status-running']."</td>\n";
-							if ($has_gateway_edit) {
-								echo "	<td class='no-link center'>";
-								echo button::create(['type'=>'button','class'=>'link','label'=>$text['label-action-stop'],'title'=>$text['button-stop'],'id'=>'btn_toggle_stop','name'=>'btn_toggle_stop','onclick'=>"list_self_check('checkbox_".$x."'); modal_open('modal-toggle_stop','btn_toggle_stop');"]);
-								echo modal::create(['id'=>'modal-toggle_stop','type'=>'general','message'=>$text['confirm-stop_gateway'],'actions'=>button::create(['type'=>'button','label'=>$text['button-stop'],'icon'=>'check','id'=>'btn_toggle_stop','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('stop'); list_form_submit('form_list');"])]);
-								echo "	</td>\n";
-							}
-							echo "	<td>".escape($state)."</td>\n"; //REGED, NOREG, UNREGED
-						}
-						catch (Exception $e) {
-								//echo $e->getMessage();
-						}
-					}
-				}
-				else {
-					echo "	<td class='hide-sm-dn'>&nbsp;</td>\n";
-					if ($has_gateway_edit) {
-						echo "	<td>&nbsp;</td>\n";
-					}
-					echo "	<td>&nbsp;</td>\n";
-				}
-			}
-			echo "	<td class='hide-sm-dn'>".escape($row["hostname"])."</td>\n";
-			if ($has_gateway_edit) {
-				echo "	<td class='no-link center'>";
-				echo button::create(['type'=>'button','class'=>'link','label'=>$text['label-'.$row['enabled']],'title'=>$text['button-toggle'],'id'=>'btn_toggle_enabled','name'=>'btn_toggle_enabled','onclick'=>"list_self_check('checkbox_".$x."'); modal_open('modal-toggle_enabled','btn_toggle_enabled');"]);
-				echo modal::create(['id'=>'modal-toggle_enabled','type'=>'toggle','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_toggle_enabled','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('toggle'); list_form_submit('form_list');"])]);
-			}
-			else {
-				echo "	<td class='center'>";
-				echo $text['label-'.$row['enabled']];
-			}
-			echo "	</td>\n";
-			echo "	<td class='description overflow hide-sm-dn'>".escape($row["description"])."&nbsp;</td>\n";
-			if ($has_gateway_edit && $list_row_edit_button) {
-				echo "	<td class='action-button'>";
-				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
-				echo "	</td>\n";
-			}
-			echo "</tr>\n";
-			$x++;
-		}
-	}
-	unset($gateways);
+//invoke pre-render hook
+app::dispatch_list_pre_render('gateway_list_page_hook', $url, $template);
 
-	echo "</table>\n";
-	echo "</div>\n";
-	echo "<br /><br />\n";
-	echo "<div align='center'>".$paging_controls."</div>\n";
+//include the header
+$document['title'] = $text['title-gateways'];
+require_once "resources/header.php";
 
-	echo "<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
+//render the template
+$html = $template->render('gateways_list.tpl');
 
-	echo "</form>\n";
+//invoke post-render hook
+app::dispatch_list_post_render('gateway_list_page_hook', $url, $html);
+echo $html;
 
 //include the footer
-	require_once "resources/footer.php";
-
-
+require_once "resources/footer.php";

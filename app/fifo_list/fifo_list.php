@@ -36,81 +36,31 @@
 //add multi-lingual support
 	$text = new text()->get();
 
-require_once "resources/header.php";
-$document['title'] = $text['title-active_queues'];
+//build the template
+	$template = new template();
+	$template->engine = 'smarty';
+	$template->template_dir = __DIR__.'/resources/views';
+	$template->cache_dir = sys_get_temp_dir();
+	$template->init();
 
-?><script type="text/javascript">
-function loadXmlHttp(url, id) {
-	var f = this;
-	f.xmlHttp = null;
-	/*@cc_on @*/ // used here and below, limits try/catch to those IE browsers that both benefit from and support it
-	/*@if(@_jscript_version >= 5) // prevents errors in old browsers that barf on try/catch & problems in IE if Active X disabled
-	try {f.ie = window.ActiveXObject}catch(e){f.ie = false;}
-	@end @*/
-	if (window.XMLHttpRequest&&!f.ie||/^http/.test(window.location.href))
-		f.xmlHttp = new XMLHttpRequest(); // Firefox, Opera 8.0+, Safari, others, IE 7+ when live - this is the standard method
-	else if (/(object)|(function)/.test(typeof createRequest))
-		f.xmlHttp = createRequest(); // ICEBrowser, perhaps others
-	else {
-		f.xmlHttp = null;
-		 // Internet Explorer 5 to 6, includes IE 7+ when local //
-		/*@cc_on @*/
-		/*@if(@_jscript_version >= 5)
-		try{f.xmlHttp=new ActiveXObject("Msxml2.XMLHTTP");}
-		catch (e){try{f.xmlHttp=new ActiveXObject("Microsoft.XMLHTTP");}catch(e){f.xmlHttp=null;}}
-		@end @*/
-	}
-	if(f.xmlHttp != null){
-		f.el = document.getElementById(id);
-		f.xmlHttp.open("GET",url,true);
-		f.xmlHttp.onreadystatechange = function(){f.stateChanged();};
-		f.xmlHttp.send(null);
-	}
-}
+//assign the template variables
+	$template->assign('text',        $text);
+	$template->assign('request_uri', $_SERVER['REQUEST_URI']);
 
-loadXmlHttp.prototype.stateChanged=function () {
-	var url = new URL(this.xmlHttp.responseURL);
-	if (/login\.php$/.test(url.pathname)) {
-		// You are logged out. Stop refresh!
-		url.searchParams.set('path', '<?php echo $_SERVER['REQUEST_URI']; ?>');
-		window.location.href = url.href;
-		return;
-	}
+//invoke pre-render hook
+	app::dispatch_list_pre_render('active_queue_list_page_hook', null, $template);
 
-	if (this.xmlHttp.readyState == 4 && (this.xmlHttp.status == 200 || !/^http/.test(window.location.href)))
-		//this.el.innerHTML = this.xmlHttp.responseText;
-		document.getElementById('ajax_reponse').innerHTML = this.xmlHttp.responseText;
-}
+//include the header
+	$document['title'] = $text['title-active_queues'];
+	require_once "resources/header.php";
 
-var requestTime = function() {
-	var url = 'fifo_list_inc.php';
-	new loadXmlHttp(url, 'ajax_reponse');
-	setInterval(function(){new loadXmlHttp(url, 'ajax_reponse');}, 1777);
-}
+//render the template
+	$html = $template->render('fifo_list_list.tpl');
 
-if (window.addEventListener) {
-	window.addEventListener('load', requestTime, false);
-}
-else if (window.attachEvent) {
-	window.attachEvent('onload', requestTime);
-}
+//invoke post-render hook
+	app::dispatch_list_post_render('active_queue_list_page_hook', null, $html);
+	echo $html;
 
-</script>
-
-<?php
-echo "<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">\n";
-echo "  <tr>\n";
-echo "	<td align='left'>";
-echo "		<b>".$text['header-active_queues']."</b>";
-echo "		<br><br>";
-echo "		".$text['description-active_queues']."\n";
-echo "	</td>\n";
-echo "  </tr>\n";
-echo "</table>\n";
-echo "<br>";
-
-echo "<div id=\"ajax_reponse\"></div>\n";
-echo "<br><br>";
-
-require_once "resources/footer.php";
+//include the footer
+	require_once "resources/footer.php";
 

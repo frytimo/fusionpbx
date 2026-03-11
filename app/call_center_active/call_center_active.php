@@ -45,162 +45,46 @@
 	unset($_SESSION['queues']);
 	unset($_SESSION['agents']);
 
-//get the header
+//determine refresh rate
+	$refresh_default = 1500;
+	$refresh = is_numeric($settings->get('call_center', 'refresh')) ? $settings->get('call_center', 'refresh') : $refresh_default;
+	if ($refresh >= 0.5 && $refresh <= 120) {
+		$refresh = $refresh * 1000;
+	} else if ($refresh < 0.5 || ($refresh > 120 && $refresh < 500)) {
+		$refresh = $refresh_default;
+	}
+
+//get the agent status filter
+	$agent_status = $_GET['agent_status'] ?? '';
+
+//build the template
+	$template = new template();
+	$template->engine = 'smarty';
+	$template->template_dir = __DIR__.'/resources/views';
+	$template->cache_dir = sys_get_temp_dir();
+	$template->init();
+
+//assign the template variables
+	$template->assign('text',         $text);
+	$template->assign('queue_name',   $queue_name);
+	$template->assign('name',         $name);
+	$template->assign('agent_status', $agent_status);
+	$template->assign('refresh',      $refresh);
+	$template->assign('request_uri',  $_SERVER['REQUEST_URI']);
+
+//invoke pre-render hook
+	app::dispatch_list_pre_render('call_center_active_list_page_hook', null, $template);
+
+//include the header
 	$document['title'] = $text['title-call_center_queue_activity'];
 	require_once "resources/header.php";
 
-//add the ajax
-	?><script type="text/javascript">
-	function loadXmlHttp(url, id) {
-		var f = this;
-		f.xmlHttp = null;
-		/*@cc_on @*/ // used here and below, limits try/catch to those IE browsers that both benefit from and support it
-		/*@if(@_jscript_version >= 5) // prevents errors in old browsers that barf on try/catch & problems in IE if Active X disabled
-		try {f.ie = window.ActiveXObject}catch(e){f.ie = false;}
-		@end @*/
-		if (window.XMLHttpRequest&&!f.ie||/^http/.test(window.location.href))
-			f.xmlHttp = new XMLHttpRequest(); // Firefox, Opera 8.0+, Safari, others, IE 7+ when live - this is the standard method
-		else if (/(object)|(function)/.test(typeof createRequest))
-			f.xmlHttp = createRequest(); // ICEBrowser, perhaps others
-		else {
-			f.xmlHttp = null;
-			 // Internet Explorer 5 to 6, includes IE 7+ when local //
-			/*@cc_on @*/
-			/*@if(@_jscript_version >= 5)
-			try{f.xmlHttp=new ActiveXObject("Msxml2.XMLHTTP");}
-			catch (e){try{f.xmlHttp=new ActiveXObject("Microsoft.XMLHTTP");}catch(e){f.xmlHttp=null;}}
-			@end @*/
-		}
-		if(f.xmlHttp != null) {
-			f.el = document.getElementById(id);
-			f.xmlHttp.open("GET",url,true);
-			f.xmlHttp.onreadystatechange = function(){f.stateChanged();};
-			f.xmlHttp.send(null);
-		}
-	}
+//render the template
+	$html = $template->render('call_center_active_list.tpl');
 
-	loadXmlHttp.prototype.stateChanged=function () {
-		var url = new URL(this.xmlHttp.responseURL);
-
-		//logged out stop the refresh
-		if (/login\.php$/.test(url.pathname)) {
-			url.searchParams.set('path', '<?php echo $_SERVER['REQUEST_URI']; ?>');
-			window.location.href = url.href;
-			return;
-		}
-
-		if (this.xmlHttp.readyState == 4 && (this.xmlHttp.status == 200 || !/^http/.test(window.location.href))) {
-			//this.el.innerHTML = this.xmlHttp.responseText;
-			document.getElementById('ajax_response').innerHTML = this.xmlHttp.responseText;
-		}
-
-		//link table rows (except the last - the list_control_icons cell) on a table with a class of 'tr_hover', according to the href attribute of the <tr> tag
-		$('.tr_hover tr,.list tr').each(function(i,e) {
-			$(e).children('td:not(.list_control_icon,.list_control_icons,.tr_link_void,.list-row > .no-link,.list-row > .checkbox,.list-row > .button,.list-row > .action-button)').on('click', function() {
-				var href = $(this).closest('tr').attr('href');
-				var target = $(this).closest('tr').attr('target');
-				if (href) {
-					if (target) { window.open(href, target); }
-					else { window.location = href; }
-				}
-			});
-		});
-
-		//filter agent list based on status
-		document.querySelectorAll('tr[data-agent-status]').forEach(table_row => {
-			const filter = '<?php echo isset($_GET['agent_status']) ? $_GET['agent_status'] : null; ?>';
-
-			if (filter === 'available' && !table_row.getAttribute('data-agent-status').includes('Available')) {
-				table_row.style.display = 'none';
-			}
-			// else if (filter === 'on_demand' && !table_row.getAttribute('data-agent-status').includes('On Demand')) {
-			// 	table_row.style.display = 'none';
-			// }
-			else if (filter === 'not_available' && table_row.getAttribute('data-agent-status').includes('Available')) {
-				table_row.style.display = 'none';
-			}
-			else if (filter === 'on_break' && !table_row.getAttribute('data-agent-status').includes('On Break')) {
-				table_row.style.display = 'none';
-			}
-			else if (filter === 'logged_out' && !table_row.getAttribute('data-agent-status').includes('Logged Out')) {
-				table_row.style.display = 'none';
-			}
-		});
-	}
-
-	var requestTime = function() {
-		var url = 'call_center_active_inc.php?queue_name=<?php echo escape($queue_name); ?>&name=<?php echo urlencode(escape($name)); ?>&agent_status=<?php echo escape($_GET['agent_status']); ?>';
-		new loadXmlHttp(url, 'ajax_response');
-		<?php
-
-		//determine refresh rate
-		$refresh_default = 1500; //milliseconds
-		$refresh = is_numeric($settings->get('call_center', 'refresh')) ? $settings->get('call_center', 'refresh') : $refresh_default;
-		if ($refresh >= 0.5 && $refresh <= 120) { //convert seconds to milliseconds
-			$refresh = $refresh * 1000;
-		}
-		else if ($refresh < 0.5 || ($refresh > 120 && $refresh < 500)) {
-			$refresh = $refresh_default; //use default
-		}
-		else {
-			//>= 500, must be milliseconds
-		}
-
-		//set the value for the refresh
-		echo "setInterval(function(){new loadXmlHttp(url, 'ajax_reponse');}, ".$refresh.");";
-
-		?>
-	}
-
-	if (window.addEventListener) {
-		window.addEventListener('load', requestTime, false);
-	}
-	else if (window.attachEvent) {
-		window.attachEvent('onload', requestTime);
-	}
-
-	function send_command(url) {
-		if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
-			xmlhttp=new XMLHttpRequest();
-		}
-		else {// code for IE6, IE5
-			xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
-		}
-		xmlhttp.open("GET", url, false);
-		xmlhttp.send(null);
-		//document.getElementById('cmd_response').innerHTML=xmlhttp.responseText;
-	}
-
-	</script>
-
-<?php
-
-//show the content
-	$agent_status = $_GET['agent_status'] ?? '';
-	echo "<div class='action_bar' id='action_bar'>\n";
-	echo "	<div class='heading'><b>".$text['header-agents']."</b></div>\n";
-	echo "	<div class='actions'>\n";
-	echo "		<form id='frm' name='frm' method='GET'>\n";
-	echo "			<input type='hidden' name='queue_name' value='".escape($queue_name)."'>\n";
-	echo "			<input type='hidden' name='name' value='".urlencode(escape($_GET['name']))."'>\n";
-	echo "			<select class='formfld' name='agent_status' id='agent_status' onchange=\"document.getElementById('frm').submit();\">\n";
-	echo "				<option value='' selected disabled hidden>".$text['label-status']."...</option>";
-	echo "				<option value=''></option>\n";
-	echo "				<option value='available' ".($agent_status === 'available' ? 'selected' : null).">".$text['label-available']."</option>\n";
-	//echo "				<option value='on_demand' ".($agent_status === 'on_demand' ? 'selected' : null).">".$text['label-available_on_demand']."</option>\n";
-	echo "				<option value='not_available' ".($agent_status === 'not_available' ? 'selected' : null).">".$text['label-not_available']."</option>\n";
-	echo "				<option value='on_break' ".($agent_status === 'on_break' ? 'selected' : null).">".$text['label-on_break']."</option>\n";
-	echo "				<option value='logged_out' ".($agent_status === 'logged_out' ? 'selected' : null).">".$text['label-logged_out']."</option>\n";
-	echo "			</select>\n";
-	echo "		</form>\n";
-	echo "	</div>\n";
-	echo "	<div style='clear: both;'></div>\n";
-	echo "</div>\n";
-	echo $text['description-agents']."<br /><br />\n";
-
-	//show the response
-	echo "<div id='ajax_response'></div>\n";
-	echo "<br><br>";
+//invoke post-render hook
+	app::dispatch_list_post_render('call_center_active_list_page_hook', null, $html);
+	echo $html;
 
 //include the footer
 	require_once "resources/footer.php";

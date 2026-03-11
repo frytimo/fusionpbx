@@ -356,118 +356,89 @@
 	$object = new token;
 	$token = $object->create($_SERVER['PHP_SELF']);
 
-//include the header
-	$document['title'] = $text['title'];
-	require_once "resources/header.php";
+//compute storage type flag
+	$storage_is_base64 = (!empty($settings->get('voicemail', 'storage_type')) && $settings->get('voicemail', 'storage_type') == 'base64');
 
-//file type check script
-	echo "<script language='JavaScript' type='text/javascript'>\n";
-	echo "	function check_file_type(file_input) {\n";
-	echo "		file_ext = file_input.value.substr((~-file_input.value.lastIndexOf('.') >>> 0) + 2);\n";
-	echo "		if (file_ext != 'mp3' && file_ext != 'wav' && file_ext != 'ogg' && file_ext != '') {\n";
-	echo "			display_message(\"".$text['message-unsupported_file_type']."\", 'negative', '2750');\n";
-	echo "			document.getElementById('form_upload').reset();\n";
-	echo "		}\n";
-	echo "	}\n";
-	echo "</script>";
+//set list row edit button preference
+	$list_row_edit_button = $settings->get('theme', 'list_row_edit_button', false);
 
-//show the content
-	echo "<div class='action_bar' id='action_bar'>\n";
-	echo "	<div class='heading'><b>".$text['title']."</b><div class='count'>".number_format($num_rows)."</div></div>\n";
-	echo "	<div class='actions'>\n";
-	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','link'=>$_SESSION['back'][$_SERVER['PHP_SELF']]]);
-	$margin_left = false;
+//build action bar buttons
+	$btn_back = button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','link'=>$_SESSION['back'][$_SERVER['PHP_SELF']]]);
+	$btn_add = '';
 	if ($has_voicemail_greeting_add && is_array($greetings) && $speech_enabled == 'true') {
-		echo button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','style'=>'margin-left: 15px;','link'=>'voicemail_greeting_edit.php?voicemail_id='.urlencode($voicemail_id)]);
-		$margin_left = true;
+		$btn_add = button::create(['type'=>'button','label'=>$text['button-add'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_add','style'=>'margin-left: 15px;','link'=>'voicemail_greeting_edit.php?voicemail_id='.urlencode($voicemail_id)]);
 	}
+	$btn_upload_form = '';
+	$_ml = !empty($btn_add);
 	if ($has_voicemail_greeting_upload && is_array($greetings) && @sizeof($greetings) < 9) {
-		echo "	<form id='form_upload' class='inline' method='post' enctype='multipart/form-data'>\n";
-		echo "	<input name='a' type='hidden' value='upload'>\n";
-		echo "	<input type='hidden' name='id' value='".escape($voicemail_id)."'>\n";
-		echo "	<input type='hidden' name='type' value='rec'>\n";
-		echo "	<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
-		echo button::create(['type'=>'button','label'=>$text['button-upload'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_upload','style'=>(!$margin_left ? 'margin-left: 15px;' : null),'onclick'=>"$(this).fadeOut(250, function(){ $('span#form_upload').fadeIn(250); document.getElementById('ulfile').click(); });"]);
-		echo "	<span id='form_upload' style='display: none;'>";
-		echo button::create(['label'=>$text['button-cancel'],'icon'=>$settings->get('theme', 'button_icon_cancel'),'type'=>'button','id'=>'btn_upload_cancel','style'=>'margin-left: 15px;','onclick'=>"$('span#form_upload').fadeOut(250, function(){ document.getElementById('form_upload').reset(); $('#btn_upload').fadeIn(250) });"]);
-		echo "		<input type='text' class='txt' style='width: 100px; cursor: pointer;' id='filename' placeholder='Select...' onclick=\"document.getElementById('ulfile').click(); this.blur();\" onfocus='this.blur();'>";
-		echo "		<input type='file' id='ulfile' name='file' style='display: none;' accept='.wav,.mp3,.ogg' onchange=\"document.getElementById('filename').value = this.files.item(0).name; check_file_type(this);\">";
-		echo button::create(['type'=>'submit','label'=>$text['button-upload'],'icon'=>$settings->get('theme', 'button_icon_upload')]);
-		echo "	</span>\n";
-		echo "	</form>\n";
-		$margin_left = true;
+		$_ul_btn  = button::create(['type'=>'button','label'=>$text['button-upload'],'icon'=>$settings->get('theme', 'button_icon_add'),'id'=>'btn_upload','style'=>(!$_ml ? 'margin-left: 15px;' : null),'onclick'=>"$(this).fadeOut(250, function(){ \$('span#form_upload').fadeIn(250); document.getElementById('ulfile').click(); });"]);
+		$_can_btn = button::create(['label'=>$text['button-cancel'],'icon'=>$settings->get('theme', 'button_icon_cancel'),'type'=>'button','id'=>'btn_upload_cancel','style'=>'margin-left: 15px;','onclick'=>"\$('span#form_upload').fadeOut(250, function(){ document.getElementById('form_upload').reset(); \$('#btn_upload').fadeIn(250) });"]);
+		$_sub_btn = button::create(['type'=>'submit','label'=>$text['button-upload'],'icon'=>$settings->get('theme', 'button_icon_upload')]);
+		$btn_upload_form  = "<form id='form_upload' class='inline' method='post' enctype='multipart/form-data'>\n";
+		$btn_upload_form .= "<input name='a' type='hidden' value='upload'>\n";
+		$btn_upload_form .= "<input type='hidden' name='id' value='".escape($voicemail_id)."'>\n";
+		$btn_upload_form .= "<input type='hidden' name='type' value='rec'>\n";
+		$btn_upload_form .= "<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
+		$btn_upload_form .= $_ul_btn."\n";
+		$btn_upload_form .= "<span id='form_upload' style='display: none;'>\n";
+		$btn_upload_form .= $_can_btn."\n";
+		$btn_upload_form .= "	<input type='text' class='txt' style='width: 100px; cursor: pointer;' id='filename' placeholder='Select...' onclick=\"document.getElementById('ulfile').click(); this.blur();\" onfocus='this.blur();'>\n";
+		$btn_upload_form .= "	<input type='file' id='ulfile' name='file' style='display: none;' accept='.wav,.mp3,.ogg' onchange=\"document.getElementById('filename').value = this.files.item(0).name; check_file_type(this);\">\n";
+		$btn_upload_form .= $_sub_btn."\n";
+		$btn_upload_form .= "</span>\n";
+		$btn_upload_form .= "</form>\n";
+		$_ml = true;
+		unset($_ul_btn, $_can_btn, $_sub_btn);
+	} elseif ($has_voicemail_greeting_upload && is_array($greetings) && @sizeof($greetings) >= 9) {
+		$_ul_btn = button::create(['type'=>'submit','label'=>$text['button-upload'],'icon'=>$settings->get('theme', 'button_icon_add')]);
+		$btn_upload_form  = "<form class='inline' method='post'>\n";
+		$btn_upload_form .= "<input type='hidden' name='limit_reached' value='true'>\n";
+		$btn_upload_form .= $_ul_btn."\n";
+		$btn_upload_form .= "</form>\n";
+		$_ml = true;
+		unset($_ul_btn);
 	}
-	else if ($has_voicemail_greeting_upload && is_array($greetings) && @sizeof($greetings) >= 9) {
-		echo "	<form class='inline' method='post'>\n";
-		echo "	<input type='hidden' name='limit_reached' value='true'>\n";
-		echo button::create(['type'=>'submit','label'=>$text['button-upload'],'icon'=>$settings->get('theme', 'button_icon_add')]);
-		echo "	</form>\n";
-		$margin_left = true;
-	}
+	$btn_delete = '';
 	if ($has_voicemail_greeting_delete && $greetings) {
-		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none; '.(!$margin_left ? 'margin-left: 15px;' : null),'onclick'=>"modal_open('modal-delete','btn_delete');"]);
-		$margin_left = true;
+		$btn_delete = button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'id'=>'btn_delete','name'=>'btn_delete','style'=>'display: none;'.(!$_ml ? ' margin-left: 15px;' : null),'onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}
-	echo "	</div>\n";
-	echo "	<div style='clear: both;'></div>\n";
-	echo "</div>\n";
+	unset($_ml);
 
+//build modal
+	$modal_delete = '';
 	if ($has_voicemail_greeting_delete && $greetings) {
-		echo modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
+		$modal_delete = modal::create(['id'=>'modal-delete','type'=>'delete','actions'=>button::create(['type'=>'button','label'=>$text['button-continue'],'icon'=>'check','id'=>'btn_delete','style'=>'float: right; margin-left: 15px;','collapse'=>'never','onclick'=>"modal_close(); list_action_set('delete'); list_form_submit('form_list');"])]);
 	}
 
-	echo $text['description']." <strong>".escape($voicemail_id)."</strong>\n";
-	echo "<br /><br />\n";
+//build table headers
+	$th_greeting_id       = th_order_by('greeting_id',          $text['label-number'],      $order_by, $order, null, "class='center shrink'",   "id=".urlencode($voicemail_id));
+	$th_greeting_name     = th_order_by('greeting_name',         $text['label-name'],        $order_by, $order, null, null,                        "id=".urlencode($voicemail_id));
+	$th_greeting_filename = '';
+	if (!$storage_is_base64) {
+		$th_greeting_filename = th_order_by('greeting_filename', $text['label-filename'],    $order_by, $order, null, "class='hide-sm-dn'",       "id=".urlencode($voicemail_id));
+	}
+	$th_description       = th_order_by('greeting_description',  $text['label-description'], $order_by, $order, null, "class='hide-sm-dn pct-25'", "id=".urlencode($voicemail_id));
 
-	echo "<form id='form_list' method='post'>\n";
-	echo "<input type='hidden' id='action' name='action' value=''>\n";
-	echo "<input type='hidden' id='voicemail_id' name='voicemail_id' value='".escape($voicemail_id)."'>\n";
-
-	echo "<div class='card'>\n";
-	echo "<table class='list'>\n";
-	echo "<tr class='list-header'>\n";
+//compute col count for progress bar colspan
 	$col_count = 0;
-	if ($has_voicemail_greeting_delete) {
-		echo "	<th class='checkbox'>\n";
-		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(empty($greetings) ? "style='visibility: hidden;'" : null).">\n";
-		echo "	</th>\n";
-		$col_count++;
-	}
-	echo "<th class='shrink center'>".$text['label-selected']."</th>\n";
-	$col_count++;
- 	echo th_order_by('greeting_id', $text['label-number'], $order_by, $order, null, "class='center shrink'", "id=".urlencode($voicemail_id));
-	$col_count++;
-	echo th_order_by('greeting_name', $text['label-name'], $order_by, $order, null, null, "id=".urlencode($voicemail_id));
-	$col_count++;
-	if (empty($settings->get('voicemail', 'storage_type')) || $settings->get('voicemail', 'storage_type') != 'base64') {
-		echo th_order_by('greeting_filename', $text['label-filename'], $order_by, $order, null, "class='hide-sm-dn'", "id=".urlencode($voicemail_id));
-		$col_count++;
-	}
-	if ($has_voicemail_greeting_play || $has_voicemail_greeting_download) {
-		echo "<th class='center'>".$text['label-tools']."</th>\n";
-		$col_count++;
-	}
-	echo "<th class='center no-wrap hide-xs'>".$text['label-size']."</th>\n";
-	$col_count++;
-	if (empty($settings->get('voicemail', 'storage_type')) || $settings->get('voicemail', 'storage_type') != 'base64') {
-		echo "<th class='center no-wrap hide-xs'>".$text['label-uploaded']."</th>\n";
-		$col_count++;
-	}
-	echo th_order_by('greeting_description', $text['label-description'], $order_by, $order, null, "class='hide-sm-dn pct-25'", "id=".urlencode($voicemail_id));
-	$col_count++;
-	if ($has_voicemail_greeting_edit && $settings->get('theme', 'list_row_edit_button', false)) {
-		echo "	<td class='action-button'>&nbsp;</td>\n";
-	}
-	echo "</tr>\n";
+	if ($has_voicemail_greeting_delete) { $col_count++; }
+	$col_count++; //selected radio
+	$col_count++; //greeting_id
+	$col_count++; //greeting_name
+	if (!$storage_is_base64) { $col_count++; } //filename
+	if ($has_voicemail_greeting_play || $has_voicemail_greeting_download) { $col_count++; } //tools
+	$col_count++; //size
+	if (!$storage_is_base64) { $col_count++; } //uploaded
+	$col_count++; //description
+	if ($has_voicemail_greeting_edit && $list_row_edit_button) { $col_count++; } //edit button
 
-	if (is_array($greetings) && @sizeof($greetings) != 0) {
+//build row data
+	if (is_array($greetings)) {
+		date_default_timezone_set($settings->get('domain', 'time_zone', date_default_timezone_get()));
+		$time_format = ($settings->get('domain', 'time_format') == '24h') ? 'H:i:s' : 'h:i:s a';
 		$x = 0;
-		foreach ($greetings as $row) {
-			//playback progress bar
-			if ($has_voicemail_greeting_play) {
-				echo "<tr class='list-row' id='recording_progress_bar_".escape($row['voicemail_greeting_uuid'])."' onclick=\"recording_seek(event,'".escape($row['voicemail_greeting_uuid'])."')\" style='display: none;'><td id='playback_progress_bar_background_".escape($row['voicemail_greeting_uuid'])."' class='playback_progress_bar_background' style='padding: 0; border: none;' colspan='".$col_count."'><span class='playback_progress_bar' id='recording_progress_".escape($row['voicemail_greeting_uuid'])."'></span></td></tr>\n";
-				echo "<tr class='list-row' style='display: none;'><td></td></tr>\n"; // dummy row to maintain alternating background color
-			}
+		foreach ($greetings as &$row) {
+			app::dispatch_list_render_row('voicemail_greeting_list_page_hook', null, $row, $x);
 			$list_row_url = '';
 			if ($has_voicemail_greeting_edit) {
 				$list_row_url = "voicemail_greeting_edit.php?id=".urlencode($row['voicemail_greeting_uuid'])."&voicemail_id=".urlencode($voicemail_id);
@@ -475,88 +446,96 @@
 					$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 				}
 			}
-			echo "<tr class='list-row' href='".$list_row_url."'>\n";
-			if ($has_voicemail_greeting_delete) {
-				echo "	<td class='checkbox'>\n";
-				echo "		<input type='checkbox' name='voicemail_greetings[$x][checked]' id='checkbox_".$x."' value='true' onclick=\"if (!this.checked) { document.getElementById('checkbox_all').checked = false; } checkbox_on_change(this);\">\n";
-				echo "		<input type='hidden' name='voicemail_greetings[$x][uuid]' value='".escape($row['voicemail_greeting_uuid'])."' />\n";
-				echo "	</td>\n";
+			$row['_list_row_url']  = $list_row_url;
+			$row['_radio_button']  = "<input type='radio' onclick=\"window.location='".PROJECT_PATH."/app/voicemail_greetings/voicemail_greetings.php?id=".escape($voicemail_id)."&greeting_id=".escape($row['greeting_id'])."&action=set&order_by=".$order_by."&order=".$order."';\" name='greeting_id' value='".escape($row['greeting_id'])."' ".(($row['greeting_id'] == $selected_greeting_id) ? "checked='checked'" : '')." style='display: block; width: 20px; height: auto; margin: auto calc(50% - 10px);'>";
+			$row['_progress_bar_html'] = '';
+			if ($has_voicemail_greeting_play) {
+				$_uuid_e = escape($row['voicemail_greeting_uuid']);
+				$row['_progress_bar_html']  = "<tr class='list-row' id='recording_progress_bar_{$_uuid_e}' onclick=\"recording_seek(event,'{$_uuid_e}')\" style='display: none;'><td id='playback_progress_bar_background_{$_uuid_e}' class='playback_progress_bar_background' style='padding: 0; border: none;' colspan='{$col_count}'><span class='playback_progress_bar' id='recording_progress_{$_uuid_e}'></span></td></tr>\n";
+				$row['_progress_bar_html'] .= "<tr class='list-row' style='display: none;'><td></td></tr>\n";
 			}
-			echo "	<td class='center no-link'>";
-			$selected = ($row['greeting_id'] == $selected_greeting_id) ? true : false;
-			echo 		"<input type='radio' onclick=\"window.location='".PROJECT_PATH."/app/voicemail_greetings/voicemail_greetings.php?id=".escape($voicemail_id)."&greeting_id=".escape($row['greeting_id'])."&action=set&order_by=".$order_by."&order=".$order."';\" name='greeting_id' value='".escape($row['greeting_id'])."' ".(($selected) ? "checked='checked'" : null)." style='display: block; width: 20px; height: auto; margin: auto calc(50% - 10px);'>\n";
-			echo "	</td>\n";
-			echo "	<td class='center'>".escape($row['greeting_id'])."</td>\n";
-			echo "	<td class='no-wrap'>";
-			if ($has_voicemail_greeting_edit) {
-				echo "<a href='".$list_row_url."' title=\"".$text['button-edit']."\">".escape($row['greeting_name'])."</a>";
-			}
-			else {
-				echo escape($row['greeting_name']);
-			}
-			echo "	</td>\n";
-			if (empty($settings->get('voicemail', 'storage_type')) || $settings->get('voicemail', 'storage_type') != 'base64') {
-				echo "	<td class='hide-sm-dn'>".escape($row['greeting_filename'])."</td>\n";
-			}
+			$row['_tools_html'] = '';
 			if ($has_voicemail_greeting_play || $has_voicemail_greeting_download) {
-				echo "	<td class='middle button center no-link no-wrap'>";
+				$_tools = '';
 				if ($has_voicemail_greeting_play) {
-					$greeting_file_path = $row['greeting_filename'];
-					$greeting_file_name = strtolower(pathinfo($greeting_file_path, PATHINFO_BASENAME));
-					$greeting_file_ext = pathinfo($greeting_file_name, PATHINFO_EXTENSION);
-					switch ($greeting_file_ext) {
-						case "wav" : $greeting_type = "audio/wav"; break;
-						case "mp3" : $greeting_type = "audio/mpeg"; break;
-						case "ogg" : $greeting_type = "audio/ogg"; break;
-					}
-					echo "<audio id='recording_audio_".escape($row['voicemail_greeting_uuid'])."' style='display: none;' preload='none' ontimeupdate=\"update_progress('".escape($row['voicemail_greeting_uuid'])."')\" onended=\"recording_reset('".escape($row['voicemail_greeting_uuid'])."');\" src=\"voicemail_greetings.php?id=".escape($voicemail_id)."&a=download&type=rec&uuid=".escape($row['voicemail_greeting_uuid'])."\" type='".$greeting_type."'></audio>";
-					echo button::create(['type'=>'button','title'=>$text['label-play'].' / '.$text['label-pause'],'icon'=>$settings->get('theme', 'button_icon_play'),'id'=>'recording_button_'.escape($row['voicemail_greeting_uuid']),'onclick'=>"recording_play('".escape($row['voicemail_greeting_uuid'])."','".escape($voicemail_id).'|'.escape($row['voicemail_greeting_uuid'])."')"]);
+					$_uuid_e       = escape($row['voicemail_greeting_uuid']);
+					$_file_ext     = pathinfo(strtolower($row['greeting_filename']), PATHINFO_EXTENSION);
+					$_audio_types  = ['wav'=>'audio/wav','mp3'=>'audio/mpeg','ogg'=>'audio/ogg'];
+					$_audio_type   = $_audio_types[$_file_ext] ?? 'audio/wav';
+					$_tools .= "<audio id='recording_audio_{$_uuid_e}' style='display: none;' preload='none' ontimeupdate=\"update_progress('{$_uuid_e}')\" onended=\"recording_reset('{$_uuid_e}');\" src=\"voicemail_greetings.php?id=".escape($voicemail_id)."&a=download&type=rec&uuid={$_uuid_e}\" type='{$_audio_type}'></audio>";
+					$_tools .= button::create(['type'=>'button','title'=>$text['label-play'].' / '.$text['label-pause'],'icon'=>$settings->get('theme', 'button_icon_play'),'id'=>'recording_button_'.$_uuid_e,'onclick'=>"recording_play('{$_uuid_e}','".escape($voicemail_id)."|{$_uuid_e}')"]);
 				}
 				if ($has_voicemail_greeting_download) {
-					echo button::create(['type'=>'button','title'=>$text['label-download'],'icon'=>$settings->get('theme', 'button_icon_download'),'link'=>"voicemail_greetings.php?a=download&type=rec&t=bin&id=".urlencode($voicemail_id)."&uuid=".escape($row['voicemail_greeting_uuid'])]);
+					$_tools .= button::create(['type'=>'button','title'=>$text['label-download'],'icon'=>$settings->get('theme', 'button_icon_download'),'link'=>"voicemail_greetings.php?a=download&type=rec&t=bin&id=".urlencode($voicemail_id)."&uuid=".escape($row['voicemail_greeting_uuid'])]);
 				}
-				echo "	</td>\n";
+				$row['_tools_html'] = $_tools;
+				unset($_tools, $_uuid_e, $_file_ext, $_audio_types, $_audio_type);
 			}
-
-			if (!empty($settings->get('voicemail', 'storage_type')) && $settings->get('voicemail', 'storage_type') == 'base64') {
-				$file_size = byte_convert($row['greeting_size']);
-				echo "	<td class='center no-wrap hide-xs'>".$file_size."</td>\n";
-			}
-			else {
+			if ($storage_is_base64) {
+				$row['_file_size'] = byte_convert($row['greeting_size']);
+				$row['_file_date'] = '';
+			} else {
 				if (file_exists($greeting_dir.'/'.$row['greeting_filename'])) {
-					date_default_timezone_set($settings->get('domain', 'time_zone', date_default_timezone_get()));
-					if ($settings->get('domain', 'time_format') == '24h') {
-						$time_format = 'H:i:s';
-					}
-					else {
-						$time_format = 'h:i:s a';
-					}
-					$file_size = byte_convert(filesize($greeting_dir.'/'.$row['greeting_filename']));
-					$file_date = date("M d, Y ".$time_format, filemtime($greeting_dir.'/'.$row['greeting_filename']));
+					$row['_file_size'] = byte_convert(filesize($greeting_dir.'/'.$row['greeting_filename']));
+					$row['_file_date'] = date("M d, Y ".$time_format, filemtime($greeting_dir.'/'.$row['greeting_filename']));
 				} else {
-					$file_size = 0;
-					$file_date = '';
+					$row['_file_size'] = '0';
+					$row['_file_date'] = '';
 				}
-				echo "	<td class='center no-wrap hide-xs'>".$file_size."</td>\n";
-				echo "	<td class='center no-wrap hide-xs'>".$file_date."</td>\n";
 			}
-			echo "	<td class='description overflow hide-sm-dn'>".escape($row['greeting_description'])."&nbsp;</td>\n";
-			if ($has_voicemail_greeting_edit && $settings->get('theme', 'list_row_edit_button', false)) {
-				echo "	<td class='action-button'>";
-				echo button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
-				echo "	</td>\n";
+			$row['_edit_button'] = '';
+			if ($has_voicemail_greeting_edit && $list_row_edit_button) {
+				$row['_edit_button'] = button::create(['type'=>'button','title'=>$text['button-edit'],'icon'=>$settings->get('theme', 'button_icon_edit'),'link'=>$list_row_url]);
 			}
-			echo "</tr>\n";
 			$x++;
 		}
-		unset($greetings);
+		unset($row);
 	}
 
-	echo "</table>\n";
-	echo "</div>\n";
-	echo "<br />\n";
-	echo "<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
-	echo "</form>\n";
+//build the template
+	$template = new template();
+	$template->engine = 'smarty';
+	$template->template_dir = __DIR__.'/resources/views';
+	$template->cache_dir = sys_get_temp_dir();
+	$template->init();
+
+//assign the template variables
+	$template->assign('text',                              $text);
+	$template->assign('num_rows',                          $num_rows);
+	$template->assign('greetings',                         $greetings ?? []);
+	$template->assign('voicemail_id',                      $voicemail_id);
+	$template->assign('order_by',                          $order_by);
+	$template->assign('order',                             $order);
+	$template->assign('token',                             $token);
+	$template->assign('storage_is_base64',                 $storage_is_base64);
+	$template->assign('has_voicemail_greeting_delete',     $has_voicemail_greeting_delete);
+	$template->assign('has_voicemail_greeting_download',   $has_voicemail_greeting_download);
+	$template->assign('has_voicemail_greeting_edit',       $has_voicemail_greeting_edit);
+	$template->assign('has_voicemail_greeting_play',       $has_voicemail_greeting_play);
+	$template->assign('list_row_edit_button',              $list_row_edit_button);
+	$template->assign('btn_back',                          $btn_back);
+	$template->assign('btn_add',                           $btn_add);
+	$template->assign('btn_upload_form',                   $btn_upload_form);
+	$template->assign('btn_delete',                        $btn_delete);
+	$template->assign('modal_delete',                      $modal_delete);
+	$template->assign('th_greeting_id',                    $th_greeting_id);
+	$template->assign('th_greeting_name',                  $th_greeting_name);
+	$template->assign('th_greeting_filename',              $th_greeting_filename);
+	$template->assign('th_description',                    $th_description);
+
+//invoke pre render hook
+	app::dispatch_list_pre_render('voicemail_greeting_list_page_hook', null, $template);
+
+//include the header
+	$document['title'] = $text['title'];
+	require_once "resources/header.php";
+
+//render the template
+	$html = $template->render('voicemail_greetings_list.tpl');
+
+//invoke post render hook
+	app::dispatch_list_post_render('voicemail_greeting_list_page_hook', null, $html);
+	echo $html;
 
 //include the footer
 	require_once "resources/footer.php";
