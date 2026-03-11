@@ -51,7 +51,7 @@ class bridges_hook_example extends render_bridges {
 	/**
 	 * Hook: Before rendering each table row
 	 *
-	 * Called for each bridge row before the <tr> HTML is generated.
+	 * Called for each bridge row before per-row data is passed to the template.
 	 * Use this to:
 	 * - Modify how individual rows are displayed
 	 * - Add/remove data fields
@@ -79,5 +79,39 @@ class bridges_hook_example extends render_bridges {
 
 		// Note: You can add custom fields with '_' prefix to avoid conflicts
 		// These are available in the row rendering context
+	}
+
+	/**
+	 * Hook: Before the Smarty template is rendered
+	 *
+	 * Called after all data is prepared and assigned but before render() is invoked.
+	 * Use this to:
+	 * - Assign additional variables to the template
+	 * - Override variables already assigned by the page
+	 * - Inject data from external sources into the view
+	 *
+	 * @param url      $url      The URL object
+	 * @param template $template The Smarty template object (assign variables via $template->assign())
+	 */
+	public static function on_pre_render(url $url, template $template): void {
+		// Example: inject additional data into the template before rendering
+		// $template->assign('my_custom_banner', '<div class="notice">Maintenance tonight</div>');
+	}
+
+	/**
+	 * Hook: After the Smarty template is rendered
+	 *
+	 * Called with the fully rendered HTML string passed by reference.
+	 * Use this to:
+	 * - Append or prepend content to the page body
+	 * - Replace tokens in the rendered output
+	 * - Add debug information
+	 *
+	 * @param url    $url  The URL object
+	 * @param string $html The rendered HTML output (passed by reference for modification)
+	 */
+	public static function on_post_render(url $url, string &$html): void {
+		// Example: append a debug comment to the rendered output
+		// $html .= "\n<!-- rendered by bridges_hook_example -->";
 	}
 }
