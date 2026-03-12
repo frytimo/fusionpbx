@@ -228,9 +228,11 @@ class auto_loader {
 			$project_path . '/resources/interfaces/*.php',
 			$project_path . '/resources/traits/*.php',
 			$project_path . '/resources/classes/*.php',
+			$project_path . '/resources/classes/*/*.php',
 			$project_path . '/*/*/resources/interfaces/*.php',
 			$project_path . '/*/*/resources/traits/*.php',
 			$project_path . '/*/*/resources/classes/*.php',
+			$project_path . '/*/*/resources/classes/*/*.php',
 			$project_path . '/core/authentication/resources/classes/plugins/*.php',
 		];
 
@@ -648,9 +650,11 @@ class auto_loader {
 		$search_path[] = glob($project_path . "/resources/interfaces/" . $class_name . ".php");
 		$search_path[] = glob($project_path . "/resources/traits/" . $class_name . ".php");
 		$search_path[] = glob($project_path . "/resources/classes/" . $class_name . ".php");
+		$search_path[] = glob($project_path . "/resources/classes/*/" . $class_name . ".php");
 		$search_path[] = glob($project_path . "/*/*/resources/interfaces/" . $class_name . ".php");
 		$search_path[] = glob($project_path . "/*/*/resources/traits/" . $class_name . ".php");
 		$search_path[] = glob($project_path . "/*/*/resources/classes/" . $class_name . ".php");
+		$search_path[] = glob($project_path . "/*/*/resources/classes/*/" . $class_name . ".php");
 
 		//fix class names in the plugins directory prefixed with 'plugin_'
 		if (str_starts_with($class_name, 'plugin_')) {

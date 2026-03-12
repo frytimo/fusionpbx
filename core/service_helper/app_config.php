@@ -2,7 +2,7 @@
 
 // application details
 $apps[$x]['name'] = "Service Helper";
-$apps[$x]['uuid'] = "generate-uuid-here";  // Replace with actual UUID
+$apps[$x]['uuid'] = "e9d7bf44-a216-4b21-8d21-a6c32e25d573";  // Replace with actual UUID
 $apps[$x]['category'] = "System";
 $apps[$x]['subcategory'] = "";
 $apps[$x]['version'] = "1.0";
@@ -23,7 +23,7 @@ $apps[$x]['permissions'][$y]['groups'][] = 'superadmin';
 $y = 0;
 $apps[$x]['menu'][$y]['title']['en-us'] = 'Service Helper';
 $apps[$x]['menu'][$y]['title']['en-gb'] = 'Service Helper';
-$apps[$x]['menu'][$y]['uuid'] = "generate-uuid-here";
+$apps[$x]['menu'][$y]['uuid'] = "e9d7bf44-a216-4b21-8d21-a6c32e25d573";
 $apps[$x]['menu'][$y]['parent_uuid'] = "594d99c5-6128-9c88-ca35-4b33392cec0f";  // System menu
 $apps[$x]['menu'][$y]['category'] = "internal";
 $apps[$x]['menu'][$y]['path'] = "/core/service_helper/service_helper.php";
@@ -88,7 +88,7 @@ $apps[$x]['db'][$table_index]['fields'][$field_index]['description']['en-us'] = 
 
 // default settings
 $y = 0;
-$apps[$x]['default_settings'][$y]['default_setting_uuid'] = "generate-uuid-here";  // Replace
+$apps[$x]['default_settings'][$y]['default_setting_uuid'] = "5b3c250a-33da-405d-88b0-d1032722d416";  // Replace
 $apps[$x]['default_settings'][$y]['default_setting_category'] = "service_helper";
 $apps[$x]['default_settings'][$y]['default_setting_subcategory'] = "cron_interval";
 $apps[$x]['default_settings'][$y]['default_setting_name'] = "text";

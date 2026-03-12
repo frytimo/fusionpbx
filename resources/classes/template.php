@@ -24,122 +24,201 @@
 	Mark J Crane <markjcrane@fusionpbx.com>
 */
 
-//define the template class
+/**
+ * Template factory and facade.
+ *
+ * Acts as the single public entry-point for all template rendering in
+ * FusionPBX.  The concrete rendering work is delegated to an engine adapter
+ * (smarty_engine, twig_engine, raintpl_engine, …) that implements the
+ * {@see template_engine} interface.
+ *
+ * Engine selection priority (highest → lowest):
+ *   1. Explicit call to {@see setEngine()} after construction.
+ *   2. Direct assignment to the public {@see $engine} property followed by
+ *      a call to {@see init()} — preserves backward compatibility with all
+ *      existing callers.
+ *   3. The value stored in default_settings under category "template",
+ *      sub-category "engine" (read at construction time when a database
+ *      session is available).
+ *   4. Hard-coded fallback: 'smarty'.
+ *
+ * Adding a new engine requires only:
+ *   - A new class in resources/classes/template/ that implements
+ *     template_engine.
+ *   - Setting the "template / engine" default_setting to the new name.
+ *   - No changes anywhere else in the codebase.
+ */
 class template {
 
+	// -----------------------------------------------------------------------
+	// Public properties kept for backward compatibility with existing callers
+	// that set them directly before calling init().
+	// -----------------------------------------------------------------------
+
+	/** @var string Name of the engine to use ('smarty', 'twig', 'raintpl', …). */
 	public $engine;
+
+	/** @var string Absolute path to the directory containing template files. */
 	public $template_dir;
+
+	/** @var string Absolute path used for compiled / cached templates. */
 	public $cache_dir;
-	private $object;
-	private $var_array;
 
-	private $template_name;
+	// -----------------------------------------------------------------------
+	// Private state
+	// -----------------------------------------------------------------------
 
+	/** @var template_engine|null The instantiated engine adapter. */
+	private $object = null;
+
+	/** @var string Full path to a specific template file passed to the constructor. */
+	private $template_name = '';
+
+	// -----------------------------------------------------------------------
+	// Construction
+	// -----------------------------------------------------------------------
+
+	/**
+	 * @param string $template Optional absolute path to a specific template
+	 *                         file.  When supplied the directory part is used
+	 *                         as template_dir and the full path is passed to
+	 *                         render() when no name is given explicitly.
+	 */
 	public function __construct(string $template = '') {
 		if ($template !== '') {
 			$this->template_name = $template;
-			$this->template_dir = dirname($template);
+			$this->template_dir  = dirname($template);
 		} else {
 			$this->template_dir = PROJECT_ROOT . '/resources/views';
 		}
 
 		$this->cache_dir = sys_get_temp_dir();
 
-		// Assume we are using Smarty
-		require_once "resources/templates/engine/smarty/Smarty.class.php";
-		$this->object = new Smarty();
-		$this->object->setTemplateDir($this->template_dir);
-		$this->object->setCompileDir($this->cache_dir);
-		$this->object->setCacheDir($this->cache_dir);
-		$this->object->registerPlugin("modifier", "in_array", "in_array");
-		$this->object->registerPlugin("modifier", "json", "json_encode");
+		// Resolve the engine name from default_settings when a database
+		// session already exists; fall back to 'smarty' otherwise.
+		$this->engine = $this->resolve_default_engine();
+	}
+
+	// -----------------------------------------------------------------------
+	// Fluent engine override (new API)
+	// -----------------------------------------------------------------------
+
+	/**
+	 * Overrides the engine to use and returns $this for fluent chaining.
+	 *
+	 * Calling this method after construction but before init() / render()
+	 * takes precedence over both the default_settings value and any earlier
+	 * assignment to the public $engine property.
+	 *
+	 * @param  string $engine Engine name ('smarty', 'twig', 'raintpl', …).
+	 * @return static
+	 */
+	public function setEngine(string $engine): static {
+		$this->engine = $engine;
+		// Force the adapter to be re-created on the next call that needs it.
+		$this->object = null;
+		return $this;
+	}
+
+	// -----------------------------------------------------------------------
+	// Initialisation (backward-compatible existing API)
+	// -----------------------------------------------------------------------
+
+	/**
+	 * Instantiates the concrete engine adapter selected by $this->engine.
+	 *
+	 * Existing callers set $view->engine then call $view->init(); that pattern
+	 * continues to work unchanged.  If init() is never called the adapter is
+	 * created lazily on the first assign() / render() / display() call.
+	 */
+	public function init(): void {
+		$this->object = $this->create_engine($this->engine);
+	}
+
+	// -----------------------------------------------------------------------
+	// Core template operations
+	// -----------------------------------------------------------------------
+
+	/**
+	 * Assigns a variable to the template engine.
+	 *
+	 * @param string $key   Variable name exposed inside the template.
+	 * @param mixed  $value The value to expose.
+	 */
+	public function assign($key, $value): void {
+		$this->ensure_engine();
+		$this->object->assign($key, $value);
 	}
 
 	/**
-	 * Initializes the template engine based on the selected engine.
+	 * Renders the template and returns the result as a string.
 	 *
-	 * @access public
+	 * @param string $name Template file name/path.  When omitted the value
+	 *                     supplied to the constructor is used.
+	 * @return string Rendered output.
 	 */
-	public function init() {
-		if ($this->engine === 'smarty') {
-			require_once "resources/templates/engine/smarty/Smarty.class.php";
-			$this->object = new Smarty();
-			$this->object->setTemplateDir($this->template_dir);
-			$this->object->setCompileDir($this->cache_dir);
-			$this->object->setCacheDir($this->cache_dir);
-			$this->object->registerPlugin("modifier", "in_array", "in_array");
-			$this->object->registerPlugin("modifier", "json", "json_encode");
-		}
-		if ($this->engine === 'raintpl') {
-			require_once "resources/templates/engine/raintpl/rain.tpl.class.php";
-			$this->object = new RainTPL();
-			RainTPL::configure('tpl_dir', realpath($this->template_dir) . "/");
-			RainTPL::configure('cache_dir', realpath($this->cache_dir) . "/");
-		}
-		if ($this->engine === 'twig') {
-			require_once "resources/templates/engine/Twig/Autoloader.php";
-			Twig_Autoloader::register();
-			$loader = new Twig_Loader_Filesystem($this->template_dir);
-			$this->object = new Twig_Environment($loader);
-			$lexer = new Twig_Lexer($this->object, [
-				'tag_comment' => ['{*', '*}'],
-				'tag_block' => ['{', '}'],
-				'tag_variable' => ['{$', '}'],
-			]);
-			$this->object->setLexer($lexer);
-		}
-	}
-
-	/**
-	 * Assigns a value to the template engine based on the selected engine.
-	 *
-	 * @param string $key   The key for the assigned value.
-	 * @param mixed  $value The value to be assigned.
-	 *
-	 * @access public
-	 *
-	 * @return void
-	 */
-	public function assign($key, $value) {
-		if ($this->engine === 'raintpl') {
-			$this->object->assign($key, $value);
-		} elseif ($this->engine === 'twig') {
-			$this->var_array[$key] = $value;
-		} else {
-			$this->object->assign($key, $value);
-		}
-	}
-
-	/**
-	 * Renders the given template using the configured engine.
-	 *
-	 * @param string $name Name of the template to render. Values can be 'smarty', 'raintpl' or 'twig' (case sensitive)
-	 *
-	 * @return mixed The rendered template output, depending on the used engine
-	 *
-	 * @access public
-	 */
-	public function render($name = '') {
+	public function render(string $name = ''): string {
 		if ($name === '' && $this->template_name !== '') {
 			$name = $this->template_name;
 		}
-
-		switch ($this->engine) {
-			case 'raintpl':
-				return $this->object->draw($name, 'return_string=true');
-			case 'twig':
-				return $this->object->render($name, $this->var_array);
-			case 'smarty':
-			default:
-				return $this->object->fetch($name);
-		}
+		$this->ensure_engine();
+		return $this->object->render($name);
 	}
 
+	/**
+	 * Renders the template and sends the output directly to the browser.
+	 */
 	public function display(): void {
 		echo $this->render();
 	}
 
 	public function __toString(): string {
 		return $this->render();
+	}
+
+	// -----------------------------------------------------------------------
+	// Private helpers
+	// -----------------------------------------------------------------------
+
+	/**
+	 * Ensures the engine adapter has been created, creating it lazily if not.
+	 */
+	private function ensure_engine(): void {
+		if ($this->object === null) {
+			$this->object = $this->create_engine($this->engine);
+		}
+	}
+
+	/**
+	 * Factory method — maps an engine name to a concrete adapter instance.
+	 *
+	 * @param  string $name Engine name.
+	 * @return template_engine
+	 */
+	private function create_engine(string $name): template_engine {
+		return match ($name) {
+			'twig'    => new twig_engine($this->template_dir, $this->cache_dir),
+			'raintpl' => new raintpl_engine($this->template_dir, $this->cache_dir),
+			default   => new smarty_engine($this->template_dir, $this->cache_dir),
+		};
+	}
+
+	/**
+	 * Reads the preferred engine from default_settings when the database
+	 * session is already available.  Falls back to 'smarty' so the class
+	 * works at bootstrap time before any session exists.
+	 *
+	 * @return string Engine name.
+	 */
+	private function resolve_default_engine(): string {
+		if (!class_exists('settings', false)) {
+			return 'smarty';
+		}
+		try {
+			$s = new settings([]);
+			return $s->get('template', 'engine', 'smarty') ?: 'smarty';
+		} catch (\Throwable $e) {
+			return 'smarty';
+		}
 	}
 }

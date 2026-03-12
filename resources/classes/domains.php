@@ -346,10 +346,11 @@ class domains {
 		//get the list of installed apps from the app and core directories
 		$config_list_1 = glob(dirname(__DIR__, 2) . "/app/*/app_config.php");
 		$config_list_2 = glob(dirname(__DIR__, 2) . "/core/*/app_config.php");
-		$config_list_3 = glob(dirname(__DIR__, 2) . "/app/*/app_menu.php");
-		$config_list_4 = glob(dirname(__DIR__, 2) . "/core/*/app_menu.php");
-		$config_list = array_merge((array)$config_list_1, (array)$config_list_2, (array)$config_list_3, (array)$config_list_4);
-		unset($config_list_1, $config_list_2, $config_list_3, $config_list_4);
+		$config_list_3 = glob(dirname(__DIR__, 2) . "/themes/*/app_config.php");
+		$config_list_4 = glob(dirname(__DIR__, 2) . "/app/*/app_menu.php");
+		$config_list_5 = glob(dirname(__DIR__, 2) . "/core/*/app_menu.php");
+		$config_list = array_merge((array)$config_list_1, (array)$config_list_2, (array)$config_list_3, (array)$config_list_4, (array)$config_list_5);
+		unset($config_list_1, $config_list_2, $config_list_3, $config_list_4, $config_list_5);
 		$x = 0;
 		foreach ($config_list as $config_path) {
 			$app_path = dirname($config_path);
@@ -416,7 +417,8 @@ class domains {
 		//get the list of default settings
 		$config_list = array_merge(
 			(array) glob(dirname(__DIR__, 2) . "/app/*/app_config.php"),
-			(array) glob(dirname(__DIR__, 2) . "/core/*/app_config.php")
+			(array) glob(dirname(__DIR__, 2) . "/core/*/app_config.php"),
+			(array) glob(dirname(__DIR__, 2) . "/themes/*/app_config.php")
 		);
 		$x = 0;
 		foreach ($config_list as $config_path) {
