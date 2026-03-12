@@ -86,22 +86,19 @@ if (!empty($app_uuid) && is_uuid($app_uuid) && !in_array($app_uuid, $allowed_app
 }
 
 // get posted data
-if (!empty($_POST['dialplans'])) {
-	$action    = $_POST['action'];
-	$dialplans = $_POST['dialplans'];
-	$context   = $_POST['context'];
-	$search    = $_POST['search'] ?? '';
-	$order_by  = $_POST['order_by'];
-	$order     = $_POST['order'];
-}
-
-// get the app uuid
-$app_uuid = (!empty($_REQUEST["app_uuid"]) && is_uuid($_REQUEST["app_uuid"])) ? $_REQUEST["app_uuid"] : '';
+$action    = $url_paging->get('action', '');
+$dialplans = $url_paging->get('dialplans', '');
+$order_by  = $url_paging->get('order_by', '');
+$order     = $url_paging->get('order', '');
+$context   = $url_paging->get('context', ''); // for use in the search form and links
+$search    = $url_paging->get('search', '');
+$show      = $url_paging->get('show', '');
+$app_uuid  = $url_paging->get('app_uuid', '');
 
 // process the http post data by action
 if (!empty($action) && is_array($dialplans) && @sizeof($dialplans) != 0) {
 	// define redirect parameters and url
-	$list_page = $url_paging->set_page('dialplans.php')->build_absolute();
+	$list_page = $url_paging->set_path('dialplans.php')->build_absolute();
 
 	// process action
 	switch ($action) {
@@ -137,8 +134,8 @@ if (!empty($action) && is_array($dialplans) && @sizeof($dialplans) != 0) {
 }
 
 // get order and order by and sanitize the values
-$order_by = $url->get('order_by', '');
-$order    = $url->get('order', '');
+$order_by = $url_paging->get('order_by', '');
+$order    = $url_paging->get('order', '');
 
 // make sure all dialplans with context of public have the inbound route app_uuid
 if (!empty($app_uuid) && $app_uuid == 'c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4') {
@@ -149,11 +146,6 @@ if (!empty($app_uuid) && $app_uuid == 'c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4') {
 	$database->execute($sql);
 	unset($sql);
 }
-
-// set additional variables
-$context = $url_paging->get('context', ''); // for use in the search form and links
-$search  = $url_paging->get('search', '');
-$show    = $url_paging->get('show', '');
 
 // set from session variables
 $list_row_edit_button = $settings->get('theme', 'list_row_edit_button', false);
@@ -214,36 +206,11 @@ if (!empty($search)) {
 }
 $num_rows = $database->select($sql, $parameters ?? null, 'column');
 
-// prepare the paging
-$rows_per_page = $settings->get('domain', 'paging', 50);
-if (!empty($app_uuid)) {
-	$params[] = "app_uuid=" . urlencode($app_uuid);
-}
-if (!empty($context)) {
-	$params[] = "context=" . urlencode($context);
-}
-if (!empty($search)) {
-	$params[] = "search=" . urlencode($search);
-}
-if (!empty($order_by)) {
-	$params[] = "order_by=" . urlencode($order_by);
-}
-if (!empty($order)) {
-	$params[] = "order=" . urlencode($order);
-}
-if ($show == "all" && $has_dialplan_all) {
-	$params[] = "show=all";
-}
-if (!empty($params)) {
-	$param = $params ? implode('&', $params) : null;
-} else {
-	$param = null;
-}
-unset($params);
-// $page = $url->get('page', 0);
-// list($paging_controls, $rows_per_page)      = paging($num_rows, $param, $rows_per_page);
-// list($paging_controls_mini, $rows_per_page) = paging($num_rows, $param, $rows_per_page, true);
-// $offset                                     = $rows_per_page * $page;
+$url_paging->set_total_rows($num_rows);
+$rows_per_page        = $url_paging->get_rows_per_page();
+$offset               = $url_paging->offset();
+$paging_controls      = url_paging::html_paging_controls($url_paging);
+$paging_controls_mini = url_paging::html_paging_mini_controls($url_paging);
 
 // get the list of dialplans
 $sql  = "
@@ -667,7 +634,7 @@ $template->assign('th_enabled', $th_enabled);
 $template->assign('th_description', $th_description);
 
 // invoke pre-render hook
-app::dispatch_list_pre_render('dialplan_list_page_hook', $url, $template);
+app::dispatch_list_pre_render('dialplan_list_page_hook', $url_paging, $template);
 
 // include the header
 $document['title'] = $page_title;
@@ -677,7 +644,7 @@ require_once "resources/header.php";
 $html = $template->render('dialplans_list.tpl');
 
 // invoke post-render hook
-app::dispatch_list_post_render('dialplan_list_page_hook', $url, $html);
+app::dispatch_list_post_render('dialplan_list_page_hook', $url_paging, $html);
 echo $html;
 
 // include the footer
