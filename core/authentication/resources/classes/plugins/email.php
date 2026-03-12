@@ -122,7 +122,7 @@ class plugin_email {
 			$view->assign('messages', message::html(true, '		'));
 
 			//show the views
-			$content = $view->render('username.htm');
+			$content = $view->render('username.tpl');
 			echo $content;
 			exit;
 
@@ -360,7 +360,7 @@ class plugin_email {
 			$view->assign('messages', message::html(true, '		'));
 
 			//show the views
-			$content = $view->render('email.htm');
+			$content = $view->render('email.tpl');
 			echo $content;
 			exit;
 		}

@@ -134,7 +134,7 @@ class plugin_totp {
 			$view->assign('messages', message::html(true, '		'));
 
 			//show the views
-			$content = $view->render('username.htm');
+			$content = $view->render('username.tpl');
 			echo $content;
 			exit;
 		}
@@ -294,7 +294,7 @@ class plugin_totp {
 				$view->assign('messages', message::html(true, '		'));
 
 				//render the template
-				$content = $view->render('totp_secret.htm');
+				$content = $view->render('totp_secret.tpl');
 			} else {
 				//assign values to the template
 				$view->assign("button_verify", $text['label-verify']);
@@ -304,7 +304,7 @@ class plugin_totp {
 				$view->assign('messages', message::html(true, '		'));
 
 				//render the template
-				$content = $view->render('totp.htm');
+				$content = $view->render('totp.tpl');
 			}
 			echo $content;
 			exit;

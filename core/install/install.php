@@ -357,16 +357,15 @@
 
 //show the views
 	//if ($_GET["step"] == "" || $_GET["step"] == "1") {
-	//	$content = $view->render('language.htm');
+	//	$content = $view->render('language.tpl');
 	//}
 
 	if (!empty($_REQUEST["step"]) && $_REQUEST["step"] == "1") {
-		$content = $view->render('configuration.htm');
+		$content = $view->render('configuration.tpl');
 	}
 	if (!empty($_REQUEST["step"]) && $_REQUEST["step"] == "2") {
-		$content = $view->render('database.htm');
+		$content = $view->render('database.tpl');
 	}
 	$view->assign("content", $content);
-	echo $view->render('template.htm');
-
+	echo $view->render('template.tpl');
 

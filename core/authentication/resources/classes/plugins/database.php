@@ -167,7 +167,7 @@ class plugin_database {
 			//$view->assign("token_hash", $token['hash']);
 
 			//show the views
-			$content = $view->render('login.htm');
+			$content = $view->render('login.tpl');
 			echo $content;
 			exit;
 		}
