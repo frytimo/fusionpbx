@@ -48,6 +48,21 @@ if (!defined('FILTER_SANITIZE_DOMAIN')) {
  * - Validation is minimal; use filter_var(..., FILTER_VALIDATE_URL) if needed.
  */
 class url {
+    /**
+     * Sets the page part of the URL
+     * @param string $page
+     * @return self
+     */
+    public function set_page(string $page): static {
+        // Ensure the page is sanitized
+        $page = filter_var($page, FILTER_SANITIZE_URL);
+        
+        // Update the path to include the new page
+        $this->path = '/' . $page;
+        
+        // Return the updated URL object
+        return $this;
+    }
 
 	const SORT_NORMAL = 'natural';
 	const SORT_NATURAL = 'natural';
