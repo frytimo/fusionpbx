@@ -286,6 +286,13 @@ if ($action === 'update' && !empty($dialplan_uuid)) {
 // determine if this is a migration (legacy to unified)
 $is_migration = ($action === 'update' && $dialplan_editor_version !== 'unified');
 
+// allow a default setting to suppress the migration notice globally
+if ($is_migration) {
+	if ($settings->get('dialplan', 'suppress_migration_notice', false) === true) {
+		$is_migration = false;
+	}
+}
+
 // create token
 $object = new token;
 $token = $object->create($_SERVER['PHP_SELF']);
@@ -1265,6 +1272,25 @@ require_once "resources/header.php";
 								<input class="formfld" type="text" name="dialplan_context" id="dialplan_context" maxlength="255" value="<?php echo escape($dialplan_context); ?>">
 							</td>
 						</tr>
+						<?php if ($has_dialplan_domain): ?>
+						<tr>
+							<td class="vncell"><?php echo $text['label-domain']; ?></td>
+							<td class="vtable">
+								<select class="formfld" id="domain_uuid" name="domain_uuid" onchange="domainChanged(this)">
+									<?php if (!is_uuid($dialplan_domain_uuid)): ?>
+									<option value="" selected="selected"><?php echo $text['select-global']; ?></option>
+									<?php else: ?>
+									<option value=""><?php echo $text['select-global']; ?></option>
+									<?php endif; ?>
+									<?php if (is_array($_SESSION['domains']) && sizeof($_SESSION['domains']) > 0): ?>
+									<?php foreach ($_SESSION['domains'] as $dom_row): ?>
+									<option value="<?php echo escape($dom_row['domain_uuid']); ?>"<?php echo ($dom_row['domain_uuid'] == $dialplan_domain_uuid ? ' selected="selected"' : ''); ?>><?php echo escape($dom_row['domain_name']); ?></option>
+									<?php endforeach; ?>
+									<?php endif; ?>
+								</select>
+							</td>
+						</tr>
+						<?php endif; ?>
 						<tr>
 							<td class="vncell"><?php echo $text['label-continue']; ?></td>
 							<td class="vtable">
@@ -1518,6 +1544,29 @@ require_once "resources/header.php";
 		} else {
 			content.classList.remove('collapsed');
 			header.classList.remove('collapsed');
+		}
+	};
+
+	// Domain map for context auto-update (uuid => name, empty string => global context placeholder)
+	const domainNameMap = <?php
+		$dom_map = [''];
+		if (is_array($_SESSION['domains'])) {
+			foreach ($_SESSION['domains'] as $dm) {
+				$dom_map[$dm['domain_uuid']] = $dm['domain_name'];
+			}
+		}
+		echo json_encode($dom_map);
+	?>;
+
+	// When domain dropdown changes, sync the context field if it still matches the previous domain name
+	window.domainChanged = function(selectEl) {
+		const contextInput = document.getElementById('dialplan_context');
+		if (!contextInput) return;
+		const newDomainName = domainNameMap[selectEl.value] ?? '';
+		// Only overwrite context if it currently matches a known domain name (was following domain)
+		const knownNames = Object.values(domainNameMap);
+		if (knownNames.includes(contextInput.value)) {
+			contextInput.value = newDomainName;
 		}
 	};
 

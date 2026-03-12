@@ -149,6 +149,40 @@ if ($domains_processed == 1) {
 	unset($sql, $num_rows);
 }
 
+// add default setting for suppress_migration_notice
+if ($domains_processed == 1) {
+	$sql = "select count(*) as num_rows from v_default_settings ";
+	$sql .= "where default_setting_category = 'dialplan' ";
+	$sql .= "and default_setting_subcategory = 'suppress_migration_notice' ";
+	$sql .= "and default_setting_name = 'boolean' ";
+	$num_rows = $database->select($sql, null, 'column');
+	if ($num_rows == 0) {
+		$sql = "insert into v_default_settings ";
+		$sql .= "(";
+		$sql .= "default_setting_uuid, ";
+		$sql .= "default_setting_category, ";
+		$sql .= "default_setting_subcategory, ";
+		$sql .= "default_setting_name, ";
+		$sql .= "default_setting_value, ";
+		$sql .= "default_setting_enabled, ";
+		$sql .= "default_setting_description ";
+		$sql .= ")";
+		$sql .= "values ";
+		$sql .= "(";
+		$sql .= "'3f8a1c2e-7b4d-4e9f-a5c6-1d2e3f4a5b6c', ";
+		$sql .= "'dialplan', ";
+		$sql .= "'suppress_migration_notice', ";
+		$sql .= "'boolean', ";
+		$sql .= "'false', ";
+		$sql .= "'true', ";
+		$sql .= "'Suppress the migration notice shown when opening a legacy dialplan in the unified editor' ";
+		$sql .= ")";
+		$database->execute($sql);
+		unset($sql);
+	}
+	unset($sql, $num_rows);
+}
+
 // add not found dialplan to inbound routes
 
 /*

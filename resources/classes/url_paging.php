@@ -37,7 +37,7 @@ declare(strict_types=1);
  * Paging helper for URLs.
  * Extends url class with paging, sorting, and ordering functionality.
  */
-class url_paging extends url {
+class url_paging extends \url {
 	private $settings;
 
 	private $page;
@@ -46,12 +46,15 @@ class url_paging extends url {
 
 	private $total_rows;
 
-	public function __construct(settings $settings, ?string $url = null) {
+	public function __construct(settings $settings, ?string $url = null, ?callable $filter = null) {
 		parent::__construct($url);
-		$this->settings = $settings;
-		$this->rows_per_page = (int)$settings->get('domain', 'paging', 50);
-		$this->total_rows = 0;
-		$this->page = (int) $this->get('page', 0);
+		if ($filter !== null) {
+			$this->add_query_filter($filter);
+		}
+		$this->settings      = $settings;
+		$this->rows_per_page = (int) $settings->get('domain', 'paging', 50);
+		$this->total_rows    = 0;
+		$this->page          = (int) $this->get('page', 0);
 		$this->set_page($this->page);
 	}
 
@@ -63,11 +66,12 @@ class url_paging extends url {
 		if ($this->rows_per_page > 0) {
 			return (int) ceil($this->total_rows / $this->rows_per_page);
 		}
+
 		return 0;
 	}
 
 	public function get_rows_per_page(): int {
-		return (int)$this->rows_per_page;
+		return (int) $this->rows_per_page;
 	}
 
 	/**
@@ -75,13 +79,14 @@ class url_paging extends url {
 	 *
 	 * @return self
 	 */
-	public function set_page(int $page): self {
+	public function set_page(int $page): static {
 		$this->page = max(0, $page);
 		if ($this->page > 0) {
 			$this->set_query_param('page', $this->page);
 		} else {
 			$this->unset_query_param('page');
 		}
+
 		return $this;
 	}
 
@@ -119,7 +124,7 @@ class url_paging extends url {
 	 */
 	public function next(): static {
 		$clone = clone $this;
-		$page = (int) $clone->get('page', 0);
+		$page  = (int) $clone->get('page', 0);
 		$clone->set_query_param('page', $page + 1);
 
 		return $clone;
@@ -132,7 +137,7 @@ class url_paging extends url {
 	 */
 	public function prev(): static {
 		$clone = clone $this;
-		$page = (int) $clone->get_query_param('page', 0) - 1;
+		$page  = (int) $clone->get_query_param('page', 0) - 1;
 		if ($page > 0) {
 			$clone->set_query_param('page', $page);
 		} else {
@@ -154,11 +159,14 @@ class url_paging extends url {
 		return $clone;
 	}
 
-	protected function filter_query_modifier(string $key, mixed $value): mixed {
-		$filtered = parent::filter_query_modifier($key, $value);
+	protected function default_query_filter(string $key, mixed $value): mixed {
+		$filtered = parent::default_query_filter($key, $value);
+		if ($filtered === null) {
+			return null;
+		}
 
 		if ($key === 'page' && !is_numeric($filtered)) {
-			$filtered = null;
+			return null;
 		}
 
 		return $filtered;
@@ -181,6 +189,7 @@ class url_paging extends url {
 	 */
 	public function set_total_rows(int $total_rows): self {
 		$this->total_rows = max(0, $total_rows);
+
 		return $this;
 	}
 
@@ -222,10 +231,10 @@ class url_paging extends url {
 				]);
 			} else {
 				$prev = button::create([
-					'type'  => 'button',
-					'label' => (!$mini ? $label_back : null),
-					'icon'  => 'chevron-left',
-					'style' => 'opacity: 0.4; -moz-opacity: 0.4; cursor: default;',
+					'type'    => 'button',
+					'label'   => (!$mini ? $label_back : null),
+					'icon'    => 'chevron-left',
+					'style'   => 'opacity: 0.4; -moz-opacity: 0.4; cursor: default;',
 					'onclick' => 'return false;',
 				]);
 			}
@@ -234,19 +243,19 @@ class url_paging extends url {
 
 			if ($next_is_enabled) {
 				$next = button::create([
-					'type' => 'button',
+					'type'  => 'button',
 					'label' => (!$mini ? $label_next : null),
-					'icon' => 'chevron-right',
-					'link' => $next_link,
+					'icon'  => 'chevron-right',
+					'link'  => $next_link,
 					'title' => $label_page . ' ' . ($page_number + 2),
 				]);
 			} else {
 				$next = button::create([
-					'type' => 'button',
-					'label' => (!$mini ? $label_next : null),
-					'icon' => 'chevron-right',
+					'type'    => 'button',
+					'label'   => (!$mini ? $label_next : null),
+					'icon'    => 'chevron-right',
 					'onclick' => 'return false;',
-					'style' => 'opacity: 0.4; -moz-opacity: 0.4; cursor: default;',
+					'style'   => 'opacity: 0.4; -moz-opacity: 0.4; cursor: default;',
 				]);
 			}
 		} else {
@@ -260,28 +269,28 @@ class url_paging extends url {
 				$html = "<span style='white-space: nowrap;'>" . $prev . $next . "</span>\n";
 			} else {
 				$page_input_id = 'paging_page_num_' . substr(md5((string) $url->get_host() . ':' . $max_page), 0, 8);
-				$html .= "<script>\n";
-				$html .= "function fusionpbx_paging_go_" . $page_input_id . "(e) {\n";
-				$html .= "\tvar page_num = document.getElementById('" . $page_input_id . "').value;\n";
-				$html .= "\tvar do_action = false;\n";
-				$html .= "\tif (e != null) {\n";
-				$html .= "\t\tvar keyevent = window.event ? e.keyCode : e.which;\n";
-				$html .= "\t\tif (keyevent == 13) { do_action = true; }\n";
-				$html .= "\t\telse { return true; }\n";
-				$html .= "\t}\n";
-				$html .= "\telse { do_action = true; }\n";
-				$html .= "\tif (do_action) {\n";
-				$html .= "\t\tif (page_num < 1) { page_num = 1; }\n";
-				$html .= "\t\tif (page_num > " . $max_page . ") { page_num = " . $max_page . "; }\n";
-				$go_url = $url->set('page', 0)->build();
-				$go_url = preg_replace('/([?&])page=0(&|$)/', '$1', $go_url);
-				$go_url = rtrim((string) $go_url, '?&');
-				$join = (strpos((string) $go_url, '?') !== false) ? '&' : '?';
-				$html .= "\t\tdocument.location.href = '" . htmlspecialchars((string) $go_url, ENT_QUOTES, 'UTF-8') . $join . "page='+(--page_num);\n";
-				$html .= "\t\treturn false;\n";
-				$html .= "\t}\n";
-				$html .= "}\n";
-				$html .= "</script>\n";
+				$html         .= "<script>\n";
+				$html         .= "function fusionpbx_paging_go_" . $page_input_id . "(e) {\n";
+				$html         .= "\tvar page_num = document.getElementById('" . $page_input_id . "').value;\n";
+				$html         .= "\tvar do_action = false;\n";
+				$html         .= "\tif (e != null) {\n";
+				$html         .= "\t\tvar keyevent = window.event ? e.keyCode : e.which;\n";
+				$html         .= "\t\tif (keyevent == 13) { do_action = true; }\n";
+				$html         .= "\t\telse { return true; }\n";
+				$html         .= "\t}\n";
+				$html         .= "\telse { do_action = true; }\n";
+				$html         .= "\tif (do_action) {\n";
+				$html         .= "\t\tif (page_num < 1) { page_num = 1; }\n";
+				$html         .= "\t\tif (page_num > " . $max_page . ") { page_num = " . $max_page . "; }\n";
+				$go_url        = $url->set('page', 0)->build();
+				$go_url        = preg_replace('/([?&])page=0(&|$)/', '$1', $go_url);
+				$go_url        = rtrim((string) $go_url, '?&');
+				$join          = (strpos((string) $go_url, '?') !== false) ? '&' : '?';
+				$html         .= "\t\tdocument.location.href = '" . htmlspecialchars((string) $go_url, ENT_QUOTES, 'UTF-8') . $join . "page='+(--page_num);\n";
+				$html         .= "\t\treturn false;\n";
+				$html         .= "\t}\n";
+				$html         .= "}\n";
+				$html         .= "</script>\n";
 
 				$html .= "<center style='white-space: nowrap;'>";
 				$html .= $prev;

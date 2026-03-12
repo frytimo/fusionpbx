@@ -75,8 +75,9 @@ class url {
 	private $original_url;
 	private $username;
 	private $password;
+	private array $filter_chain = [];
 
-	public function __construct(?string $url = null) {
+	public function __construct(?string $url = null, ?array $filters = null) {
 		// initialize object properties
 		$this->scheme       = '';
 		$this->host         = '';
@@ -89,6 +90,13 @@ class url {
 		$this->post_params  = [];
 		$this->input_params = [];
 		$url                = $url ?? '';
+
+		// Register any initial filters provided at construction time
+		if ($filters !== null) {
+			foreach ($filters as $filter) {
+				$this->add_query_filter($filter);
+			}
+		}
 
 		$parsed = parse_url(urldecode($url));
 
@@ -243,6 +251,26 @@ class url {
 		}, $params, array_keys($params)));
 	}
 
+	public function get_filter_query_modifier(): array {
+		return $this->filter_chain;
+	}
+
+	/**
+	 * Registers a callable in the query filter chain.
+	 *
+	 * Each filter receives (string $key, mixed $value, callable $next): mixed.
+	 * Call $next($key, $value) to pass control to the next filter.
+	 * Return null to drop the parameter and stop the chain.
+	 *
+	 * @param callable $filter fn(string $key, mixed $value, callable $next): mixed
+	 * @return static
+	 */
+	public function add_query_filter(callable $filter): static {
+		$this->filter_chain[] = $filter;
+
+		return $this;
+	}
+
 	/**
 	 * Fragment or ancore in the link
 	 * @return string
@@ -252,19 +280,18 @@ class url {
 	}
 
 	/**
-	 * Sets the page part of the URL
-	 * @param string $page
-	 * @return self
+	 * Remove a query param
+	 * @param string $key Parameter key to remove from the URL query string
+	 * @return static Cloned URL object with the specified query parameter removed
 	 */
-	public function set_page(string $page): static {
-		// Ensure the page is sanitized
-		$page = filter_var($page, FILTER_SANITIZE_URL);
+	public function delete(string $key): static {
+		$url = clone $this;
+		// Remove the query parameter
+		return $url->unset_query_param($key);
+	}
 
-		// Update the path to include the new page
-		$this->path = '/' . $page;
-
-		// Return the updated URL object
-		return $this;
+	public function to_location_header(): string {
+		return 'Location: ' . $this->build_absolute();
 	}
 
 	/**
@@ -503,15 +530,45 @@ class url {
 		return $this;
 	}
 
-	protected function filter_query_modifier(string $key, mixed $value): mixed {
+	/**
+	 * Default sanitization applied before any chain filters.
+	 * Subclasses may override this to change built-in validation rules.
+	 *
+	 * @return mixed Sanitized value, or null to drop the parameter.
+	 */
+	protected function default_query_filter(string $key, mixed $value): mixed {
 		$filtered = filter_var($value, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-		// Remove keys that have invalid values from the safe parameters but keep them in the unsafe parameters for reference
+		// Remove keys that have invalid values but keep them in unsafe params for reference
 		if ($key === 'sort' && !in_array($filtered, [self::SORT_ASC, self::SORT_DSC, self::SORT_NATURAL])) {
-			$filtered = null;
+			return null;
 		}
 
-		// Sanitize the value for the safe parameters
 		return $filtered;
+	}
+
+	/**
+	 * Applies the default filter and then the registered filter chain to a query parameter.
+	 * The default filter is always applied first, and if it returns null, the parameter is dropped immediately. If the default filter returns a non-null value, it is then passed through the registered filter chain in order. Each filter in the chain can modify the value or return null to drop the parameter. The final result after all filters have been applied is returned.
+	 *
+	 * @param string $key   The key of the query parameter being filtered.
+	 * @param mixed  $value The value of the query parameter being filtered.
+	 *
+	 * @return mixed Final filtered value, or null if dropped by any filter.
+	 */
+	protected function filter_query_modifier(string $key, mixed $value): mixed {
+		// The default filter is always the head of the chain
+		$filtered = $this->default_query_filter($key, $value);
+		if ($filtered === null || empty($this->filter_chain)) {
+			return $filtered;
+		}
+
+		// Build the middleware pipeline from last to first, wrapping around a terminus
+		$pipeline = fn(string $k, mixed $v) => $v;
+		foreach (array_reverse($this->filter_chain) as $callable_filter) {
+			$pipeline = fn(string $k, mixed $v) => $callable_filter($k, $v, $pipeline);
+		}
+
+		return $pipeline($key, $filtered);
 	}
 
 	/**
@@ -971,3 +1028,31 @@ class url {
 		return $default;
 	}
 }
+
+
+/*
+
+$url = new url('https://example.com/page?sort=asc');
+
+// Add a custom filter — runs after the built-in default sanitizer
+$url->add_query_filter(function (string $key, mixed $value, callable $next): mixed {
+    // Drop any key named 'token' from safe params
+    if ($key === 'token') {
+        return null;
+    }
+    // Pass the (already-sanitized) value down the chain
+    return $next($key, $value);
+});
+
+// Subclass extension point: override default_query_filter() for mandatory rules
+class my_url extends url {
+    protected function default_query_filter(string $key, mixed $value): mixed {
+        $filtered = parent::default_query_filter($key, $value);
+        if ($key === 'limit' && ((int)$filtered < 1 || (int)$filtered > 1000)) {
+            return null;
+        }
+        return $filtered;
+    }
+}
+
+*/
