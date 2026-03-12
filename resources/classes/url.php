@@ -30,6 +30,7 @@
  *
  * @author Tim Fry <tim@fusionpbx.com>
  */
+
 declare(strict_types=1);
 
 if (!defined('FILTER_SANITIZE_DOMAIN')) {
@@ -48,34 +49,18 @@ if (!defined('FILTER_SANITIZE_DOMAIN')) {
  * - Validation is minimal; use filter_var(..., FILTER_VALIDATE_URL) if needed.
  */
 class url {
-    /**
-     * Sets the page part of the URL
-     * @param string $page
-     * @return self
-     */
-    public function set_page(string $page): static {
-        // Ensure the page is sanitized
-        $page = filter_var($page, FILTER_SANITIZE_URL);
-        
-        // Update the path to include the new page
-        $this->path = '/' . $page;
-        
-        // Return the updated URL object
-        return $this;
-    }
 
-	const SORT_NORMAL = 'natural';
-	const SORT_NATURAL = 'natural';
-	const SORT_ASC = 'asc';
-	const SORT_DSC = 'dsc';
+	const SORT_NORMAL        = 'natural';
+	const SORT_NATURAL       = 'natural';
+	const SORT_ASC           = 'asc';
+	const SORT_DSC           = 'dsc';
 	const BUILD_FORCE_SCHEME = 1;
-	const BUILD_FORCE_HOST = 2;
-	const BUILD_FORCE_PATH = 4;
-
-	const FILTERED = 0;
-	const UNSAFE = 1;
+	const BUILD_FORCE_HOST   = 2;
+	const BUILD_FORCE_PATH   = 4;
+	const FILTERED           = 0;
+	const UNSAFE             = 1;
 	/** @deprecated Use FILTERED instead */
-	const SAFE = self::FILTERED;
+	const SAFE               = self::FILTERED;
 
 	private $parts;
 	private $scheme;
@@ -87,24 +72,23 @@ class url {
 	private $input_params;
 	private $unsafe_params;
 	private $fragment;
-
 	private $original_url;
 	private $username;
 	private $password;
 
 	public function __construct(?string $url = null) {
 		// initialize object properties
-		$this->scheme = '';
-		$this->host = '';
-		$this->port = '';
-		$this->username = '';
-		$this->password = '';
-		$this->path = '';
-		$this->fragment = '';
-		$this->params = [];
-		$this->post_params = [];
+		$this->scheme       = '';
+		$this->host         = '';
+		$this->port         = '';
+		$this->username     = '';
+		$this->password     = '';
+		$this->path         = '';
+		$this->fragment     = '';
+		$this->params       = [];
+		$this->post_params  = [];
 		$this->input_params = [];
-		$url = $url ?? '';
+		$url                = $url ?? '';
 
 		$parsed = parse_url(urldecode($url));
 
@@ -155,9 +139,10 @@ class url {
 	 * @return self
 	 */
 	public static function from_parts(array $parts): static {
-		$u = new self();
+		$u        = new self();
 		// more validation needed here
 		$u->parts = $parts;
+
 		return $u;
 	}
 
@@ -173,6 +158,7 @@ class url {
 		$url = new static($_SERVER['REQUEST_URI'] ?? '');
 		$url->load_post($_POST);
 		$url->load_input();
+
 		return $url;
 	}
 
@@ -251,6 +237,7 @@ class url {
 	 */
 	public function get_query(int $unsafe = self::FILTERED): string {
 		$params = $unsafe ? $this->unsafe_params : $this->params;
+
 		return implode('&', array_map(function ($param, $key) {
 			return "$key=$param";
 		}, $params, array_keys($params)));
@@ -262,6 +249,22 @@ class url {
 	 */
 	public function get_fragment(): string {
 		return $this->fragment;
+	}
+
+	/**
+	 * Sets the page part of the URL
+	 * @param string $page
+	 * @return self
+	 */
+	public function set_page(string $page): static {
+		// Ensure the page is sanitized
+		$page = filter_var($page, FILTER_SANITIZE_URL);
+
+		// Update the path to include the new page
+		$this->path = '/' . $page;
+
+		// Return the updated URL object
+		return $this;
 	}
 
 	/**
@@ -278,6 +281,7 @@ class url {
 			}
 		}
 		$this->scheme = $scheme;
+
 		return $this;
 	}
 
@@ -288,6 +292,7 @@ class url {
 	 */
 	public function set_username(string $username): static {
 		$this->username = $username;
+
 		return $this;
 	}
 
@@ -298,6 +303,7 @@ class url {
 	 */
 	public function set_password(string $password): static {
 		$this->password = $password;
+
 		return $this;
 	}
 
@@ -322,6 +328,7 @@ class url {
 			}
 		}
 		$this->host = $host;
+
 		return $this;
 	}
 
@@ -342,7 +349,7 @@ class url {
 	 */
 	public function set_port($port = ''): static {
 		if (strlen("$port")) {
-			$port = (int)$port;
+			$port = (int) $port;
 			if ($port < 1 || $port > 65535) {
 				throw new InvalidArgumentException("Invalid port");
 			}
@@ -352,6 +359,7 @@ class url {
 			}
 		}
 		$this->port = "$port";
+
 		return $this;
 	}
 
@@ -364,6 +372,7 @@ class url {
 	public function set_path(string $path = ''): static {
 		// Strip out suspicious characters but keep slashes
 		$this->path = filter_var($path, FILTER_SANITIZE_URL);
+
 		return $this;
 	}
 
@@ -391,13 +400,14 @@ class url {
 				}
 			}
 			$params = [];
-			$query = parse_str($query, $params);
+			$query  = parse_str($query, $params);
 			foreach ($params as $key => $value) {
 				$this->set_query_param($key, $value);
 			}
 		} else {
 			$this->remove_parameters();
 		}
+
 		return $this;
 	}
 
@@ -412,6 +422,7 @@ class url {
 			$fragment = filter_var($fragment, FILTER_SANITIZE_URL);
 		}
 		$this->fragment = $fragment;
+
 		return $this;
 	}
 
@@ -428,6 +439,7 @@ class url {
 		if ($unsafe) {
 			return $this->get_query_param($key, $default);
 		}
+
 		return $this->get_query_param($key, $default);
 	}
 
@@ -442,7 +454,7 @@ class url {
 		$key = strtolower($key);
 
 		// filter is 0 for safe (sanitized) and 1 for unsafe (original)
-		$filter = (int)$unsafe;
+		$filter = (int) $unsafe;
 
 		// return the value if it exists, otherwise return the default
 		return isset($this->params[$key][$filter]) ? $this->params[$key][$filter] : $default;
@@ -472,7 +484,6 @@ class url {
 	 * @throws \InvalidArgumentException
 	 */
 	public function set_query_param(string $key, mixed $value): static {
-
 		$key = strtolower($key);
 		if (!strlen($key)) {
 			throw new \InvalidArgumentException("Key must not be empty", 500);
@@ -498,6 +509,7 @@ class url {
 		if ($key === 'sort' && !in_array($filtered, [self::SORT_ASC, self::SORT_DSC, self::SORT_NATURAL])) {
 			$filtered = null;
 		}
+
 		// Sanitize the value for the safe parameters
 		return $filtered;
 	}
@@ -509,6 +521,7 @@ class url {
 	 */
 	public function unset_query_param(string $key): static {
 		unset($this->params[$key]);
+
 		return $this;
 	}
 
@@ -518,10 +531,13 @@ class url {
 	 */
 	public function get_path_segments(): array {
 		$segments = [];
-		$path = $this->get_path();
+		$path     = $this->get_path();
 		if (!empty($path)) {
-			$segments = array_values(array_filter(explode('/', $path), function($s) { return $s !== '';}));
+			$segments = array_values(array_filter(explode('/', $path), function ($s) {
+				return $s !== '';
+			}));
 		}
+
 		return $segments;
 	}
 
@@ -533,6 +549,7 @@ class url {
 	public function set_path_segments(array $segments): static {
 		// Assumes segments are already encoded how you want them
 		$this->path = '/' . implode('/', array_map('strval', $segments));
+
 		return $this;
 	}
 
@@ -542,12 +559,13 @@ class url {
 	 * @return self
 	 */
 	public function append_path(string $segment): static {
-		$path = rtrim((string) ($this->path ?? ''), '/');
-		$segment = ltrim($segment, '/');
+		$path       = rtrim((string) ($this->path ?? ''), '/');
+		$segment    = ltrim($segment, '/');
 		$this->path = ($path === '' ? '' : $path . '/') . $segment;
 		if (!str_starts_with($this->path, '/')) {
 			$this->path = '/' . $this->path;
 		}
+
 		return $this;
 	}
 
@@ -566,7 +584,7 @@ class url {
 			if (strlen($user)) {
 				$parts['username'] = $user;
 				// password cannot be present without a user
-				$pass = $this->get_password();
+				$pass              = $this->get_password();
 				if (strlen($pass)) {
 					$parts['password'] = $pass;
 				}
@@ -588,13 +606,14 @@ class url {
 
 		$query = $this->get_query();
 		if (strlen($query)) {
-			$parts['query'] =  $query;
+			$parts['query'] = $query;
 		}
 
 		$fragment = $this->get_fragment();
 		if (strlen($fragment)) {
 			$parts['fragment'] = $fragment;
 		}
+
 		return $parts;
 	}
 
@@ -620,7 +639,7 @@ class url {
 		if (!strlen($path) && $flags & self::BUILD_FORCE_PATH) {
 			$path = '/';
 		}
-		$query = $this->get_query();
+		$query    = $this->get_query();
 		$fragment = $this->get_fragment();
 
 		if (strlen($scheme)) {
@@ -670,6 +689,7 @@ class url {
 	public function build_relative(): string {
 		$url = clone $this;
 		$url->set_scheme()->set_host()->set_port();
+
 		return $url->build();
 	}
 
@@ -699,6 +719,7 @@ class url {
 			// set the order_by in the new object
 			$url->set_query_param('order_by', $order_by);
 		}
+
 		return $url;
 	}
 
@@ -730,6 +751,7 @@ class url {
 			// set the sort param in the new object
 			$url->set_query_param('sort', $sort);
 		}
+
 		return $url;
 	}
 
@@ -766,8 +788,9 @@ class url {
 	 * @return self
 	 */
 	public function remove_parameters(): static {
-		$this->params = [];
+		$this->params   = [];
 		$this->fragment = '';
+
 		return $this;
 	}
 
@@ -832,6 +855,7 @@ class url {
 	 */
 	public function load_post(array $post): static {
 		$this->import_params($post, $this->post_params);
+
 		return $this;
 	}
 
@@ -844,8 +868,9 @@ class url {
 	 * @return mixed
 	 */
 	public function post(string $key, mixed $default = null, bool $unsafe = false): mixed {
-		$key = strtolower($key);
+		$key  = strtolower($key);
 		$slot = $unsafe ? self::UNSAFE : self::FILTERED;
+
 		return $this->post_params[$key][$slot] ?? $default;
 	}
 
@@ -889,6 +914,7 @@ class url {
 			parse_str($raw, $params);
 			$this->import_params($params, $this->input_params);
 		}
+
 		return $this;
 	}
 
@@ -901,8 +927,9 @@ class url {
 	 * @return mixed
 	 */
 	public function input(string $key, mixed $default = null, bool $unsafe = false): mixed {
-		$key = strtolower($key);
+		$key  = strtolower($key);
 		$slot = $unsafe ? self::UNSAFE : self::FILTERED;
+
 		return $this->input_params[$key][$slot] ?? $default;
 	}
 
@@ -940,6 +967,7 @@ class url {
 		if (isset($this->input_params[$lower])) {
 			return $this->input($key, $default, $unsafe);
 		}
+
 		return $default;
 	}
 }
