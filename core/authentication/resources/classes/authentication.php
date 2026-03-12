@@ -106,6 +106,60 @@ class authentication {
 			$_SESSION['authentication']['plugin'] = [];
 		}
 
+		// attempt remember-me cookie re-authentication before running plugins
+		if (empty($_SESSION['authorized']) && isset($_COOKIE['remember'])) {
+			$cookie_parts = explode(':', $_COOKIE['remember'], 2);
+			if (count($cookie_parts) === 2) {
+				[$selector, $validator] = $cookie_parts;
+				if (is_uuid($selector)) {
+					$sql  = "select ul.domain_uuid, ul.user_uuid, ul.username, ul.remember_validator, d.domain_name ";
+					$sql .= "from v_user_logs as ul ";
+					$sql .= "join v_domains as d on d.domain_uuid = ul.domain_uuid ";
+					$sql .= "where ul.remember_selector = :selector ";
+					$sql .= "and ul.result = 'success' ";
+					$sql .= "limit 1 ";
+					$cookie_row = $this->database->select($sql, ['selector' => $selector], 'row');
+					if (!empty($cookie_row) && !empty($cookie_row['remember_validator'])
+						&& hash_equals($cookie_row['remember_validator'], hash('sha256', $validator))
+					) {
+						// rotate the token to limit exposure window
+						$new_validator = bin2hex(random_bytes(32));
+						$p = permissions::new();
+						$p->add('user_log_add', 'temp');
+						$this->database->execute(
+							"update v_user_logs set remember_validator = :new_hash where remember_selector = :selector ",
+							['new_hash' => hash('sha256', $new_validator), 'selector' => $selector]
+						);
+						$p->delete('user_log_add', 'temp');
+						setcookie('remember', $selector . ':' . $new_validator, [
+							'expires'  => time() + 60 * 60 * 24 * 30,
+							'path'     => '/',
+							'httponly' => true,
+							'samesite' => 'Lax',
+							'secure'   => isset($_SERVER['HTTPS']),
+						]);
+						$this->domain_uuid = $cookie_row['domain_uuid'];
+						$this->user_uuid   = $cookie_row['user_uuid'];
+						$this->settings    = new settings(['database' => $this->database, 'domain_uuid' => $this->domain_uuid]);
+						$result = [
+							'plugin'       => 'database',
+							'domain_uuid'  => $cookie_row['domain_uuid'],
+							'domain_name'  => $cookie_row['domain_name'],
+							'user_uuid'    => $cookie_row['user_uuid'],
+							'username'     => $cookie_row['username'],
+							'contact_uuid' => null,
+							'authorized'   => true,
+						];
+						self::create_user_session($result, $this->settings);
+						$_SESSION['authorized'] = true;
+						return $result;
+					}
+					// invalid or expired token – clear the cookie
+					setcookie('remember', '', time() - 3600, '/');
+				}
+			}
+		}
+
 		// use the authentication plugins
 		foreach ($_SESSION['authentication']['methods'] as $name) {
 			// already processed the plugin move to the next plugin
@@ -209,6 +263,22 @@ class authentication {
 			if (check_cidr($cidr_list, $_SERVER['REMOTE_ADDR'])) {
 				// user passed the cidr check
 				self::create_user_session($result, $this->settings);
+
+				// generate a remember-me token if the user opted in
+				if (!empty($_SESSION['remember'])) {
+					$selector  = uuid();
+					$validator = bin2hex(random_bytes(32));
+					$_SESSION['authentication']['plugin'][$name]['remember_selector'] = $selector;
+					$_SESSION['authentication']['plugin'][$name]['remember_validator'] = hash('sha256', $validator);
+					setcookie('remember', $selector . ':' . $validator, [
+						'expires'  => time() + 60 * 60 * 24 * 30,
+						'path'     => '/',
+						'httponly' => true,
+						'samesite' => 'Lax',
+						'secure'   => isset($_SERVER['HTTPS']),
+					]);
+					unset($_SESSION['remember']);
+				}
 			} else {
 				// user failed the cidr check - no longer authorized
 				$authorized = false;

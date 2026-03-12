@@ -61,6 +61,15 @@ if (!empty($_SESSION['authorized']) && !empty($_SESSION['user_uuid']) && !empty(
 	$url->redirect(PROJECT_PATH . "/core/dashboard/index.php");
 }
 
+// on a GET request, check for a remember-me cookie and bypass the login form
+if (empty($_POST) && isset($_COOKIE['remember'])) {
+	$authentication = new authentication(['database' => $database, 'settings' => $settings]);
+	$authentication->validate();
+	if (!empty($_SESSION['authorized'])) {
+		$url->redirect(PROJECT_PATH . "/core/dashboard/index.php");
+	}
+}
+
 // initialize a template view
 $view = new template(PROJECT_ROOT . '/core/authentication/resources/views/login.tpl');
 
@@ -80,6 +89,7 @@ $login_domain_name            = $settings->get('login', 'domain_name');
 $login_destination            = $settings->get('login', 'destination');
 $users_unique                 = $settings->get('users', 'unique', '');
 $login_password_reset_enabled = $settings->get('login', 'password_reset_enabled', false);
+$login_remember_me            = $settings->get('login', 'remember_me', true);
 
 // add translations
 $view->assign("login_title", $text['button-login']);
@@ -87,6 +97,7 @@ $view->assign("label_username", $text['label-username']);
 $view->assign("label_password", $text['label-password']);
 $view->assign("label_domain", $text['label-domain']);
 $view->assign("button_login", $text['button-login']);
+$view->assign("label_remember_me", $text['label-remember_me']);
 
 // assign default values to the template
 $view->assign("project_path", PROJECT_PATH);
@@ -94,6 +105,7 @@ $view->assign("login_destination_url", $login_destination);
 $view->assign("login_domain_name_visible", $login_domain_name_visible);
 $view->assign("login_domain_names", $domain_name);
 $view->assign("login_password_reset_enabled", $login_password_reset_enabled);
+$view->assign("login_remember_me", $login_remember_me);
 $view->assign("favicon", $theme_favicon);
 $view->assign("login_logo_width", $theme_login_logo_width);
 $view->assign("login_logo_height", $theme_login_logo_height);

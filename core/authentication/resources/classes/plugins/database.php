@@ -70,6 +70,7 @@ class plugin_database {
 		$login_domain_name         = $settings->get('login', 'domain_name');
 		$login_destination         = $settings->get('login', 'destination');
 		$users_unique              = $settings->get('users', 'unique', '');
+		$login_remember_me         = $settings->get('login', 'remember_me', true);
 
 		//set the default login type and image
 		if (empty($theme_login_type)) {
@@ -131,6 +132,8 @@ class plugin_database {
 			$view->assign("login_password_description", $text['label-password_description']);
 			$view->assign("button_cancel", $text['button-cancel']);
 			$view->assign("button_forgot_password", $text['button-forgot_password']);
+			$view->assign("login_remember_me", $login_remember_me);
+			$view->assign("label_remember_me", $text['label-remember_me']);
 
 			//assign openid values to the template
 			if ($settings->get('open_id', 'enabled', false)) {
@@ -191,6 +194,11 @@ class plugin_database {
 		if (isset($_REQUEST["domain_name"])) {
 			$domain_name       = $_REQUEST["domain_name"];
 			$this->domain_name = $_REQUEST["domain_name"];
+		}
+		if (!empty($_POST['remember'])) {
+			$_SESSION['remember'] = true;
+		} else {
+			unset($_SESSION['remember']);
 		}
 
 		//get the domain name

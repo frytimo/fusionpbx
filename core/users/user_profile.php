@@ -400,6 +400,16 @@
 				}
 				unset($sql, $parameters);
 
+				//clear remember-me tokens so the old password cannot be used to re-authenticate
+				$p_tmp = permissions::new();
+				$p_tmp->add('user_log_add', 'temp');
+				$database->execute(
+					"update v_user_logs set remember_selector = null, remember_validator = null where user_uuid = :user_uuid ",
+					['user_uuid' => $user_uuid]
+				);
+				$p_tmp->delete('user_log_add', 'temp');
+				setcookie('remember', '', time() - 3600, '/');
+
 				//create a one way hash for the user password
 				$array['users'][$x]['password'] = password_hash($password, PASSWORD_DEFAULT, $options);
 				$array['users'][$x]['salt'] = null;

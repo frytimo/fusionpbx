@@ -214,7 +214,7 @@ $paging_controls_mini = url_paging::html_paging_mini_controls($url_paging);
 
 // get the list of dialplans
 $sql  = "
-	select
+	SELECT
 		domain_uuid,
 		dialplan_uuid,
 		app_uuid,
@@ -223,12 +223,12 @@ $sql  = "
 		dialplan_name,
 		dialplan_number,
 		dialplan_destination,
-		cast(dialplan_continue as text),
+		dialplan_continue,
 		dialplan_xml,
 		dialplan_order,
-		cast(dialplan_enabled as text),
+		dialplan_enabled,
 		dialplan_description
-	from
+	FROM
 		v_dialplans
 ";
 if ($show == "all" && $has_dialplan_all) {

@@ -41,8 +41,14 @@ if (function_exists('session_start')) {
 
 // check the authentication and required session context
 if (empty($_SESSION['authorized']) || empty($_SESSION['user_uuid']) || empty($_SESSION['domain_uuid'])) {
-	$url->redirect('/login.php');
-	exit;
+	// attempt remember-me cookie re-authentication before redirecting to login
+	if (isset($_COOKIE['remember'])) {
+		(new authentication())->validate();
+	}
+	if (empty($_SESSION['authorized']) || empty($_SESSION['user_uuid']) || empty($_SESSION['domain_uuid'])) {
+		$url->redirect('/login.php');
+		exit;
+	}
 // set the domains session if not already set
 if (!isset($_SESSION['domains'])) {
 	$domain = new domains();

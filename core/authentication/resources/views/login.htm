@@ -90,8 +90,12 @@
 								</select>
 							{/if}
 						{/if}
-					</div>
-					<div>
+					</div>				{if !empty($login_remember_me)}
+				<label style='display: flex; padding-left: 19px; gap: 5px; margin-bottom: 5px;' for='remember'>
+					<input style='vertical-align: -2px;' type='checkbox' id='remember' name='remember'>
+					<div class='login_text'>{$label_remember_me}</div>
+				</label>
+				{/if}					<div>
 						<input type='submit' id='btn_login' class='btn' style='width: 100px; margin-top: 15px;' value='{$button_login}' /><br />
 						{if !empty($login_password_reset_enabled) && $login_password_reset_enabled}
 							<a class='login_link' style='display: inline-block; margin-top: 15px;' href='{$project_path}/resources/login.php?action=request'>{$button_forgot_password}</a><br />
