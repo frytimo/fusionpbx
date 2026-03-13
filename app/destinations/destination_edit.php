@@ -177,7 +177,7 @@
 
 		//initialize the destinations object
 			if ($has_destination_domain && !empty($domain_uuid) && is_uuid($domain_uuid)) {
-				$destination->domain_uuid = $domain_uuid;
+				$destination->set_domain_uuid($domain_uuid);
 			}
 
 		//set the default context
@@ -1579,7 +1579,7 @@
 
 //initialize the destinations object
 	if ($has_destination_domain && is_uuid($domain_uuid)) {
-		$destination->domain_uuid = $domain_uuid;
+		$destination->set_domain_uuid($domain_uuid);
 	}
 
 //get the providers list
