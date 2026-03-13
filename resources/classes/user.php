@@ -436,23 +436,6 @@ class user implements logout_event, login_event {
 	 * @return void
 	 */
 	public static function on_logout_pre_session_destroy(settings $settings): void {
-		// Implementation would go here
-		// This is typically called by logout.php in the application
-
-		// Example implementation:
-		// if (isset($_SESSION['user_uuid']) && is_uuid($_SESSION['user_uuid'])) {
-		//     $database = database::new();
-		//
-		//     // Log the logout event
-		//     $sql = "INSERT INTO v_user_logs (user_log_uuid, user_uuid, log_type, log_date, ip_address)
-		//             VALUES (:user_log_uuid, :user_uuid, 'logout', NOW(), :ip_address)";
-		//     $parameters = [
-		//         'user_log_uuid' => uuid(),
-		//         'user_uuid' => $_SESSION['user_uuid'],
-		//         'ip_address' => $_SERVER['REMOTE_ADDR']
-		//     ];
-		//     $database->execute($sql, $parameters);
-		// }
 	}
 
 	/**
@@ -473,13 +456,8 @@ class user implements logout_event, login_event {
 	 * @return void
 	 */
 	public static function on_logout_post_session_destroy(settings $settings): void {
-		// Implementation would go here
-		// This is typically called by logout.php in the application
-
-		// Example implementation:
-		// setcookie('remember_me', '', time() - 3600, '/');
-		// header('Location: /login.php?logout=success');
-		// exit;
+		// Drop the remember me cookie
+		setcookie('remember', '', time() - 3600, '/');
 	}
 
 	/**

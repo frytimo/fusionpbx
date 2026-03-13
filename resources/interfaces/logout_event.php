@@ -10,7 +10,7 @@ interface logout_event {
 	 * Executed before the session is destroyed.
 	 * Use this to perform cleanup or logging prior to logout.
 	 */
-	public static function on_logout_pre_session_destroy(settings $setttings);
+	public static function on_logout_pre_session_destroy(settings $settings);
 
 	/**
 	 * Executed after the session is destroyed.

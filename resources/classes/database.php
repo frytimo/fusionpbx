@@ -1075,12 +1075,10 @@ class database {
 			}
 		}
 
-		// use a try catch around the transaction
-		try {
-			// start the atomic transaction
-			$this->engine->begin_transaction();
+		// start the atomic transaction
+		$this->engine->begin_transaction();
 
-			// delete the current data
+		// delete the current data
 			foreach ($new_array as $table_name => $rows) {
 				// get the application name and uuid
 				if (class_exists($table_name) && defined("$table_name::app_name")) {
@@ -1111,56 +1109,26 @@ class database {
 							$parameters[$field_name] = $field_value;
 							$i++;
 						}
-						try {
-							$this->execute($sql, $parameters);
-							$message['message'] = 'OK';
-							$message['code'] = '200';
-							$message['uuid'] = $id;
-							$message['details'][$m]['name'] = $this->app_name;
-							$message['details'][$m]['message'] = 'OK';
-							$message['details'][$m]['code'] = '200';
-							// $message["details"][$m]["uuid"] = $parent_key_value;
-							$message['details'][$m]['sql'] = $sql;
+						$this->execute($sql, $parameters);
+						$message['message'] = 'OK';
+						$message['code'] = '200';
+						$message['uuid'] = $id;
+						$message['details'][$m]['name'] = $this->app_name;
+						$message['details'][$m]['message'] = 'OK';
+						$message['details'][$m]['code'] = '200';
+						// $message["details"][$m]["uuid"] = $parent_key_value;
+						$message['details'][$m]['sql'] = $sql;
 
-							$this->message = $message;
-							$m++;
-							unset($sql, $statement);
-						} catch (PDOException $e) {
-							$retval = false;
-							$message['message'] = 'Bad Request';
-							$message['code'] = '400';
-							$message['details'][$m]['name'] = $this->app_name;
-							$message['details'][$m]['message'] = $e->getMessage();
-							$message['details'][$m]['code'] = '400';
-							$message['details'][$m]['sql'] = $sql;
-
-							$this->message = $message;
-							$m++;
-						}
+						$this->message = $message;
+						$m++;
+						unset($sql, $statement);
 						unset($parameters);
 					}  // if permission
 				}      // foreach rows
 			}          // foreach $array
 
-			// commit the atomic transaction
-			$this->engine->commit();
-		} catch (PDOException $e) {
-			// rollback the transaction on error
-			if ($this->engine->in_transaction()) {
-				$this->engine->rollback();
-			}
-
-			// prepare the message array
-			$message['message'] = $e->getMessage();
-			$message['code'] = $e->getCode();
-			$message['line'] = $e->getLine();
-			$message['file'] = $e->getFile();
-			$message['trace'] = $e->getTraceAsString();
-			$message['debug'] = debug_backtrace();
-			$this->message = $message;
-
-			return false;
-		}
+		// commit the atomic transaction
+		$this->engine->commit();
 
 		// set the action if not set
 		$transaction_type = 'delete';
@@ -1475,32 +1443,19 @@ class database {
 			}
 		}
 		// execute the query, and return the results
-		try {
-			$prep_statement = $this->engine->prepare($sql);
-			$prep_statement->execute($params);
-			$message['message'] = 'OK';
-			$message['code'] = '200';
-			$message['details'][$m]['name'] = $this->name;
-			$message['details'][$m]['message'] = 'OK';
-			$message['details'][$m]['code'] = '200';
-			$message['details'][$m]['sql'] = $sql;
+		$prep_statement = $this->engine->prepare($sql);
+		$prep_statement->execute($params);
+		$message['message'] = 'OK';
+		$message['code'] = '200';
+		$message['details'][$m]['name'] = $this->name;
+		$message['details'][$m]['message'] = 'OK';
+		$message['details'][$m]['code'] = '200';
+		$message['details'][$m]['sql'] = $sql;
 
-			$this->message = $message;
-			$this->result = $prep_statement->fetchAll(PDO::FETCH_NAMED);
-			unset($prep_statement);
-			$m++;
-		} catch (PDOException $e) {
-			$message['message'] = 'Bad Request';
-			$message['code'] = '400';
-			$message['details'][$m]['name'] = $this->name;
-			$message['details'][$m]['message'] = $e->getMessage();
-			$message['details'][$m]['code'] = '400';
-			$message['details'][$m]['sql'] = $sql;
-
-			$this->message = $message;
-			$this->result = '';
-			$m++;
-		}
+		$this->message = $message;
+		$this->result = $prep_statement->fetchAll(PDO::FETCH_NAMED);
+		unset($prep_statement);
+		$m++;
 
 		return $this;
 	}
@@ -1791,13 +1746,11 @@ class database {
 			$this->connect();
 		}
 
-		// use a try catch around the transaction
-		try {
-			// start the atomic transaction
-			$this->engine->begin_transaction();
+		// start the atomic transaction
+		$this->engine->begin_transaction();
 
-			// loop through the array
-			if (is_array($array))
+		// loop through the array
+		if (is_array($array))
 				foreach ($array as $parent_name => $parent_array) {
 					// get the application name and uuid
 					if (class_exists($parent_name) && defined("$parent_name::app_name")) {
@@ -1849,18 +1802,8 @@ class database {
 								$prep_statement = $this->engine->prepare($sql);
 								if ($prep_statement) {
 									// get the data
-									try {
-										$prep_statement->execute();
-										$parent_results = $prep_statement->fetchAll(PDO::FETCH_ASSOC);
-									} catch (PDOException $e) {
-										$message['type'] = 'error';
-										$message['code'] = $e->getCode();
-										$message['message'] = $e->getMessage();
-										$message['sql'] = $sql;
-										$this->message = $message;
-
-										return false;
-									}
+									$prep_statement->execute();
+									$parent_results = $prep_statement->fetchAll(PDO::FETCH_ASSOC);
 
 									// set the action
 									if (count($parent_results) > 0) {
@@ -1957,39 +1900,22 @@ class database {
 									// }
 
 									// run the query and return the results
-									try {
-										$this->engine->add_transaction($sql, $params);
-										unset($prep_statement);
-										$message['message'] = 'OK';
-										$message['code'] = '200';
-										$message['uuid'] = $parent_key_value;
-										$message['details'][$m]['name'] = $this->app_name;
-										$message['details'][$m]['message'] = 'OK';
-										$message['details'][$m]['code'] = '200';
-										$message['details'][$m]['uuid'] = $parent_key_value;
-										$message['details'][$m]['sql'] = $sql;
-										if (is_array($params)) {
-											$message['details'][$m]['params'] = $params;
-										}
-										unset($params);
-										$this->message = $message;
-										$m++;
-									} catch (PDOException $e) {
-										$retval = false;
-										$message['message'] = 'Bad Request';
-										$message['code'] = '400';
-										$message['details'][$m]['name'] = $this->app_name;
-										$message['details'][$m]['message'] = $e->getMessage();
-										$message['details'][$m]['code'] = '400';
-										$message['details'][$m]['array'] = $parent_field_array;
-										$message['details'][$m]['sql'] = $sql;
-										if (is_array($params)) {
-											$message['details'][$m]['params'] = $params;
-										}
-										unset($params);
-										$this->message = $message;
-										$m++;
+									$this->engine->add_transaction($sql, $params);
+									unset($prep_statement);
+									$message['message'] = 'OK';
+									$message['code'] = '200';
+									$message['uuid'] = $parent_key_value;
+									$message['details'][$m]['name'] = $this->app_name;
+									$message['details'][$m]['message'] = 'OK';
+									$message['details'][$m]['code'] = '200';
+									$message['details'][$m]['uuid'] = $parent_key_value;
+									$message['details'][$m]['sql'] = $sql;
+									if (is_array($params)) {
+										$message['details'][$m]['params'] = $params;
 									}
+									unset($params);
+									$this->message = $message;
+									$m++;
 									unset($sql);
 								} else {
 									$retval = false;
@@ -2157,39 +2083,23 @@ class database {
 										}
 
 										// run the query and return the results
-										try {
-											$prep_statement = $this->engine->prepare($sql);
-											$prep_statement->execute($params);
-											$message['message'] = 'OK';
-											$message['code'] = '200';
-											$message['uuid'] = $parent_key_value;
-											$message['details'][$m]['name'] = $this->app_name;
-											$message['details'][$m]['message'] = 'OK';
-											$message['details'][$m]['code'] = '200';
-											$message['details'][$m]['uuid'] = $parent_key_value;
-											$message['details'][$m]['sql'] = $sql;
-											if (is_array($params)) {
-												$message['details'][$m]['params'] = $params;
-											}
-											unset($params);
-											$this->message = $message;
-											$m++;
-											unset($sql);
-										} catch (PDOException $e) {
-											$retval = false;
-											$message['message'] = 'Bad Request';
-											$message['code'] = '400';
-											$message['details'][$m]['name'] = $this->app_name;
-											$message['details'][$m]['message'] = $e->getMessage();
-											$message['details'][$m]['code'] = '400';
-											$message['details'][$m]['sql'] = $sql;
-											if (is_array($params)) {
-												$message['details'][$m]['params'] = $params;
-											}
-											unset($params);
-											$this->message = $message;
-											$m++;
+										$prep_statement = $this->engine->prepare($sql);
+										$prep_statement->execute($params);
+										$message['message'] = 'OK';
+										$message['code'] = '200';
+										$message['uuid'] = $parent_key_value;
+										$message['details'][$m]['name'] = $this->app_name;
+										$message['details'][$m]['message'] = 'OK';
+										$message['details'][$m]['code'] = '200';
+										$message['details'][$m]['uuid'] = $parent_key_value;
+										$message['details'][$m]['sql'] = $sql;
+										if (is_array($params)) {
+											$message['details'][$m]['params'] = $params;
 										}
+										unset($params);
+										$this->message = $message;
+										$m++;
+										unset($sql);
 									} else {
 										$message['details'][$m]['name'] = $parent_name;
 										$message['details'][$m]['message'] = 'No Changes';
@@ -2266,32 +2176,20 @@ class database {
 											if ($uuid_exists) {
 												$sql = 'SELECT ' . implode(', ', $child_field_names) . ' FROM ' . $child_table_name . ' ';
 												$sql .= 'WHERE ' . $child_key_name . " = '" . $child_key_value . "'; ";
-												try {
-													$prep_statement = $this->engine->prepare($sql);
-													if ($prep_statement) {
-														// get the data
-														$prep_statement->execute();
-														$child_results = $prep_statement->fetch(PDO::FETCH_ASSOC);
+												$prep_statement = $this->engine->prepare($sql);
+												if ($prep_statement) {
+													// get the data
+													$prep_statement->execute();
+													$child_results = $prep_statement->fetch(PDO::FETCH_ASSOC);
 
-														// set the action
-														if (is_array($child_results)) {
-															$action = 'update';
-														} else {
-															$action = 'add';
-														}
+													// set the action
+													if (is_array($child_results)) {
+														$action = 'update';
+													} else {
+														$action = 'add';
 													}
-													unset($prep_statement);
-												} catch (PDOException $e) {
-													$message['message'] = $e->getMessage();
-													$message['code'] = $e->getCode();
-													$message['line'] = $e->getLine();
-													$message['file'] = $e->getFile();
-													$message['trace'] = $e->getTraceAsString();
-													$message['debug'] = debug_backtrace();
-													$this->message = $message;
-
-													return false;
 												}
+												unset($prep_statement);
 											} else {
 												$action = 'add';
 											}
@@ -2443,38 +2341,20 @@ class database {
 															$this->engine->set_attribute(PDO::PGSQL_ATTR_DISABLE_PREPARES, true);
 														}
 
-														try {
-															$prep_statement = $this->engine->prepare($sql);
-															$prep_statement->execute($params);
-															unset($prep_statement);
-															$message['details'][$m]['name'] = $key;
-															$message['details'][$m]['message'] = 'OK';
-															$message['details'][$m]['code'] = '200';
-															$message['details'][$m]['uuid'] = $child_key_value;
-															$message['details'][$m]['sql'] = $sql;
-															if (is_array($params)) {
-																$message['details'][$m]['params'] = $params;
-															}
-															unset($params);
-															$this->message = $message;
-															$m++;
-														} catch (PDOException $e) {
-															$retval = false;
-															if ($message['code'] == '200') {
-																$message['message'] = 'Bad Request';
-																$message['code'] = '400';
-															}
-															$message['details'][$m]['name'] = $key;
-															$message['details'][$m]['message'] = $e->getMessage();
-															$message['details'][$m]['code'] = '400';
-															$message['details'][$m]['sql'] = $sql;
-															if (is_array($params)) {
-																$message['details'][$m]['params'] = $params;
-															}
-															unset($params);
-															$this->message = $message;
-															$m++;
+														$prep_statement = $this->engine->prepare($sql);
+														$prep_statement->execute($params);
+														unset($prep_statement);
+														$message['details'][$m]['name'] = $key;
+														$message['details'][$m]['message'] = 'OK';
+														$message['details'][$m]['code'] = '200';
+														$message['details'][$m]['uuid'] = $child_key_value;
+														$message['details'][$m]['sql'] = $sql;
+														if (is_array($params)) {
+															$message['details'][$m]['params'] = $params;
 														}
+														unset($params);
+														$this->message = $message;
+														$m++;
 													} else {
 														$message['details'][$m]['name'] = $key;
 														$message['details'][$m]['message'] = 'No Changes';
@@ -2611,39 +2491,21 @@ class database {
 													}
 
 													// run the query and return the results
-													try {
-														$prep_statement = $this->engine->prepare($sql);
-														$prep_statement->execute($params);
-														unset($prep_statement);
-														$message['code'] = '200';
-														$message['details'][$m]['name'] = $key;
-														$message['details'][$m]['message'] = 'OK';
-														$message['details'][$m]['code'] = '200';
-														$message['details'][$m]['uuid'] = $child_key_value;
-														$message['details'][$m]['sql'] = $sql;
-														if (is_array($params)) {
-															$message['details'][$m]['params'] = $params;
-														}
-														unset($params);
-														$this->message = $message;
-														$m++;
-													} catch (PDOException $e) {
-														$retval = false;
-														if ($message['code'] == '200') {
-															$message['message'] = 'Bad Request';
-															$message['code'] = '400';
-														}
-														$message['details'][$m]['name'] = $key;
-														$message['details'][$m]['message'] = $e->getMessage();
-														$message['details'][$m]['code'] = '400';
-														$message['details'][$m]['sql'] = $sql;
-														if (is_array($params)) {
-															$message['details'][$m]['params'] = $params;
-														}
-														unset($params);
-														$this->message = $message;
-														$m++;
+													$prep_statement = $this->engine->prepare($sql);
+													$prep_statement->execute($params);
+													unset($prep_statement);
+													$message['code'] = '200';
+													$message['details'][$m]['name'] = $key;
+													$message['details'][$m]['message'] = 'OK';
+													$message['details'][$m]['code'] = '200';
+													$message['details'][$m]['uuid'] = $child_key_value;
+													$message['details'][$m]['sql'] = $sql;
+													if (is_array($params)) {
+														$message['details'][$m]['params'] = $params;
 													}
+													unset($params);
+													$this->message = $message;
+													$m++;
 												} else {
 													$retval = false;
 													$message['name'] = $child_name;
@@ -2664,28 +2526,11 @@ class database {
 						}                                           // foreach schema_array
 				}                                           // foreach main array
 
-			// save the message
-			$this->message = $message;
+		// save the message
+		$this->message = $message;
 
-			// commit the atomic transaction
-			$this->engine->commit();
-		} catch (PDOException $e) {
-			// rollback the transaction on error
-			if ($this->engine->in_transaction()) {
-				$this->engine->rollback();
-			}
-
-			// prepare the message array
-			$message['message'] = $e->getMessage();
-			$message['code'] = $e->getCode();
-			$message['line'] = $e->getLine();
-			$message['file'] = $e->getFile();
-			$message['trace'] = $e->getTraceAsString();
-			$message['debug'] = debug_backtrace();
-			$this->message = $message;
-
-			return false;
-		}
+		// commit the atomic transaction
+		$this->engine->commit();
 
 		// set the action if not set
 		if (empty($action)) {
@@ -2722,8 +2567,7 @@ class database {
 
 		// log the transaction results
 		if ($transaction_save && $database_updated && file_exists(dirname(__DIR__, 2) . '/app/database_transactions/app_config.php')) {
-			try {
-				// build the json string from the array
+			// build the json string from the array
 				if (!empty($old_array)) {
 					$old_json = json_encode($old_array, JSON_PRETTY_PRINT);
 				}
@@ -2810,18 +2654,7 @@ class database {
 				$message = json_encode($this->message, JSON_PRETTY_PRINT);
 				$statement->bindParam(':transaction_result', $message);
 				$statement->execute();
-				unset($sql, $old_array, $old_json, $new_array, $new_json);
-			} catch (PDOException $e) {
-				$message['message'] = $e->getMessage();
-				$message['code'] = $e->getCode();
-				$message['line'] = $e->getLine();
-				$message['file'] = $e->getFile();
-				$message['trace'] = $e->getTraceAsString();
-				$message['debug'] = debug_backtrace();
-				$this->message = $message;
-
-				return false;
-			}
+			unset($sql, $old_array, $old_json, $new_array, $new_json);
 		}
 
 		return $this->message;

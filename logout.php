@@ -37,22 +37,6 @@
 //use custom logout destination if set otherwise redirect to the index page
 	$logout_destination = $settings->get('login', 'logout_destination', PROJECT_PATH.'/');
 
-//clear the remember-me cookie and invalidate the stored token
-	if (isset($_COOKIE['remember'])) {
-		$cookie_parts = explode(':', $_COOKIE['remember'], 2);
-		$selector = $cookie_parts[0] ?? '';
-		if (is_uuid($selector)) {
-			$p = permissions::new();
-			$p->add('user_log_add', 'temp');
-			$database->execute(
-				"update v_user_logs set remember_selector = null, remember_validator = null where remember_selector = :selector ",
-				['selector' => $selector]
-			);
-			$p->delete('user_log_add', 'temp');
-		}
-		setcookie('remember', '', time() - 3600, '/');
-	}
-
 //destroy session
 	session_unset();
 	session_destroy();
