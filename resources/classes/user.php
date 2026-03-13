@@ -559,47 +559,158 @@ class user implements logout_event, login_event {
 	 * @return void
 	 */
 	public static function on_login_post_session_create(settings $settings): void {
-		// Implementation would go here
-		// This is typically called by login.php in the application
+		// access the configuration for session validation
+		global $conf;
 
-		// Example implementation:
-		// if (isset($_SESSION['user_uuid']) && is_uuid($_SESSION['user_uuid'])) {
-		//     $database = database::new();
-		//
-		//     // Log successful login
-		//     $sql = "INSERT INTO v_user_logs (user_log_uuid, user_uuid, log_type, log_date, ip_address, user_agent)
-		//             VALUES (:user_log_uuid, :user_uuid, 'login_success', NOW(), :ip_address, :user_agent)";
-		//     $parameters = [
-		//         'user_log_uuid' => uuid(),
-		//         'user_uuid' => $_SESSION['user_uuid'],
-		//         'ip_address' => $_SERVER['REMOTE_ADDR'],
-		//         'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? ''
-		//     ];
-		//     $database->execute($sql, $parameters);
-		//
-		//     // Update last login date
-		//     $sql = "UPDATE v_users SET last_login_date = NOW() WHERE user_uuid = :user_uuid";
-		//     $parameters = ['user_uuid' => $_SESSION['user_uuid']];
-		//     $database->execute($sql, $parameters);
-		//
-		//     // Load user preferences
-		//     $user = new user($database, $_SESSION['user_uuid']);
-		//     $_SESSION['username'] = $user->get_username();
-		//     $_SESSION['user_email'] = $user->get_user_email();
-		//     $_SESSION['groups'] = $user->get_groups();
-		//     $_SESSION['permissions'] = $user->get_permissions();
-		//
-		//     // Set session timeout based on settings
-		//     ini_set('session.gc_maxlifetime', $settings->get('session', 'timeout', '7200'));
-		//
-		//     // Redirect to appropriate page
-		//     if (isset($_SESSION['password_change_required'])) {
-		//         header('Location: /core/users/user_password.php');
-		//     } else {
-		//         header('Location: /');
-		//     }
-		//     exit;
-		// }
+		// get the database connection from settings
+		$database = $settings->database();
+
+		// derive project root: resources/classes → resources → project root
+		$project_root = dirname(__DIR__, 2);
+
+		// get the domain and user UUIDs from the established session
+		$domain_uuid = $_SESSION['domain_uuid'] ?? '';
+		$user_uuid   = $_SESSION['user_uuid'] ?? '';
+
+		if (!is_uuid($domain_uuid) || !is_uuid($user_uuid)) {
+			return;
+		}
+
+		// Build the session server array to validate the session
+		if (!isset($conf['session.validate'])) {
+			$conf['session.validate'][] = 'HTTP_USER_AGENT';
+		} elseif (!is_array($conf['session.validate'])) {
+			$conf['session.validate'] = [$conf['session.validate']];
+		}
+		$server_array = [];
+		foreach ($conf['session.validate'] as $name) {
+			$server_array[$name] = $_SERVER[$name] ?? '';
+		}
+
+		// Save the user hash to be used in check_auth
+		$_SESSION["user_hash"] = hash('sha256', implode($server_array));
+
+		// empty the permissions
+		if (isset($_SESSION['permissions'])) {
+			unset($_SESSION['permissions']);
+		}
+
+		// get the groups assigned to the user
+		$group = new groups($database, $domain_uuid, $user_uuid);
+		$group->session();
+
+		// get the permissions assigned to the user through the assigned groups
+		$permission = new permissions($database, $domain_uuid, $user_uuid);
+		$permission->session();
+
+		// get the domains
+		if (file_exists($project_root . '/app/domains/resources/domains.php') && !is_cli()) {
+			require_once $project_root . '/app/domains/resources/domains.php';
+		}
+
+		// get the user settings
+		$sql  = "select * from v_user_settings ";
+		$sql .= "where domain_uuid = :domain_uuid ";
+		$sql .= "and user_uuid = :user_uuid ";
+		$sql .= "and user_setting_enabled = true ";
+		$parameters = [];
+		$parameters['domain_uuid'] = $domain_uuid;
+		$parameters['user_uuid']   = $user_uuid;
+		$user_settings = $database->select($sql, $parameters, 'all');
+
+		// store user settings in the session when available
+		if (is_array($user_settings)) {
+			foreach ($user_settings as $row) {
+				$name        = $row['user_setting_name'];
+				$category    = $row['user_setting_category'];
+				$subcategory = $row['user_setting_subcategory'];
+				if (isset($row['user_setting_value'])) {
+					if (empty($subcategory)) {
+						if ($name == "array") {
+							$_SESSION[$category][] = $row['user_setting_value'];
+						} else {
+							$_SESSION[$category][$name] = $row['user_setting_value'];
+						}
+					} else {
+						if ($name == "array") {
+							$_SESSION[$category][$subcategory][] = $row['user_setting_value'];
+						} else {
+							$_SESSION[$category][$subcategory][$name] = $row['user_setting_value'];
+						}
+					}
+				}
+			}
+		}
+
+		// get the extensions that are assigned to this user
+		if (file_exists($project_root . '/app/extensions/app_config.php')) {
+			if (isset($_SESSION["user"]) && is_uuid($user_uuid) && is_uuid($domain_uuid) && !isset($_SESSION['user']['extension'])) {
+				// initialize the extension array
+				$_SESSION['user']['extension'] = [];
+
+				// get the user extension list
+				$sql  = "select ";
+				$sql .= "e.extension_uuid, ";
+				$sql .= "e.extension, ";
+				$sql .= "e.number_alias, ";
+				$sql .= "e.user_context, ";
+				$sql .= "e.outbound_caller_id_name, ";
+				$sql .= "e.outbound_caller_id_number, ";
+				$sql .= "e.description ";
+				$sql .= "from ";
+				$sql .= "v_extension_users as u, ";
+				$sql .= "v_extensions as e ";
+				$sql .= "where ";
+				$sql .= "e.domain_uuid = :domain_uuid ";
+				$sql .= "and e.extension_uuid = u.extension_uuid ";
+				$sql .= "and u.user_uuid = :user_uuid ";
+				$sql .= "and e.enabled = 'true' ";
+				$sql .= "order by ";
+				$sql .= "e.extension asc ";
+				$parameters = [];
+				$parameters['domain_uuid'] = $domain_uuid;
+				$parameters['user_uuid']   = $user_uuid;
+				$extensions = $database->select($sql, $parameters, 'all');
+				if (!empty($extensions)) {
+					foreach ($extensions as $x => $row) {
+						// set the destination
+						$destination = $row['extension'];
+						if (!empty($row['number_alias'])) {
+							$destination = $row['number_alias'];
+						}
+
+						// build the user array
+						$_SESSION['user']['extension'][$x]['user']                     = $row['extension'];
+						$_SESSION['user']['extension'][$x]['number_alias']             = $row['number_alias'];
+						$_SESSION['user']['extension'][$x]['destination']              = $destination;
+						$_SESSION['user']['extension'][$x]['extension_uuid']           = $row['extension_uuid'];
+						$_SESSION['user']['extension'][$x]['outbound_caller_id_name']  = $row['outbound_caller_id_name'];
+						$_SESSION['user']['extension'][$x]['outbound_caller_id_number'] = $row['outbound_caller_id_number'];
+						$_SESSION['user']['extension'][$x]['user_context']             = $row['user_context'];
+						$_SESSION['user']['extension'][$x]['description']              = $row['description'];
+
+						// set the context
+						$_SESSION['user']['user_context'] = $row["user_context"];
+						$_SESSION['user_context']         = $row["user_context"];
+					}
+				}
+			}
+		}
+
+		// set the time zone
+		if (!isset($_SESSION["time_zone"]["user"])) {
+			$_SESSION["time_zone"]["user"] = null;
+		}
+		if (strlen($_SESSION["time_zone"]["user"] ?? '') === 0) {
+			// set the domain time zone as the default time zone
+			date_default_timezone_set($settings->get('domain', 'time_zone', 'UTC'));
+		} else {
+			// set the user defined time zone
+			date_default_timezone_set($_SESSION["time_zone"]["user"]);
+		}
+
+		// add the username to the session
+		$_SESSION['username'] = $_SESSION['user']["username"];
 	}
 
 	/**
