@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<cdr>
+  <variables>
+    <uuid>b9b9b9b9-0000-0000-0000-000000000099</uuid>
+    <domain_uuid>d0d0d0d0-0000-0000-0000-000000000001</domain_uuid>
+    <domain_name>example.com</domain_name>
+    <call_direction>inbound</call_direction>
+    <caller_id_name>Test Caller</caller_id_name>
+    <caller_id_number>2025559999</caller_id_number>
+    <caller_destination>*992110</caller_destination>
+    <destination_number>*992110</destination_number>
+    <start_epoch>1700000000</start_epoch>
+    <end_epoch>1700000060</end_epoch>
+    <billsec>60</billsec>
+    <duration>60</duration>
+    <hangup_cause>NORMAL_CLEARING</hangup_cause>
+    <limit_usage_wisecounty.encoretg.net_*992110>1</limit_usage_wisecounty.encoretg.net_*992110>
+    <limit_usage_domain_*992110>1</limit_usage_domain_*992110>
+  </variables>
+  <callflow>
+    <caller_profile>
+      <caller_id_name>Test Caller</caller_id_name>
+      <caller_id_number>2025559999</caller_id_number>
+      <destination_number>*992110</destination_number>
+    </caller_profile>
+  </callflow>
+</cdr>

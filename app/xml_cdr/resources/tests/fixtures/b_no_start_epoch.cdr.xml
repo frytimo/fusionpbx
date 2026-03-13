@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<cdr core-uuid="aaaaaaaa-bbbb-cccc-dddd-000000000001" switchname="fusionpbx">
+  <channel_data>
+    <state>CS_REPORTING</state>
+    <direction>inbound</direction>
+    <state_number>11</state_number>
+    <flags>0=1;37=1;38=1;46=1;47=1;52=1</flags>
+    <cap_flags>0</cap_flags>
+    <rate>8000</rate>
+    <ic>0</ic>
+    <oc>0</oc>
+    <callstate>DOWN</callstate>
+  </channel_data>
+  <variables>
+    <uuid>ffffffff-0000-1111-2222-333333333333</uuid>
+    <direction>inbound</direction>
+    <call_direction>inbound</call_direction>
+    <domain_name>example.com</domain_name>
+    <caller_id_name>No Epoch</caller_id_name>
+    <caller_id_number>5551234567</caller_id_number>
+    <destination_number>1002</destination_number>
+    <context>default</context>
+    <hangup_cause>NORMAL_CLEARING</hangup_cause>
+    <!-- start_epoch intentionally omitted to trigger discard -->
+    <answer_epoch>0</answer_epoch>
+    <end_epoch>1700000120</end_epoch>
+    <billsec>0</billsec>
+    <duration>60</duration>
+  </variables>
+  <app_log/>
+  <callflow sequence="1">
+    <extension name="1002" number="1002" context="default">
+      <application app_name="bridge" app_data=""/>
+    </extension>
+    <caller_profile>
+      <username>noepoch</username>
+      <dialplan>XML</dialplan>
+      <caller_id_name>No Epoch</caller_id_name>
+      <caller_id_number>5551234567</caller_id_number>
+      <network_addr>192.168.1.1</network_addr>
+      <destination_number>1002</destination_number>
+      <uuid>ffffffff-0000-1111-2222-333333333333</uuid>
+      <source>mod_sofia</source>
+      <context>default</context>
+      <chan_name>sofia/internal/noepoch@example.com</chan_name>
+    </caller_profile>
+    <times>
+      <created_time>0</created_time>
+      <profile_created_time>0</profile_created_time>
+      <progress_time>0</progress_time>
+      <progress_media_time>0</progress_media_time>
+      <answered_time>0</answered_time>
+      <bridged_time>0</bridged_time>
+      <last_hold_time>0</last_hold_time>
+      <hold_accum_time>0</hold_accum_time>
+      <hangup_time>0</hangup_time>
+      <resurrect_time>0</resurrect_time>
+      <transfer_time>0</transfer_time>
+    </times>
+  </callflow>
+</cdr>

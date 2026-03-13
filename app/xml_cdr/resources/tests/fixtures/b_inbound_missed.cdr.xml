@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<cdr>
+  <variables>
+    <uuid>a1b2c3d4-e5f6-7890-abcd-ef1234567891</uuid>
+    <domain_uuid>d0d0d0d0-0000-0000-0000-000000000001</domain_uuid>
+    <domain_name>example.com</domain_name>
+    <call_direction>inbound</call_direction>
+    <caller_id_name>Bob Jones</caller_id_name>
+    <caller_id_number>2025551002</caller_id_number>
+    <effective_caller_id_name>Bob Jones</effective_caller_id_name>
+    <effective_caller_id_number>2025551002</effective_caller_id_number>
+    <caller_destination>1002</caller_destination>
+    <destination_number>1002</destination_number>
+    <start_epoch>1700001000</start_epoch>
+    <start_stamp>2023-11-14 22%3A30%3A00</start_stamp>
+    <answer_epoch>0</answer_epoch>
+    <end_epoch>1700001040</end_epoch>
+    <billsec>0</billsec>
+    <billmsec>0</billmsec>
+    <duration>40</duration>
+    <hangup_cause>ORIGINATOR_CANCEL</hangup_cause>
+    <hangup_cause_q850>31</hangup_cause_q850>
+    <sip_call_id>def456@192.168.1.2</sip_call_id>
+    <sip_network_ip>192.168.1.102</sip_network_ip>
+    <read_codec>PCMU</read_codec>
+    <read_rate>8000</read_rate>
+    <write_codec>PCMU</write_codec>
+    <write_rate>8000</write_rate>
+    <remote_media_ip>192.168.1.102</remote_media_ip>
+    <default_language>en</default_language>
+    <progress_mediamsec>0</progress_mediamsec>
+    <progressmsec>0</progressmsec>
+    <end_uepoch>1700001040000000</end_uepoch>
+  </variables>
+  <callflow>
+    <caller_profile>
+      <caller_id_name>Bob Jones</caller_id_name>
+      <caller_id_number>2025551002</caller_id_number>
+      <destination_number>1002</destination_number>
+      <context>default</context>
+      <network_addr>192.168.1.102</network_addr>
+    </caller_profile>
+    <times>
+      <profile_created_time>1700001000000000</profile_created_time>
+      <progress_time>0</progress_time>
+      <progress_media_time>0</progress_media_time>
+      <answered_time>0</answered_time>
+      <hangup_time>1700001040000000</hangup_time>
+      <transfer_time>0</transfer_time>
+      <resurrect_time>0</resurrect_time>
+      <bridged_time>0</bridged_time>
+      <last_hold_time>0</last_hold_time>
+      <hold_accum_time>0</hold_accum_time>
+    </times>
+  </callflow>
+</cdr>

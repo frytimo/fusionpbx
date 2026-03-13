@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<cdr>
+  <variables>
+    <uuid>a1b2c3d4-e5f6-7890-abcd-ef1234567894</uuid>
+    <domain_uuid>d0d0d0d0-0000-0000-0000-000000000001</domain_uuid>
+    <domain_name>example.com</domain_name>
+    <call_direction>inbound</call_direction>
+    <caller_id_name>Provider</caller_id_name>
+    <caller_id_number>2025551003</caller_id_number>
+    <provider_prefix>9</provider_prefix>
+    <destination_number>91003</destination_number>
+    <start_epoch>1700004000</start_epoch>
+    <end_epoch>1700004060</end_epoch>
+    <billsec>60</billsec>
+    <billmsec>60000</billmsec>
+    <hangup_cause>NORMAL_CLEARING</hangup_cause>
+    <end_uepoch>1700004060000000</end_uepoch>
+  </variables>
+  <callflow>
+    <caller_profile>
+      <caller_id_name>Provider</caller_id_name>
+      <caller_id_number>2025551003</caller_id_number>
+      <destination_number>91003</destination_number>
+      <context>default</context>
+    </caller_profile>
+    <times>
+      <profile_created_time>1700004000000000</profile_created_time>
+      <hangup_time>1700004060000000</hangup_time>
+    </times>
+  </callflow>
+</cdr>

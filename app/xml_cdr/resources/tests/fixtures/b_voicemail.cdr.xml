@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<cdr>
+  <variables>
+    <uuid>a1b2c3d4-e5f6-7890-abcd-ef1234567895</uuid>
+    <domain_uuid>d0d0d0d0-0000-0000-0000-000000000001</domain_uuid>
+    <domain_name>example.com</domain_name>
+    <call_direction>inbound</call_direction>
+    <caller_id_name>Voicemail Caller</caller_id_name>
+    <caller_id_number>2025551004</caller_id_number>
+    <destination_number>*991001</destination_number>
+    <voicemail_answer_stamp>2023-11-14 22:00:00</voicemail_answer_stamp>
+    <voicemail_message_seconds>30</voicemail_message_seconds>
+    <start_epoch>1700005000</start_epoch>
+    <end_epoch>1700005035</end_epoch>
+    <billsec>35</billsec>
+    <billmsec>35000</billmsec>
+    <hangup_cause>NORMAL_CLEARING</hangup_cause>
+    <end_uepoch>1700005035000000</end_uepoch>
+  </variables>
+  <callflow>
+    <caller_profile>
+      <caller_id_name>Voicemail Caller</caller_id_name>
+      <caller_id_number>2025551004</caller_id_number>
+      <destination_number>*991001</destination_number>
+      <context>default</context>
+    </caller_profile>
+    <times>
+      <profile_created_time>1700005000000000</profile_created_time>
+      <hangup_time>1700005035000000</hangup_time>
+    </times>
+  </callflow>
+</cdr>

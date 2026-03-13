@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<cdr>
+  <variables>
+    <uuid>a1b2c3d4-e5f6-7890-abcd-ef1234567896</uuid>
+    <domain_uuid>d0d0d0d0-0000-0000-0000-000000000001</domain_uuid>
+    <domain_name>example.com</domain_name>
+    <call_direction>inbound</call_direction>
+    <cc_side>member</cc_side>
+    <cc_cause>cancel</cc_cause>
+    <cc_queue>support@example.com</cc_queue>
+    <cc_member_uuid>m1m2m3m4-e5f6-7890-abcd-ef1234567890</cc_member_uuid>
+    <cc_member_session_uuid>_undef_</cc_member_session_uuid>
+    <cc_agent_uuid>_undef_</cc_agent_uuid>
+    <call_center_queue_uuid>_undef_</call_center_queue_uuid>
+    <cc_queue_joined_epoch>1700006000</cc_queue_joined_epoch>
+    <caller_id_name>CC Caller</caller_id_name>
+    <caller_id_number>2025551005</caller_id_number>
+    <destination_number>support</destination_number>
+    <start_epoch>1700006000</start_epoch>
+    <end_epoch>1700006120</end_epoch>
+    <billsec>0</billsec>
+    <billmsec>0</billmsec>
+    <hangup_cause>ORIGINATOR_CANCEL</hangup_cause>
+    <end_uepoch>1700006120000000</end_uepoch>
+  </variables>
+  <callflow>
+    <caller_profile>
+      <caller_id_name>CC Caller</caller_id_name>
+      <caller_id_number>2025551005</caller_id_number>
+      <destination_number>support</destination_number>
+      <context>default</context>
+    </caller_profile>
+    <times>
+      <profile_created_time>1700006000000000</profile_created_time>
+      <hangup_time>1700006120000000</hangup_time>
+    </times>
+  </callflow>
+</cdr>

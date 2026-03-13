@@ -51,6 +51,13 @@ class xml_cdr_service extends service {
 
 	private $hostname;
 
+	// Pipeline architecture — enabled via xml_cdr.use_pipeline default setting
+	private bool  $use_pipeline      = false;
+	private array $pipeline_enrich   = [];   // callable chain built by xml_cdr_pipeline
+	private array $pipeline_modify   = [];   // callable chain
+	private array $pipeline_listeners = [];
+	private array $pipeline_notifiers = [];
+
 	protected function reload_settings(): void {
 		if (!$this->initialized)
 			$this->info('Loading settings');
@@ -119,6 +126,12 @@ class xml_cdr_service extends service {
 		//recreate the call detail records object
 		$this->cdr = new xml_cdr();
 
+		// Build the pipeline chains when the feature flag is enabled
+		$this->use_pipeline = (bool)$this->settings->get('xml_cdr', 'use_pipeline', false);
+		if ($this->use_pipeline) {
+			$this->build_pipeline_chains();
+		}
+
 		// Notify user we are ready
 		if ($this->initialized) {
 			$this->notice('Settings Reloaded');
@@ -160,6 +173,17 @@ class xml_cdr_service extends service {
 		if (!file_exists($xml_cdr_dir . '/failed/sql')) {
 			$this->debug("Creating missing 'sql' failed folder");
 			mkdir($xml_cdr_dir . '/failed/sql', 0770, true);
+		}
+
+		//create the retry queue directories (used by the pipeline architecture)
+		if (!file_exists($xml_cdr_dir . '/failed/retry')) {
+			$this->debug("Creating missing 'retry' failed folder");
+			mkdir($xml_cdr_dir . '/failed/retry', 0770, true);
+		}
+
+		if (!file_exists($xml_cdr_dir . '/failed/dead')) {
+			$this->debug("Creating missing 'dead' failed folder");
+			mkdir($xml_cdr_dir . '/failed/dead', 0770, true);
 		}
 
 		//save the xml_cdr directory in the object
@@ -282,6 +306,11 @@ class xml_cdr_service extends service {
 
 		// Set a flag for notifications
 		$this->initialized = true;
+
+		// Use the new pipeline architecture if enabled
+		if ($this->use_pipeline) {
+			return $this->run_with_pipeline();
+		}
 
 		// Check for inotify php extension
 		if (!function_exists('inotify_init')) {
@@ -499,5 +528,87 @@ class xml_cdr_service extends service {
 				$flags[] = $name;
 		}
 		return implode('|', $flags);
+	}
+	// Pipeline architecture methods
+	/**
+	 * Discover and build all pipeline component chains.
+	 * Called from reload_settings() when xml_cdr.use_pipeline is true.
+	 */
+	private function build_pipeline_chains(): void {
+		$this->pipeline_notifiers = xml_cdr_pipeline::build_notifier_chain(
+			xml_cdr_pipeline::discover_notifiers()
+		);
+		$this->pipeline_listeners = xml_cdr_pipeline::build_listener_chain(
+			xml_cdr_pipeline::discover_listeners(),
+			$this->database
+		);
+		$this->pipeline_enrich = xml_cdr_pipeline::build_enricher_chain(
+			xml_cdr_pipeline::discover_enrichers(),
+			$this->database
+		);
+		$this->pipeline_modify = xml_cdr_pipeline::build_modifier_chain(
+			xml_cdr_pipeline::discover_modifiers(),
+			$this->database
+		);
+		$this->info('Pipeline chains built');
+	}
+
+	/**
+	 * Main service loop using the new pipeline architecture.
+	 * Mirrors run() but delegates file handling to the pipeline.
+	 */
+	private function run_with_pipeline(): int {
+		$this->notice("Pipeline mode active — watching {$this->xml_cdr_dir}");
+
+		$failed_dir = $this->xml_cdr_dir . '/failed';
+
+		// Callback executed by consumers for each CDR record
+		$on_record = function (xml_cdr_record $record) use ($failed_dir): void {
+			try {
+				$outcome = xml_cdr_pipeline::run_pipeline(
+					$record,
+					$this->pipeline_enrich,
+					$this->pipeline_modify,
+					$this->pipeline_listeners,
+					$this->pipeline_notifiers,
+					$this->settings
+				);
+				$this->debug("Pipeline outcome: $outcome file={$record->source_filename}");
+			} catch (xml_cdr_skip_exception $e) {
+				// Keep file, do nothing — already fired by run_pipeline
+				$this->info("Skipped {$record->source_filename}: " . $e->getMessage());
+			} catch (xml_cdr_discard_exception $e) {
+				// File should already be deleted by run_pipeline; log here for visibility
+				$this->info("Discarded {$record->source_filename}: " . $e->getMessage());
+			} catch (\Throwable $e) {
+				// Unexpected error — move to failed/sql for retry
+				$this->error("Pipeline error for {$record->source_filename}: " . $e->getMessage());
+				$retry_attempt = (int)$record->get_field('retry_attempt');
+				if ($retry_attempt > 0) {
+					// This is already a retry — re-enqueue with incremented attempt
+					$cdr_path = (string)$record->get_field('retry_cdr_path');
+					xml_cdr_retry_queue::remove($cdr_path);
+				}
+				xml_cdr_retry_queue::enqueue(
+					$record,
+					$failed_dir,
+					$e->getMessage(),
+					$retry_attempt + 1
+				);
+			}
+		};
+
+		// Build consumer chain: filesystem scan + retry drain, wrapped in inotify
+		$filesystem_consumer = xml_cdr_filesystem_consumer::create($this->settings);
+		$retry_consumer      = xml_cdr_retry_consumer::create($this->settings, $this->pipeline_notifiers);
+		$primary_consumer    = xml_cdr_inotify_consumer::create(
+			$this->settings,
+			$filesystem_consumer,
+			$retry_consumer
+		);
+
+		$primary_consumer->consume($this->settings, $on_record, $this->running);
+
+		return 0;
 	}
 }
