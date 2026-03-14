@@ -62,15 +62,26 @@ class url {
 	/** @deprecated Use FILTERED instead */
 	const SAFE               = self::FILTERED;
 
+	// Source identifiers stored as metadata inside $request_params entries
+	private const SOURCE_POST  = 'post';
+	private const SOURCE_INPUT = 'input';
+
 	private $parts;
 	private $scheme;
 	private $host;
 	private $port;
 	private $path;
+
+	// URL query parameters — used exclusively for URL building and link generation.
+	// Never write POST/body data here; doing so would leak form values into generated links.
 	private $params;
-	private $post_params;
-	private $input_params;
-	private $unsafe_params;
+
+	// Merged inbound request store (POST form fields and php://input body).
+	// Each entry: [ self::FILTERED => sanitized, self::UNSAFE => raw, 'source' => SOURCE_POST|SOURCE_INPUT ]
+	// POST wins over php://input when the same key appears in both (first-value-wins rule).
+	// GET query-string values live in $params, not here; get() checks $params first.
+	private array $request_params = [];
+
 	private $fragment;
 	private $original_url;
 	private $username;
@@ -92,10 +103,9 @@ class url {
 		$this->password     = '';
 		$this->path         = '';
 		$this->fragment     = '';
-		$this->params       = [];
-		$this->post_params  = [];
-		$this->input_params = [];
-		$url                = $url ?? '';
+		$this->params         = [];
+		$this->request_params = [];
+		$url                  = $url ?? '';
 
 		// Register any initial filters provided at construction time
 		if ($filters !== null) {
@@ -141,7 +151,8 @@ class url {
 		if ($settings !== null) {
 			$this->settings      = $settings;
 			$this->rows_per_page = (int) $settings->get('domain', 'paging', 50);
-			$this->page          = (int) $this->get('page', 0);
+			// URL param is 1-based (page 1 = first page); convert to 0-based internal index
+			$this->page          = max(0, (int) $this->get('page', 1) - 1);
 			$this->set_page($this->page);
 		}
 	}
@@ -477,31 +488,6 @@ class url {
 	public function get_query_array(): array {
 		// return the array
 		return $this->params;
-	}
-
-	public function get(string $key, mixed $default = null, bool $unsafe = false): mixed {
-		if ($unsafe) {
-			return $this->get_query_param($key, $default);
-		}
-
-		return $this->get_query_param($key, $default);
-	}
-
-	/**
-	 * Returns the query parameter using the key
-	 * @param string $key Key is converted to lowercase
-	 * @param mixed $default
-	 * @return mixed
-	 */
-	public function get_query_param(string $key, mixed $default = null, bool $unsafe = false): mixed {
-		// framework specific to use lowercase only for param keys
-		$key = strtolower($key);
-
-		// filter is 0 for safe (sanitized) and 1 for unsafe (original)
-		$filter = (int) $unsafe;
-
-		// return the value if it exists, otherwise return the default
-		return isset($this->params[$key][$filter]) ? $this->params[$key][$filter] : $default;
 	}
 
 	/**
@@ -882,35 +868,49 @@ class url {
 	}
 
 	// -------------------------------------------------------------------------
-	// POST, php://input, and combined REQUEST input
+	// Inbound request data  (POST form values and php://input bodies)
+	//
+	// These are kept strictly separate from $params (the URL query store) so
+	// POST/body data never leaks into generated links.
+	//
+	// Priority rule: POST wins over php://input when the same key appears in
+	// both.  URL query params are not stored here; get() checks $params first
+	// before falling through to $request_params.
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Shared internal helper: sanitizes an array of key/value pairs into a
-	 * two-slot [FILTERED, UNSAFE] parameter store.
+	 * Internal helper: sanitizes key/value pairs and merges them into $request_params.
 	 *
-	 * Each entry is stored for O(1) indexed access:
-	 *   $store[$key][self::FILTERED] — value after filter_query_modifier()
-	 *   $store[$key][self::UNSAFE]   — original, unsanitized value
+	 * Each entry uses the same two-slot layout as $params plus a source tag:
+	 *   self::FILTERED (0) — value after filter_query_modifier()
+	 *   self::UNSAFE   (1) — original, unsanitized value
+	 *   'source'       — self::SOURCE_POST or self::SOURCE_INPUT
 	 *
 	 * Array values have each scalar element sanitized individually; the raw
 	 * array is always preserved in the UNSAFE slot.
 	 *
-	 * @param array $data   Input key/value pairs.
-	 * @param array &$store Reference to the target parameter store property.
+	 * @param array  $data      Input key/value pairs.
+	 * @param string $source    self::SOURCE_POST or self::SOURCE_INPUT.
+	 * @param bool   $overwrite When false, existing keys are left untouched
+	 *                          so POST values are not clobbered by later input.
 	 */
-	private function import_params(array $data, array &$store): void {
+	private function import_request_params(array $data, string $source, bool $overwrite = false): void {
 		foreach ($data as $key => $value) {
 			$key = strtolower((string) $key);
 			if (!strlen($key)) {
 				continue;
 			}
-			// Slot UNSAFE (1): always store the original value as-is
-			$store[$key][self::UNSAFE] = $value;
+			// First-value-wins when $overwrite is false (POST has already been loaded)
+			if (!$overwrite && isset($this->request_params[$key])) {
+				continue;
+			}
+			// UNSAFE slot: always store the original value
+			$this->request_params[$key][self::UNSAFE] = $value;
+			$this->request_params[$key]['source']     = $source;
 
 			if (is_array($value)) {
-				// Slot FILTERED (0): sanitize each scalar element individually
-				$store[$key][self::FILTERED] = array_map(
+				// FILTERED slot: sanitize each scalar element individually
+				$this->request_params[$key][self::FILTERED] = array_map(
 					function ($item) use ($key) {
 						return is_scalar($item)
 							? $this->filter_query_modifier($key, $item)
@@ -921,8 +921,8 @@ class url {
 			} else {
 				$filtered = $this->filter_query_modifier($key, $value);
 				if ($filtered !== null) {
-					// Slot FILTERED (0): sanitized scalar
-					$store[$key][self::FILTERED] = $filtered;
+					// FILTERED slot: sanitized scalar
+					$this->request_params[$key][self::FILTERED] = $filtered;
 				}
 			}
 		}
@@ -935,7 +935,8 @@ class url {
 	 * @return static
 	 */
 	public function load_post(array $post): static {
-		$this->import_params($post, $this->post_params);
+		// POST is authoritative; overwrite any php://input values already loaded
+		$this->import_request_params($post, self::SOURCE_POST, true);
 
 		return $this;
 	}
@@ -943,16 +944,85 @@ class url {
 	/**
 	 * Returns a sanitized POST value by key.
 	 *
+	 * Only returns a value when the key was loaded via load_post().
+	 * Use get() for a source-agnostic read.
+	 *
 	 * @param string $key     POST parameter name (case-insensitive).
-	 * @param mixed  $default Returned when the key is absent.
+	 * @param mixed  $default Returned when the key is absent or came from a different source.
 	 * @param bool   $unsafe  When true, returns the original unsanitized value.
 	 * @return mixed
 	 */
 	public function post(string $key, mixed $default = null, bool $unsafe = false): mixed {
 		$key  = strtolower($key);
 		$slot = $unsafe ? self::UNSAFE : self::FILTERED;
+		if (isset($this->request_params[$key]) && $this->request_params[$key]['source'] === self::SOURCE_POST) {
+			return $this->request_params[$key][$slot] ?? $default;
+		}
 
-		return $this->post_params[$key][$slot] ?? $default;
+		return $default;
+	}
+
+	/**
+	 * Unified parameter accessor.
+	 *
+	 * Searches URL query parameters first (persistent page state), then the
+	 * merged inbound request store (POST form data, php://input body), returning
+	 * the first match found.  Callers that need to know the source should use
+	 * get_query_param(), post(), or input() explicitly.
+	 *
+	 * @param string $key     Parameter name (case-insensitive).
+	 * @param mixed  $default Returned when not found in any store.
+	 * @param bool   $unsafe  When true, returns the original unsanitized value.
+	 * @return mixed
+	 */
+	public function get(string $key, mixed $default = null, bool $unsafe = false): mixed {
+		$lower = strtolower($key);
+		$slot  = $unsafe ? self::UNSAFE : self::FILTERED;
+
+		// URL query params take priority — they carry persistent page state
+		if (isset($this->params[$lower][$slot])) {
+			return $this->params[$lower][$slot];
+		}
+
+		// Merged request store (POST form data and php://input body)
+		if (isset($this->request_params[$lower][$slot])) {
+			return $this->request_params[$lower][$slot];
+		}
+
+		return $default;
+	}
+
+	/**
+	 * @deprecated Use post() instead.
+	 * @see url::post()
+	 */
+	public function get_post(string $key, mixed $default = null, bool $unsafe = false): mixed {
+		return $this->post($key, $default, $unsafe);
+	}
+
+	/**
+	 * @deprecated Use input() instead.
+	 * @see url::input()
+	 */
+	public function get_input(string $key, mixed $default = null, bool $unsafe = false): mixed {
+		return $this->input($key, $default, $unsafe);
+	}
+
+	/**
+	 * Returns the query parameter using the key
+	 * @param string $key Key is converted to lowercase
+	 * @param mixed $default
+	 * @return mixed
+	 */
+	public function get_query_param(string $key, mixed $default = null, bool $unsafe = false): mixed {
+		// framework specific to use lowercase only for param keys
+		$key = strtolower($key);
+
+		// filter is 0 for safe (sanitized) and 1 for unsafe (original)
+		$filter = (int) $unsafe;
+
+		// return the value if it exists, otherwise return the default
+		return isset($this->params[$key][$filter]) ? $this->params[$key][$filter] : $default;
 	}
 
 	/**
@@ -963,7 +1033,9 @@ class url {
 	 * @return bool
 	 */
 	public function has_post(string $key): bool {
-		return isset($this->post_params[strtolower($key)]);
+		$key = strtolower($key);
+
+		return isset($this->request_params[$key]) && $this->request_params[$key]['source'] === self::SOURCE_POST;
 	}
 
 	/**
@@ -974,6 +1046,7 @@ class url {
 	 *
 	 * The Content-Type header is read automatically from $_SERVER.
 	 * Safe to call multiple times; PHP permits repeated reads of php://input.
+	 * php://input values yield to POST if the same key was already loaded.
 	 *
 	 * @return static
 	 */
@@ -988,12 +1061,12 @@ class url {
 		if (strpos($content_type, 'application/json') !== false) {
 			$data = json_decode($raw, true);
 			if (is_array($data)) {
-				$this->import_params($data, $this->input_params);
+				$this->import_request_params($data, self::SOURCE_INPUT, false);
 			}
 		} else {
 			$params = [];
 			parse_str($raw, $params);
-			$this->import_params($params, $this->input_params);
+			$this->import_request_params($params, self::SOURCE_INPUT, false);
 		}
 
 		return $this;
@@ -1002,54 +1075,46 @@ class url {
 	/**
 	 * Returns a sanitized value from the php://input parameter store.
 	 *
+	 * Only returns a value when the key was loaded via load_input() and was not
+	 * already present as a POST value (POST wins over php://input).
+	 * Use get() for a source-agnostic read.
+	 *
 	 * @param string $key     Parameter name (case-insensitive).
-	 * @param mixed  $default Returned when the key is absent.
+	 * @param mixed  $default Returned when the key is absent or came from a different source.
 	 * @param bool   $unsafe  When true, returns the original unsanitized value.
 	 * @return mixed
 	 */
 	public function input(string $key, mixed $default = null, bool $unsafe = false): mixed {
 		$key  = strtolower($key);
 		$slot = $unsafe ? self::UNSAFE : self::FILTERED;
+		if (isset($this->request_params[$key]) && $this->request_params[$key]['source'] === self::SOURCE_INPUT) {
+			return $this->request_params[$key][$slot] ?? $default;
+		}
 
-		return $this->input_params[$key][$slot] ?? $default;
+		return $default;
 	}
 
 	/**
 	 * Returns true when the key exists in the php://input parameter store.
+	 * Returns false when the same key was already loaded by POST (POST wins).
 	 *
 	 * @param string $key Parameter name (case-insensitive).
 	 * @return bool
 	 */
 	public function has_input(string $key): bool {
-		return isset($this->input_params[strtolower($key)]);
+		$key = strtolower($key);
+
+		return isset($this->request_params[$key]) && $this->request_params[$key]['source'] === self::SOURCE_INPUT;
 	}
 
 	/**
-	 * Mirrors PHP's $_REQUEST superglobal: searches GET parameters first,
-	 * then POST form values, then php://input body values, returning the
-	 * first match found.
+	 * Alias of get(). Searches URL query params first, then POST, then php://input.
 	 *
-	 * Use the specific get() / post() / input() methods when the source
-	 * of a parameter must be certain.
-	 *
-	 * @param string $key     Parameter name (case-insensitive).
-	 * @param mixed  $default Returned when not found in any store.
-	 * @param bool   $unsafe  When true, returns the original unsanitized value.
-	 * @return mixed
+	 * @deprecated Use get() instead — behavior is identical.
+	 * @see url::get()
 	 */
 	public function request(string $key, mixed $default = null, bool $unsafe = false): mixed {
-		$lower = strtolower($key);
-		if (isset($this->params[$lower])) {
-			return $this->get($key, $default, $unsafe);
-		}
-		if (isset($this->post_params[$lower])) {
-			return $this->post($key, $default, $unsafe);
-		}
-		if (isset($this->input_params[$lower])) {
-			return $this->input($key, $default, $unsafe);
-		}
-
-		return $default;
+		return $this->get($key, $default, $unsafe);
 	}
 
 	/**
@@ -1090,8 +1155,9 @@ class url {
 	 */
 	public function set_page(int $page): static {
 		$this->page = max(0, $page);
+		// Store as 1-based in the URL; drop the param entirely when on the first page
 		if ($this->page > 0) {
-			$this->set_query_param('page', $this->page);
+			$this->set_query_param('page', $this->page + 1);
 		} else {
 			$this->unset_query_param('page');
 		}
@@ -1133,8 +1199,7 @@ class url {
 	 */
 	public function next(): static {
 		$clone = clone $this;
-		$page  = (int) $clone->get('page', 0);
-		$clone->set_query_param('page', $page + 1);
+		$clone->set_page($clone->page + 1);
 
 		return $clone;
 	}
@@ -1146,12 +1211,7 @@ class url {
 	 */
 	public function prev(): static {
 		$clone = clone $this;
-		$page  = (int) $clone->get_query_param('page', 0) - 1;
-		if ($page > 0) {
-			$clone->set_query_param('page', $page);
-		} else {
-			$clone->unset_query_param('page');
-		}
+		$clone->set_page(max(0, $clone->page - 1));
 
 		return $clone;
 	}
@@ -1279,11 +1339,12 @@ class url {
 				$html         .= "\tif (do_action) {\n";
 				$html         .= "\t\tif (page_num < 1) { page_num = 1; }\n";
 				$html         .= "\t\tif (page_num > " . $max_page . ") { page_num = " . $max_page . "; }\n";
-				$go_url        = $url->set('page', 0)->build();
-				$go_url        = preg_replace('/([?&])page=0(&|$)/', '$1', $go_url);
-				$go_url        = rtrim((string) $go_url, '?&');
+				$go_url        = $url->delete('page')->build();
 				$join          = (strpos((string) $go_url, '?') !== false) ? '&' : '?';
-				$html         .= "\t\tdocument.location.href = '" . htmlspecialchars((string) $go_url, ENT_QUOTES, 'UTF-8') . $join . "page='+(--page_num);\n";
+				$go_url_safe   = htmlspecialchars((string) $go_url, ENT_QUOTES, 'UTF-8');
+				// page=1 means first page; omit the param for a clean URL
+				$html         .= "\t\tif (page_num <= 1) { document.location.href = '" . $go_url_safe . "'; }\n";
+				$html         .= "\t\telse { document.location.href = '" . $go_url_safe . $join . "page=' + page_num; }\n";
 				$html         .= "\t\treturn false;\n";
 				$html         .= "\t}\n";
 				$html         .= "}\n";
