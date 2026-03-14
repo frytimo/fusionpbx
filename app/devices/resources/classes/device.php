@@ -96,6 +96,14 @@ class device extends app {
 
 		//initialize the parent class
 		parent::__construct();
+
+		// allow app::save() for any device sub-type editor
+		if (permission_exists('device_add') || permission_exists('device_profile_add') || permission_exists('device_vendor_add') || permission_exists('device_vendor_function_add')) {
+			$this->has_add = true;
+		}
+		if (permission_exists('device_edit') || permission_exists('device_profile_edit') || permission_exists('device_vendor_edit') || permission_exists('device_vendor_function_edit')) {
+			$this->has_edit = true;
+		}
 	}
 
 	/**

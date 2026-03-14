@@ -861,8 +861,31 @@ class url {
 		return $this;
 	}
 
+	/**
+	 * Replaces the last segment (filename) of the current path with the given resource.
+	 *
+	 * For example, if the current path is '/app/dialplans/dialplan_edit.php',
+	 * calling set_resource('dialplans.php') yields '/app/dialplans/dialplans.php'.
+	 *
+	 * @param string $resource The new filename or resource to use as the last path segment.
+	 * @return static
+	 */
+	public function set_resource(string $resource): static {
+		$path = $this->get_path();
+		$dir = substr($path, 0, (int) strrpos($path, '/'));
+		$resource = ltrim($resource, '/');
+		$this->set_path($dir . '/' . $resource);
+
+		return $this;
+	}
+
 	public static function redirect(string $url, int $status_code = 302): void {
-		$location = url::from_string($url)->build_absolute();
+		// Check for relative URL to create absolute location
+		if (!(str_starts_with($url, 'http://') || str_starts_with($url, 'https://'))) {
+			$location = (url::from_request())->set_resource($url)->build_absolute();
+		} else {
+			$location = url::from_string($url)->build_absolute();
+		}
 		header("Location: $location", true, $status_code);
 		exit();
 	}

@@ -1860,7 +1860,10 @@ class database {
 														$array_key != 'insert_date' &&
 														$array_key != 'update_user' &&
 														$array_key != 'update_date') {
-													if (!isset($array_value) || $array_value == '') {
+													if (gettype($array_value) === 'boolean') {
+														$sql .= ':' . $array_key . ', ';
+														$params[$array_key] = $array_value ? 'true' : 'false';
+													} elseif (!isset($array_value) || $array_value === '') {
 														$sql .= 'null, ';
 													} elseif ($array_value === 'now()') {
 														$sql .= 'now(), ';
@@ -1870,9 +1873,6 @@ class database {
 													} elseif ($array_value === 'remote_address()') {
 														$sql .= ':' . $array_key . ', ';
 														$params[$array_key] = $_SERVER['REMOTE_ADDR'];
-													} elseif (gettype($array_value) === 'boolean') {
-														$sql .= ':' . $array_key . ', ';
-														$params[$array_key] = $array_value;
 													} else {
 														$sql .= ':' . $array_key . ', ';
 														if (gettype($array_value) === 'string') {
@@ -2037,7 +2037,10 @@ class database {
 												}
 												if ($array_key != $parent_key_name) {
 													$array_key = self::sanitize($array_key);
-													if (!isset($array_value) || (isset($array_value) && $array_value === '')) {
+													if (gettype($array_value) === 'boolean') {
+														$sql .= $array_key . ' = :' . $array_key . ', ';
+														$params[$array_key] = $array_value ? 'true' : 'false';
+													} elseif (!isset($array_value) || (isset($array_value) && $array_value === '')) {
 														$sql .= $array_key . ' = null, ';
 													} elseif ($array_value === 'now()') {
 														$sql .= $array_key . ' = now(), ';
@@ -2047,9 +2050,6 @@ class database {
 													} elseif ($array_value === 'remote_address()') {
 														$sql .= $array_key . ' = :' . $array_key . ', ';
 														$params[$array_key] = $_SERVER['REMOTE_ADDR'];
-													} elseif (gettype($array_value) === 'boolean') {
-														$sql .= $array_key . ' = :' . $array_key . ', ';
-														$params[$array_key] = $array_value;
 													} else {
 														$sql .= $array_key . ' = :' . $array_key . ', ';
 														if (gettype($array_value) === 'string') {
@@ -2259,7 +2259,9 @@ class database {
 																$k = self::sanitize($k);
 
 																// save the key value pairs to the temp_array
-																if (!isset($v) || (isset($v) && $v == '')) {
+																if (gettype($v) === 'boolean') {
+																	$temp_array[$k] = $v;
+																} elseif (!isset($v) || (isset($v) && $v === '')) {
 																	$temp_array[$k] = null;
 																} elseif ($v === 'now()') {
 																	$temp_array[$k] = 'now()';
@@ -2267,14 +2269,6 @@ class database {
 																	$temp_array[$k] = $this->user_uuid ?? null;
 																} elseif ($v === 'remote_address()') {
 																	$temp_array[$k] = $_SERVER['REMOTE_ADDR'];
-																}
-																if (gettype($v) === 'boolean') {
-																	if ($v) {
-																		$v = true;
-																	} else {
-																		$v = false;
-																	}
-																	$temp_array[$k] = $v;
 																} else {
 																	if (gettype($v) === 'string') {
 																		$v = trim($v);
@@ -2297,7 +2291,10 @@ class database {
 															foreach ($row as $k => $v) {
 																if (!is_array($v) && ($k != $parent_key_name || $k != $child_key_name)) {
 																	$k = self::sanitize($k);
-																	if (!isset($v) || (isset($v) && $v == '')) {
+																	if (gettype($v) === 'boolean') {
+																		$sql .= $k . ' = :' . $k . ', ';
+																		$params[$k] = $v ? 'true' : 'false';
+																	} elseif (!isset($v) || (isset($v) && $v === '')) {
 																		$sql .= $k . ' = null, ';
 																	} elseif ($v === 'now()') {
 																		$sql .= $k . ' = now(), ';
@@ -2307,9 +2304,6 @@ class database {
 																	} elseif ($v === 'remote_address()') {
 																		$sql .= $k . ' = :' . $k . ', ';
 																		$params[$k] = $_SERVER['REMOTE_ADDR'];
-																	} elseif (gettype($v) === 'boolean') {
-																		$sql .= $k . ' = :' . $k . ', ';
-																		$params[$k] = $v;
 																	} else {
 																		$sql .= $k . ' = :' . $k . ', ';
 																		if (gettype($v) === 'string') {
@@ -2445,7 +2439,10 @@ class database {
 																		$k != 'insert_date' &&
 																		$k != 'update_user' &&
 																		$k != 'update_date') {
-																	if (!isset($v) || strlen($v) == 0) {
+																	if (gettype($v) === 'boolean') {
+																		$sql .= ':' . $k . ', ';
+																		$params[$k] = $v ? 'true' : 'false';
+																	} elseif (!isset($v) || strlen($v) == 0) {
 																		$sql .= 'null, ';
 																	} elseif ($v === 'now()') {
 																		$sql .= 'now(), ';
@@ -2455,9 +2452,6 @@ class database {
 																	} elseif ($v === 'remote_address()') {
 																		$sql .= ':' . $k . ', ';
 																		$params[$k] = $_SERVER['REMOTE_ADDR'];
-																	} elseif (gettype($v) === 'boolean') {
-																		$sql .= ':' . $k . ', ';
-																		$params[$k] = $v;
 																	} else {
 																		$k = self::sanitize($k);
 																		if ($k != 'insert_user' &&

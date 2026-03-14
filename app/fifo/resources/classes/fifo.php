@@ -12,6 +12,7 @@ class fifo extends app {
 	const app_uuid = '16589224-c876-aeb3-f59f-523a1c0801f7';
 
 	// class-level configuration constants
+	const PERMISSION_PREFIX = 'fifo_';
 	const TABLE             = 'fifo';
 	const UUID_PREFIX       = 'fifo_';
 	const TOGGLE_FIELD      = 'fifo_enabled';

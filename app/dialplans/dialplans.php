@@ -81,8 +81,7 @@ $url->add_query_filter(function (string $key, mixed $value, callable $next) use 
 // Check if app_uuid is set and valid, if not redirect to dialplans.php without app_uuid
 $app_uuid = $url->get('app_uuid', '');
 if (!empty($app_uuid) && is_uuid($app_uuid) && !in_array($app_uuid, $allowed_app_uuids)) {
-	header('Location: ' . $url->unset_query_param('app_uuid')->set_path('dialplans.php')->build_relative());
-	exit;
+	$url->redirect('dialplans.php');
 }
 
 // get posted data
@@ -97,36 +96,30 @@ $app_uuid  = $url->get('app_uuid', '');
 
 // process the http post data by action
 if (!empty($action) && is_array($dialplans) && @sizeof($dialplans) != 0) {
-	// define redirect parameters and url
-	$list_page = $url->set_path(dialplan::LIST_PAGE)->build_absolute();
-
 	// process action
 	switch ($action) {
 		case 'copy':
 			if ($has_dialplan_add) {
-				$obj            = new dialplan;
-				$obj->app_uuid  = $app_uuid;
+				$obj = new dialplan;
 				$obj->copy($dialplans);
 			}
 			break;
 		case 'toggle':
 			if ($has_dialplan_edit) {
-				$obj            = new dialplan;
-				$obj->app_uuid  = $app_uuid;
+				$obj = new dialplan;
 				$obj->toggle($dialplans);
 			}
 			break;
 		case 'delete':
 			if ($has_dialplan_delete) {
-				$obj            = new dialplan;
-				$obj->app_uuid  = $app_uuid;
+				$obj = new dialplan;
 				$obj->delete($dialplans);
 			}
 			break;
 	}
 
-	// redirect
-	header('Location: ' . $list_page);
+	// redirect keeps all the params in the url automatically
+	url::redirect(dialplan::LIST_PAGE);
 	exit;
 }
 

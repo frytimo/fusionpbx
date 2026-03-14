@@ -38,6 +38,7 @@ class call_forward extends app {
 	const app_uuid = '19806921-e8ed-dcff-b325-dd3e5da4959d';
 
 	// class-level configuration constants
+	const PERMISSION_PREFIX = 'extension_';
 	const TOGGLE_FIELD      = 'forward_all_enabled';
 	const TOGGLE_VALUES     = ['true', 'false'];
 

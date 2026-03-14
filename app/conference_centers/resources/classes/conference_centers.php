@@ -31,6 +31,7 @@ class conference_centers extends app {
 	/**
 	 * declare constant variables
 	 */
+	const PERMISSION_PREFIX = 'conference_center_';
 	const app_name = 'conference_centers';
 	const app_uuid = '8d083f5a-f726-42a8-9ffa-8d28f848f10e';
 

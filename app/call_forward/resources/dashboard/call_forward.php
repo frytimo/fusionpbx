@@ -87,13 +87,13 @@
 	if (is_array($extensions) && @sizeof($extensions) != 0) {
 		foreach ($extensions as $row) {
 			if ($has_call_forward) {
-				$stats['call_forward'] += $row['forward_all_enabled'] == true && $row['forward_all_destination'] ? 1 : 0;
+				$stats['call_forward'] += boolean_value($row['forward_all_enabled']) && $row['forward_all_destination'] ? 1 : 0;
 			}
 			if ($has_follow_me) {
-				$stats['follow_me'] += $row['follow_me_enabled'] == true && is_uuid($row['follow_me_uuid']) ? 1 : 0;
+				$stats['follow_me'] += boolean_value($row['follow_me_enabled']) && is_uuid($row['follow_me_uuid']) ? 1 : 0;
 			}
 			if ($has_do_not_disturb) {
-				$stats['dnd'] += $row['do_not_disturb'] == true ? 1 : 0;
+				$stats['dnd'] += boolean_value($row['do_not_disturb']) ? 1 : 0;
 			}
 		}
 		$stats['active'] = @sizeof($extensions) - $stats['call_forward'] - $stats['follow_me'] - $stats['dnd'];
@@ -221,12 +221,12 @@
 				echo "<tr href='".$tr_link."'>\n";
 				echo "	<td valign='top' class='".$row_style[$c]." hud_text'><a href='".$tr_link."' title=\"".$text['button-edit']."\">".escape($row['extension'])."</a></td>\n";
 				if ($has_call_forward) {
-					echo "	<td valign='top' class='".$row_style[$c]." hud_text' style='text-align: center;'>".($row['forward_all_enabled'] == 'true' ? escape(format_phone($row['forward_all_destination'])) : '&nbsp;')."</td>\n";
+					echo "	<td valign='top' class='".$row_style[$c]." hud_text' style='text-align: center;'>".(boolean_value($row['forward_all_enabled']) ? escape(format_phone($row['forward_all_destination'])) : '&nbsp;')."</td>\n";
 				}
 				if ($has_follow_me) {
 					//get destination count
 					$follow_me_destination_count = 0;
-					if ($row['follow_me_enabled'] == true && is_uuid($row['follow_me_uuid'])) {
+					if (boolean_value($row['follow_me_enabled']) && is_uuid($row['follow_me_uuid'])) {
 						$sql = "select count(*) from v_follow_me_destinations ";
 						$sql .= "where follow_me_uuid = :follow_me_uuid ";
 						$sql .= "and domain_uuid = :domain_uuid ";
@@ -238,7 +238,7 @@
 					echo "	<td valign='top' class='".$row_style[$c]." hud_text' style='text-align: center;'>".($follow_me_destination_count ? $text['label-enabled'].' ('.$follow_me_destination_count.')' : '&nbsp;')."</td>\n";
 				}
 				if ($has_do_not_disturb) {
-					echo "	<td valign='top' class='".$row_style[$c]." hud_text' style='text-align: center;'>".($row['do_not_disturb'] == 'true' ? $text['label-enabled'] : '&nbsp;')."</td>\n";
+					echo "	<td valign='top' class='".$row_style[$c]." hud_text' style='text-align: center;'>".(boolean_value($row['do_not_disturb']) ? $text['label-enabled'] : '&nbsp;')."</td>\n";
 				}
 				echo "</tr>\n";
 				$c = ($c) ? 0 : 1;

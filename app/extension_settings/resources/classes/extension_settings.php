@@ -36,6 +36,7 @@ class extension_settings extends app {
 	const app_uuid = '1416a250-f6e1-4edc-91a6-5c9b883638fd';
 
 	// class-level configuration constants
+	const PERMISSION_PREFIX = 'extension_setting_';
 	const TABLE             = 'extension_settings';
 	const TOGGLE_FIELD      = 'extension_setting_enabled';
 	const TOGGLE_VALUES     = ['true', 'false'];

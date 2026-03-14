@@ -33,7 +33,8 @@ class ivr_menu extends app {
 	const app_name = 'ivr_menus';
 	const app_uuid = 'a5788e9b-58bc-bd1b-df59-fff5d51253ab';
 
-	/**
+        // class-level configuration constants
+        const PERMISSION_PREFIX = 'ivr_menu_';
 	 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set
 	 * in the session global array
 	 *

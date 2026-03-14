@@ -468,8 +468,8 @@ class extension extends app {
 							$xml .= "      <variable name=\"forward_user_not_registered_destination\" value=\"" . $row['forward_user_not_registered_destination'] . "\"/>\n";
 						}
 
-						if (!empty($row['do_not_disturb'])) {
-							$xml .= "      <variable name=\"do_not_disturb\" value=\"" . $row['do_not_disturb'] . "\"/>\n";
+						if (array_key_exists('do_not_disturb', $row) && $row['do_not_disturb'] !== null) {
+							$xml .= "      <variable name=\"do_not_disturb\" value=\"" . boolean_string($row['do_not_disturb']) . "\"/>\n";
 						}
 						$xml .= "    </variables>\n";
 						$xml .= "  </user>\n";

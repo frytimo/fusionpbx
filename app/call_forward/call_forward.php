@@ -277,9 +277,9 @@
 				$list_row_url .= '&domain_uuid='.urlencode($row['domain_uuid']).'&domain_change=true';
 			}
 			$row['_list_row_url'] = $list_row_url;
-			$row['_forward_all_display'] = $row['forward_all_enabled'] == true ? escape(format_phone($row['forward_all_destination'])) : '';
+			$row['_forward_all_display'] = boolean_value($row['forward_all_enabled']) ? escape(format_phone($row['forward_all_destination'])) : '';
 			$row['_follow_me_display'] = '';
-			if ($has_follow_me && $row['follow_me_enabled'] == true && is_uuid($row['follow_me_uuid'])) {
+			if ($has_follow_me && boolean_value($row['follow_me_enabled']) && is_uuid($row['follow_me_uuid'])) {
 				$sql = "select count(*) from v_follow_me_destinations ";
 				$sql .= "where follow_me_uuid = :follow_me_uuid ";
 				$sql .= "and domain_uuid = :domain_uuid ";
@@ -291,7 +291,7 @@
 					$row['_follow_me_display'] = $text['label-enabled'] . ' (' . $follow_me_destination_count . ')';
 				}
 			}
-			$row['_dnd_display'] = $row['do_not_disturb'] == 'true' ? $text['label-enabled'] : '';
+			$row['_dnd_display'] = boolean_value($row['do_not_disturb']) ? $text['label-enabled'] : '';
 			$row['_domain_display'] = '';
 			if (!empty($show) && $show == 'all' && $has_call_forward_all) {
 				$row['_domain_display'] = !empty($_SESSION['domains'][$row['domain_uuid']]['domain_name']) ? escape($_SESSION['domains'][$row['domain_uuid']]['domain_name']) : $text['label-global'];

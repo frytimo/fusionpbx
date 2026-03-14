@@ -91,7 +91,7 @@
 		//update the user_status
 		public function user_status() {
 			//update the status
-				if ($this->enabled == "true") {
+				if (boolean_value($this->enabled)) {
 					//update the call center status
 						$user_status = "Logged Out";
 						$esl = event_socket::create();
@@ -145,7 +145,7 @@
 
 			//build extension update array
 				$array['extensions'][0]['extension_uuid'] = $this->extension_uuid;
-				$array['extensions'][0]['do_not_disturb'] = $this->enabled;
+				$array['extensions'][0]['do_not_disturb'] = boolean_value($this->enabled);
 
 			//grant temporary permissions
 				$p = permissions::new();
@@ -178,7 +178,7 @@
 				$this->table = 'extensions';
 				$this->uuid_prefix = 'extension_';
 				$this->toggle_field = 'do_not_disturb';
-				$this->toggle_values = ['true','false'];
+				$this->toggle_values = [true, false];
 
 			if (permission_exists($this->permission)) {
 
@@ -220,14 +220,14 @@
 										$extensions[$row['uuid']]['extension'] = $row['extension'];
 										$extensions[$row['uuid']]['number_alias'] = $row['number_alias'];
 										$extensions[$row['uuid']]['call_timeout'] = $row['call_timeout'];
-										$extensions[$row['uuid']]['do_not_disturb'] = $row['do_not_disturb'];
-										$extensions[$row['uuid']]['forward_all_enabled'] = $row['forward_all_enabled'];
+										$extensions[$row['uuid']]['do_not_disturb'] = boolean_value($row['do_not_disturb']);
+										$extensions[$row['uuid']]['forward_all_enabled'] = boolean_value($row['forward_all_enabled']);
 										$extensions[$row['uuid']]['forward_all_destination'] = $row['forward_all_destination'];
-										$extensions[$row['uuid']]['forward_busy_enabled'] = $row['forward_busy_enabled'];
+										$extensions[$row['uuid']]['forward_busy_enabled'] = boolean_value($row['forward_busy_enabled']);
 										$extensions[$row['uuid']]['forward_busy_destination'] = $row['forward_busy_destination'];
-										$extensions[$row['uuid']]['forward_no_answer_enabled'] = $row['forward_no_answer_enabled'];
+										$extensions[$row['uuid']]['forward_no_answer_enabled'] = boolean_value($row['forward_no_answer_enabled']);
 										$extensions[$row['uuid']]['forward_no_answer_destination'] = $row['forward_no_answer_destination'];
-										$extensions[$row['uuid']]['state'] = $row['toggle'];
+										$extensions[$row['uuid']]['state'] = boolean_value($row['toggle']);
 										$extensions[$row['uuid']]['follow_me_uuid'] = $row['follow_me_uuid'];
 									}
 								}
@@ -240,10 +240,10 @@
 
 								//toggle feature
 									$array[$this->table][$x][$this->uuid_prefix.'uuid'] = $uuid;
-									$array[$this->table][$x][$this->toggle_field] = $extension['state'] == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
+									$array[$this->table][$x][$this->toggle_field] = $extension['state'] === $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
 
 								//disable other features
-									if ($array[$this->table][$x][$this->toggle_field] == $this->toggle_values[0]) { //true
+									if ($array[$this->table][$x][$this->toggle_field] === $this->toggle_values[0]) {
 										$array[$this->table][$x]['forward_all_enabled'] = $this->toggle_values[1]; //false
 										$array[$this->table][$x]['follow_me_enabled'] = $this->toggle_values[1]; //false
 										if (is_uuid($extension['follow_me_uuid'])) {
@@ -278,7 +278,7 @@
 											$feature_event_notify = new feature_event_notify;
 											$feature_event_notify->domain_name = $this->domain_name;
 											$feature_event_notify->extension = $extension['extension'];
-											$feature_event_notify->do_not_disturb = $extension['do_not_disturb'] == "true" ? "false" : "true";
+											$feature_event_notify->do_not_disturb = !$extension['do_not_disturb'];
 											$feature_event_notify->ring_count = ceil($extension['call_timeout'] / 6);
 											$feature_event_notify->forward_all_enabled = $extension['forward_all_enabled'];
 											$feature_event_notify->forward_busy_enabled = $extension['forward_busy_enabled'];

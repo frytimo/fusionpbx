@@ -12,6 +12,7 @@ class email_queue extends app {
 	const app_uuid = '5befdf60-a242-445f-91b3-2e9ee3e0ddf7';
 
 	// class-level configuration constants
+	const PERMISSION_PREFIX = 'email_queue_';
 	const TABLE             = 'email_queue';
 	const TOGGLE_FIELD      = '';
 	const TOGGLE_VALUES     = ['true', 'false'];

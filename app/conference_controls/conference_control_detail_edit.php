@@ -121,7 +121,10 @@
 				}
 
 				if (is_uuid($array['conference_control_details'][0]['conference_control_detail_uuid'])) {
+					$p = permissions::new();
+					$p->add('conference_control_edit', 'temp');
 					(new conference_controls)->save($array);
+					$p->delete('conference_control_edit', 'temp');
 					unset($array);
 				}
 

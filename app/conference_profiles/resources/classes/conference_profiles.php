@@ -35,9 +35,9 @@ class conference_profiles extends app {
 	const app_name = 'conference_profiles';
 	const app_uuid = 'c33e2c2a-847f-44c1-8c0d-310df5d65ba9';
 
-	/**
-	 * declare private variables
-	 */
+        // class-level configuration constants
+        const PERMISSION_PREFIX = 'conference_profile_';
+
 
 	private $name;
 	protected $table;

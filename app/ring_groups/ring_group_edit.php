@@ -552,14 +552,14 @@ if (!($settings instanceof settings)) {
 			$ring_group_cid_number_prefix = $row["ring_group_cid_number_prefix"];
 			$ring_group_distinctive_ring = $row["ring_group_distinctive_ring"];
 			$ring_group_ringback = $row["ring_group_ringback"];
-			$ring_group_call_forward_enabled = $row["ring_group_call_forward_enabled"];
-			$ring_group_follow_me_enabled = $row["ring_group_follow_me_enabled"];
+			$ring_group_call_forward_enabled = boolean_string($row["ring_group_call_forward_enabled"]);
+			$ring_group_follow_me_enabled = boolean_string($row["ring_group_follow_me_enabled"]);
 			$ring_group_missed_call_app = $row["ring_group_missed_call_app"];
 			$ring_group_missed_call_data = $row["ring_group_missed_call_data"];
-			$ring_group_forward_enabled = $row["ring_group_forward_enabled"];
+			$ring_group_forward_enabled = boolean_string($row["ring_group_forward_enabled"]);
 			$ring_group_forward_destination = $row["ring_group_forward_destination"];
 			$ring_group_forward_toll_allow = $row["ring_group_forward_toll_allow"];
-			$ring_group_enabled = $row["ring_group_enabled"];
+			$ring_group_enabled = boolean_string($row["ring_group_enabled"]);
 			$ring_group_description = $row["ring_group_description"];
 			$dialplan_uuid = $row["dialplan_uuid"];
 		}
@@ -578,7 +578,7 @@ if (!($settings instanceof settings)) {
 	if (empty($ring_group_call_timeout)) {
 		$ring_group_call_timeout = '30';
 	}
-	if (empty($ring_group_enabled)) { $ring_group_enabled = 'true'; }
+	if (!isset($ring_group_enabled) || $ring_group_enabled === '') { $ring_group_enabled = 'true'; }
 
 //get the ring group destination array
 	if ($action == "add") {
@@ -640,7 +640,7 @@ if (!($settings instanceof settings)) {
 	unset($sql, $parameters);
 
 //set defaults
-	if (empty($ring_group_enabled)) { $ring_group_enabled = 'true'; }
+	if (!isset($ring_group_enabled) || $ring_group_enabled === '') { $ring_group_enabled = 'true'; }
 
 //set the default ring group context
 	if (empty($ring_group_context)) {

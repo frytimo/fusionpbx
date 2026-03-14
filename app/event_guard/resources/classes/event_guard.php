@@ -37,6 +37,7 @@ class event_guard extends app {
 	const app_uuid = 'c5b86612-1514-40cb-8e2c-3f01a8f6f637';
 
 	// class-level configuration constants
+	const PERMISSION_PREFIX = 'event_guard_log_';
 	const TABLE             = 'event_guard_logs';
 	const TOGGLE_FIELD      = '';
 	const TOGGLE_VALUES     = ['block', 'pending'];

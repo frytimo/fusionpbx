@@ -255,7 +255,7 @@
 			$gateway = $row["gateway"];
 			$username = $row["username"];
 			$password = $row["password"];
-			$distinct_to = $row["distinct_to"];
+			$distinct_to = boolean_string($row["distinct_to"]);
 			$auth_username = $row["auth_username"];
 			$realm = $row["realm"];
 			$from_user = $row["from_user"];
@@ -264,7 +264,7 @@
 			$register_proxy = $row["register_proxy"];
 			$outbound_proxy = $row["outbound_proxy"];
 			$expire_seconds = $row["expire_seconds"];
-			$register = $row["register"];
+			$register = boolean_string($row["register"]);
 			$register_transport = $row["register_transport"];
 			$contact_params = $row["contact_params"];
 			$retry_seconds = $row["retry_seconds"];
@@ -272,17 +272,17 @@
 			$ping = $row["ping"];
 			$ping_min = $row["ping_min"];
 			$ping_max = $row["ping_max"];
-			$contact_in_ping = $row["contact_in_ping"] ?? false;
+			$contact_in_ping = boolean_string($row["contact_in_ping"] ?? false);
 			$channels = $row["channels"];
-			$caller_id_in_from = $row["caller_id_in_from"] ?? false;
-			$supress_cng = $row["supress_cng"] ?? false;
+			$caller_id_in_from = boolean_string($row["caller_id_in_from"] ?? false);
+			$supress_cng = boolean_string($row["supress_cng"] ?? false);
 			$sip_cid_type = $row["sip_cid_type"];
 			$codec_prefs = $row["codec_prefs"];
 			$extension_in_contact = $row["extension_in_contact"];
 			$context = $row["context"];
 			$profile = $row["profile"];
 			$hostname = $row["hostname"];
-			$enabled = $row["enabled"];
+			$enabled = boolean_string($row["enabled"]);
 			$description = $row["description"];
 		}
 		unset($sql, $parameters, $row);
@@ -323,12 +323,12 @@
 	$profile = $profile ?? '';
 	$hostname = $hostname ?? '';
 	$description = $description ?? '';
-	$register = $register ?? false;
-	$distinct_to = $distinct_to ?? false;
-	$caller_id_in_from = $caller_id_in_from ?? false;
-	$supress_cng = $supress_cng ?? false;
-	$contact_in_ping = $contact_in_ping ?? false;
-	$enabled = $enabled ?? true;
+	$register = $register ?? 'false';
+	$distinct_to = $distinct_to ?? 'false';
+	$caller_id_in_from = $caller_id_in_from ?? 'false';
+	$supress_cng = $supress_cng ?? 'false';
+	$contact_in_ping = $contact_in_ping ?? 'false';
+	$enabled = $enabled ?? 'true';
 
 //create token
 	$object = new token;
@@ -477,8 +477,8 @@
 		echo "	<span class='switch'>\n";
 	}
 	echo "	<select class='formfld' id='register' name='register'>\n";
-	echo "		<option value='true' ".($register == true ? "selected='selected'" : null).">".$text['option-true']."</option>\n";
-	echo "		<option value='false' ".($register == false ? "selected='selected'" : null).">".$text['option-false']."</option>\n";
+	echo "\t\t<option value='true' ".($register == 'true' ? "selected='selected'" : null).">".$text['option-true']."</option>\n";
+	echo "\t\t<option value='false' ".($register == 'false' ? "selected='selected'" : null).">".$text['option-false']."</option>\n";
 	echo "	</select>\n";
 	if ($input_toggle_style_switch) {
 		echo "		<span class='slider'></span>\n";
@@ -527,8 +527,8 @@
 		echo "	<span class='switch'>\n";
 	}
 	echo "	<select class='formfld' id='distinct_to' name='distinct_to'>\n";
-	echo "		<option value='true' ".($distinct_to == true ? "selected='selected'" : null).">".$text['option-true']."</option>\n";
-	echo "		<option value='false' ".($distinct_to == false ? "selected='selected'" : null).">".$text['option-false']."</option>\n";
+	echo "\t\t<option value='true' ".($distinct_to == 'true' ? "selected='selected'" : null).">".$text['option-true']."</option>\n";
+	echo "\t\t<option value='false' ".($distinct_to == 'false' ? "selected='selected'" : null).">".$text['option-false']."</option>\n";
 	echo "	</select>\n";
 	if ($input_toggle_style_switch) {
 		echo "		<span class='slider'></span>\n";
@@ -634,8 +634,8 @@
 		echo "	<span class='switch'>\n";
 	}
 	echo "	<select class='formfld' id='caller_id_in_from' name='caller_id_in_from'>\n";
-	echo "		<option value='true' ".($caller_id_in_from == true ? "selected='selected'" : null).">".$text['option-true']."</option>\n";
-	echo "		<option value='false' ".($caller_id_in_from == false ? "selected='selected'" : null).">".$text['option-false']."</option>\n";
+	echo "\t\t<option value='true' ".($caller_id_in_from == 'true' ? "selected='selected'" : null).">".$text['option-true']."</option>\n";
+	echo "\t\t<option value='false' ".($caller_id_in_from == 'false' ? "selected='selected'" : null).">".$text['option-false']."</option>\n";
 	echo "	</select>\n";
 	if ($input_toggle_style_switch) {
 		echo "		<span class='slider'></span>\n";
@@ -655,8 +655,8 @@
 		echo "	<span class='switch'>\n";
 	}
 	echo "	<select class='formfld' id='supress_cng' name='supress_cng'>\n";
-	echo "		<option value='true' ".($supress_cng == true ? "selected='selected'" : null).">".$text['option-true']."</option>\n";
-	echo "		<option value='false' ".($supress_cng == false ? "selected='selected'" : null).">".$text['option-false']."</option>\n";
+	echo "\t\t<option value='true' ".($supress_cng == 'true' ? "selected='selected'" : null).">".$text['option-true']."</option>\n";
+	echo "\t\t<option value='false' ".($supress_cng == 'false' ? "selected='selected'" : null).">".$text['option-false']."</option>\n";
 	echo "	</select>\n";
 	if ($input_toggle_style_switch) {
 		echo "		<span class='slider'></span>\n";
@@ -756,8 +756,8 @@
 		echo "	<span class='switch'>\n";
 	}
 	echo "	<select class='formfld' id='contact_in_ping' name='contact_in_ping'>\n";
-	echo "		<option value='true' ".($contact_in_ping == true ? "selected='selected'" : null).">".$text['option-true']."</option>\n";
-	echo "		<option value='false' ".($contact_in_ping == false ? "selected='selected'" : null).">".$text['option-false']."</option>\n";
+	echo "\t\t<option value='true' ".($contact_in_ping == 'true' ? "selected='selected'" : null).">".$text['option-true']."</option>\n";
+	echo "\t\t<option value='false' ".($contact_in_ping == 'false' ? "selected='selected'" : null).">".$text['option-false']."</option>\n";
 	echo "	</select>\n";
 	if ($input_toggle_style_switch) {
 		echo "		<span class='slider'></span>\n";
@@ -869,8 +869,8 @@
 		echo "	<span class='switch'>\n";
 	}
 	echo "	<select class='formfld' id='enabled' name='enabled'>\n";
-	echo "		<option value='true' ".($enabled == true ? "selected='selected'" : null).">".$text['option-true']."</option>\n";
-	echo "		<option value='false' ".($enabled == false ? "selected='selected'" : null).">".$text['option-false']."</option>\n";
+	echo "\t\t<option value='true' ".($enabled == 'true' ? "selected='selected'" : null).">".$text['option-true']."</option>\n";
+	echo "\t\t<option value='false' ".($enabled == 'false' ? "selected='selected'" : null).">".$text['option-false']."</option>\n";
 	echo "	</select>\n";
 	if ($input_toggle_style_switch) {
 		echo "		<span class='slider'></span>\n";

@@ -155,7 +155,7 @@
 					$fifo_members[$i]['member_contact'] = preg_replace('#[^a-zA-Z0-9/@.\-\*]#', '', $row["member_contact"] ?? '');
 					$fifo_members[$i]['member_call_timeout'] = preg_replace('#[^0-9]#', '', $row["member_call_timeout"] ?? '20');
 					$fifo_members[$i]['member_wrap_up_time'] = preg_replace('#[^0-9]#', '', $row["member_wrap_up_time"] ?? '10');
-					$fifo_members[$i]['member_enabled'] = $row["member_enabled"];
+					$fifo_members[$i]['member_enabled'] = boolean_string($row["member_enabled"]);
 					$i++;
 				}
 			}
@@ -422,14 +422,14 @@
 			$fifo_music = $row["fifo_music"];
 			$domain_uuid = $row["domain_uuid"];
 			$fifo_order = $row["fifo_order"];
-			$fifo_enabled = $row["fifo_enabled"];
+			$fifo_enabled = boolean_string($row["fifo_enabled"]);
 			$fifo_description = $row["fifo_description"];
 		}
 		unset($sql, $parameters, $row);
 	}
 
 //set the defaults
-	$fifo_enabled = $fifo_enabled ?? true;
+	$fifo_enabled = $fifo_enabled ?? 'true';
 
 //get the child data
 	if (!empty($fifo_uuid) && is_uuid($fifo_uuid)) {
@@ -484,7 +484,7 @@
 		$fifo_members[$id]['member_call_timeout'] = '';
 		//$fifo_members[$id]['member_simultaneous'] = '';
 		$fifo_members[$id]['member_wrap_up_time'] = '';
-		$fifo_members[$id]['member_enabled'] = false;
+		$fifo_members[$id]['member_enabled'] = 'false';
 		$id++;
 	}
 
@@ -647,8 +647,8 @@
 				echo "	<span class='switch'>\n";
 			}
 			echo "	<select class='formfld' id='member_enabled' name='fifo_members[$x][member_enabled]'>\n";
-			echo "		<option value='true' ".($row['member_enabled'] == true ? "selected='selected'" : null).">".$text['option-true']."</option>\n";
-			echo "		<option value='false' ".($row['member_enabled'] == false ? "selected='selected'" : null).">".$text['option-false']."</option>\n";
+	echo "\t\t<option value='true' ".($row['member_enabled'] == 'true' ? "selected='selected'" : null).">".$text['option-true']."</option>\n";
+			echo "\t\t<option value='false' ".($row['member_enabled'] == 'false' ? "selected='selected'" : null).">".$text['option-false']."</option>\n";
 			echo "	</select>\n";
 			if ($input_toggle_style_switch) {
 				echo "		<span class='slider'></span>\n";
@@ -782,8 +782,8 @@
 		echo "	<span class='switch'>\n";
 	}
 	echo "	<select class='formfld' id='fifo_enabled' name='fifo_enabled'>\n";
-	echo "		<option value='true' ".($fifo_enabled == true ? "selected='selected'" : null).">".$text['option-true']."</option>\n";
-	echo "		<option value='false' ".($fifo_enabled == false ? "selected='selected'" : null).">".$text['option-false']."</option>\n";
+	echo "\t\t<option value='true' ".($fifo_enabled == 'true' ? "selected='selected'" : null).">".$text['option-true']."</option>\n";
+	echo "\t\t<option value='false' ".($fifo_enabled == 'false' ? "selected='selected'" : null).">".$text['option-false']."</option>\n";
 	echo "	</select>\n";
 	if ($input_toggle_style_switch) {
 		echo "		<span class='slider'></span>\n";

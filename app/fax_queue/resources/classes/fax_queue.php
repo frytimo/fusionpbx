@@ -36,6 +36,7 @@ class fax_queue extends app {
 	const app_uuid = '3656287f-4b22-4cf1-91f6-00386bf488f4';
 
 	// class-level configuration constants
+	const PERMISSION_PREFIX = 'fax_queue_';
 	const TABLE             = 'fax_queue';
 	const TOGGLE_FIELD      = '';
 	const TOGGLE_VALUES     = ['true', 'false'];

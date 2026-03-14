@@ -91,6 +91,14 @@ class call_center extends app {
 
 		//initialize the parent class
 		parent::__construct();
+
+		// allow app::save() for any call center sub-type editor
+		if (permission_exists('call_center_queue_add') || permission_exists('call_center_agent_add')) {
+			$this->has_add = true;
+		}
+		if (permission_exists('call_center_queue_edit') || permission_exists('call_center_agent_edit')) {
+			$this->has_edit = true;
+		}
 	}
 
 	/**

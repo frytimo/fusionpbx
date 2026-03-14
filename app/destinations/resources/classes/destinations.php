@@ -32,6 +32,7 @@
  * @method select build the html select
  */
 class destinations extends app {
+	const app_uuid = '5ec89622-b19c-3559-64f0-afde802ab139';
 
 	// class-level configuration constants
 	const PERMISSION_PREFIX = 'destination_';
@@ -103,7 +104,7 @@ class destinations extends app {
 
 		// set database to the destinations app for transaction recording
 		$this->database->app_name = $this->app_name;
-		$this->database->app_uuid = $this->app_uuid;
+		$this->database->app_uuid = static::app_uuid;
 
 		// get the settings
 		// if the domain_uuid and user_uuid are filled in then this will return the settings for the
@@ -254,7 +255,9 @@ class destinations extends app {
 	 * @param array $filter_applications Optional. When supplied, filters out all other dialplan destinations except the ones specified
 	 * @return string
 	 */
-	public function select(string $destination_type, string $destination_name, string $destination_value, array $filter_applications = []) {
+	public function select(string $destination_type, string $destination_name, ?string $destination_value, array $filter_applications = []) {
+		$destination_value = $destination_value ?? '';
+
 		// set the db type
 		$db_type = $this->database->type;
 

@@ -64,13 +64,13 @@
 					$event .= "host: " . $this->domain_name . "\n";
 					$event .= "device: \n";
 					$event .= "Feature-Event: init\n";
-					$event .= "forward_immediate_enabled: " . $this->forward_all_enabled . "\n";
+					$event .= "forward_immediate_enabled: " . boolean_string($this->forward_all_enabled) . "\n";
 					$event .= "forward_immediate: " . $this->forward_all_destination . "\n";
-					$event .= "forward_busy_enabled: " . $this->forward_busy_enabled . "\n";
+					$event .= "forward_busy_enabled: " . boolean_string($this->forward_busy_enabled) . "\n";
 					$event .= "forward_busy: " . $this->forward_busy_destination . "\n";
-					$event .= "forward_no_answer_enabled: " . $this->forward_no_answer_enabled . "\n";
+					$event .= "forward_no_answer_enabled: " . boolean_string($this->forward_no_answer_enabled) . "\n";
 					$event .= "forward_no_answer: " . $this->forward_no_answer_destination . "\n";
-					$event .= "doNotDisturbOn: " . $this->do_not_disturb . "\n";
+					$event .= "doNotDisturbOn: " . boolean_string($this->do_not_disturb) . "\n";
 					$event .= "ringCount: " . $this->ring_count . "\n";
 					event_socket::command($event);
 				}

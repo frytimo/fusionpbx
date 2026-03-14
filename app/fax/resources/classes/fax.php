@@ -33,7 +33,8 @@ class fax extends app {
 	const app_name = 'fax';
 	const app_uuid = '24108154-4ac3-1db6-1551-4731703a4440';
 
-	/**
+        // class-level configuration constants
+        const PERMISSION_PREFIX = 'fax_';
 	 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set
 	 * in the session global array
 	 *

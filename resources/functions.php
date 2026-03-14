@@ -183,6 +183,57 @@ if (!function_exists('fix_postback')) {
 	}
 }
 
+if (!function_exists('boolean_value')) {
+	/**
+	 * Normalize mixed boolean-like values to a PHP boolean.
+	 *
+	 * @param mixed $value The value to normalize.
+	 * @return bool
+	 */
+	function boolean_value($value): bool {
+		if (is_bool($value)) {
+			return $value;
+		}
+
+		if ($value === null) {
+			return false;
+		}
+
+		if (is_int($value) || is_float($value)) {
+			return (bool) $value;
+		}
+
+		if (is_string($value)) {
+			$value = strtolower(trim($value));
+			if ($value === '') {
+				return false;
+			}
+
+			if (in_array($value, ['1', 'true', 't', 'yes', 'y', 'on'], true)) {
+				return true;
+			}
+
+			if (in_array($value, ['0', 'false', 'f', 'no', 'n', 'off'], true)) {
+				return false;
+			}
+		}
+
+		return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+	}
+}
+
+if (!function_exists('boolean_string')) {
+	/**
+	 * Convert a mixed boolean-like value to the literal strings true or false.
+	 *
+	 * @param mixed $value The value to normalize.
+	 * @return string
+	 */
+	function boolean_string($value): string {
+		return boolean_value($value) ? 'true' : 'false';
+	}
+}
+
 if (!function_exists('uuid')) {
 	/**
 	 * Generates a unique identifier (UUID) based on the operating system.

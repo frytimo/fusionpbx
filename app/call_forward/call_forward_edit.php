@@ -111,15 +111,15 @@
 		$effective_caller_id_number = $row["effective_caller_id_number"];
 		$outbound_caller_id_name = $row["outbound_caller_id_name"];
 		$outbound_caller_id_number = $row["outbound_caller_id_number"];
-		$do_not_disturb = filter_var($row["do_not_disturb"], FILTER_VALIDATE_BOOLEAN);
+		$do_not_disturb = filter_var($row["do_not_disturb"], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
 		$forward_all_destination = $row["forward_all_destination"];
-		$forward_all_enabled = filter_var($row["forward_all_enabled"], FILTER_VALIDATE_BOOLEAN);
+		$forward_all_enabled = filter_var($row["forward_all_enabled"], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
 		$forward_busy_destination = $row["forward_busy_destination"];
-		$forward_busy_enabled = filter_var($row["forward_busy_enabled"], FILTER_VALIDATE_BOOLEAN);
+		$forward_busy_enabled = filter_var($row["forward_busy_enabled"], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
 		$forward_no_answer_destination = $row["forward_no_answer_destination"];
-		$forward_no_answer_enabled = filter_var($row["forward_no_answer_enabled"], FILTER_VALIDATE_BOOLEAN);
+		$forward_no_answer_enabled = filter_var($row["forward_no_answer_enabled"], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
 		$forward_user_not_registered_destination = $row["forward_user_not_registered_destination"];
-		$forward_user_not_registered_enabled = filter_var($row["forward_user_not_registered_enabled"], FILTER_VALIDATE_BOOLEAN);
+		$forward_user_not_registered_enabled = filter_var($row["forward_user_not_registered_enabled"], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
 		$follow_me_uuid = $row["follow_me_uuid"];
 	}
 	else {
@@ -132,20 +132,20 @@
 	if (!empty($_POST) && empty($_POST["persistformvar"])) {
 
 		//get http post variables and set them to php variables
-			$forward_all_enabled = filter_var($_POST["forward_all_enabled"], FILTER_VALIDATE_BOOLEAN);
+			$forward_all_enabled = filter_var($_POST["forward_all_enabled"] ?? false, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
 			$forward_all_destination = $_POST["forward_all_destination"];
-			$forward_busy_enabled = filter_var($_POST["forward_busy_enabled"], FILTER_VALIDATE_BOOLEAN);
+			$forward_busy_enabled = filter_var($_POST["forward_busy_enabled"] ?? false, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
 			$forward_busy_destination = $_POST["forward_busy_destination"];
-			$forward_no_answer_enabled = filter_var($_POST["forward_no_answer_enabled"], FILTER_VALIDATE_BOOLEAN);
+			$forward_no_answer_enabled = filter_var($_POST["forward_no_answer_enabled"] ?? false, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
 			$forward_no_answer_destination = $_POST["forward_no_answer_destination"];
-			$forward_user_not_registered_enabled = filter_var($_POST["forward_user_not_registered_enabled"], FILTER_VALIDATE_BOOLEAN);
+			$forward_user_not_registered_enabled = filter_var($_POST["forward_user_not_registered_enabled"] ?? false, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
 			$forward_user_not_registered_destination = $_POST["forward_user_not_registered_destination"];
-			$do_not_disturb = filter_var($_POST["do_not_disturb"], FILTER_VALIDATE_BOOLEAN);
+			$do_not_disturb = filter_var($_POST["do_not_disturb"] ?? false, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
 
 			$cid_name_prefix = $_POST["cid_name_prefix"] ?? '';
 			$cid_number_prefix = $_POST["cid_number_prefix"] ?? '';
-			$follow_me_enabled = filter_var($_POST["follow_me_enabled"], FILTER_VALIDATE_BOOLEAN);
-			$follow_me_ignore_busy = filter_var($_POST["follow_me_ignore_busy"], FILTER_VALIDATE_BOOLEAN);
+			$follow_me_enabled = filter_var($_POST["follow_me_enabled"] ?? false, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
+			$follow_me_ignore_busy = filter_var($_POST["follow_me_ignore_busy"] ?? false, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
 
 			$n = 0;
 			$destination_found = false;
@@ -195,13 +195,13 @@
 				//build the array
 				$array['extensions'][0]['domain_uuid'] = $_SESSION['domain_uuid'];
 				$array['extensions'][0]['extension_uuid'] = $extension_uuid;
-				$array['extensions'][0]['forward_all_enabled'] = $forward_all_enabled ? 'true' : 'false';
+				$array['extensions'][0]['forward_all_enabled'] = $forward_all_enabled;
 				$array['extensions'][0]['forward_all_destination'] = $forward_all_destination;
-				$array['extensions'][0]['forward_busy_enabled'] = $forward_busy_enabled ? 'true' : 'false';
+				$array['extensions'][0]['forward_busy_enabled'] = $forward_busy_enabled;
 				$array['extensions'][0]['forward_busy_destination'] = $forward_busy_destination;
-				$array['extensions'][0]['forward_no_answer_enabled'] = $forward_no_answer_enabled ? 'true' : 'false';
+				$array['extensions'][0]['forward_no_answer_enabled'] = $forward_no_answer_enabled;
 				$array['extensions'][0]['forward_no_answer_destination'] = $forward_no_answer_destination;
-				$array['extensions'][0]['forward_user_not_registered_enabled'] = $forward_user_not_registered_enabled ? 'true' : 'false';
+				$array['extensions'][0]['forward_user_not_registered_enabled'] = $forward_user_not_registered_enabled;
 				$array['extensions'][0]['forward_user_not_registered_destination'] = $forward_user_not_registered_destination;
 			}
 
@@ -209,7 +209,7 @@
 			if ($has_do_not_disturb) {
 				$array['extensions'][0]['domain_uuid'] = $_SESSION['domain_uuid'];
 				$array['extensions'][0]['extension_uuid'] = $extension_uuid;
-				$array['extensions'][0]['do_not_disturb'] = $do_not_disturb ? 'true' : 'false';
+				$array['extensions'][0]['do_not_disturb'] = $do_not_disturb;
 			}
 
 		//follow me config
@@ -222,15 +222,15 @@
 						$array['extensions'][0]['extension_uuid'] = $extension_uuid;
 						$array['extensions'][0]['follow_me_uuid'] = $follow_me_uuid;
 					}
-					$array['extensions'][0]['follow_me_enabled'] = ($destination_found && $follow_me_enabled) ? 'true' : 'false';
+					$array['extensions'][0]['follow_me_enabled'] = ($destination_found && $follow_me_enabled);
 
 				//build the follow me array
 					$array['follow_me'][0]['domain_uuid'] = $_SESSION['domain_uuid'];
 					$array['follow_me'][0]['follow_me_uuid'] = $follow_me_uuid;
 					$array['follow_me'][0]['cid_name_prefix'] = $cid_name_prefix;
 					$array['follow_me'][0]['cid_number_prefix'] = $cid_number_prefix;
-					$array['follow_me'][0]['follow_me_ignore_busy'] = $follow_me_ignore_busy ? 'true' : 'false';
-					$array['follow_me'][0]['follow_me_enabled'] = ($destination_found && $follow_me_enabled) ? 'true' : 'false';
+					$array['follow_me'][0]['follow_me_ignore_busy'] = $follow_me_ignore_busy;
+					$array['follow_me'][0]['follow_me_enabled'] = ($destination_found && $follow_me_enabled);
 
 					$d = 0;
 					$destination_found = false;
@@ -350,7 +350,7 @@
 				$feature_event_notify = new feature_event_notify;
 				$feature_event_notify->domain_name = $_SESSION['domain_name'];
 				$feature_event_notify->extension = $extension;
-				$feature_event_notify->do_not_disturb = $do_not_disturb ? 'true' : 'false';
+				$feature_event_notify->do_not_disturb = $do_not_disturb;
 				$feature_event_notify->ring_count = $ring_count;
 				$feature_event_notify->forward_all_enabled = $forward_all_enabled;
 				$feature_event_notify->forward_busy_enabled = $forward_busy_enabled;
@@ -463,8 +463,8 @@
 		if (!empty($row)) {
 			$cid_name_prefix = $row["cid_name_prefix"];
 			$cid_number_prefix = $row["cid_number_prefix"];
-			$follow_me_enabled = filter_var($row["follow_me_enabled"], FILTER_VALIDATE_BOOLEAN);
-			$follow_me_ignore_busy = filter_var($row["follow_me_ignore_busy"], FILTER_VALIDATE_BOOLEAN);
+			$follow_me_enabled = filter_var($row["follow_me_enabled"], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
+			$follow_me_ignore_busy = filter_var($row["follow_me_ignore_busy"], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
 
 			unset($row);
 
@@ -766,8 +766,8 @@
 				echo "	<span class='switch'>\n";
 			}
 			echo "		<select class='formfld' id='follow_me_ignore_busy' name='follow_me_ignore_busy'>\n";
-			echo "			<option value='true' ".($follow_me_ignore_busy == true ? "selected='selected'" : null).">".$text['option-true']."</option>\n";
-			echo "			<option value='false' ".($follow_me_ignore_busy == false ? "selected='selected'" : null).">".$text['option-false']."</option>\n";
+			echo "			<option value='true' ".($follow_me_ignore_busy === true ? "selected='selected'" : null).">".$text['option-true']."</option>\n";
+			echo "			<option value='false' ".($follow_me_ignore_busy === false ? "selected='selected'" : null).">".$text['option-false']."</option>\n";
 			echo "		</select>\n";
 			if ($input_toggle_style_switch) {
 				echo "		<span class='slider'></span>\n";
@@ -828,8 +828,8 @@
 		echo "	<span class='switch' onclick='changed_do_not_disturb(this);'>\n";
 	}
 	echo "		<select class='formfld' id='do_not_disturb' name='do_not_disturb' onchange='changed_do_not_disturb();'>\n";
-	echo "			<option value='true' ".($do_not_disturb == true ? "selected='selected'" : null).">".$text['option-true']."</option>\n";
-	echo "			<option value='false' ".($do_not_disturb == false ? "selected='selected'" : null).">".$text['option-false']."</option>\n";
+	echo "			<option value='true' ".($do_not_disturb === true ? "selected='selected'" : null).">".$text['option-true']."</option>\n";
+	echo "			<option value='false' ".($do_not_disturb === false ? "selected='selected'" : null).">".$text['option-false']."</option>\n";
 	echo "		</select>\n";
 	if ($input_toggle_style_switch) {
 		echo "		<span class='slider'></span>\n";

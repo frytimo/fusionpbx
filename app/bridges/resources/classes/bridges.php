@@ -52,7 +52,7 @@ class bridges extends app {
 	/**
 	 * App-specific hook interface names for the two-tier hook dispatch system
 	 */
-	protected $edit_hook_interface = 'bridge_edit_hook';
+	protected ?string $edit_hook_interface = 'bridge_edit_hook';
 	protected $list_hook_interface = 'bridge_list_page_hook';
 
 	/**

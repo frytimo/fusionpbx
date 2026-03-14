@@ -121,7 +121,10 @@
 				}
 
 				if (is_uuid($array['conference_profile_params'][0]['conference_profile_param_uuid'])) {
+					$p = permissions::new();
+					$p->add('conference_profile_edit', 'temp');
 					(new conference_profiles)->save($array);
+					$p->delete('conference_profile_edit', 'temp');
 					unset($array);
 				}
 

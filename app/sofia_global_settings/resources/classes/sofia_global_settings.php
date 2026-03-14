@@ -36,6 +36,7 @@ class sofia_global_settings extends app {
 	const app_uuid = '240c25a3-a2cf-44ea-a300-0626eca5b945';
 
 	// class-level configuration constants
+	const PERMISSION_PREFIX = 'sofia_global_setting_';
 	const TABLE             = 'sofia_global_settings';
 	const TOGGLE_FIELD      = 'global_setting_enabled';
 	const TOGGLE_VALUES     = ['true', 'false'];
