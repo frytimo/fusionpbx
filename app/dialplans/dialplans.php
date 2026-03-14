@@ -26,7 +26,7 @@
  */
 
 // includes files
-global $settings, $domain_uuid, $database, $url_paging;
+global $settings, $domain_uuid, $database, $url;
 require_once dirname(__DIR__, 2) . "/resources/require.php";
 require_once "resources/check_auth.php";
 require_once "resources/paging.php";
@@ -71,7 +71,7 @@ $allowed_app_uuids = [
 ];
 
 // Remove prohibited apps
-$url_paging->add_query_filter(function (string $key, mixed $value, callable $next) use ($allowed_app_uuids) {
+$url->add_query_filter(function (string $key, mixed $value, callable $next) use ($allowed_app_uuids) {
 	if ($key === 'app_uuid' && !in_array($value, $allowed_app_uuids)) {
 		return null;
 	}
@@ -79,26 +79,26 @@ $url_paging->add_query_filter(function (string $key, mixed $value, callable $nex
 });
 
 // Check if app_uuid is set and valid, if not redirect to dialplans.php without app_uuid
-$app_uuid = $url_paging->get('app_uuid', '');
+$app_uuid = $url->get('app_uuid', '');
 if (!empty($app_uuid) && is_uuid($app_uuid) && !in_array($app_uuid, $allowed_app_uuids)) {
-	header($url_paging->unset_query_param('app_uuid')->set_path('dialplans.php')->to_location_header());
+	header('Location: ' . $url->unset_query_param('app_uuid')->set_path('dialplans.php')->build_relative());
 	exit;
 }
 
 // get posted data
-$action    = $url_paging->get('action', '');
-$dialplans = $url_paging->get('dialplans', '');
-$order_by  = $url_paging->get('order_by', '');
-$order     = $url_paging->get('order', '');
-$context   = $url_paging->get('context', ''); // for use in the search form and links
-$search    = $url_paging->get('search', '');
-$show      = $url_paging->get('show', '');
-$app_uuid  = $url_paging->get('app_uuid', '');
+$action    = $url->post('action', '');
+$dialplans = $url->post('dialplans', []);
+$order_by  = $url->get('order_by', '');
+$order     = $url->get('order', '');
+$context   = $url->get('context', ''); // for use in the search form and links
+$search    = $url->get('search', '');
+$show      = $url->get('show', '');
+$app_uuid  = $url->get('app_uuid', '');
 
 // process the http post data by action
 if (!empty($action) && is_array($dialplans) && @sizeof($dialplans) != 0) {
 	// define redirect parameters and url
-	$list_page = $url_paging->set_path('dialplans.php')->build_absolute();
+	$list_page = $url->set_path(dialplan::LIST_PAGE)->build_absolute();
 
 	// process action
 	switch ($action) {
@@ -106,7 +106,6 @@ if (!empty($action) && is_array($dialplans) && @sizeof($dialplans) != 0) {
 			if ($has_dialplan_add) {
 				$obj            = new dialplan;
 				$obj->app_uuid  = $app_uuid;
-				$obj->list_page = $list_page;
 				$obj->copy($dialplans);
 			}
 			break;
@@ -114,7 +113,6 @@ if (!empty($action) && is_array($dialplans) && @sizeof($dialplans) != 0) {
 			if ($has_dialplan_edit) {
 				$obj            = new dialplan;
 				$obj->app_uuid  = $app_uuid;
-				$obj->list_page = $list_page;
 				$obj->toggle($dialplans);
 			}
 			break;
@@ -122,7 +120,6 @@ if (!empty($action) && is_array($dialplans) && @sizeof($dialplans) != 0) {
 			if ($has_dialplan_delete) {
 				$obj            = new dialplan;
 				$obj->app_uuid  = $app_uuid;
-				$obj->list_page = $list_page;
 				$obj->delete($dialplans);
 			}
 			break;
@@ -134,8 +131,8 @@ if (!empty($action) && is_array($dialplans) && @sizeof($dialplans) != 0) {
 }
 
 // get order and order by and sanitize the values
-$order_by = $url_paging->get('order_by', '');
-$order    = $url_paging->get('order', '');
+$order_by = $url->get('order_by', '');
+$order    = $url->get('order', '');
 
 // make sure all dialplans with context of public have the inbound route app_uuid
 if (!empty($app_uuid) && $app_uuid == 'c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4') {
@@ -148,15 +145,15 @@ if (!empty($app_uuid) && $app_uuid == 'c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4') {
 }
 
 // set from session variables
+$button_icon_add      = $settings->get('theme', 'button_icon_add',    '');
+$button_icon_all      = $settings->get('theme', 'button_icon_all',    '');
+$button_icon_copy     = $settings->get('theme', 'button_icon_copy',   '');
+$button_icon_edit     = $settings->get('theme', 'button_icon_edit',   '');
+$button_icon_reset    = $settings->get('theme', 'button_icon_reset',  '');
+$button_icon_toggle   = $settings->get('theme', 'button_icon_toggle', '');
+$button_icon_delete   = $settings->get('theme', 'button_icon_delete', '');
+$button_icon_search   = $settings->get('theme', 'button_icon_search', '');
 $list_row_edit_button = $settings->get('theme', 'list_row_edit_button', false);
-$button_icon_add      = $settings->get('theme', 'button_icon_add') ?? '';
-$button_icon_copy     = $settings->get('theme', 'button_icon_copy') ?? '';
-$button_icon_toggle   = $settings->get('theme', 'button_icon_toggle') ?? '';
-$button_icon_all      = $settings->get('theme', 'button_icon_all') ?? '';
-$button_icon_delete   = $settings->get('theme', 'button_icon_delete') ?? '';
-$button_icon_search   = $settings->get('theme', 'button_icon_search') ?? '';
-$button_icon_edit     = $settings->get('theme', 'button_icon_edit') ?? '';
-$button_icon_reset    = $settings->get('theme', 'button_icon_reset') ?? '';
 
 // get the number of rows in the dialplan
 $sql = "select count(dialplan_uuid) from v_dialplans ";
@@ -206,11 +203,11 @@ if (!empty($search)) {
 }
 $num_rows = $database->select($sql, $parameters ?? null, 'column');
 
-$url_paging->set_total_rows($num_rows);
-$rows_per_page        = $url_paging->get_rows_per_page();
-$offset               = $url_paging->offset();
-$paging_controls      = url_paging::html_paging_controls($url_paging);
-$paging_controls_mini = url_paging::html_paging_mini_controls($url_paging);
+$url->set_total_rows($num_rows);
+$rows_per_page        = $url->get_rows_per_page();
+$offset               = $url->offset();
+$paging_controls      = url::html_paging_controls($url);
+$paging_controls_mini = url::html_paging_mini_controls($url);
 
 // get the list of dialplans
 $sql  = "
@@ -416,7 +413,7 @@ if ($app_uuid == "c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4" && $has_inbound_route_ad
 } else if ($app_uuid == "4b821450-926b-175a-af93-a03c441818b1" && $has_time_condition_add) {
 	$button_add_url = PROJECT_PATH . "/app/time_conditions/time_condition_edit.php";
 } else if ($has_dialplan_add) {
-	$button_add_url = PROJECT_PATH . "/app/dialplans/dialplan_add.php";
+	$button_add_url = PROJECT_PATH . "/app/dialplans/dialplan_edit_unified.php";
 }
 
 // build the action bar buttons
@@ -572,7 +569,7 @@ foreach ($dialplans as &$row) {
 	$row['_has_toggle']    = $has_row_toggle;
 	$row['_toggle_button'] = '';
 	if ($has_row_toggle) {
-		$row['_toggle_button'] = button::create(['type' => 'submit', 'class' => 'link', 'label' => $text['label-' . $row['dialplan_enabled']], 'title' => $text['button-toggle'], 'onclick' => "list_self_check('checkbox_" . $x . "'); list_action_set('toggle'); list_form_submit('form_list')"]);
+		$row['_toggle_button'] = button::create(['type' => 'submit', 'class' => 'link', 'label' => $text['label-' . ($row['dialplan_enabled'] ? 'true' : 'false')], 'title' => $text['button-toggle'], 'onclick' => "list_self_check('checkbox_" . $x . "'); list_action_set('toggle'); list_form_submit('form_list')"]);
 	}
 	$row['_edit_button'] = '';
 	if ($has_edit_column && $has_row_toggle && !empty($list_row_url)) {
@@ -634,7 +631,7 @@ $template->assign('th_enabled', $th_enabled);
 $template->assign('th_description', $th_description);
 
 // invoke pre-render hook
-app::dispatch_list_pre_render('dialplan_list_page_hook', $url_paging, $template);
+app::dispatch_list_pre_render('dialplan_list_page_hook', $url, $template);
 
 // include the header
 $document['title'] = $page_title;
@@ -644,7 +641,7 @@ require_once "resources/header.php";
 $html = $template->render('dialplans_list.tpl');
 
 // invoke post-render hook
-app::dispatch_list_post_render('dialplan_list_page_hook', $url_paging, $html);
+app::dispatch_list_post_render('dialplan_list_page_hook', $url, $html);
 echo $html;
 
 // include the footer

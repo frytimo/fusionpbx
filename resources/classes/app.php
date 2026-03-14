@@ -1,26 +1,26 @@
 <?php
 
 abstract class app {
+	protected static $applications = null;
 
-	private static $applications = null;
-	private static $permission_prefix = null;
-	private static $list_page = null;
-	private static $table = null;
-	private static $uuid_prefix = null;
-	private static $toggle_field = null;
-	private static $toggle_values = null;
+	const LIST_PAGE         = '';
+	const PERMISSION_PREFIX = '';
+	const TABLE             = '';
+	const UUID_PREFIX       = '';
+	const TOGGLE_FIELD      = '';
+	const TOGGLE_VALUES     = [];
 
 	/**
 	 * Set in the constructor. Must be a database object and cannot be null.
 	 * @var database Database Object
 	 */
-	protected $database;
+	protected database $database;
 
 	/**
 	 * Settings object set in the constructor. Must be a settings object and cannot be null.
 	 * @var settings Settings Object
 	 */
-	protected $settings;
+	protected settings $settings;
 
 	/**
 	 * User UUID set in the constructor. This can be passed in through the $settings_array associative array or set in the session global array
@@ -34,15 +34,15 @@ abstract class app {
 	 */
 	protected $domain_uuid;
 
-	protected $has_permission_prefix = false;
-	protected $has_list_page = false;
-	protected $has_table = false;
-	protected $has_uuid_prefix = false;
-	protected $has_toggle_field = false;
-	protected $has_toggle_values = false;
-	protected $has_delete = false;
-	protected $has_add = false;
-	protected $has_edit = false;
+	protected bool $has_permission_prefix = false;
+	protected bool $has_list_page         = false;
+	protected bool $has_table             = false;
+	protected bool $has_uuid_prefix       = false;
+	protected bool $has_toggle_field      = false;
+	protected bool $has_toggle_values     = false;
+	protected bool $has_delete            = false;
+	protected bool $has_add               = false;
+	protected bool $has_edit              = false;
 
 	/**
 	 * The app-specific edit hook interface name. When set, the dispatch system will invoke
@@ -50,7 +50,7 @@ abstract class app {
 	 * Example: 'bridge_edit_hook' for bridges.
 	 * @var string|null
 	 */
-	protected $edit_hook_interface = null;
+	protected ?string $edit_hook_interface = null;
 
 	/**
 	 * The app-specific list hook interface name. When set, the dispatch system will invoke
@@ -61,32 +61,28 @@ abstract class app {
 	protected $list_hook_interface = null;
 
 	public function __construct() {
-		if (property_exists($this, 'permission_prefix')) {
-			$this->has_permission_prefix = true;
-		}
-		if (property_exists($this, 'list_page')) {
-			$this->has_list_page = true;
-		}
-		if (property_exists($this, 'table')) {
-			$this->has_table = true;
-		}
-		if (property_exists($this, 'uuid_prefix')) {
-			$this->has_uuid_prefix = true;
-		}
-		if (property_exists($this, 'toggle_field')) {
-			$this->has_toggle_field = true;
-		}
-		if (property_exists($this, 'toggle_values')) {
-			$this->has_toggle_values = true;
-		}
+		// Support both class constants (preferred) and instance property assignments (legacy subclasses)
+		$permission_prefix = static::PERMISSION_PREFIX !== '' ? static::PERMISSION_PREFIX : ($this->permission_prefix ?? '');
+		$table             = static::TABLE !== ''             ? static::TABLE             : ($this->table ?? '');
+		$uuid_prefix       = static::UUID_PREFIX !== ''       ? static::UUID_PREFIX       : ($this->uuid_prefix ?? '');
+		$toggle_field      = static::TOGGLE_FIELD !== ''      ? static::TOGGLE_FIELD      : ($this->toggle_field ?? '');
+		$toggle_values     = !empty(static::TOGGLE_VALUES)    ? static::TOGGLE_VALUES     : ($this->toggle_values ?? []);
+
+		$this->has_permission_prefix = $permission_prefix !== '';
+		$this->has_list_page         = static::LIST_PAGE !== '';
+		$this->has_table             = $table !== '';
+		$this->has_uuid_prefix       = $uuid_prefix !== '';
+		$this->has_toggle_field      = $toggle_field !== '';
+		$this->has_toggle_values     = !empty($toggle_values);
+
 		if ($this->has_permission_prefix) {
-			if (permission_exists($this->permission_prefix . 'delete')) {
+			if (permission_exists($permission_prefix . 'delete')) {
 				$this->has_delete = true;
 			}
-			if (permission_exists($this->permission_prefix . 'add')) {
+			if (permission_exists($permission_prefix . 'add')) {
 				$this->has_add = true;
 			}
-			if (permission_exists($this->permission_prefix . 'edit')) {
+			if (permission_exists($permission_prefix . 'edit')) {
 				$this->has_edit = true;
 			}
 		}
@@ -289,15 +285,17 @@ abstract class app {
 
 		$checked = [];
 		// build the delete array
+		$_table       = static::TABLE !== ''       ? static::TABLE       : ($this->table ?? '');
+		$_uuid_prefix = static::UUID_PREFIX !== '' ? static::UUID_PREFIX : ($this->uuid_prefix ?? '');
 		foreach ($records as $x => $record) {
 			if (!empty($record['checked']) && $record['checked'] == 'true' && is_uuid($record['uuid'])) {
-				$checked[$this->table][$x][$this->uuid_prefix . 'uuid'] = $record['uuid'];
-				$checked[$this->table][$x]['domain_uuid'] = $this->domain_uuid;
+				$checked[$_table][$x][$_uuid_prefix . 'uuid'] = $record['uuid'];
+				$checked[$_table][$x]['domain_uuid']          = $this->domain_uuid;
 			}
 		}
 
 		// dispatch pre-action hooks (action = 'delete')
-		$url = new url($_SERVER['PHP_SELF'] ?? '');
+		$url    = new url($_SERVER['PHP_SELF'] ?? '');
 		$action = 'delete';
 		$this->dispatch_list_hooks('on_pre_action', $url, $action, $checked);
 
@@ -351,7 +349,7 @@ abstract class app {
 			}
 
 			// dispatch pre-action hooks (action = 'copy')
-			$url = new url($_SERVER['PHP_SELF'] ?? '');
+			$url    = new url($_SERVER['PHP_SELF'] ?? '');
 			$action = 'copy';
 			$this->dispatch_list_hooks('on_pre_action', $url, $action, $uuids);
 
@@ -377,7 +375,9 @@ abstract class app {
 	 * @param array $uuids An array of UUIDs that are being copied. This array can be modified by the child class to perform any necessary copy actions and should return an array of data to be saved to the database.
 	 * @return array An array of data to be saved to the database after the copy action is performed.
 	 */
-	protected function on_copy(array &$uuids) { return []; }
+	protected function on_copy(array &$uuids) {
+		return [];
+	}
 
 	/**
 	 * This method is intended to be overridden by child classes that need to perform actions before records are copied.
@@ -410,7 +410,7 @@ abstract class app {
 		}
 
 		// dispatch pre-action hooks (action = 'toggle')
-		$url = new url($_SERVER['PHP_SELF'] ?? '');
+		$url    = new url($_SERVER['PHP_SELF'] ?? '');
 		$action = 'toggle';
 		$this->dispatch_list_hooks('on_pre_action', $url, $action, $uuids);
 
@@ -439,7 +439,9 @@ abstract class app {
 	 * @param array $uuids An array of UUIDs that are being toggled. This array can be modified by the child class to perform any necessary toggle actions and should return an array of data to be saved to the database.
 	 * @return array An array of data to be saved to the database after the toggle action is performed.
 	 */
-	protected function on_toggle(array &$checked) { return []; }
+	protected function on_toggle(array &$checked) {
+		return [];
+	}
 
 	/**
 	 * This method is intended to be overridden by child classes that need to perform actions before records are toggled.
@@ -545,7 +547,7 @@ abstract class app {
 	}
 
 	public static function database_schemas(): array {
-		$schema = [];
+		$schema      = [];
 		$schema_apps = (new auto_loader(true))->get_interface_list('has_database_schema');
 		foreach ($schema_apps as $class) {
 			$schema[] = $class::get_database_schema();
@@ -555,7 +557,7 @@ abstract class app {
 	}
 
 	public static function default_settings(): array {
-		$settings = [];
+		$settings      = [];
 		$settings_apps = (new auto_loader(true))->get_interface_list('has_default_settings');
 		foreach ($settings_apps as $class) {
 			$settings[] = $class::get_default_settings();
@@ -565,7 +567,7 @@ abstract class app {
 	}
 
 	public static function default_permissions(): array {
-		$permissions = [];
+		$permissions      = [];
 		$permissions_apps = (new auto_loader())->get_interface_list('has_default_permissions');
 		foreach ($permissions_apps as $class) {
 			$permissions[] = $class::get_default_permissions();
@@ -575,7 +577,7 @@ abstract class app {
 	}
 
 	public static function default_menus(): array {
-		$menus = [];
+		$menus      = [];
 		$menus_apps = (new auto_loader())->get_interface_list('has_default_menus');
 		foreach ($menus_apps as $class) {
 			$menus[] = $class::get_default_menus();
@@ -585,7 +587,7 @@ abstract class app {
 	}
 
 	public static function default_destinations(): array {
-		$destinations = [];
+		$destinations              = [];
 		$default_destinations_apps = (new auto_loader())->get_interface_list('has_default_destinations');
 		foreach ($default_destinations_apps as $class) {
 			$destinations[] = $class::get_default_destinations();
@@ -595,7 +597,7 @@ abstract class app {
 	}
 
 	public static function default_queues(): array {
-		$queues = [];
+		$queues              = [];
 		$default_queues_apps = (new auto_loader())->get_interface_list('has_default_queues');
 		foreach ($default_queues_apps as $class) {
 			$queues[] = $class::get_default_queues();
@@ -605,7 +607,7 @@ abstract class app {
 	}
 
 	public static function default_all(): array {
-		$all = [];
+		$all              = [];
 		$default_all_apps = (new auto_loader())->get_interface_list('has_default_all');
 		foreach ($default_all_apps as $class) {
 			$all[] = $class::get_default_all();
@@ -646,11 +648,11 @@ abstract class app {
 		foreach (self::list() as $apps) {
 			if (!empty($apps['destinations'])) {
 				foreach ($apps['destinations'] as $destination) {
-					$singular_name = database::singular($destination['name']);
-					$destination['name_singular'] = $singular_name;
-					$destination['permission'] = $singular_name . '_destinations';
+					$singular_name                 = database::singular($destination['name']);
+					$destination['name_singular']  = $singular_name;
+					$destination['permission']     = $singular_name . '_destinations';
 					$destination['has_permission'] = permission_exists($destination['permission']);
-					$destinations[] = $destination;
+					$destinations[]                = $destination;
 				}
 			}
 		}
@@ -659,13 +661,14 @@ abstract class app {
 	}
 
 	public static function get_app_config_all(): array {
-		$all = [];
+		$all                 = [];
 		$all['destinations'] = self::default_destinations();
-		$all['queues'] = self::default_queues();
-		$all['menus'] = self::default_menus();
-		$all['permissions'] = self::default_permissions();
-		$all['settings'] = self::default_settings();
-		$all['db'] = self::database_schemas();
+		$all['queues']       = self::default_queues();
+		$all['menus']        = self::default_menus();
+		$all['permissions']  = self::default_permissions();
+		$all['settings']     = self::default_settings();
+		$all['db']           = self::database_schemas();
+
 		return $all;
 	}
 
@@ -709,7 +712,7 @@ abstract class app {
 			$apps = [];
 
 			// Reset output and exit code variables for each file to test for syntax errors
-			$output = [];
+			$output    = [];
 			$exit_code = 0;
 
 			//
@@ -745,4 +748,9 @@ abstract class app {
 
 		return self::$applications;
 	}
+
+	public static function get_list_page(): ?string {
+		return static::LIST_PAGE;
+	}
+
 }

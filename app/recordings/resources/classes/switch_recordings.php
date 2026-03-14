@@ -54,7 +54,7 @@ class switch_recordings extends app {
 	 * declare private variables
 	 */
 	protected $permission_prefix;
-	protected $list_page;
+	protected $LIST_PAGE;
 	protected $table;
 	protected $uuid_prefix;
 	protected $toggle_field;
@@ -80,7 +80,7 @@ class switch_recordings extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'recording_';
-		$this->list_page         = 'recordings.php';
+		$this->LIST_PAGE         = 'recordings.php';
 		$this->table             = 'recordings';
 		$this->uuid_prefix       = 'recording_';
 
@@ -136,7 +136,7 @@ class switch_recordings extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 

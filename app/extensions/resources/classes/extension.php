@@ -33,6 +33,15 @@ class extension extends app {
 	const app_name = 'extensions';
 	const app_uuid = 'e68d9689-2769-e013-28fa-6214bf47fca3';
 
+	// class-level configuration constants
+	const PERMISSION_PREFIX = 'extension_';
+	const LIST_PAGE         = 'extensions.php';
+	const TABLE             = 'extensions';
+	const UUID_PREFIX       = 'extension_';
+	const TOGGLE_FIELD      = 'enabled';
+	const TOGGLE_VALUES     = ['true', 'false'];
+
+
 	/**
 	 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set
 	 * in the session global array
@@ -96,12 +105,7 @@ class extension extends app {
 	/**
 	 * declare private variables
 	 */
-	protected $permission_prefix;
 	protected $list_page;
-	protected $table;
-	protected $uuid_prefix;
-	protected $toggle_field;
-	protected $toggle_values;
 
 	/**
 	 * Initializes the object with setting array.
@@ -122,12 +126,7 @@ class extension extends app {
 		$this->settings = $setting_array['settings'] ?? new settings(['database' => $this->database, 'domain_uuid' => $this->domain_uuid, 'user_uuid' => $this->user_uuid]);
 
 		//assign private variables
-		$this->permission_prefix = 'extension_';
 		$this->list_page         = 'extensions.php';
-		$this->table             = 'extensions';
-		$this->uuid_prefix       = 'extension_';
-		$this->toggle_field      = 'enabled';
-		$this->toggle_values     = ['true', 'false'];
 
 		//initialize the parent class
 		parent::__construct();
@@ -594,7 +593,7 @@ class extension extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function delete($records) {
-		if (permission_exists($this->permission_prefix . 'delete')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'delete')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -629,7 +628,7 @@ class extension extends app {
 							$extensions[$x] = $row;
 
 							//build delete array
-							$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $record['uuid'];
+							$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $record['uuid'];
 							$array['extension_users'][$x]['extension_uuid']       = $record['uuid'];
 
 							//include follow me destinations, if exists
@@ -759,7 +758,7 @@ class extension extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function toggle($records) {
-		if (permission_exists($this->permission_prefix . 'enabled')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'enabled')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -783,9 +782,9 @@ class extension extends app {
 					}
 				}
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql                       = "select " . $this->uuid_prefix . "uuid as uuid, " . $this->toggle_field . " as toggle, extension, number_alias, user_context from v_" . $this->table . " ";
+					$sql                       = "select " . static::UUID_PREFIX . "uuid as uuid, " . static::TOGGLE_FIELD . " as toggle, extension, number_alias, user_context from v_" . static::TABLE . " ";
 					$sql                       .= "where domain_uuid = :domain_uuid ";
-					$sql                       .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+					$sql                       .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
 					$rows                      = $this->database->select($sql, $parameters, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
@@ -803,8 +802,8 @@ class extension extends app {
 				//build update array
 				$x = 0;
 				foreach ($extensions as $uuid => $extension) {
-					$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $uuid;
-					$array[$this->table][$x][$this->toggle_field]         = $extension['state'] == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
+					$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $uuid;
+					$array[static::TABLE][$x][static::TOGGLE_FIELD]         = $extension['state'] == static::TOGGLE_VALUES[0] ? static::TOGGLE_VALUES[1] : static::TOGGLE_VALUES[0];
 					$x++;
 				}
 

@@ -11,14 +11,17 @@ class email_queue extends app {
 	const app_name = 'email_queue';
 	const app_uuid = '5befdf60-a242-445f-91b3-2e9ee3e0ddf7';
 
+	// class-level configuration constants
+	const TABLE             = 'email_queue';
+	const TOGGLE_FIELD      = '';
+	const TOGGLE_VALUES     = ['true', 'false'];
+	const LIST_PAGE         = 'email_queue.php';
+
+
 	/**
 	 * declare the variables
 	 */
 	private $name;
-	protected $table;
-	protected $toggle_field;
-	protected $toggle_values;
-	private $location;
 
 	/**
 	 * Initializes the object with setting array.
@@ -39,10 +42,6 @@ class email_queue extends app {
 
 		//assign the variables
 		$this->name          = 'email_queue';
-		$this->table         = 'email_queue';
-		$this->toggle_field  = '';
-		$this->toggle_values = ['true', 'false'];
-		$this->location      = 'email_queue.php';
 
 		//initialize the parent class
 		parent::__construct();
@@ -68,7 +67,7 @@ class email_queue extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -79,9 +78,9 @@ class email_queue extends app {
 				foreach ($records as $record) {
 					//add to the array
 					if ($record['checked'] == 'true' && is_uuid($record['uuid'])) {
-						$array[$this->table][$x][$this->name . '_uuid']              = $record['uuid'];
+						$array[static::TABLE][$x][$this->name . '_uuid']              = $record['uuid'];
 						$array['email_queue_attachments'][$x][$this->name . '_uuid'] = $record['uuid'];
-						//$array[$this->table][$x]['domain_uuid'] = $this->domain_uuid;
+						//$array[static::TABLE][$x]['domain_uuid'] = $this->domain_uuid;
 					}
 
 					//increment the id
@@ -125,7 +124,7 @@ class email_queue extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -136,9 +135,9 @@ class email_queue extends app {
 				foreach ($records as $record) {
 					//add to the array
 					if ($record['checked'] == 'true' && is_uuid($record['uuid'])) {
-						$array[$this->table][$x][$this->name . '_uuid'] = $record['uuid'];
-						$array[$this->table][$x]['email_status']        = 'waiting';
-						$array[$this->table][$x]['email_retry_count']   = null;
+						$array[static::TABLE][$x][$this->name . '_uuid'] = $record['uuid'];
+						$array[static::TABLE][$x]['email_status']        = 'waiting';
+						$array[static::TABLE][$x]['email_retry_count']   = null;
 					}
 
 					//increment the id
@@ -180,7 +179,7 @@ class email_queue extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -193,7 +192,7 @@ class email_queue extends app {
 					}
 				}
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql                       = "select " . $this->name . "_uuid as uuid, " . $this->toggle_field . " as toggle from v_" . $this->table . " ";
+					$sql                       = "select " . $this->name . "_uuid as uuid, " . static::TOGGLE_FIELD . " as toggle from v_" . static::TABLE . " ";
 					$sql                       .= "where " . $this->name . "_uuid in (" . implode(', ', $uuids) . ") ";
 					$sql                       .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
@@ -210,8 +209,8 @@ class email_queue extends app {
 				$x = 0;
 				foreach ($states as $uuid => $state) {
 					//create the array
-					$array[$this->table][$x][$this->name . '_uuid'] = $uuid;
-					$array[$this->table][$x][$this->toggle_field]   = $state == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
+					$array[static::TABLE][$x][$this->name . '_uuid'] = $uuid;
+					$array[static::TABLE][$x][static::TOGGLE_FIELD]   = $state == static::TOGGLE_VALUES[0] ? static::TOGGLE_VALUES[1] : static::TOGGLE_VALUES[0];
 
 					//increment the id
 					$x++;
@@ -252,7 +251,7 @@ class email_queue extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -268,7 +267,7 @@ class email_queue extends app {
 
 				//create the array from existing data
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql                       = "select * from v_" . $this->table . " ";
+					$sql                       = "select * from v_" . static::TABLE . " ";
 					$sql                       .= "where " . $this->name . "_uuid in (" . implode(', ', $uuids) . ") ";
 					$sql                       .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
@@ -277,10 +276,10 @@ class email_queue extends app {
 						$x = 0;
 						foreach ($rows as $row) {
 							//copy data
-							$array[$this->table][$x] = $row;
+							$array[static::TABLE][$x] = $row;
 
 							//add copy to the description
-							$array[$this->table][$x][$this->name . '_uuid'] = uuid();
+							$array[static::TABLE][$x][$this->name . '_uuid'] = uuid();
 
 							//increment the id
 							$x++;

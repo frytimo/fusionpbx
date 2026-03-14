@@ -42,7 +42,7 @@ class number_translations extends app {
 	 * declare private variables
 	 */
 	protected $permission_prefix;
-	protected $list_page;
+	protected $LIST_PAGE;
 	protected $table;
 	protected $uuid_prefix;
 	protected $toggle_field;
@@ -65,7 +65,7 @@ class number_translations extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'number_translation_';
-		$this->list_page         = 'number_translations.php';
+		$this->LIST_PAGE         = 'number_translations.php';
 		$this->table             = 'number_translations';
 		$this->uuid_prefix       = 'number_translation_';
 		$this->toggle_field      = 'number_translation_enabled';
@@ -186,7 +186,7 @@ class number_translations extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -249,7 +249,7 @@ class number_translations extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -297,7 +297,7 @@ class number_translations extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -367,7 +367,7 @@ class number_translations extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 

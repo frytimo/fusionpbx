@@ -64,7 +64,7 @@
 		 * declare private variables
 		 */
 		private $permission;
-		protected $list_page;
+		protected $LIST_PAGE;
 		protected $table;
 		protected $uuid_prefix;
 		protected $toggle_field;
@@ -174,7 +174,7 @@
 
 			//assign private variables
 				$this->permission = 'do_not_disturb';
-				$this->list_page = 'calls.php';
+				$this->LIST_PAGE = 'calls.php';
 				$this->table = 'extensions';
 				$this->uuid_prefix = 'extension_';
 				$this->toggle_field = 'do_not_disturb';
@@ -190,7 +190,7 @@
 					$token = new token;
 					if (!$token->validate($_SERVER['PHP_SELF'])) {
 						message::add($text['message-invalid_token'],'negative');
-						header('Location: '.$this->list_page);
+						header('Location: '.$this->LIST_PAGE);
 						exit;
 					}
 

@@ -75,7 +75,7 @@ class conference_centers extends app {
 	 * declare private variables
 	 */
 	protected $permission_prefix;
-	protected $list_page;
+	protected $LIST_PAGE;
 	protected $table;
 	protected $uuid_prefix;
 	protected $toggle_values;
@@ -342,7 +342,7 @@ class conference_centers extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'conference_center_';
-		$this->list_page         = 'conference_centers.php';
+		$this->LIST_PAGE         = 'conference_centers.php';
 		$this->table             = 'conference_centers';
 		$this->uuid_prefix       = 'conference_center_';
 
@@ -356,7 +356,7 @@ class conference_centers extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -433,7 +433,7 @@ class conference_centers extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'conference_room_';
-		$this->list_page         = 'conference_rooms.php';
+		$this->LIST_PAGE         = 'conference_rooms.php';
 		$this->table             = 'conference_rooms';
 		$this->uuid_prefix       = 'conference_room_';
 
@@ -447,7 +447,7 @@ class conference_centers extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -502,7 +502,7 @@ class conference_centers extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'conference_session_';
-		$this->list_page         = 'conference_sessions.php?id=' . $this->conference_room_uuid;
+		$this->LIST_PAGE         = 'conference_sessions.php?id=' . $this->conference_room_uuid;
 		$this->table             = 'conference_sessions';
 		$this->uuid_prefix       = 'conference_session_';
 
@@ -516,7 +516,7 @@ class conference_centers extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -571,7 +571,7 @@ class conference_centers extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'conference_center_';
-		$this->list_page         = 'conference_centers.php';
+		$this->LIST_PAGE         = 'conference_centers.php';
 		$this->table             = 'conference_centers';
 		$this->uuid_prefix       = 'conference_center_';
 		$this->toggle_field      = 'conference_center_enabled';
@@ -587,7 +587,7 @@ class conference_centers extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -674,7 +674,7 @@ class conference_centers extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'conference_room_';
-		$this->list_page         = 'conference_rooms.php';
+		$this->LIST_PAGE         = 'conference_rooms.php';
 		$this->table             = 'conference_rooms';
 		$this->uuid_prefix       = 'conference_room_';
 		$this->toggle_values     = ['true', 'false'];
@@ -689,7 +689,7 @@ class conference_centers extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -698,7 +698,7 @@ class conference_centers extends app {
 
 				//validate submitted toggle field
 				if (!in_array($this->toggle_field, ['record', 'wait_mod', 'announce_name', 'announce_count', 'announce_recording', 'mute', 'sounds', 'enabled'])) {
-					header('Location: ' . $this->list_page);
+					header('Location: ' . $this->LIST_PAGE);
 					exit;
 				}
 

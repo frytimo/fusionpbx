@@ -36,15 +36,18 @@ class event_guard extends app {
 
 	const app_uuid = 'c5b86612-1514-40cb-8e2c-3f01a8f6f637';
 
+	// class-level configuration constants
+	const TABLE             = 'event_guard_logs';
+	const TOGGLE_FIELD      = '';
+	const TOGGLE_VALUES     = ['block', 'pending'];
+	const LIST_PAGE         = 'event_guard_logs.php';
+
+
 	/**
 	 * declare the variables
 	 */
 	private $name;
 
-	protected $table;
-	protected $toggle_field;
-	protected $toggle_values;
-	private $location;
 	private $config;
 
 	/**
@@ -58,10 +61,6 @@ class event_guard extends app {
 	public function __construct($params = []) {
 		// assign the variables
 		$this->name = 'event_guard_log';
-		$this->table = 'event_guard_logs';
-		$this->toggle_field = '';
-		$this->toggle_values = ['block', 'pending'];
-		$this->location = 'event_guard_logs.php';
 		$this->config = config::load();
 		$this->database = database::new(['config' => $this->config]);
 
@@ -126,7 +125,7 @@ class event_guard extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -137,7 +136,7 @@ class event_guard extends app {
 				foreach ($records as $record) {
 					// Add to the array
 					if ($record['checked'] == 'true' && is_uuid($record['event_guard_log_uuid'])) {
-						$array[$this->table][$x]['event_guard_log_uuid'] = $record['event_guard_log_uuid'];
+						$array[static::TABLE][$x]['event_guard_log_uuid'] = $record['event_guard_log_uuid'];
 					}
 
 					// Increment the id
@@ -175,7 +174,7 @@ class event_guard extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -186,8 +185,8 @@ class event_guard extends app {
 				foreach ($records as $record) {
 					// add to the array
 					if (!empty($record['checked']) && $record['checked'] == 'true' && is_uuid($record['event_guard_log_uuid'])) {
-						$array[$this->table][$x]['event_guard_log_uuid'] = $record['event_guard_log_uuid'];
-						$array[$this->table][$x]['log_status'] = 'pending';
+						$array[static::TABLE][$x]['event_guard_log_uuid'] = $record['event_guard_log_uuid'];
+						$array[static::TABLE][$x]['log_status'] = 'pending';
 					}
 
 					// increment the id
@@ -237,7 +236,7 @@ class event_guard extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -250,7 +249,7 @@ class event_guard extends app {
 					}
 				}
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql = "select " . $this->name . "_uuid as uuid, " . $this->toggle_field . " as toggle from v_" . $this->table . " ";
+					$sql = "select " . $this->name . "_uuid as uuid, " . static::TOGGLE_FIELD . " as toggle from v_" . static::TABLE . " ";
 					$sql .= "where " . $this->name . "_uuid in (" . implode(', ', $uuids) . ") ";
 					$rows = $this->database->select($sql, null, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
@@ -265,8 +264,8 @@ class event_guard extends app {
 				$x = 0;
 				foreach ($states as $uuid => $state) {
 					// Create the array
-					$array[$this->table][$x][$this->name . '_uuid'] = $uuid;
-					$array[$this->table][$x][$this->toggle_field] = $state == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
+					$array[static::TABLE][$x][$this->name . '_uuid'] = $uuid;
+					$array[static::TABLE][$x][static::TOGGLE_FIELD] = $state == static::TOGGLE_VALUES[0] ? static::TOGGLE_VALUES[1] : static::TOGGLE_VALUES[0];
 
 					// Increment the id
 					$x++;
@@ -305,7 +304,7 @@ class event_guard extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -320,7 +319,7 @@ class event_guard extends app {
 
 				// Create the array from existing data
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql = "select * from v_" . $this->table . " ";
+					$sql = "select * from v_" . static::TABLE . " ";
 					$sql .= "where event_guard_log_uuid in (" . implode(', ', $uuids) . ") ";
 					$rows = $this->database->select($sql, null, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
@@ -335,10 +334,10 @@ class event_guard extends app {
 							}
 
 							// Copy data
-							$array[$this->table][$x] = $row;
+							$array[static::TABLE][$x] = $row;
 
 							// Add copy to the description
-							$array[$this->table][$x]['event_guard_log_uuid'] = uuid();
+							$array[static::TABLE][$x]['event_guard_log_uuid'] = uuid();
 
 							// Increment the id
 							$x++;

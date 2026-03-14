@@ -80,7 +80,7 @@ class voicemail extends app {
 	 * declare private variables
 	 */
 	protected $permission_prefix;
-	protected $list_page;
+	protected $LIST_PAGE;
 	protected $table;
 	protected $uuid_prefix;
 	protected $toggle_field;
@@ -107,7 +107,7 @@ class voicemail extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'voicemail_';
-		$this->list_page         = 'voicemails.php';
+		$this->LIST_PAGE         = 'voicemails.php';
 		$this->table             = 'voicemails';
 		$this->uuid_prefix       = 'voicemail_';
 		$this->toggle_field      = 'voicemail_enabled';
@@ -389,7 +389,7 @@ class voicemail extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -503,7 +503,7 @@ class voicemail extends app {
 	public function voicemail_options_delete($records) {
 		//assign private variables
 		$this->permission_prefix = 'voicemail_option_';
-		$this->list_page         = 'voicemail_edit.php?id=' . $this->voicemail_uuid;
+		$this->LIST_PAGE         = 'voicemail_edit.php?id=' . $this->voicemail_uuid;
 		$this->table             = 'voicemail_options';
 		$this->uuid_prefix       = 'voicemail_option_';
 
@@ -517,7 +517,7 @@ class voicemail extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -556,7 +556,7 @@ class voicemail extends app {
 	 */
 	public function voicemail_destinations_delete($records) {
 		//assign private variables
-		$this->list_page   = 'voicemail_edit.php?id=' . $this->voicemail_uuid;
+		$this->LIST_PAGE   = 'voicemail_edit.php?id=' . $this->voicemail_uuid;
 		$this->table       = 'voicemail_destinations';
 		$this->uuid_prefix = 'voicemail_destination_';
 
@@ -570,7 +570,7 @@ class voicemail extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -625,7 +625,7 @@ class voicemail extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 

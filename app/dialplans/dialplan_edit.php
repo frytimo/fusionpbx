@@ -194,7 +194,7 @@ if (count($_POST) > 0 && empty($_POST["persistformvar"])) {
 				) {
 					$obj = new dialplan;
 					$obj->app_uuid = $app_uuid ?? null;
-					$obj->list_page = $list_page;
+					$obj->LIST_PAGE = $list_page;
 					$obj->copy($array);
 				}
 				break;
@@ -208,7 +208,7 @@ if (count($_POST) > 0 && empty($_POST["persistformvar"])) {
 				) {
 					$obj = new dialplan;
 					$obj->app_uuid = $app_uuid ?? null;
-					$obj->list_page = $list_page;
+					$obj->LIST_PAGE = $list_page;
 					$obj->delete($array);
 				}
 				break;

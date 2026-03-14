@@ -35,6 +35,13 @@ class switch_music_on_hold extends app {
 	const app_name = 'music_on_hold';
 	const app_uuid = '1dafe0f8-c08a-289b-0312-15baf4f20f81';
 
+	// class-level configuration constants
+	const PERMISSION_PREFIX = 'music_on_hold_';
+	const LIST_PAGE         = 'music_on_hold.php';
+	const TABLE             = 'music_on_hold';
+	const UUID_PREFIX       = 'music_on_hold_';
+
+
 	/**
 	 * Username set in the constructor. This can be passed in through the $this->settings_array associative array or
 	 * set in the session global array
@@ -57,10 +64,7 @@ class switch_music_on_hold extends app {
 	private $xml;
 	private $app_name;
 	private $app_uuid;
-	protected $permission_prefix;
 	protected $list_page;
-	protected $table;
-	protected $uuid_prefix;
 
 	/**
 	 * Initializes the object with setting array.
@@ -80,10 +84,7 @@ class switch_music_on_hold extends app {
 		$this->settings = $setting_array['settings'] ?? new settings(['database' => $this->database, 'domain_uuid' => $this->domain_uuid, 'user_uuid' => $this->user_uuid]);
 
 		//assign private variables
-		$this->permission_prefix = 'music_on_hold_';
 		$this->list_page         = 'music_on_hold.php';
-		$this->table             = 'music_on_hold';
-		$this->uuid_prefix       = 'music_on_hold_';
 
 		//initialize the parent class
 		parent::__construct();
@@ -333,7 +334,7 @@ class switch_music_on_hold extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function delete($records) {
-		if (permission_exists($this->permission_prefix . 'delete')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'delete')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -406,9 +407,9 @@ class switch_music_on_hold extends app {
 						if (!empty($row['delete']) && $row['delete'] == true) {
 
 							//build delete array
-							$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $music_on_hold_uuid;
+							$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $music_on_hold_uuid;
 							if (!permission_exists('music_on_hold_domain')) {
-								$array[$this->table][$x]['domain_uuid'] = $this->domain_uuid;
+								$array[static::TABLE][$x]['domain_uuid'] = $this->domain_uuid;
 							}
 							$x++;
 

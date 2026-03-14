@@ -33,15 +33,19 @@ class gateways extends app {
 	const app_name = 'gateways';
 	const app_uuid = '297ab33e-2c2f-8196-552c-f3567d2caaf8';
 
+	// class-level configuration constants
+	const PERMISSION_PREFIX = 'gateway_';
+	const LIST_PAGE         = 'gateways.php';
+	const TABLE             = 'gateways';
+	const UUID_PREFIX       = 'gateway_';
+	const TOGGLE_FIELD      = 'enabled';
+	const TOGGLE_VALUES     = ['true', 'false'];
+
+
 	/**
 	 * declare private variables
 	 */
-	protected $permission_prefix;
 	protected $list_page;
-	protected $table;
-	protected $uuid_prefix;
-	protected $toggle_field;
-	protected $toggle_values;
 
 	/**
 	 * Initializes the object with setting array.
@@ -61,12 +65,7 @@ class gateways extends app {
 		$this->settings = $setting_array['settings'] ?? new settings(['database' => $this->database, 'domain_uuid' => $this->domain_uuid, 'user_uuid' => $this->user_uuid]);
 
 		//assign private variables
-		$this->permission_prefix = 'gateway_';
 		$this->list_page         = 'gateways.php';
-		$this->table             = 'gateways';
-		$this->uuid_prefix       = 'gateway_';
-		$this->toggle_field      = 'enabled';
-		$this->toggle_values     = ['true', 'false'];
 
 		//call parent constructor to initialize has_* flags
 		parent::__construct();
@@ -84,7 +83,7 @@ class gateways extends app {
 	 * @return void
 	 */
 	public function start($records) {
-		if (permission_exists($this->permission_prefix . 'edit')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'edit')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -110,12 +109,12 @@ class gateways extends app {
 
 				//get necessary gateway details
 				if (!empty($uuids) && is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql = "select " . $this->uuid_prefix . "uuid as uuid, gateway, profile, enabled from v_" . $this->table . " ";
+					$sql = "select " . static::UUID_PREFIX . "uuid as uuid, gateway, profile, enabled from v_" . static::TABLE . " ";
 					if (permission_exists('gateway_all')) {
-						$sql .= "where " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+						$sql .= "where " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					} else {
 						$sql                       .= "where (domain_uuid = :domain_uuid) ";
-						$sql                       .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+						$sql                       .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 						$parameters['domain_uuid'] = $this->domain_uuid;
 					}
 					$rows = $this->database->select($sql, $parameters ?? null, 'all');
@@ -178,7 +177,7 @@ class gateways extends app {
 	 * @return void
 	 */
 	public function stop($records) {
-		if (permission_exists($this->permission_prefix . 'edit')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'edit')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -204,12 +203,12 @@ class gateways extends app {
 
 				//get necessary gateway details
 				if (!empty($uuids) && is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql = "select " . $this->uuid_prefix . "uuid as uuid, gateway, profile, enabled from v_" . $this->table . " ";
+					$sql = "select " . static::UUID_PREFIX . "uuid as uuid, gateway, profile, enabled from v_" . static::TABLE . " ";
 					if (permission_exists('gateway_all')) {
-						$sql .= "where " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+						$sql .= "where " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					} else {
 						$sql                       .= "where (domain_uuid = :domain_uuid) ";
-						$sql                       .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+						$sql                       .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 						$parameters['domain_uuid'] = $this->domain_uuid;
 					}
 					$rows = $this->database->select($sql, $parameters ?? null, 'all');
@@ -260,7 +259,7 @@ class gateways extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function delete($records) {
-		if (permission_exists($this->permission_prefix . 'delete')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'delete')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -286,12 +285,12 @@ class gateways extends app {
 
 				//get necessary gateway details
 				if (!empty($uuids) && is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql = "select " . $this->uuid_prefix . "uuid as uuid, gateway, profile from v_" . $this->table . " ";
+					$sql = "select " . static::UUID_PREFIX . "uuid as uuid, gateway, profile from v_" . static::TABLE . " ";
 					if (permission_exists('gateway_all')) {
-						$sql .= "where " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+						$sql .= "where " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					} else {
 						$sql                       .= "where (domain_uuid = :domain_uuid) ";
-						$sql                       .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+						$sql                       .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 						$parameters['domain_uuid'] = $this->domain_uuid;
 					}
 					$rows = $this->database->select($sql, $parameters ?? null, 'all');
@@ -330,7 +329,7 @@ class gateways extends app {
 					}
 
 					//build delete array
-					$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $gateway_uuid;
+					$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $gateway_uuid;
 					$x++;
 
 				}
@@ -387,7 +386,7 @@ class gateways extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function toggle($records) {
-		if (permission_exists($this->permission_prefix . 'edit')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'edit')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -411,12 +410,12 @@ class gateways extends app {
 					}
 				}
 				if (!empty($uuids) && is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql = "select " . $this->uuid_prefix . "uuid as uuid, " . $this->toggle_field . " as state, gateway, profile from v_" . $this->table . " ";
+					$sql = "select " . static::UUID_PREFIX . "uuid as uuid, " . static::TOGGLE_FIELD . " as state, gateway, profile from v_" . static::TABLE . " ";
 					if (permission_exists('gateway_all')) {
-						$sql .= "where " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+						$sql .= "where " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					} else {
 						$sql                       .= "where (domain_uuid = :domain_uuid) ";
-						$sql                       .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+						$sql                       .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 						$parameters['domain_uuid'] = $this->domain_uuid;
 					}
 					$rows = $this->database->select($sql, $parameters ?? null, 'all');
@@ -433,8 +432,8 @@ class gateways extends app {
 				//build update array
 				$x = 0;
 				foreach ($gateways as $uuid => $gateway) {
-					$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $uuid;
-					$array[$this->table][$x][$this->toggle_field]         = $gateway['state'] == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
+					$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $uuid;
+					$array[static::TABLE][$x][static::TOGGLE_FIELD]         = $gateway['state'] == static::TOGGLE_VALUES[0] ? static::TOGGLE_VALUES[1] : static::TOGGLE_VALUES[0];
 					$x++;
 				}
 
@@ -510,7 +509,7 @@ class gateways extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function copy($records) {
-		if (permission_exists($this->permission_prefix . 'add')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'add')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -536,12 +535,12 @@ class gateways extends app {
 
 				//create insert array from existing data
 				if (!empty($uuids) && is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql = "select * from v_" . $this->table . " ";
+					$sql = "select * from v_" . static::TABLE . " ";
 					if (permission_exists('gateway_all')) {
-						$sql .= "where " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+						$sql .= "where " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					} else {
 						$sql                       .= "where (domain_uuid = :domain_uuid) ";
-						$sql                       .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+						$sql                       .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 						$parameters['domain_uuid'] = $this->domain_uuid;
 					}
 					$rows = $this->database->select($sql, $parameters ?? null, 'all');
@@ -558,19 +557,19 @@ class gateways extends app {
 							}
 
 							//copy data
-							$array[$this->table][$x] = $row;
+							$array[static::TABLE][$x] = $row;
 
 							//overwrite
-							$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $primary_uuid;
-							$array[$this->table][$x]['description']               = trim($row['description'] . ' (' . $text['label-copy'] . ')');
-							unset($array[$this->table][$x]['channels']);
+							$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $primary_uuid;
+							$array[static::TABLE][$x]['description']               = trim($row['description'] . ' (' . $text['label-copy'] . ')');
+							unset($array[static::TABLE][$x]['channels']);
 
 							//defaults
 							if (empty($row['expire_seconds'])) {
-								$array[$this->table][$x]['expire_seconds'] = '800';
+								$array[static::TABLE][$x]['expire_seconds'] = '800';
 							}
 							if (empty($row['retry_seconds'])) {
-								$array[$this->table][$x]['retry_seconds'] = '30';
+								$array[static::TABLE][$x]['retry_seconds'] = '30';
 							}
 
 							//array of new gateways

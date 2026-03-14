@@ -35,14 +35,17 @@ class fax_queue extends app {
 	const app_name = 'fax_queue';
 	const app_uuid = '3656287f-4b22-4cf1-91f6-00386bf488f4';
 
+	// class-level configuration constants
+	const TABLE             = 'fax_queue';
+	const TOGGLE_FIELD      = '';
+	const TOGGLE_VALUES     = ['true', 'false'];
+	const LIST_PAGE         = 'fax_queue.php';
+
+
 	/**
 	 * declare private variables
 	 */
 	private $name;
-	protected $table;
-	protected $toggle_field;
-	protected $toggle_values;
-	private $location;
 
 	/**
 	 * Initializes the object with setting array.
@@ -61,10 +64,6 @@ class fax_queue extends app {
 
 		//assign the variables
 		$this->name          = 'fax_queue';
-		$this->table         = 'fax_queue';
-		$this->toggle_field  = '';
-		$this->toggle_values = ['true', 'false'];
-		$this->location      = 'fax_queue.php';
 
 		//initialize the parent class
 		parent::__construct();
@@ -90,7 +89,7 @@ class fax_queue extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -101,8 +100,8 @@ class fax_queue extends app {
 				foreach ($records as $record) {
 					//add to the array
 					if ($record['checked'] == 'true' && is_uuid($record['fax_queue_uuid'])) {
-						$array[$this->table][$x]['fax_queue_uuid'] = $record['fax_queue_uuid'];
-						$array[$this->table][$x]['domain_uuid']    = $this->domain_uuid;
+						$array[static::TABLE][$x]['fax_queue_uuid'] = $record['fax_queue_uuid'];
+						$array[static::TABLE][$x]['domain_uuid']    = $this->domain_uuid;
 					}
 
 					//increment the id
@@ -141,7 +140,7 @@ class fax_queue extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -152,11 +151,11 @@ class fax_queue extends app {
 				foreach ($records as $record) {
 					//add to the array
 					if ($record['checked'] == 'true' && is_uuid($record['fax_queue_uuid'])) {
-						$array[$this->table][$x][$this->name . '_uuid'] = $record['fax_queue_uuid'];
-						$array[$this->table][$x]['fax_status']          = 'waiting';
-						$array[$this->table][$x]['fax_retry_date']      = null;
-						$array[$this->table][$x]['fax_notify_date']     = null;
-						$array[$this->table][$x]['fax_retry_count']     = '0';
+						$array[static::TABLE][$x][$this->name . '_uuid'] = $record['fax_queue_uuid'];
+						$array[static::TABLE][$x]['fax_status']          = 'waiting';
+						$array[static::TABLE][$x]['fax_retry_date']      = null;
+						$array[static::TABLE][$x]['fax_notify_date']     = null;
+						$array[static::TABLE][$x]['fax_retry_count']     = '0';
 					}
 
 					//increment the id
@@ -199,7 +198,7 @@ class fax_queue extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -212,7 +211,7 @@ class fax_queue extends app {
 					}
 				}
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql                       = "select " . $this->name . "_uuid as uuid, " . $this->toggle_field . " as toggle from v_" . $this->table . " ";
+					$sql                       = "select " . $this->name . "_uuid as uuid, " . static::TOGGLE_FIELD . " as toggle from v_" . static::TABLE . " ";
 					$sql                       .= "where " . $this->name . "_uuid in (" . implode(', ', $uuids) . ") ";
 					$sql                       .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
@@ -229,8 +228,8 @@ class fax_queue extends app {
 				$x = 0;
 				foreach ($states as $uuid => $state) {
 					//create the array
-					$array[$this->table][$x][$this->name . '_uuid'] = $uuid;
-					$array[$this->table][$x][$this->toggle_field]   = $state == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
+					$array[static::TABLE][$x][$this->name . '_uuid'] = $uuid;
+					$array[static::TABLE][$x][static::TOGGLE_FIELD]   = $state == static::TOGGLE_VALUES[0] ? static::TOGGLE_VALUES[1] : static::TOGGLE_VALUES[0];
 
 					//increment the id
 					$x++;
@@ -271,7 +270,7 @@ class fax_queue extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -287,7 +286,7 @@ class fax_queue extends app {
 
 				//create the array from existing data
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql                       = "select * from v_" . $this->table . " ";
+					$sql                       = "select * from v_" . static::TABLE . " ";
 					$sql                       .= "where fax_queue_uuid in (" . implode(', ', $uuids) . ") ";
 					$sql                       .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
@@ -304,10 +303,10 @@ class fax_queue extends app {
 							}
 
 							//copy data
-							$array[$this->table][$x] = $row;
+							$array[static::TABLE][$x] = $row;
 
 							//add copy to the description
-							$array[$this->table][$x][$this->name . '_uuid'] = uuid();
+							$array[static::TABLE][$x][$this->name . '_uuid'] = uuid();
 
 							//increment the id
 							$x++;

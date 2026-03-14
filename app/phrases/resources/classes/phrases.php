@@ -44,7 +44,7 @@ class phrases extends app {
 	 */
 	protected $permission_prefix;
 
-	protected $list_page;
+	protected $LIST_PAGE;
 	protected $table;
 	protected $uuid_prefix;
 	protected $toggle_field;
@@ -67,7 +67,7 @@ class phrases extends app {
 
 		// assign private variables
 		$this->permission_prefix = 'phrase_';
-		$this->list_page = 'phrases.php';
+		$this->LIST_PAGE = 'phrases.php';
 		$this->table = 'phrases';
 		$this->uuid_prefix = 'phrase_';
 		$this->toggle_field = 'phrase_enabled';
@@ -190,7 +190,7 @@ class phrases extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -275,7 +275,7 @@ class phrases extends app {
 	public function delete_details($records) {
 		// assign private variables
 		$this->permission_prefix = 'phrase_';
-		$this->list_page = 'phrase_edit.php?id=' . $this->phrase_uuid;
+		$this->LIST_PAGE = 'phrase_edit.php?id=' . $this->phrase_uuid;
 		$this->table = 'phrase_details';
 		$this->uuid_prefix = 'phrase_detail_';
 
@@ -288,7 +288,7 @@ class phrases extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -357,7 +357,7 @@ class phrases extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -440,7 +440,7 @@ class phrases extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 

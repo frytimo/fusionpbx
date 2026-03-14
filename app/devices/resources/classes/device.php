@@ -69,7 +69,7 @@ class device extends app {
 	 * declare private variables
 	 */
 	protected $permission_prefix;
-	protected $list_page;
+	protected $LIST_PAGE;
 	protected $table;
 	protected $uuid_prefix;
 	protected $toggle_field;
@@ -534,7 +534,7 @@ class device extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'device_';
-		$this->list_page         = 'devices.php';
+		$this->LIST_PAGE         = 'devices.php';
 		$this->table             = 'devices';
 		$this->uuid_prefix       = 'device_';
 
@@ -548,7 +548,7 @@ class device extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -628,7 +628,7 @@ class device extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -680,7 +680,7 @@ class device extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -735,7 +735,7 @@ class device extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -775,7 +775,7 @@ class device extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'device_vendor_';
-		$this->list_page         = 'device_vendors.php';
+		$this->LIST_PAGE         = 'device_vendors.php';
 		$this->tables[]          = 'device_vendors';
 		$this->tables[]          = 'device_vendor_functions';
 		$this->tables[]          = 'device_vendor_function_groups';
@@ -791,7 +791,7 @@ class device extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -844,7 +844,7 @@ class device extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'device_vendor_function_';
-		$this->list_page         = 'device_vendor_edit.php';
+		$this->LIST_PAGE         = 'device_vendor_edit.php';
 		$this->tables[]          = 'device_vendor_functions';
 		$this->tables[]          = 'device_vendor_function_groups';
 		$this->uuid_prefix       = 'device_vendor_function_';
@@ -859,7 +859,7 @@ class device extends app {
 			$token = new token;
 			if (!$token->validate('/app/devices/device_vendor_functions.php')) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page . '?id=' . $this->device_vendor_uuid);
+				header('Location: ' . $this->LIST_PAGE . '?id=' . $this->device_vendor_uuid);
 				exit;
 			}
 
@@ -910,7 +910,7 @@ class device extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'device_profile_';
-		$this->list_page         = 'device_profiles.php';
+		$this->LIST_PAGE         = 'device_profiles.php';
 		$this->tables[]          = 'device_profiles';
 		$this->tables[]          = 'device_profile_keys';
 		$this->tables[]          = 'device_profile_settings';
@@ -926,7 +926,7 @@ class device extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -979,7 +979,7 @@ class device extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'device_profile_key_';
-		$this->list_page         = 'device_profile_edit.php?id=' . $this->device_profile_uuid;
+		$this->LIST_PAGE         = 'device_profile_edit.php?id=' . $this->device_profile_uuid;
 		$this->table             = 'device_profile_keys';
 		$this->uuid_prefix       = 'device_profile_key_';
 
@@ -993,7 +993,7 @@ class device extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -1027,7 +1027,7 @@ class device extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'device_profile_setting_';
-		$this->list_page         = 'device_profile_edit.php?id=' . $this->device_profile_uuid;
+		$this->LIST_PAGE         = 'device_profile_edit.php?id=' . $this->device_profile_uuid;
 		$this->table             = 'device_profile_settings';
 		$this->uuid_prefix       = 'device_profile_setting_';
 
@@ -1041,7 +1041,7 @@ class device extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -1079,7 +1079,7 @@ class device extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'device_';
-		$this->list_page         = 'devices.php';
+		$this->LIST_PAGE         = 'devices.php';
 		$this->table             = 'devices';
 		$this->uuid_prefix       = 'device_';
 		$this->toggle_field      = 'device_enabled';
@@ -1095,7 +1095,7 @@ class device extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -1166,7 +1166,7 @@ class device extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'device_vendor_';
-		$this->list_page         = 'device_vendors.php';
+		$this->LIST_PAGE         = 'device_vendors.php';
 		$this->table             = 'device_vendors';
 		$this->uuid_prefix       = 'device_vendor_';
 		$this->toggle_field      = 'enabled';
@@ -1182,7 +1182,7 @@ class device extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -1243,7 +1243,7 @@ class device extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'device_vendor_function_';
-		$this->list_page         = 'device_vendor_edit.php';
+		$this->LIST_PAGE         = 'device_vendor_edit.php';
 		$this->table             = 'device_vendor_functions';
 		$this->uuid_prefix       = 'device_vendor_function_';
 		$this->toggle_field      = 'enabled';
@@ -1259,7 +1259,7 @@ class device extends app {
 			$token = new token;
 			if (!$token->validate('/app/devices/device_vendor_functions.php')) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page . '?id=' . $this->device_vendor_uuid);
+				header('Location: ' . $this->LIST_PAGE . '?id=' . $this->device_vendor_uuid);
 				exit;
 			}
 
@@ -1322,7 +1322,7 @@ class device extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'device_profile_';
-		$this->list_page         = 'device_profiles.php';
+		$this->LIST_PAGE         = 'device_profiles.php';
 		$this->table             = 'device_profiles';
 		$this->uuid_prefix       = 'device_profile_';
 		$this->toggle_field      = 'device_profile_enabled';
@@ -1338,7 +1338,7 @@ class device extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -1403,7 +1403,7 @@ class device extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'device_profile_';
-		$this->list_page         = 'device_profiles.php';
+		$this->LIST_PAGE         = 'device_profiles.php';
 		$this->table             = 'device_profiles';
 		$this->uuid_prefix       = 'device_profile_';
 
@@ -1417,7 +1417,7 @@ class device extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 

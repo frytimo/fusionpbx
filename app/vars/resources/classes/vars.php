@@ -33,17 +33,21 @@
 		const app_name = 'vars';
 		const app_uuid = '54e08402-c1b8-0a9d-a30a-f569fc174dd8';
 
+	// class-level configuration constants
+	const PERMISSION_PREFIX = 'var_';
+	const LIST_PAGE         = 'vars.php';
+	const TABLE             = 'vars';
+	const UUID_PREFIX       = 'var_';
+	const TOGGLE_FIELD      = 'var_enabled';
+	const TOGGLE_VALUES     = ['true','false'];
+
+
 		/**
 		 * declare private variables
 		 */
 
-		protected $permission_prefix;
-		protected $list_page;
-		protected $table;
-		protected $uuid_prefix;
-		protected $toggle_field;
-		protected $toggle_values;
-
+			protected $list_page;
+				
 		/**
 		 * Initializes the object with setting array.
 		 *
@@ -57,12 +61,7 @@
 			$this->database = $setting_array['database'] ?? database::new();
 
 			//assign private variables
-			$this->permission_prefix = 'var_';
 			$this->list_page = 'vars.php';
-			$this->table = 'vars';
-			$this->uuid_prefix = 'var_';
-			$this->toggle_field = 'var_enabled';
-			$this->toggle_values = ['true','false'];
 
 			//initialize the parent class
 			parent::__construct();
@@ -78,7 +77,7 @@
 		 * @return void No return value; this method modifies the database state and sets a message.
 		 */
 		public function delete($records) {
-			if (permission_exists($this->permission_prefix.'delete')) {
+			if (permission_exists(static::PERMISSION_PREFIX.'delete')) {
 
 				//add multi-lingual support
 					$language = new text;
@@ -98,7 +97,7 @@
 						//build the delete array
 							foreach ($records as $x => $record) {
 								if (!empty($record['checked']) && $record['checked'] == 'true' && is_uuid($record['uuid'])) {
-									$array[$this->table][$x][$this->uuid_prefix.'uuid'] = $record['uuid'];
+									$array[static::TABLE][$x][static::UUID_PREFIX.'uuid'] = $record['uuid'];
 								}
 							}
 
@@ -133,7 +132,7 @@
 		 * @return void No return value; this method modifies the database state and sets a message.
 		 */
 		public function toggle($records) {
-			if (permission_exists($this->permission_prefix.'edit')) {
+			if (permission_exists(static::PERMISSION_PREFIX.'edit')) {
 
 				//add multi-lingual support
 					$language = new text;
@@ -157,8 +156,8 @@
 								}
 							}
 							if (!empty($uuids) && @sizeof($uuids) != 0) {
-								$sql = "select ".$this->uuid_prefix."uuid as uuid, ".$this->toggle_field." as toggle from v_".$this->table." ";
-								$sql .= "where ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
+								$sql = "select ".static::UUID_PREFIX."uuid as uuid, ".static::TOGGLE_FIELD." as toggle from v_".static::TABLE." ";
+								$sql .= "where ".static::UUID_PREFIX."uuid in (".implode(', ', $uuids).") ";
 								$rows = $this->database->select($sql, null, 'all');
 								if (!empty($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $row) {
@@ -171,8 +170,8 @@
 						//build update array
 							$x = 0;
 							foreach ($states as $uuid => $state) {
-								$array[$this->table][$x][$this->uuid_prefix.'uuid'] = $uuid;
-								$array[$this->table][$x][$this->toggle_field] = $state == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
+								$array[static::TABLE][$x][static::UUID_PREFIX.'uuid'] = $uuid;
+								$array[static::TABLE][$x][static::TOGGLE_FIELD] = $state == static::TOGGLE_VALUES[0] ? static::TOGGLE_VALUES[1] : static::TOGGLE_VALUES[0];
 								$x++;
 							}
 
@@ -209,7 +208,7 @@
 		 * @return void No return value; this method modifies the database state and sets a message.
 		 */
 		public function copy($records) {
-			if (permission_exists($this->permission_prefix.'add')) {
+			if (permission_exists(static::PERMISSION_PREFIX.'add')) {
 
 				//add multi-lingual support
 					$language = new text;
@@ -235,8 +234,8 @@
 
 						//create insert array from existing data
 							if (!empty($uuids) && @sizeof($uuids) != 0) {
-								$sql = "select * from v_".$this->table." ";
-								$sql .= "where ".$this->uuid_prefix."uuid in (".implode(', ', $uuids).") ";
+								$sql = "select * from v_".static::TABLE." ";
+								$sql .= "where ".static::UUID_PREFIX."uuid in (".implode(', ', $uuids).") ";
 								$rows = $this->database->select($sql, null, 'all');
 								if (!empty($rows) && @sizeof($rows) != 0) {
 									foreach ($rows as $x => $row) {
@@ -250,11 +249,11 @@
 											}
 
 										//copy data
-											$array[$this->table][$x] = $row;
+											$array[static::TABLE][$x] = $row;
 
 										//overwrite
-											$array[$this->table][$x][$this->uuid_prefix.'uuid'] = uuid();
-											$array[$this->table][$x]['var_description'] = trim($row['var_description'] ?? '').trim(' ('.$text['label-copy'].')');
+											$array[static::TABLE][$x][static::UUID_PREFIX.'uuid'] = uuid();
+											$array[static::TABLE][$x]['var_description'] = trim($row['var_description'] ?? '').trim(' ('.$text['label-copy'].')');
 
 									}
 								}

@@ -36,13 +36,17 @@ class call_broadcast extends app {
 	const app_name = 'call_broadcast';
 	const app_uuid = 'efc11f6b-ed73-9955-4d4d-3a1bed75a056';
 
+	// class-level configuration constants
+	const PERMISSION_PREFIX = 'call_broadcast_';
+	const LIST_PAGE         = 'call_broadcast.php';
+	const TABLE             = 'call_broadcasts';
+	const UUID_PREFIX       = 'call_broadcast_';
+
+
 	/**
 	 * declare private variables
 	 */
-	protected $permission_prefix;
 	protected $list_page;
-	protected $table;
-	protected $uuid_prefix;
 
 	/**
 	 * Initializes the object with the provided settings.
@@ -60,10 +64,7 @@ class call_broadcast extends app {
 		$this->database = $setting_array['database'] ?? database::new();
 
 		//assign private variables
-		$this->permission_prefix = 'call_broadcast_';
 		$this->list_page         = 'call_broadcast.php';
-		$this->table             = 'call_broadcasts';
-		$this->uuid_prefix       = 'call_broadcast_';
 
 		//initialize the parent class
 		parent::__construct();
@@ -79,7 +80,7 @@ class call_broadcast extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function delete($records) {
-		if (permission_exists($this->permission_prefix . 'delete')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'delete')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -99,8 +100,8 @@ class call_broadcast extends app {
 				//build the delete array
 				foreach ($records as $x => $record) {
 					if (!empty($record['checked']) && $record['checked'] == 'true' && is_uuid($record['uuid'])) {
-						$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $record['uuid'];
-						$array[$this->table][$x]['domain_uuid']               = $this->domain_uuid;
+						$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $record['uuid'];
+						$array[static::TABLE][$x]['domain_uuid']               = $this->domain_uuid;
 					}
 				}
 
@@ -129,7 +130,7 @@ class call_broadcast extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function copy($records) {
-		if (permission_exists($this->permission_prefix . 'add')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'add')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -155,20 +156,20 @@ class call_broadcast extends app {
 
 				//create insert array from existing data
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql                       = "select * from v_" . $this->table . " ";
+					$sql                       = "select * from v_" . static::TABLE . " ";
 					$sql                       .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
-					$sql                       .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+					$sql                       .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
 					$rows                      = $this->database->select($sql, $parameters, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
 						foreach ($rows as $x => $row) {
 
 							//copy data
-							$array[$this->table][$x] = $row;
+							$array[static::TABLE][$x] = $row;
 
 							//overwrite
-							$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = uuid();
-							$array[$this->table][$x]['broadcast_description']     = trim($row['broadcast_description'] . ' (' . $text['label-copy'] . ')');
+							$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = uuid();
+							$array[static::TABLE][$x]['broadcast_description']     = trim($row['broadcast_description'] . ' (' . $text['label-copy'] . ')');
 
 						}
 					}

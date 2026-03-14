@@ -32,6 +32,13 @@
  * @method select build the html select
  */
 class destinations extends app {
+
+	// class-level configuration constants
+	const PERMISSION_PREFIX = 'destination_';
+	const LIST_PAGE         = 'destinations.php';
+	const TABLE             = 'destinations';
+	const UUID_PREFIX       = 'destination_';
+
 	/**
 	 * destinations array
 	 */
@@ -42,11 +49,7 @@ class destinations extends app {
 	 */
 	private $app_name;
 
-	private $app_uuid;
-	protected $permission_prefix;
 	protected $list_page;
-	protected $table;
-	protected $uuid_prefix;
 
 	/**
 	 * Domain name used to filter settings
@@ -75,11 +78,7 @@ class destinations extends app {
 	public function __construct(array $params = []) {
 		// assign private variables
 		$this->app_name = 'destinations';
-		$this->app_uuid = '5ec89622-b19c-3559-64f0-afde802ab139';
-		$this->permission_prefix = 'destination_';
 		$this->list_page = 'destinations.php';
-		$this->table = 'destinations';
-		$this->uuid_prefix = 'destination_';
 
 		if (isset($params['domain_uuid'])) {
 			$domain_uuid = $params['domain_uuid'];

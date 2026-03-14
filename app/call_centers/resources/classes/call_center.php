@@ -69,7 +69,7 @@ class call_center extends app {
 	 * declare private variables
 	 */
 	protected $permission_prefix;
-	protected $list_page;
+	protected $LIST_PAGE;
 	protected $table;
 	protected $uuid_prefix;
 
@@ -303,7 +303,7 @@ class call_center extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'call_center_queue_';
-		$this->list_page         = 'call_center_queues.php';
+		$this->LIST_PAGE         = 'call_center_queues.php';
 		$this->table             = 'call_center_queues';
 		$this->uuid_prefix       = 'call_center_queue_';
 
@@ -317,7 +317,7 @@ class call_center extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -430,7 +430,7 @@ class call_center extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'call_center_agent_';
-		$this->list_page         = 'call_center_agents.php';
+		$this->LIST_PAGE         = 'call_center_agents.php';
 		$this->table             = 'call_center_agents';
 		$this->uuid_prefix       = 'call_center_agent_';
 
@@ -444,7 +444,7 @@ class call_center extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -517,7 +517,7 @@ class call_center extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'call_center_queue_';
-		$this->list_page         = 'call_center_queues.php';
+		$this->LIST_PAGE         = 'call_center_queues.php';
 		$this->table             = 'call_center_queues';
 		$this->uuid_prefix       = 'call_center_queue_';
 
@@ -531,7 +531,7 @@ class call_center extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 

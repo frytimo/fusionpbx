@@ -33,6 +33,15 @@ class streams extends app {
 	const app_name = 'streams';
 	const app_uuid = 'ffde6287-aa18-41fc-9a38-076d292e0a38';
 
+	// class-level configuration constants
+	const PERMISSION_PREFIX = 'stream_';
+	const LIST_PAGE         = 'streams.php';
+	const TABLE             = 'streams';
+	const UUID_PREFIX       = 'stream_';
+	const TOGGLE_FIELD      = 'stream_enabled';
+	const TOGGLE_VALUES     = ['true', 'false'];
+
+
 	/**
 	 * Username set in the constructor. This can be passed in through the $settings_array associative array or set in
 	 * the session global array
@@ -52,12 +61,7 @@ class streams extends app {
 	/**
 	 * declare private variables
 	 */
-	protected $permission_prefix;
 	protected $list_page;
-	protected $table;
-	protected $uuid_prefix;
-	protected $toggle_field;
-	protected $toggle_values;
 
 	/**
 	 * Initializes the object with setting array.
@@ -75,12 +79,7 @@ class streams extends app {
 		$this->database = $setting_array['database'] ?? database::new();
 
 		//assign private variables
-		$this->permission_prefix = 'stream_';
 		$this->list_page         = 'streams.php';
-		$this->table             = 'streams';
-		$this->uuid_prefix       = 'stream_';
-		$this->toggle_field      = 'stream_enabled';
-		$this->toggle_values     = ['true', 'false'];
 
 		//initialize the parent class
 		parent::__construct();
@@ -96,7 +95,7 @@ class streams extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function delete($records) {
-		if (permission_exists($this->permission_prefix . 'delete')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'delete')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -116,7 +115,7 @@ class streams extends app {
 				//build the delete array
 				foreach ($records as $x => $record) {
 					if (!empty($record['checked']) && $record['checked'] == 'true' && is_uuid($record['uuid'])) {
-						$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $record['uuid'];
+						$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $record['uuid'];
 					}
 				}
 
@@ -145,7 +144,7 @@ class streams extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function toggle($records) {
-		if (permission_exists($this->permission_prefix . 'edit')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'edit')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -169,9 +168,9 @@ class streams extends app {
 					}
 				}
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql                       = "select " . $this->uuid_prefix . "uuid as uuid, " . $this->toggle_field . " as toggle from v_" . $this->table . " ";
+					$sql                       = "select " . static::UUID_PREFIX . "uuid as uuid, " . static::TOGGLE_FIELD . " as toggle from v_" . static::TABLE . " ";
 					$sql                       .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
-					$sql                       .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+					$sql                       .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
 					$rows                      = $this->database->select($sql, $parameters, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
@@ -185,8 +184,8 @@ class streams extends app {
 				//build update array
 				$x = 0;
 				foreach ($states as $uuid => $state) {
-					$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $uuid;
-					$array[$this->table][$x][$this->toggle_field]         = $state == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
+					$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $uuid;
+					$array[static::TABLE][$x][static::TOGGLE_FIELD]         = $state == static::TOGGLE_VALUES[0] ? static::TOGGLE_VALUES[1] : static::TOGGLE_VALUES[0];
 					$x++;
 				}
 
@@ -217,7 +216,7 @@ class streams extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function copy($records) {
-		if (permission_exists($this->permission_prefix . 'add')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'add')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -243,9 +242,9 @@ class streams extends app {
 
 				//create insert array from existing data
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql                       = "select * from v_" . $this->table . " ";
+					$sql                       = "select * from v_" . static::TABLE . " ";
 					$sql                       .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
-					$sql                       .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+					$sql                       .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
 					$rows                      = $this->database->select($sql, $parameters, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
@@ -260,11 +259,11 @@ class streams extends app {
 							}
 
 							//copy data
-							$array[$this->table][$x] = $row;
+							$array[static::TABLE][$x] = $row;
 
 							//overwrite
-							$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = uuid();
-							$array[$this->table][$x]['stream_description']        = trim($row['stream_description'] . ' (' . $text['label-copy'] . ')');
+							$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = uuid();
+							$array[static::TABLE][$x]['stream_description']        = trim($row['stream_description'] . ' (' . $text['label-copy'] . ')');
 
 						}
 					}

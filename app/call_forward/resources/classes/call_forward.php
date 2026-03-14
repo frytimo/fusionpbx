@@ -37,6 +37,11 @@ class call_forward extends app {
 	const app_name = 'call_forward';
 	const app_uuid = '19806921-e8ed-dcff-b325-dd3e5da4959d';
 
+	// class-level configuration constants
+	const TOGGLE_FIELD      = 'forward_all_enabled';
+	const TOGGLE_VALUES     = ['true', 'false'];
+
+
 	/**
 	 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set
 	 * in the session global array
@@ -70,8 +75,6 @@ class call_forward extends app {
 	private $extension;
 	private $number_alias;
 	private $toll_allow;
-	protected $toggle_field;
-	protected $toggle_values;
 
 	/**
 	 * Initializes the object with setting array.
@@ -92,8 +95,6 @@ class call_forward extends app {
 		$this->settings = $setting_array['settings'] ?? new settings(['database' => $this->database, 'domain_uuid' => $this->domain_uuid, 'user_uuid' => $this->user_uuid]);
 
 		//assign private variables
-		$this->toggle_field  = 'forward_all_enabled';
-		$this->toggle_values = ['true', 'false'];
 
 		//initialize the parent class
 		parent::__construct();
@@ -198,7 +199,7 @@ class call_forward extends app {
 				$sql                       .= "forward_all_enabled, forward_all_destination, ";
 				$sql                       .= "forward_busy_enabled, forward_busy_destination, ";
 				$sql                       .= "forward_no_answer_enabled, forward_no_answer_destination, ";
-				$sql                       .= $this->toggle_field . " as toggle, follow_me_uuid ";
+				$sql                       .= static::TOGGLE_FIELD . " as toggle, follow_me_uuid ";
 				$sql                       .= "from v_extensions ";
 				$sql                       .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
 				$sql                       .= "and extension_uuid in (" . implode(', ', $uuids) . ") ";
@@ -231,21 +232,21 @@ class call_forward extends app {
 				$destination_exists = $extension['forward_all_destination'] != '' ? true : false;
 
 				//determine new state
-				$new_state = $extension['state'] == $this->toggle_values[1] && $destination_exists ? $this->toggle_values[0] : $this->toggle_values[1];
+				$new_state = $extension['state'] == static::TOGGLE_VALUES[1] && $destination_exists ? static::TOGGLE_VALUES[0] : static::TOGGLE_VALUES[1];
 
 				//toggle feature
 				if ($new_state != $extension['state']) {
 					$array['extensions'][$x]['extension_uuid']    = $uuid;
-					$array['extensions'][$x][$this->toggle_field] = $new_state;
+					$array['extensions'][$x][static::TOGGLE_FIELD] = $new_state;
 				}
 
 				//disable other features
-				if ($new_state == $this->toggle_values[0]) { //true
-					$array['extensions'][$x]['do_not_disturb']    = $this->toggle_values[1]; //false
-					$array['extensions'][$x]['follow_me_enabled'] = $this->toggle_values[1]; //false
+				if ($new_state == static::TOGGLE_VALUES[0]) { //true
+					$array['extensions'][$x]['do_not_disturb']    = static::TOGGLE_VALUES[1]; //false
+					$array['extensions'][$x]['follow_me_enabled'] = static::TOGGLE_VALUES[1]; //false
 					if (is_uuid($extension['follow_me_uuid'])) {
 						$array['follow_me'][$x]['follow_me_uuid']    = $extension['follow_me_uuid'];
-						$array['follow_me'][$x]['follow_me_enabled'] = $this->toggle_values[1]; //false
+						$array['follow_me'][$x]['follow_me_enabled'] = static::TOGGLE_VALUES[1]; //false
 					}
 				}
 

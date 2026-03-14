@@ -34,16 +34,20 @@ class bridges extends app {
 
 	const app_uuid = 'a6a7c4c5-340a-43ce-bcbc-2ed9bab8659d';
 
+	// class-level configuration constants
+	const PERMISSION_PREFIX = 'bridge_';
+	const LIST_PAGE         = 'bridges.php';
+	const TABLE             = 'bridges';
+	const UUID_PREFIX       = 'bridge_';
+	const TOGGLE_FIELD      = 'bridge_enabled';
+	const TOGGLE_VALUES     = ['true', 'false'];
+
+
 	/**
 	 * declare private variables
 	 */
-	protected $permission_prefix;
 
 	protected $list_page;
-	protected $table;
-	protected $uuid_prefix;
-	protected $toggle_field;
-	protected $toggle_values;
 
 	/**
 	 * App-specific hook interface names for the two-tier hook dispatch system
@@ -67,12 +71,7 @@ class bridges extends app {
 		$this->settings = $setting_array['settings'] ?? new settings(['database' => $this->database, 'domain_uuid' => $this->domain_uuid, 'user_uuid' => $this->user_uuid]);
 
 		// assign private variables
-		$this->permission_prefix = 'bridge_';
 		$this->list_page = 'bridges.php';
-		$this->table = 'bridges';
-		$this->uuid_prefix = 'bridge_';
-		$this->toggle_field = 'bridge_enabled';
-		$this->toggle_values = ['true', 'false'];
 
 		// call parent constructor to initialize has_* flags
 		parent::__construct();
@@ -106,9 +105,9 @@ class bridges extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function on_toggle(array &$uuids) {
-		$sql = "select " . $this->uuid_prefix . "uuid as uuid, " . $this->toggle_field . " as toggle from v_" . $this->table . " ";
+		$sql = "select " . static::UUID_PREFIX . "uuid as uuid, " . static::TOGGLE_FIELD . " as toggle from v_" . static::TABLE . " ";
 		$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
-		$sql .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+		$sql .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 		$parameters['domain_uuid'] = $this->domain_uuid;
 		$rows = $this->database->select($sql, $parameters, 'all');
 		if (!empty($rows)) {
@@ -121,8 +120,8 @@ class bridges extends app {
 			$array = [];
 			$x = 0;
 			foreach ($states as $uuid => $state) {
-				$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $uuid;
-				$array[$this->table][$x][$this->toggle_field] = $state == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
+				$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $uuid;
+				$array[static::TABLE][$x][static::TOGGLE_FIELD] = $state == static::TOGGLE_VALUES[0] ? static::TOGGLE_VALUES[1] : static::TOGGLE_VALUES[0];
 				$x++;
 			}
 			$uuids = $array;
@@ -145,9 +144,9 @@ class bridges extends app {
 	protected function on_copy(array &$uuids) {
 		global $text;
 		$array = [];
-		$sql = "select * from v_" . $this->table . " ";
+		$sql = "select * from v_" . static::TABLE . " ";
 		$sql .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
-		$sql .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+		$sql .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 		$parameters['domain_uuid'] = $this->domain_uuid;
 		$rows = $this->database->select($sql, $parameters, 'all');
 		if (!empty($rows)) {
@@ -161,11 +160,11 @@ class bridges extends app {
 				}
 
 				// copy data
-				$array[$this->table][$x] = $row;
+				$array[static::TABLE][$x] = $row;
 
 				// overwrite
-				$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = uuid();
-				$array[$this->table][$x]['bridge_description'] = trim($row['bridge_description'] . ' (' . $text['label-copy'] . ')');
+				$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = uuid();
+				$array[static::TABLE][$x]['bridge_description'] = trim($row['bridge_description'] . ' (' . $text['label-copy'] . ')');
 			}
 			$uuids = $array;
 		}
@@ -184,7 +183,7 @@ class bridges extends app {
 		return [$table];
 	}
 
-	private static function build_query_conditions(url_paging $url, bool $include_disabled = true, string $field_prefix = ''): array {
+	private static function build_query_conditions(url $url, bool $include_disabled = true, string $field_prefix = ''): array {
 		$conditions = [];
 		$parameters = [];
 
@@ -216,29 +215,29 @@ class bridges extends app {
 		return [$conditions, $parameters];
 	}
 
-	public static function count(url_paging $url_paging, bool $include_disabled = true): int {
-		list($conditions, $parameters) = self::build_query_conditions($url_paging, $include_disabled);
+	public static function count(url $url, bool $include_disabled = true): int {
+		list($conditions, $parameters) = self::build_query_conditions($url, $include_disabled);
 		$sql = "select count(bridge_uuid) from v_bridges";
 		if (!empty($conditions)) {
 			$sql .= " where " . implode(" and ", $conditions);
 		}
 
-		return $url_paging->get_settings()->database()->select($sql, $parameters, 'column');
+		return $url->get_settings()->database()->select($sql, $parameters, 'column');
 	}
 
-	public static function fetch(url_paging $url_paging, bool $include_disabled = true): array {
-		list($conditions, $parameters) = self::build_query_conditions($url_paging, $include_disabled, 'b.');
+	public static function fetch(url $url, bool $include_disabled = true): array {
+		list($conditions, $parameters) = self::build_query_conditions($url, $include_disabled, 'b.');
 		$sql = "select d.domain_uuid, b.bridge_uuid, d.domain_name, b.bridge_name, b.bridge_destination, cast(b.bridge_enabled as text) as bridge_enabled, b.bridge_description ";
 		$sql .= "from v_bridges as b, v_domains as d ";
 		$sql .= "where b.domain_uuid = d.domain_uuid ";
 		if (!empty($conditions)) {
 			$sql .= " and " . implode(" and ", $conditions);
 		}
-		$order_by = $url_paging->get('order_by', 'bridge_name');
-		$order = $url_paging->get('order', 'asc');
+		$order_by = $url->get('order_by', 'bridge_name');
+		$order = $url->get('order', 'asc');
 		$sql .= order_by($order_by, $order, 'bridge_name', 'asc');
-		$sql .= limit_offset($url_paging->get_rows_per_page(), $url_paging->offset());
+		$sql .= limit_offset($url->get_rows_per_page(), $url->offset());
 
-		return $url_paging->get_settings()->database()->select($sql, $parameters, 'all');
+		return $url->get_settings()->database()->select($sql, $parameters, 'all');
 	}
 }

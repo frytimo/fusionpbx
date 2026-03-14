@@ -14,11 +14,11 @@ class access_controls extends app implements app_config_db, app_config_permissio
 	/**
 	 * declare private variables
 	 */
-	const permission_prefix = 'access_control_';
+	const PERMISSION_PREFIX = 'access_control_';
 
-	const list_page = 'access_controls.php';
-	const table = 'access_controls';
-	const uuid_prefix = 'access_control_';
+	const LIST_PAGE = 'access_controls.php';
+	const TABLE = 'access_controls';
+	const UUID_PREFIX = 'access_control_';
 
 	/**
 	 * called when the object is created
@@ -85,19 +85,14 @@ class access_controls extends app implements app_config_db, app_config_permissio
 	 *                       'uuid' and 'checked' keys.
 	 *
 	 * @return void
+	 * @deprecated Use (new access_control_nodes)->delete($records) instead.
 	 */
 	public function delete_nodes(array $records) {
-		if (empty($records)) {
-			return;
-		}
-
-		parent::delete($records, 'access_control_nodes', 'access_control_node_');
-
-		// clear the cache
-		$cache = new cache;
-		$cache->delete("configuration:acl.conf");
-
-		// create the event socket connection
-		event_socket::async("reloadacl");
+		$obj = new access_control_nodes([
+			'domain_uuid' => $this->domain_uuid,
+			'user_uuid'   => $this->user_uuid,
+			'database'    => $this->database,
+		]);
+		$obj->delete($records);
 	}
 }

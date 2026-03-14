@@ -33,15 +33,19 @@ class pin_numbers extends app {
 	const app_name = 'pin_numbers';
 	const app_uuid = '4b88ccfb-cb98-40e1-a5e5-33389e14a388';
 
+	// class-level configuration constants
+	const PERMISSION_PREFIX = 'pin_number_';
+	const LIST_PAGE         = 'pin_numbers.php';
+	const TABLE             = 'pin_numbers';
+	const UUID_PREFIX       = 'pin_number_';
+	const TOGGLE_FIELD      = 'enabled';
+	const TOGGLE_VALUES     = ['true', 'false'];
+
+
 	/**
 	 * declare private variables
 	 */
-	protected $permission_prefix;
 	protected $list_page;
-	protected $table;
-	protected $uuid_prefix;
-	protected $toggle_field;
-	protected $toggle_values;
 
 	/**
 	 * Initializes the object with setting array.
@@ -59,12 +63,7 @@ class pin_numbers extends app {
 		$this->database = $setting_array['database'] ?? database::new();
 
 		//assign private variables
-		$this->permission_prefix = 'pin_number_';
 		$this->list_page         = 'pin_numbers.php';
-		$this->table             = 'pin_numbers';
-		$this->uuid_prefix       = 'pin_number_';
-		$this->toggle_field      = 'enabled';
-		$this->toggle_values     = ['true', 'false'];
 
 		//initialize the parent class
 		parent::__construct();
@@ -80,7 +79,7 @@ class pin_numbers extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function delete($records) {
-		if (permission_exists($this->permission_prefix . 'delete')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'delete')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -100,8 +99,8 @@ class pin_numbers extends app {
 				//build the delete array
 				foreach ($records as $x => $record) {
 					if ($record['checked'] == 'true' && is_uuid($record['uuid'])) {
-						$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $record['uuid'];
-						$array[$this->table][$x]['domain_uuid']               = $this->domain_uuid;
+						$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $record['uuid'];
+						$array[static::TABLE][$x]['domain_uuid']               = $this->domain_uuid;
 					}
 				}
 
@@ -130,7 +129,7 @@ class pin_numbers extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function toggle($records) {
-		if (permission_exists($this->permission_prefix . 'edit')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'edit')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -154,9 +153,9 @@ class pin_numbers extends app {
 					}
 				}
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql                       = "select " . $this->uuid_prefix . "uuid as uuid, " . $this->toggle_field . " as toggle from v_" . $this->table . " ";
+					$sql                       = "select " . static::UUID_PREFIX . "uuid as uuid, " . static::TOGGLE_FIELD . " as toggle from v_" . static::TABLE . " ";
 					$sql                       .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
-					$sql                       .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+					$sql                       .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
 					$rows                      = $this->database->select($sql, $parameters, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
@@ -170,8 +169,8 @@ class pin_numbers extends app {
 				//build update array
 				$x = 0;
 				foreach ($states as $uuid => $state) {
-					$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $uuid;
-					$array[$this->table][$x][$this->toggle_field]         = $state == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
+					$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $uuid;
+					$array[static::TABLE][$x][static::TOGGLE_FIELD]         = $state == static::TOGGLE_VALUES[0] ? static::TOGGLE_VALUES[1] : static::TOGGLE_VALUES[0];
 					$x++;
 				}
 
@@ -202,7 +201,7 @@ class pin_numbers extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function copy($records) {
-		if (permission_exists($this->permission_prefix . 'add')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'add')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -228,9 +227,9 @@ class pin_numbers extends app {
 
 				//create insert array from existing data
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql                       = "select * from v_" . $this->table . " ";
+					$sql                       = "select * from v_" . static::TABLE . " ";
 					$sql                       .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
-					$sql                       .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+					$sql                       .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
 					$rows                      = $this->database->select($sql, $parameters, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
@@ -245,11 +244,11 @@ class pin_numbers extends app {
 							}
 
 							//copy data
-							$array[$this->table][$x] = $row;
+							$array[static::TABLE][$x] = $row;
 
 							//overwrite
-							$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = uuid();
-							$array[$this->table][$x]['description']               = trim($row['description'] . ' (' . $text['label-copy'] . ')');
+							$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = uuid();
+							$array[static::TABLE][$x]['description']               = trim($row['description'] . ' (' . $text['label-copy'] . ')');
 
 						}
 					}

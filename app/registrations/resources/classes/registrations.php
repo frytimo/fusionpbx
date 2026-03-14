@@ -32,6 +32,11 @@ class registrations extends app {
 	const app_name = 'registrations';
 	const app_uuid = '5d9e7cd7-629e-3553-4cf5-f26e39fefa39';
 
+	// class-level configuration constants
+	const PERMISSION_PREFIX = 'registration_';
+	const LIST_PAGE         = 'registrations.php';
+
+
 	/**
 	 * Domain name set in the constructor. This can be passed in through the $settings_array associative array or set
 	 * in the session global array
@@ -50,7 +55,6 @@ class registrations extends app {
 	/**
 	 * declare private variables
 	 */
-	protected $permission_prefix;
 	protected $list_page;
 	public $show;
 
@@ -78,7 +82,6 @@ class registrations extends app {
 		}
 
 		//assign private variables
-		$this->permission_prefix = 'registration_';
 		$this->list_page         = 'registrations.php';
 		$this->show              = 'local';
 
@@ -316,7 +319,7 @@ class registrations extends app {
 	 * @return void
 	 */
 	private function switch_api($action, $records) {
-		if (permission_exists($this->permission_prefix . 'domain') || permission_exists($this->permission_prefix . 'all') || if_group('superadmin')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'domain') || permission_exists(static::PERMISSION_PREFIX . 'all') || if_group('superadmin')) {
 
 			//add multi-lingual support
 			$language = new text;

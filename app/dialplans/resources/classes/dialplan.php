@@ -39,8 +39,8 @@ class dialplan extends app {
 	 *
 	 * @var string
 	 */
-	public $domain_uuid;
-	public $app_uuid;
+	public string $domain_uuid;
+	public string $app_uuid;
 
 	/**
 	 * declare public variables
@@ -79,16 +79,16 @@ class dialplan extends app {
 	public $destination;
 	public $is_empty;
 	public $array;
-	public $list_page;
+	const LIST_PAGE = 'dialplans.php';
 
 	/**
 	 * declare private variables
 	 */
-	protected $permission_prefix;
-	protected $table;
-	protected $uuid_prefix;
-	protected $toggle_field;
-	protected $toggle_values;
+	// protected $permission_prefix;
+	// protected $table;
+	// protected $uuid_prefix;
+	// protected $toggle_field;
+	// protected $toggle_values;
 
 	/**
 	 * Initializes the object with setting array.
@@ -112,7 +112,6 @@ class dialplan extends app {
 
 		//assign property defaults
 		$this->permission_prefix = 'dialplan_';
-		$this->list_page         = 'dialplans.php';
 		$this->table             = 'dialplans';
 		$this->uuid_prefix       = 'dialplan_';
 		$this->toggle_field      = 'dialplan_enabled';
@@ -1087,7 +1086,6 @@ class dialplan extends app {
 	public function delete($records) {
 
 		if (permission_exists($this->permission_prefix . 'delete')) {
-
 			//add multi-lingual support
 			$language = new text;
 			$text     = $language->get();
@@ -1096,7 +1094,7 @@ class dialplan extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -1183,7 +1181,7 @@ class dialplan extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -1258,7 +1256,7 @@ class dialplan extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -1355,7 +1353,7 @@ class dialplan extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 

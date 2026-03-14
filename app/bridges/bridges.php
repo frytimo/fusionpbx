@@ -48,18 +48,18 @@
 	$list_row_edit_button = $settings->get('theme', 'list_row_edit_button', false);
 
 //get request data from url object
-	$show = $url_paging->get('show', '');
-	$order = $url_paging->get('order', '');
-	$action = $url_paging->get('action', '');
-	$search = $url_paging->get('search', '');
-	$order_by = $url_paging->get('order_by', '');
+	$show = $url->get('show', '');
+	$order = $url->get('order', '');
+	$action = $url->get('action', '');
+	$search = $url->get('search', '');
+	$order_by = $url->get('order_by', '');
 
 //get bridges from the url for post processing
-	$bridges = $url_paging->get('bridges', []);
+	$bridges = $url->get('bridges', []);
 
 //invoke pre-action hook
 	if (!empty($action) && !empty($bridges)) {
-		app::dispatch_list_pre_action('bridge_list_page_hook', $url_paging, $action, $bridges);
+		app::dispatch_list_pre_action('bridge_list_page_hook', $url, $action, $bridges);
 	}
 
 //process the http post data by action
@@ -86,7 +86,7 @@
 		}
 
 		//invoke post-action hook
-		app::dispatch_list_post_action('bridge_list_page_hook', $url_paging, $action, $bridges);
+		app::dispatch_list_post_action('bridge_list_page_hook', $url, $action, $bridges);
 
 		header('Location: bridges.php'.(!empty($search) ? '?search='.urlencode($search) : ''));
 		exit;
@@ -94,21 +94,21 @@
 
 //invoke pre-query hook
 	$query_parameters = [];
-	app::dispatch_list_pre_query('bridge_list_page_hook', $url_paging, $query_parameters);
+	app::dispatch_list_pre_query('bridge_list_page_hook', $url, $query_parameters);
 
 //get the count
-	$num_rows = bridges::count($url_paging);
-	$url_paging->set_total_rows($num_rows);
+	$num_rows = bridges::count($url);
+	$url->set_total_rows($num_rows);
 
 //prepare to page the results
-	$paging_controls = url_paging::html_paging_controls($url_paging);
-	$paging_controls_mini = url_paging::html_paging_mini_controls($url_paging);
+	$paging_controls = url::html_paging_controls($url);
+	$paging_controls_mini = url::html_paging_mini_controls($url);
 
 //get the list
-	$bridges = bridges::fetch($url_paging);
+	$bridges = bridges::fetch($url);
 
 //invoke post-fetch hook
-	app::dispatch_list_post_query('bridge_list_page_hook', $url_paging, $bridges);
+	app::dispatch_list_post_query('bridge_list_page_hook', $url, $bridges);
 
 //create token
 	$object = new token;
@@ -167,7 +167,7 @@
 //build the row data
 	$x = 0;
 	foreach ($bridges as &$row) {
-		app::dispatch_list_render_row('bridge_list_page_hook', $url_paging, $row, $x);
+		app::dispatch_list_render_row('bridge_list_page_hook', $url, $row, $x);
 		$list_row_url = '';
 		if ($has_bridge_edit) {
 			$list_row_url = "bridge_edit.php?id=".urlencode($row['bridge_uuid']);
@@ -227,7 +227,7 @@
 	$template->assign('th_bridge_enabled',      $th_bridge_enabled);
 
 //invoke pre-render hook
-	app::dispatch_list_pre_render('bridge_list_page_hook', $url_paging, $template);
+	app::dispatch_list_pre_render('bridge_list_page_hook', $url, $template);
 
 //include the header
 	$document['title'] = $text['title-bridges'];
@@ -237,7 +237,7 @@
 	$html = $template->render('bridges_list.tpl');
 
 //invoke post-render hook
-	app::dispatch_list_post_render('bridge_list_page_hook', $url_paging, $html);
+	app::dispatch_list_post_render('bridge_list_page_hook', $url, $html);
 	echo $html;
 
 //include the footer

@@ -35,16 +35,19 @@ class sofia_global_settings extends app {
 	const app_name = 'sofia_global_settings';
 	const app_uuid = '240c25a3-a2cf-44ea-a300-0626eca5b945';
 
+	// class-level configuration constants
+	const TABLE             = 'sofia_global_settings';
+	const TOGGLE_FIELD      = 'global_setting_enabled';
+	const TOGGLE_VALUES     = ['true', 'false'];
+	const LIST_PAGE         = 'sofia_global_settings.php';
+
+
 	/**
 	 * declare the variables
 	 */
 
 	private $name;
-	protected $table;
-	protected $toggle_field;
-	protected $toggle_values;
 	private $description_field;
-	private $location;
 
 	/**
 	 * Initializes the object with setting array.
@@ -60,11 +63,7 @@ class sofia_global_settings extends app {
 
 		//assign the variables
 		$this->name              = 'sofia_global_setting';
-		$this->table             = 'sofia_global_settings';
-		$this->toggle_field      = 'global_setting_enabled';
-		$this->toggle_values     = ['true', 'false'];
 		$this->description_field = 'global_setting_description';
-		$this->location          = 'sofia_global_settings.php';
 
 		//initialize the parent class
 		parent::__construct();
@@ -90,7 +89,7 @@ class sofia_global_settings extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -101,7 +100,7 @@ class sofia_global_settings extends app {
 				foreach ($records as $record) {
 					//add to the array
 					if (!empty($record['checked']) && $record['checked'] == 'true' && is_uuid($record['sofia_global_setting_uuid'])) {
-						$array[$this->table][$x]['sofia_global_setting_uuid'] = $record['sofia_global_setting_uuid'];
+						$array[static::TABLE][$x]['sofia_global_setting_uuid'] = $record['sofia_global_setting_uuid'];
 					}
 
 					//increment the id
@@ -142,7 +141,7 @@ class sofia_global_settings extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -155,7 +154,7 @@ class sofia_global_settings extends app {
 					}
 				}
 				if (!empty($uuids) && @sizeof($uuids) != 0) {
-					$sql  = "select " . $this->name . "_uuid as uuid, " . $this->toggle_field . " as toggle from v_" . $this->table . " ";
+					$sql  = "select " . $this->name . "_uuid as uuid, " . static::TOGGLE_FIELD . " as toggle from v_" . static::TABLE . " ";
 					$sql  .= "where " . $this->name . "_uuid in (" . implode(', ', $uuids) . ") ";
 					$rows = $this->database->select($sql, null, 'all');
 					if (!empty($rows) && @sizeof($rows) != 0) {
@@ -170,8 +169,8 @@ class sofia_global_settings extends app {
 				$x = 0;
 				foreach ($states as $uuid => $state) {
 					//create the array
-					$array[$this->table][$x][$this->name . '_uuid'] = $uuid;
-					$array[$this->table][$x][$this->toggle_field]   = $state == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
+					$array[static::TABLE][$x][$this->name . '_uuid'] = $uuid;
+					$array[static::TABLE][$x][static::TOGGLE_FIELD]   = $state == static::TOGGLE_VALUES[0] ? static::TOGGLE_VALUES[1] : static::TOGGLE_VALUES[0];
 
 					//increment the id
 					$x++;
@@ -212,7 +211,7 @@ class sofia_global_settings extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -228,19 +227,19 @@ class sofia_global_settings extends app {
 
 				//create the array from existing data
 				if (!empty($uuids) && @sizeof($uuids) != 0) {
-					$sql  = "select * from v_" . $this->table . " ";
+					$sql  = "select * from v_" . static::TABLE . " ";
 					$sql  .= "where sofia_global_setting_uuid in (" . implode(', ', $uuids) . ") ";
 					$rows = $this->database->select($sql, null, 'all');
 					if (!empty($rows) && @sizeof($rows) != 0) {
 						$x = 0;
 						foreach ($rows as $row) {
 							//copy data
-							$array[$this->table][$x] = $row;
+							$array[static::TABLE][$x] = $row;
 
 							//add copy to the description
-							$array[$this->table][$x][$this->name . '_uuid']    = uuid();
-							$array[$this->table][$x]['global_setting_enabled'] = $row['global_setting_enabled'] === true ? 'true' : 'false';
-							$array[$this->table][$x][$this->description_field] = trim($row[$this->description_field] ?? '') . trim(' (' . $text['label-copy'] . ')');
+							$array[static::TABLE][$x][$this->name . '_uuid']    = uuid();
+							$array[static::TABLE][$x]['global_setting_enabled'] = $row['global_setting_enabled'] === true ? 'true' : 'false';
+							$array[static::TABLE][$x][$this->description_field] = trim($row[$this->description_field] ?? '') . trim(' (' . $text['label-copy'] . ')');
 
 							//increment the id
 							$x++;

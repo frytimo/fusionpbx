@@ -43,6 +43,7 @@
 //set the defaults
 	$search = '';
 	$paging_controls = '';
+	$paging_controls_mini = '';
 	$id = '';
 
 //set from session variables

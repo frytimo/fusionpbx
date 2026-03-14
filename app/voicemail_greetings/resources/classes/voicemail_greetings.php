@@ -45,7 +45,7 @@ class voicemail_greetings extends app {
 	 * declare private variables
 	 */
 	protected $permission_prefix;
-	protected $list_page;
+	protected $LIST_PAGE;
 	protected $table;
 	protected $uuid_prefix;
 
@@ -75,9 +75,9 @@ class voicemail_greetings extends app {
 		//assign private variables
 		$this->permission_prefix = 'voicemail_greeting_';
 		if (is_numeric($this->voicemail_id)) {
-			$this->list_page = 'voicemail_greetings.php?id=' . urlencode($this->voicemail_id) . '&back=' . urlencode(PROJECT_PATH . '/app/voicemail/voicemails.php');
+			$this->LIST_PAGE = 'voicemail_greetings.php?id=' . urlencode($this->voicemail_id) . '&back=' . urlencode(PROJECT_PATH . '/app/voicemail/voicemails.php');
 		} else {
-			$this->list_page = PROJECT_PATH . '/app/voicemails/voicemails.php';
+			$this->LIST_PAGE = PROJECT_PATH . '/app/voicemails/voicemails.php';
 		}
 		$this->table       = 'voicemail_greetings';
 		$this->uuid_prefix = 'voicemail_greeting_';
@@ -106,13 +106,13 @@ class voicemail_greetings extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
 			//check voicemail id
 			if (!is_numeric($this->voicemail_id)) {
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 

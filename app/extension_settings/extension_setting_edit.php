@@ -179,7 +179,7 @@
 	}
 
 //pre-populate the form
-	if (!empty($_GET) && empty($_POST["persistformvar"])) {
+	if (!empty($_GET) && empty($_POST["persistformvar"]) && !empty($extension_setting_uuid) && is_uuid($extension_setting_uuid)) {
 		$sql = "select ";
 		//$sql .= "extension_uuid, ";
 		//$sql .= "domain_uuid, ";

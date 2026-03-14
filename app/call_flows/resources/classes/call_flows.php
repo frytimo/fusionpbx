@@ -30,13 +30,21 @@ class call_flows extends app {
 	/**
 	 * declare public variables
 	 */
-	public $toggle_field;
 
 	/**
 	 * declare constant variables
 	 */
 	const app_name = 'call_flows';
 	const app_uuid = 'b1b70f85-6b42-429b-8c5a-60c8b02b7d14';
+
+	// class-level configuration constants
+	const PERMISSION_PREFIX = 'call_flow_';
+	const LIST_PAGE         = 'call_flows.php';
+	const TABLE             = 'call_flows';
+	const UUID_PREFIX       = 'call_flow_';
+	const TOGGLE_FIELD      = 'call_flow_enabled';
+	const TOGGLE_VALUES     = ['true', 'false'];
+
 
 	/**
 	 * Domain name set in the constructor. This can be passed in through the $settings_array associative array or set
@@ -49,11 +57,7 @@ class call_flows extends app {
 	/**
 	 * declare private variables
 	 */
-	protected $permission_prefix;
 	protected $list_page;
-	protected $table;
-	protected $uuid_prefix;
-	protected $toggle_values;
 
 	/**
 	 * Constructor for the class.
@@ -72,11 +76,7 @@ class call_flows extends app {
 		$this->database = $setting_array['database'] ?? database::new();
 
 		//assign private variables
-		$this->permission_prefix = 'call_flow_';
 		$this->list_page         = 'call_flows.php';
-		$this->table             = 'call_flows';
-		$this->uuid_prefix       = 'call_flow_';
-		$this->toggle_values     = ['true', 'false'];
 
 		//initialize the parent class
 		parent::__construct();
@@ -92,7 +92,7 @@ class call_flows extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function delete($records) {
-		if (permission_exists($this->permission_prefix . 'delete')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'delete')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -118,9 +118,9 @@ class call_flows extends app {
 
 				//get necessary call flow details
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql                       = "select " . $this->uuid_prefix . "uuid as uuid, dialplan_uuid, call_flow_context from v_" . $this->table . " ";
+					$sql                       = "select " . static::UUID_PREFIX . "uuid as uuid, dialplan_uuid, call_flow_context from v_" . static::TABLE . " ";
 					$sql                       .= "where domain_uuid = :domain_uuid ";
-					$sql                       .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+					$sql                       .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
 					$rows                      = $this->database->select($sql, $parameters, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
@@ -135,8 +135,8 @@ class call_flows extends app {
 				//build the delete array
 				$x = 0;
 				foreach ($call_flows as $call_flow_uuid => $call_flow) {
-					$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $call_flow_uuid;
-					$array[$this->table][$x]['domain_uuid']               = $this->domain_uuid;
+					$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $call_flow_uuid;
+					$array[static::TABLE][$x]['domain_uuid']               = $this->domain_uuid;
 					$array['dialplans'][$x]['dialplan_uuid']              = $call_flow['dialplan_uuid'];
 					$array['dialplans'][$x]['domain_uuid']                = $this->domain_uuid;
 					$array['dialplan_details'][$x]['dialplan_uuid']       = $call_flow['dialplan_uuid'];
@@ -195,7 +195,7 @@ class call_flows extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function toggle($records) {
-		if (permission_exists($this->permission_prefix . 'edit')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'edit')) {
 			//add multi-lingual support
 			$language = new text;
 			$text     = $language->get();
@@ -219,10 +219,10 @@ class call_flows extends app {
 				}
 
 				if (!empty($uuids)) {
-					$sql                       = "select " . $this->uuid_prefix . "uuid as uuid, " . $this->toggle_field . " as toggle, ";
-					$sql                       .= "dialplan_uuid, call_flow_feature_code, call_flow_context from v_" . $this->table . " ";
+					$sql                       = "select " . static::UUID_PREFIX . "uuid as uuid, " . static::TOGGLE_FIELD . " as toggle, ";
+					$sql                       .= "dialplan_uuid, call_flow_feature_code, call_flow_context from v_" . static::TABLE . " ";
 					$sql                       .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
-					$sql                       .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+					$sql                       .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
 					$rows                      = $this->database->select($sql, $parameters, 'all');
 					if (!empty($rows)) {
@@ -239,11 +239,11 @@ class call_flows extends app {
 				//build update array
 				$x = 0;
 				foreach ($call_flows as $uuid => $call_flow) {
-					$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $uuid;
-					$array[$this->table][$x][$this->toggle_field]         = $call_flow['state'] == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
-					if ($this->toggle_field == 'call_flow_enabled') {
+					$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $uuid;
+					$array[static::TABLE][$x][static::TOGGLE_FIELD]         = $call_flow['state'] == static::TOGGLE_VALUES[0] ? static::TOGGLE_VALUES[1] : static::TOGGLE_VALUES[0];
+					if (static::TOGGLE_FIELD == 'call_flow_enabled') {
 						$array['dialplans'][$x]['dialplan_uuid']    = $call_flow['dialplan_uuid'];
-						$array['dialplans'][$x]['dialplan_enabled'] = $call_flow['state'] == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
+						$array['dialplans'][$x]['dialplan_enabled'] = $call_flow['state'] == static::TOGGLE_VALUES[0] ? static::TOGGLE_VALUES[1] : static::TOGGLE_VALUES[0];
 					}
 					$x++;
 				}
@@ -286,7 +286,7 @@ class call_flows extends app {
 				unset($records);
 
 				//toggle the presence
-				if ($this->toggle_field != 'call_flow_enabled') {
+				if (static::TOGGLE_FIELD != 'call_flow_enabled') {
 					foreach ($call_flows as $uuid => $row) {
 						//prepare the event
 						$cmd = "sendevent PRESENCE_IN\n";
@@ -327,7 +327,7 @@ class call_flows extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function copy($records) {
-		if (permission_exists($this->permission_prefix . 'add')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'add')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -355,9 +355,9 @@ class call_flows extends app {
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
 
 					//primary table
-					$sql                       = "select * from v_" . $this->table . " ";
+					$sql                       = "select * from v_" . static::TABLE . " ";
 					$sql                       .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
-					$sql                       .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+					$sql                       .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
 					$rows                      = $this->database->select($sql, $parameters, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
@@ -374,12 +374,12 @@ class call_flows extends app {
 							}
 
 							//copy data
-							$array[$this->table][$x] = $row;
+							$array[static::TABLE][$x] = $row;
 
 							//overwrite
-							$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $new_call_flow_uuid;
-							$array[$this->table][$x]['dialplan_uuid']             = $new_dialplan_uuid;
-							$array[$this->table][$x]['call_flow_description']     = trim($row['call_flow_description'] . ' (' . $text['label-copy'] . ')');
+							$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $new_call_flow_uuid;
+							$array[static::TABLE][$x]['dialplan_uuid']             = $new_dialplan_uuid;
+							$array[static::TABLE][$x]['call_flow_description']     = trim($row['call_flow_description'] . ' (' . $text['label-copy'] . ')');
 
 							//call flow dialplan record
 							$sql_2                         = "select * from v_dialplans where dialplan_uuid = :dialplan_uuid";

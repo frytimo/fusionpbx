@@ -67,7 +67,7 @@ class ivr_menu extends app {
 	 * declare private variables
 	 */
 	protected $permission_prefix;
-	protected $list_page;
+	protected $LIST_PAGE;
 	protected $table;
 	protected $uuid_prefix;
 	protected $toggle_field;
@@ -90,7 +90,7 @@ class ivr_menu extends app {
 		$this->database = $setting_array['database'] ?? database::new();
 
 		//assign private variables
-		$this->list_page = 'ivr_menus.php';
+		$this->LIST_PAGE = 'ivr_menus.php';
 
 		//initialize the parent class
 		parent::__construct();
@@ -143,7 +143,7 @@ class ivr_menu extends app {
 		$token = new token;
 		if (!$token->validate($_SERVER['PHP_SELF'])) {
 			message::add($text['message-invalid_token'], 'negative');
-			header('Location: ' . $this->list_page);
+			header('Location: ' . $this->LIST_PAGE);
 			exit;
 		}
 
@@ -246,7 +246,7 @@ class ivr_menu extends app {
 		$token = new token;
 		if (!$token->validate($_SERVER['PHP_SELF'])) {
 			message::add($text['message-invalid_token'], 'negative');
-			header('Location: ' . $this->list_page);
+			header('Location: ' . $this->LIST_PAGE);
 			exit;
 		}
 
@@ -322,7 +322,7 @@ class ivr_menu extends app {
 		$token = new token;
 		if (!$token->validate($_SERVER['PHP_SELF'])) {
 			message::add($text['message-invalid_token'], 'negative');
-			header('Location: ' . $this->list_page);
+			header('Location: ' . $this->LIST_PAGE);
 			exit;
 		}
 
@@ -422,7 +422,7 @@ class ivr_menu extends app {
 		$token = new token;
 		if (!$token->validate($_SERVER['PHP_SELF'])) {
 			message::add($text['message-invalid_token'], 'negative');
-			header('Location: ' . $this->list_page);
+			header('Location: ' . $this->LIST_PAGE);
 			exit;
 		}
 

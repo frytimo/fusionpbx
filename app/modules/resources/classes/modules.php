@@ -33,6 +33,15 @@ class modules extends app {
 	const app_name = 'modules';
 	const app_uuid = '5eb9cba1-8cb6-5d21-e36a-775475f16b5e';
 
+	// class-level configuration constants
+	const PERMISSION_PREFIX = 'module_';
+	const LIST_PAGE         = 'modules.php';
+	const TABLE             = 'modules';
+	const UUID_PREFIX       = 'module_';
+	const TOGGLE_FIELD      = 'module_enabled';
+	const TOGGLE_VALUES     = ['true', 'false'];
+
+
 	/**
 	 * declare public variables
 	 */
@@ -44,12 +53,7 @@ class modules extends app {
 	/**
 	 * declare private variables
 	 */
-	protected $permission_prefix;
 	protected $list_page;
-	protected $table;
-	protected $uuid_prefix;
-	protected $toggle_field;
-	protected $toggle_values;
 	private $active_modules;
 
 	/**
@@ -71,12 +75,7 @@ class modules extends app {
 		$this->esl      = event_socket::create();
 
 		//assign private variables
-		$this->permission_prefix = 'module_';
 		$this->list_page         = 'modules.php';
-		$this->table             = 'modules';
-		$this->uuid_prefix       = 'module_';
-		$this->toggle_field      = 'module_enabled';
-		$this->toggle_values     = ['true', 'false'];
 
 		//get the list of active modules
 		$json                 = $this->esl->request("api show modules as json");
@@ -956,7 +955,7 @@ class modules extends app {
 	 * @param mixed[] $records An array of records containing information about the modules to be controlled
 	 */
 	private function control($action, $records) {
-		if (permission_exists($this->permission_prefix . 'edit')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'edit')) {
 
 			//set local variables
 			switch ($action) {
@@ -996,8 +995,8 @@ class modules extends app {
 
 				//get module details
 				if (!empty($uuids) && is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql  = "select " . $this->uuid_prefix . "uuid as uuid, module_name as module, module_enabled as enabled from v_" . $this->table . " ";
-					$sql  .= "where " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+					$sql  = "select " . static::UUID_PREFIX . "uuid as uuid, module_name as module, module_enabled as enabled from v_" . static::TABLE . " ";
+					$sql  .= "where " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					$rows = $this->database->select($sql, $parameters ?? null, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
 						foreach ($rows as $row) {
@@ -1049,7 +1048,7 @@ class modules extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function delete($records) {
-		if (permission_exists($this->permission_prefix . 'delete')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'delete')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -1075,8 +1074,8 @@ class modules extends app {
 
 				//get module details
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql  = "select " . $this->uuid_prefix . "uuid as uuid, module_name as module from v_" . $this->table . " ";
-					$sql  .= "where " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+					$sql  = "select " . static::UUID_PREFIX . "uuid as uuid, module_name as module from v_" . static::TABLE . " ";
+					$sql  .= "where " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					$rows = $this->database->select($sql, $parameters ?? null, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
 						foreach ($rows as $row) {
@@ -1090,7 +1089,7 @@ class modules extends app {
 				if (is_array($modules) && @sizeof($modules) != 0) {
 					$x = 0;
 					foreach ($modules as $module_uuid => $module) {
-						$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $module_uuid;
+						$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $module_uuid;
 						$x++;
 					}
 				}
@@ -1143,7 +1142,7 @@ class modules extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function toggle($records) {
-		if (permission_exists($this->permission_prefix . 'edit')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'edit')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -1167,8 +1166,8 @@ class modules extends app {
 					}
 				}
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql  = "select " . $this->uuid_prefix . "uuid as uuid, " . $this->toggle_field . " as state, module_name as name from v_" . $this->table . " ";
-					$sql  .= "where " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+					$sql  = "select " . static::UUID_PREFIX . "uuid as uuid, " . static::TOGGLE_FIELD . " as state, module_name as name from v_" . static::TABLE . " ";
+					$sql  .= "where " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					$rows = $this->database->select($sql, $parameters ?? null, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
 						foreach ($rows as $row) {
@@ -1183,8 +1182,8 @@ class modules extends app {
 				$x = 0;
 				if (is_array($modules) && @sizeof($modules) != 0) {
 					foreach ($modules as $uuid => $module) {
-						$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $uuid;
-						$array[$this->table][$x][$this->toggle_field]         = $module['state'] == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
+						$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $uuid;
+						$array[static::TABLE][$x][static::TOGGLE_FIELD]         = $module['state'] == static::TOGGLE_VALUES[0] ? static::TOGGLE_VALUES[1] : static::TOGGLE_VALUES[0];
 						$x++;
 					}
 				}

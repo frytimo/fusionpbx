@@ -77,7 +77,13 @@ class url {
 	private $password;
 	private array $filter_chain = [];
 
-	public function __construct(?string $url = null, ?array $filters = null) {
+	// Paging properties (active only when settings is provided to the constructor)
+	private $settings      = null;
+	private $page          = 0;
+	private $rows_per_page = 50;
+	private $total_rows    = 0;
+
+	public function __construct(?string $url = null, ?array $filters = null, ?settings $settings = null) {
 		// initialize object properties
 		$this->scheme       = '';
 		$this->host         = '';
@@ -130,6 +136,14 @@ class url {
 
 		// save the original URL provided
 		$this->original_url = $url;
+
+		// Initialize paging state when settings are provided
+		if ($settings !== null) {
+			$this->settings      = $settings;
+			$this->rows_per_page = (int) $settings->get('domain', 'paging', 50);
+			$this->page          = (int) $this->get('page', 0);
+			$this->set_page($this->page);
+		}
 	}
 
 	/**
@@ -244,11 +258,10 @@ class url {
 	 * @return string
 	 */
 	public function get_query(int $unsafe = self::FILTERED): string {
-		$params = $unsafe ? $this->unsafe_params : $this->params;
-
-		return implode('&', array_map(function ($param, $key) {
-			return "$key=$param";
-		}, $params, array_keys($params)));
+		return implode('&', array_map(function ($param, $key) use ($unsafe) {
+			$value = is_array($param) ? ($param[$unsafe] ?? $param[self::FILTERED] ?? '') : $param;
+			return "$key=" . urlencode((string) $value);
+		}, $this->params, array_keys($this->params)));
 	}
 
 	public function get_filter_query_modifier(): array {
@@ -292,6 +305,10 @@ class url {
 
 	public function to_location_header(): string {
 		return 'Location: ' . $this->build_absolute();
+	}
+
+	public function to_location_header_relative(): string {
+		return 'Location: ' . $this->build_relative();
 	}
 
 	/**
@@ -542,6 +559,9 @@ class url {
 		if ($key === 'sort' && !in_array($filtered, [self::SORT_ASC, self::SORT_DSC, self::SORT_NATURAL])) {
 			return null;
 		}
+		if ($key === 'page' && !is_numeric($filtered)) {
+			return null;
+		}
 
 		return $filtered;
 	}
@@ -725,6 +745,10 @@ class url {
 		}
 
 		if (strlen($path)) {
+			// RFC 3986: when an authority is present, path must begin with '/'
+			if ((strlen($host) || strlen($user) || strlen("$port")) && $path[0] !== '/') {
+				$path = '/' . $path;
+			}
 			$string_buffer .= $path;
 		}
 
@@ -1026,6 +1050,267 @@ class url {
 		}
 
 		return $default;
+	}
+
+	/**
+	 * Calculate the SQL offset for the current page.
+	 *
+	 * @return int
+	 */
+	public function offset(): int {
+		return $this->page * $this->rows_per_page;
+	}
+
+	/**
+	 * Total number of pages given the current row count.
+	 *
+	 * @return int
+	 */
+	public function pages(): int {
+		if ($this->rows_per_page > 0) {
+			return (int) ceil($this->total_rows / $this->rows_per_page);
+		}
+
+		return 0;
+	}
+
+	/**
+	 * Returns the number of rows per page.
+	 *
+	 * @return int
+	 */
+	public function get_rows_per_page(): int {
+		return (int) $this->rows_per_page;
+	}
+
+	/**
+	 * Set the current page number.
+	 *
+	 * @return static
+	 */
+	public function set_page(int $page): static {
+		$this->page = max(0, $page);
+		if ($this->page > 0) {
+			$this->set_query_param('page', $this->page);
+		} else {
+			$this->unset_query_param('page');
+		}
+
+		return $this;
+	}
+
+	/**
+	 * Get the current page number.
+	 *
+	 * @return int
+	 */
+	public function get_page(): int {
+		return $this->page;
+	}
+
+	/**
+	 * Set the settings object.
+	 *
+	 * @param settings $settings
+	 */
+	public function set_settings(settings $settings): void {
+		$this->settings = $settings;
+	}
+
+	/**
+	 * Get the settings object.
+	 *
+	 * @return settings
+	 */
+	public function get_settings(): settings {
+		return $this->settings;
+	}
+
+	/**
+	 * Return a clone pointing to the next page.
+	 *
+	 * @return static
+	 */
+	public function next(): static {
+		$clone = clone $this;
+		$page  = (int) $clone->get('page', 0);
+		$clone->set_query_param('page', $page + 1);
+
+		return $clone;
+	}
+
+	/**
+	 * Return a clone pointing to the previous page.
+	 *
+	 * @return static
+	 */
+	public function prev(): static {
+		$clone = clone $this;
+		$page  = (int) $clone->get_query_param('page', 0) - 1;
+		if ($page > 0) {
+			$clone->set_query_param('page', $page);
+		} else {
+			$clone->unset_query_param('page');
+		}
+
+		return $clone;
+	}
+
+	/**
+	 * Return a clone pointing to the first page.
+	 *
+	 * @return static
+	 */
+	public function page_first(): static {
+		$clone = clone $this;
+		$clone->unset_query_param('page');
+
+		return $clone;
+	}
+
+	/**
+	 * Get the total number of rows.
+	 *
+	 * @return int
+	 */
+	public function get_total_rows(): int {
+		return $this->total_rows;
+	}
+
+	/**
+	 * Set the total number of rows for the current query.
+	 *
+	 * @param int $total_rows Total number of rows in the result set.
+	 * @return static
+	 */
+	public function set_total_rows(int $total_rows): static {
+		$this->total_rows = max(0, $total_rows);
+
+		return $this;
+	}
+
+	/**
+	 * Build paging controls HTML.
+	 *
+	 * @param url  $url  URL object with paging state.
+	 * @param bool $mini Render mini controls.
+	 * @return string
+	 */
+	public static function html_paging_controls(url $url, bool $mini = false): string {
+		global $text;
+
+		if ($url->get_total_rows() <= 0) {
+			return '';
+		}
+
+		$max_page = $url->pages();
+		if ($url->pages() < 1) {
+			return '';
+		}
+
+		$page_number = $url->get_page();
+
+		$label_back = $text['button-back'] ?? 'Back';
+		$label_next = $text['button-next'] ?? 'Next';
+		$label_page = $text['label-page'] ?? 'Page';
+
+		$prev_link = $url->prev()->build();
+		$next_link = $url->next()->build();
+
+		if (class_exists('button')) {
+			if ($page_number > 0) {
+				$prev = button::create([
+					'type'  => 'button',
+					'label' => (!$mini ? $label_back : null),
+					'icon'  => 'chevron-left',
+					'link'  => $prev_link,
+					'title' => $label_page . ' ' . $page_number,
+				]);
+			} else {
+				$prev = button::create([
+					'type'    => 'button',
+					'label'   => (!$mini ? $label_back : null),
+					'icon'    => 'chevron-left',
+					'style'   => 'opacity: 0.4; -moz-opacity: 0.4; cursor: default;',
+					'onclick' => 'return false;',
+				]);
+			}
+
+			$next_is_enabled = ($page_number < $max_page - 1);
+
+			if ($next_is_enabled) {
+				$next = button::create([
+					'type'  => 'button',
+					'label' => (!$mini ? $label_next : null),
+					'icon'  => 'chevron-right',
+					'link'  => $next_link,
+					'title' => $label_page . ' ' . ($page_number + 2),
+				]);
+			} else {
+				$next = button::create([
+					'type'    => 'button',
+					'label'   => (!$mini ? $label_next : null),
+					'icon'    => 'chevron-right',
+					'onclick' => 'return false;',
+					'style'   => 'opacity: 0.4; -moz-opacity: 0.4; cursor: default;',
+				]);
+			}
+		} else {
+			$prev = "<a href='" . htmlspecialchars($prev_link, ENT_QUOTES, 'UTF-8') . "'>" . htmlspecialchars($label_back, ENT_QUOTES, 'UTF-8') . "</a>";
+			$next = "<a href='" . htmlspecialchars($next_link, ENT_QUOTES, 'UTF-8') . "'>" . htmlspecialchars($label_next, ENT_QUOTES, 'UTF-8') . "</a>";
+		}
+
+		$html = '';
+		if ($max_page > 1) {
+			if ($mini) {
+				$html = "<span style='white-space: nowrap;'>" . $prev . $next . "</span>\n";
+			} else {
+				$page_input_id = 'paging_page_num_' . substr(md5((string) $url->get_host() . ':' . $max_page), 0, 8);
+				$html         .= "<script>\n";
+				$html         .= "function fusionpbx_paging_go_" . $page_input_id . "(e) {\n";
+				$html         .= "\tvar page_num = document.getElementById('" . $page_input_id . "').value;\n";
+				$html         .= "\tvar do_action = false;\n";
+				$html         .= "\tif (e != null) {\n";
+				$html         .= "\t\tvar keyevent = window.event ? e.keyCode : e.which;\n";
+				$html         .= "\t\tif (keyevent == 13) { do_action = true; }\n";
+				$html         .= "\t\telse { return true; }\n";
+				$html         .= "\t}\n";
+				$html         .= "\telse { do_action = true; }\n";
+				$html         .= "\tif (do_action) {\n";
+				$html         .= "\t\tif (page_num < 1) { page_num = 1; }\n";
+				$html         .= "\t\tif (page_num > " . $max_page . ") { page_num = " . $max_page . "; }\n";
+				$go_url        = $url->set('page', 0)->build();
+				$go_url        = preg_replace('/([?&])page=0(&|$)/', '$1', $go_url);
+				$go_url        = rtrim((string) $go_url, '?&');
+				$join          = (strpos((string) $go_url, '?') !== false) ? '&' : '?';
+				$html         .= "\t\tdocument.location.href = '" . htmlspecialchars((string) $go_url, ENT_QUOTES, 'UTF-8') . $join . "page='+(--page_num);\n";
+				$html         .= "\t\treturn false;\n";
+				$html         .= "\t}\n";
+				$html         .= "}\n";
+				$html         .= "</script>\n";
+
+				$html .= "<center style='white-space: nowrap;'>";
+				$html .= $prev;
+				$html .= "&nbsp;&nbsp;&nbsp;";
+				$html .= "<input id='" . $page_input_id . "' class='formfld' style='max-width: 50px; min-width: 50px; text-align: center;' type='text' value='" . ($page_number + 1) . "' onfocus='this.select();' onkeypress='return fusionpbx_paging_go_" . $page_input_id . "(event);'>";
+				$html .= "&nbsp;&nbsp;<strong>" . $max_page . "</strong>";
+				$html .= "&nbsp;&nbsp;&nbsp;";
+				$html .= $next;
+				$html .= "</center>\n";
+			}
+		}
+
+		return $html;
+	}
+
+	/**
+	 * Build mini paging controls HTML.
+	 *
+	 * @param url $url URL object with paging state.
+	 * @return string
+	 */
+	public static function html_paging_mini_controls(url $url): string {
+		return self::html_paging_controls($url, true);
 	}
 }
 

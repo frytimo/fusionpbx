@@ -35,6 +35,13 @@ class extension_settings extends app {
 	const app_name = 'extension_settings';
 	const app_uuid = '1416a250-f6e1-4edc-91a6-5c9b883638fd';
 
+	// class-level configuration constants
+	const TABLE             = 'extension_settings';
+	const TOGGLE_FIELD      = 'extension_setting_enabled';
+	const TOGGLE_VALUES     = ['true', 'false'];
+	const LIST_PAGE         = 'extension_settings.php';
+
+
 	/**
 	 * declare the public variables
 	 */
@@ -44,11 +51,7 @@ class extension_settings extends app {
 	 * declare the private variables
 	 */
 	private $name;
-	protected $table;
-	protected $toggle_field;
-	protected $toggle_values;
 	private $description_field;
-	private $location;
 
 	/**
 	 * Initializes the object with setting array.
@@ -68,11 +71,7 @@ class extension_settings extends app {
 
 		//assign the variables
 		$this->name              = 'extension_setting';
-		$this->table             = 'extension_settings';
-		$this->toggle_field      = 'extension_setting_enabled';
-		$this->toggle_values     = ['true', 'false'];
 		$this->description_field = 'extension_setting_description';
-		$this->location          = 'extension_settings.php';
 
 		//initialize the parent class
 		parent::__construct();
@@ -99,7 +98,7 @@ class extension_settings extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -110,12 +109,12 @@ class extension_settings extends app {
 				foreach ($records as $record) {
 					//add to the array
 					if (!empty($record['checked']) && $record['checked'] == 'true' && is_uuid($record['uuid'])) {
-						$array[$this->table][$x][$this->name . '_uuid'] = $record['uuid'];
-						$array[$this->table][$x]['domain_uuid']         = $this->domain_uuid;
+						$array[static::TABLE][$x][$this->name . '_uuid'] = $record['uuid'];
+						$array[static::TABLE][$x]['domain_uuid']         = $this->domain_uuid;
 
 						if (empty($this->extension_uuid)) {
-							$sql                       = "select " . $this->name . "_uuid as uuid, " . $this->toggle_field . " as toggle, extension_uuid ";
-							$sql                       .= "from v_" . $this->table . " ";
+							$sql                       = "select " . $this->name . "_uuid as uuid, " . static::TOGGLE_FIELD . " as toggle, extension_uuid ";
+							$sql                       .= "from v_" . static::TABLE . " ";
 							$sql                       .= "where " . $this->name . "_uuid in :uuid ";
 							$sql                       .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 							$parameters['domain_uuid'] = $this->domain_uuid;
@@ -177,7 +176,7 @@ class extension_settings extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -190,7 +189,7 @@ class extension_settings extends app {
 					}
 				}
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql                       = "select " . $this->name . "_uuid as uuid, " . $this->toggle_field . " as toggle, extension_uuid from v_" . $this->table . " ";
+					$sql                       = "select " . $this->name . "_uuid as uuid, " . static::TOGGLE_FIELD . " as toggle, extension_uuid from v_" . static::TABLE . " ";
 					$sql                       .= "where " . $this->name . "_uuid in (" . implode(', ', $uuids) . ") ";
 					$sql                       .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
@@ -208,8 +207,8 @@ class extension_settings extends app {
 				$x = 0;
 				foreach ($states as $uuid => $state) {
 					//create the array
-					$array[$this->table][$x][$this->name . '_uuid'] = $uuid;
-					$array[$this->table][$x][$this->toggle_field]   = $state == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
+					$array[static::TABLE][$x][$this->name . '_uuid'] = $uuid;
+					$array[static::TABLE][$x][static::TOGGLE_FIELD]   = $state == static::TOGGLE_VALUES[0] ? static::TOGGLE_VALUES[1] : static::TOGGLE_VALUES[0];
 
 					//increment the id
 					$x++;
@@ -259,7 +258,7 @@ class extension_settings extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -275,7 +274,7 @@ class extension_settings extends app {
 
 				//create the array from existing data
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql                       = "select * from v_" . $this->table . " ";
+					$sql                       = "select * from v_" . static::TABLE . " ";
 					$sql                       .= "where " . $this->name . "_uuid in (" . implode(', ', $uuids) . ") ";
 					$sql                       .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
@@ -291,12 +290,12 @@ class extension_settings extends app {
 							}
 
 							//copy data
-							$array[$this->table][$x] = $row;
+							$array[static::TABLE][$x] = $row;
 
 							//overwrite
-							$array[$this->table][$x][$this->name . '_uuid']    = uuid();
-							$array[$this->table][$x][$this->name . '_enabled'] = $row['extension_setting_enabled'] === true ? 'true' : 'false';
-							$array[$this->table][$x][$this->description_field] = trim($row[$this->description_field] ?? '') . ' (' . $text['label-copy'] . ')';
+							$array[static::TABLE][$x][$this->name . '_uuid']    = uuid();
+							$array[static::TABLE][$x][$this->name . '_enabled'] = $row['extension_setting_enabled'] === true ? 'true' : 'false';
+							$array[static::TABLE][$x][$this->description_field] = trim($row[$this->description_field] ?? '') . ' (' . $text['label-copy'] . ')';
 
 						}
 					}

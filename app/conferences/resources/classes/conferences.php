@@ -33,6 +33,15 @@ class conferences extends app {
 	const app_name = 'conferences';
 	const app_uuid = 'b81412e8-7253-91f4-e48e-42fc2c9a38d9';
 
+	// class-level configuration constants
+	const PERMISSION_PREFIX = 'conference_';
+	const LIST_PAGE         = 'conferences.php';
+	const TABLE             = 'conferences';
+	const UUID_PREFIX       = 'conference_';
+	const TOGGLE_FIELD      = 'conference_enabled';
+	const TOGGLE_VALUES     = ['true', 'false'];
+
+
 	/**
 	 * Domain name set in the constructor. This can be passed in through the $settings_array associative array or set
 	 * in the session global array
@@ -44,12 +53,7 @@ class conferences extends app {
 	/**
 	 * declare private variables
 	 */
-	protected $permission_prefix;
 	protected $list_page;
-	protected $table;
-	protected $uuid_prefix;
-	protected $toggle_field;
-	protected $toggle_values;
 
 	/**
 	 * Initializes the object with setting array.
@@ -69,19 +73,14 @@ class conferences extends app {
 		$this->database = $setting_array['database'] ?? database::new();
 
 		//assign private variables
-		$this->permission_prefix = 'conference_';
 		$this->list_page         = 'conferences.php';
-		$this->table             = 'conferences';
-		$this->uuid_prefix       = 'conference_';
-		$this->toggle_field      = 'conference_enabled';
-		$this->toggle_values     = ['true', 'false'];
 
 		//call parent constructor to initialize has_* flags
 		parent::__construct();
 	}
 
 	public function delete($records) {
-		if (permission_exists($this->permission_prefix . 'delete')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'delete')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -112,8 +111,8 @@ class conferences extends app {
 						unset($sql, $parameters);
 
 						//build array
-						$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $record['uuid'];
-						$array[$this->table][$x]['domain_uuid']               = $this->domain_uuid;
+						$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $record['uuid'];
+						$array[static::TABLE][$x]['domain_uuid']               = $this->domain_uuid;
 						$array['conference_users'][$x]['conference_uuid']     = $record['uuid'];
 						$array['conference_users'][$x]['domain_uuid']         = $this->domain_uuid;
 						$array['dialplans'][$x]['dialplan_uuid']              = $dialplan_uuid;
@@ -173,7 +172,7 @@ class conferences extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function toggle($records) {
-		if (permission_exists($this->permission_prefix . 'edit')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'edit')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -197,9 +196,9 @@ class conferences extends app {
 					}
 				}
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql                       = "select " . $this->uuid_prefix . "uuid as uuid, " . $this->toggle_field . " as toggle, dialplan_uuid from v_" . $this->table . " ";
+					$sql                       = "select " . static::UUID_PREFIX . "uuid as uuid, " . static::TOGGLE_FIELD . " as toggle, dialplan_uuid from v_" . static::TABLE . " ";
 					$sql                       .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
-					$sql                       .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+					$sql                       .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
 					$rows                      = $this->database->select($sql, $parameters, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
@@ -214,10 +213,10 @@ class conferences extends app {
 				//build update array
 				$x = 0;
 				foreach ($conferences as $uuid => $conference) {
-					$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $uuid;
-					$array[$this->table][$x][$this->toggle_field]         = $conference['state'] == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
+					$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $uuid;
+					$array[static::TABLE][$x][static::TOGGLE_FIELD]         = $conference['state'] == static::TOGGLE_VALUES[0] ? static::TOGGLE_VALUES[1] : static::TOGGLE_VALUES[0];
 					$array['dialplans'][$x]['dialplan_uuid']              = $conference['dialplan_uuid'];
-					$array['dialplans'][$x]['dialplan_enabled']           = $conference['state'] == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
+					$array['dialplans'][$x]['dialplan_enabled']           = $conference['state'] == static::TOGGLE_VALUES[0] ? static::TOGGLE_VALUES[1] : static::TOGGLE_VALUES[0];
 					$x++;
 				}
 
@@ -267,7 +266,7 @@ class conferences extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function copy($records) {
-		if (permission_exists($this->permission_prefix . 'add')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'add')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -293,9 +292,9 @@ class conferences extends app {
 
 				//create insert array from existing data
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql                       = "select * from v_" . $this->table . " ";
+					$sql                       = "select * from v_" . static::TABLE . " ";
 					$sql                       .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
-					$sql                       .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+					$sql                       .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
 					$rows                      = $this->database->select($sql, $parameters, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
@@ -313,12 +312,12 @@ class conferences extends app {
 							}
 
 							//copy data
-							$array[$this->table][$x] = $row;
+							$array[static::TABLE][$x] = $row;
 
 							//overwrite
-							$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $new_conference_uuid;
-							$array[$this->table][$x]['dialplan_uuid']             = $new_dialplan_uuid;
-							$array[$this->table][$x]['conference_description']    = trim($row['conference_description'] . ' (' . $text['label-copy'] . ')');
+							$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $new_conference_uuid;
+							$array[static::TABLE][$x]['dialplan_uuid']             = $new_dialplan_uuid;
+							$array[static::TABLE][$x]['conference_description']    = trim($row['conference_description'] . ' (' . $text['label-copy'] . ')');
 
 							//conference users sub table
 							$sql_2                           = "select * from v_conference_users ";

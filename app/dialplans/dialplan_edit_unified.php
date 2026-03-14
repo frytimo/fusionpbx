@@ -146,7 +146,7 @@ if (!empty($_POST['dialplan_xml']) && !empty($_POST['submit'])) {
 	$token = new token;
 	if (!$token->validate($_SERVER['PHP_SELF'])) {
 		message::add($text['message-invalid_token'], 'negative');
-		header('Location: dialplans.php');
+		header($url->set_path('dialplans.php')->to_location_header());
 		exit;
 	}
 
@@ -1211,10 +1211,10 @@ require_once "resources/header.php";
 	<div class="heading"><b><?php echo escape($text['title-dialplan_edit']); ?></b></div>
 	<div class="actions">
 		<?php
-		echo button::create(['type' => 'button', 'label' => $text['button-back'], 'icon' => $settings->get('theme', 'button_icon_back'), 'id' => 'btn_back', 'link' => 'dialplans.php' . (!empty($app_uuid) && is_uuid($app_uuid) ? '?app_uuid=' . urlencode($app_uuid) : '')]);
+		echo button::create(['type' => 'button', 'label' => $text['button-back'], 'icon' => $settings->get('theme', 'button_icon_back'), 'id' => 'btn_back', 'link' => $url->set_path('/app/dialplans/dialplans.php')->build_absolute()]);
 
 		if ($action === 'update' && $has_dialplan_xml) {
-			echo button::create(['type' => 'button', 'label' => $text['button-legacy_editor'] ?? 'Legacy Editor', 'icon' => 'history', 'style' => 'margin-left: 15px;', 'link' => 'dialplan_edit.php?id=' . urlencode($dialplan_uuid) . (!empty($app_uuid) ? '&app_uuid=' . urlencode($app_uuid) : '')]);
+			echo button::create(['type' => 'button', 'label' => $text['button-legacy_editor'] ?? 'Legacy Editor', 'icon' => 'history', 'style' => 'margin-left: 15px;', 'link' => $url->set_path('/app/dialplans/dialplan_edit.php')->set_query_param('id', $dialplan_uuid)->set_query_param('app_uuid', $app_uuid)->build_absolute()]);
 		}
 		?>
 

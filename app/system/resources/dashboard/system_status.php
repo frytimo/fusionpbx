@@ -391,7 +391,7 @@
 			}
 
 		//channel count
-			if ($esl == null) {
+			if (!isset($esl) || !($esl instanceof event_socket) || !$esl->is_connected()) {
 				$esl = event_socket::create();
 			}
 			if ($esl->is_connected()) {

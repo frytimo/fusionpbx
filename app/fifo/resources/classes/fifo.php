@@ -11,16 +11,19 @@ class fifo extends app {
 	const app_name = 'fifo';
 	const app_uuid = '16589224-c876-aeb3-f59f-523a1c0801f7';
 
+	// class-level configuration constants
+	const TABLE             = 'fifo';
+	const UUID_PREFIX       = 'fifo_';
+	const TOGGLE_FIELD      = 'fifo_enabled';
+	const TOGGLE_VALUES     = ['true', 'false'];
+	const LIST_PAGE         = 'fifo.php';
+
+
 	/**
 	 * declare the variables
 	 */
 	private $name;
-	protected $table;
-	protected $toggle_field;
-	protected $toggle_values;
 	private $description_field;
-	private $location;
-	protected $uuid_prefix;
 
 	/**
 	 * Initializes the object with setting array.
@@ -39,12 +42,7 @@ class fifo extends app {
 
 		//assign the variables
 		$this->name              = 'fifo';
-		$this->table             = 'fifo';
-		$this->uuid_prefix       = 'fifo_';
-		$this->toggle_field      = 'fifo_enabled';
-		$this->toggle_values     = ['true', 'false'];
 		$this->description_field = 'fifo_description';
-		$this->location          = 'fifo.php';
 
 		//initialize the parent class
 		parent::__construct();
@@ -70,7 +68,7 @@ class fifo extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -87,9 +85,9 @@ class fifo extends app {
 
 				//get necessary fifo queue details
 				if (!empty($uuids) && is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql                       = "select " . $this->uuid_prefix . "uuid as uuid, dialplan_uuid from v_" . $this->table . " ";
+					$sql                       = "select " . static::UUID_PREFIX . "uuid as uuid, dialplan_uuid from v_" . static::TABLE . " ";
 					$sql                       .= "where domain_uuid = :domain_uuid ";
-					$sql                       .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+					$sql                       .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
 					$rows                      = $this->database->select($sql, $parameters, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
@@ -104,8 +102,8 @@ class fifo extends app {
 				$x = 0;
 				foreach ($fifos as $fifo_uuid => $fifo) {
 					//add to the array
-					$array[$this->table][$x][$this->name . '_uuid'] = $fifo_uuid;
-					$array[$this->table][$x]['domain_uuid']         = $this->domain_uuid;
+					$array[static::TABLE][$x][$this->name . '_uuid'] = $fifo_uuid;
+					$array[static::TABLE][$x]['domain_uuid']         = $this->domain_uuid;
 					$array['fifo_members'][$x]['fifo_uuid']         = $fifo_uuid;
 					$array['fifo_members'][$x]['domain_uuid']       = $this->domain_uuid;
 					$array['dialplans'][$x]['dialplan_uuid']        = $fifo['dialplan_uuid'];
@@ -158,7 +156,7 @@ class fifo extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -171,7 +169,7 @@ class fifo extends app {
 					}
 				}
 				if (!empty($uuids) && is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql                       = "select " . $this->name . "_uuid as uuid, " . $this->toggle_field . " as toggle from v_" . $this->table . " ";
+					$sql                       = "select " . $this->name . "_uuid as uuid, " . static::TOGGLE_FIELD . " as toggle from v_" . static::TABLE . " ";
 					$sql                       .= "where " . $this->name . "_uuid in (" . implode(', ', $uuids) . ") ";
 					$sql                       .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
@@ -188,8 +186,8 @@ class fifo extends app {
 				$x = 0;
 				foreach ($states as $uuid => $state) {
 					//create the array
-					$array[$this->table][$x][$this->name . '_uuid'] = $uuid;
-					$array[$this->table][$x][$this->toggle_field]   = $state == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
+					$array[static::TABLE][$x][$this->name . '_uuid'] = $uuid;
+					$array[static::TABLE][$x][static::TOGGLE_FIELD]   = $state == static::TOGGLE_VALUES[0] ? static::TOGGLE_VALUES[1] : static::TOGGLE_VALUES[0];
 
 					//increment the id
 					$x++;
@@ -230,7 +228,7 @@ class fifo extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -246,7 +244,7 @@ class fifo extends app {
 
 				//create the array from existing data
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql                       = "select * from v_" . $this->table . " ";
+					$sql                       = "select * from v_" . static::TABLE . " ";
 					$sql                       .= "where " . $this->name . "_uuid in (" . implode(', ', $uuids) . ") ";
 					$sql                       .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
@@ -256,11 +254,11 @@ class fifo extends app {
 						$x = 0;
 						foreach ($rows as $row) {
 							//copy data
-							$array[$this->table][$x] = $row;
+							$array[static::TABLE][$x] = $row;
 
 							//add copy to the description
-							$array[$this->table][$x][$this->name . '_uuid']    = uuid();
-							$array[$this->table][$x][$this->description_field] = trim($row[$this->description_field]) . ' (' . $text['label-copy'] . ')';
+							$array[static::TABLE][$x][$this->name . '_uuid']    = uuid();
+							$array[static::TABLE][$x][$this->description_field] = trim($row[$this->description_field]) . ' (' . $text['label-copy'] . ')';
 
 							//increment the id
 							$x++;

@@ -35,6 +35,11 @@ class call_recordings extends app {
 	const app_name = 'follow_me';
 	const app_uuid = 'b1b70f85-6b42-429b-8c5a-60c8b02b7d14';
 
+	// class-level configuration constants
+	const TABLE             = 'call_recordings';
+	const LIST_PAGE         = 'call_recordings.php';
+
+
 	/**
 	 * Username set in the constructor. This can be passed in through the $settings_array associative array or set in
 	 * the session global array
@@ -55,9 +60,7 @@ class call_recordings extends app {
 	 * declare the variables
 	 */
 	private $name;
-	protected $table;
 	private $description_field;
-	private $location;
 	public $recording_uuid;
 	public $binary;
 
@@ -80,9 +83,7 @@ class call_recordings extends app {
 
 		//assign the variables
 		$this->name              = 'call_recording';
-		$this->table             = 'call_recordings';
 		$this->description_field = 'call_recording_description';
-		$this->location          = 'call_recordings.php';
 
 		//initialize the parent class
 		parent::__construct();
@@ -108,7 +109,7 @@ class call_recordings extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -407,7 +408,7 @@ class call_recordings extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->location);
+				header('Location: ' . static::LIST_PAGE);
 				exit;
 			}
 
@@ -640,7 +641,7 @@ class call_recordings extends app {
 				$token = new token;
 				if (!$token->validate($_SERVER['PHP_SELF'])) {
 					message::add($text['message-invalid_token'], 'negative');
-					header('Location: ' . $this->location);
+					header('Location: ' . static::LIST_PAGE);
 					exit;
 				}
 

@@ -50,16 +50,16 @@
 	$transcribe_engine = $settings->get('transcribe', 'engine', '');
 
 //set additional variables
-	// url_paging->get() returns sanitized values via FILTER_SANITIZE_FULL_SPECIAL_CHARS
-	$search = $url_paging->get('search', '');
-	$show = $url_paging->get('show', '');
+	// $url->get() returns sanitized values via FILTER_SANITIZE_FULL_SPECIAL_CHARS
+	$search = $url->get('search', '');
+	$show = $url->get('show', '');
 	$result_count = 0;
 
 //get the http post data
-	if ($url_paging->has_post('call_recordings') && is_array($url_paging->post('call_recordings'))) {
-		$action = $url_paging->post('action', '');
-		$search = $url_paging->post('search', '');
-		$call_recordings = $url_paging->post('call_recordings', []);
+	if ($url->has_post('call_recordings') && is_array($url->post('call_recordings'))) {
+		$action = $url->post('action', '');
+		$search = $url->post('search', '');
+		$call_recordings = $url->post('call_recordings', []);
 	}
 
 //process the http post data by action
@@ -92,8 +92,8 @@
 
 //get order and order by
 	// Additional preg_replace on order_by as an extra defence-in-depth layer for SQL identifier safety
-	$order_by = preg_replace('#[^a-zA-Z0-9_\-]#', '', $url_paging->get('order_by', ''));
-	$order = $url_paging->get('order', '');
+	$order_by = preg_replace('#[^a-zA-Z0-9_\-]#', '', $url->get('order_by', ''));
+	$order = $url->get('order', '');
 
 //normalise the search string to lowercase
 	if (!empty($search)) {
@@ -101,10 +101,10 @@
 	}
 
 //prepare some of the paging values
-	// url_paging validates page >= 0 and rows_per_page from settings
-	$rows_per_page = $url_paging->get_rows_per_page();
-	$page = $url_paging->get_page();
-	$offset = $url_paging->offset();
+	// $url validates page >= 0 and rows_per_page from settings
+	$rows_per_page = $url->get_rows_per_page();
+	$page = $url->get_page();
+	$offset = $url->offset();
 
 //set the time zone
 	$time_zone = $settings->get('domain', 'time_zone', date_default_timezone_get());
@@ -149,11 +149,11 @@
 	}
 
 //set total rows on the paging object and clamp page to last valid page
-	$url_paging->set_total_rows($num_rows);
-	if ($num_rows > 0 && $page > ($url_paging->pages() - 1)) {
-		$url_paging->set_page($url_paging->pages() - 1);
-		$page = $url_paging->get_page();
-		$offset = $url_paging->offset();
+	$url->set_total_rows($num_rows);
+	if ($num_rows > 0 && $page > ($url->pages() - 1)) {
+		$url->set_page($url->pages() - 1);
+		$page = $url->get_page();
+		$offset = $url->offset();
 	}
 
 //get the list
@@ -188,9 +188,9 @@
 		$param .= "&show=all";
 	}
 
-//prepare paging controls using the url_paging object
-	$paging_controls_mini = url_paging::html_paging_mini_controls($url_paging);
-	$paging_controls = url_paging::html_paging_controls($url_paging);
+//prepare paging controls using the url object
+	$paging_controls_mini = url::html_paging_mini_controls($url);
+	$paging_controls = url::html_paging_controls($url);
 
 //create token
 	$object = new token;
@@ -211,7 +211,7 @@
 	}
 	$btn_show_all = '';
 	if ($has_call_recording_all && $show != 'all') {
-		$btn_show_all = button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>$url_paging->build_relative()]);
+		$btn_show_all = button::create(['type'=>'button','label'=>$text['button-show_all'],'icon'=>$settings->get('theme', 'button_icon_all'),'link'=>$url->build_relative()]);
 	}
 	$btn_search = button::create(['label'=>$text['button-search'],'icon'=>$settings->get('theme', 'button_icon_search'),'type'=>'submit','id'=>'btn_search','style'=>(!empty($search) ? 'display: none;' : null),'collapse'=>'hide-xs']);
 	$btn_reset  = button::create(['label'=>$text['button-reset'],'icon'=>$settings->get('theme', 'button_icon_reset'),'type'=>'button','id'=>'btn_reset','link'=>'call_recordings.php','style'=>(empty($search) ? 'display: none;' : null),'collapse'=>'hide-xs']);
@@ -328,7 +328,7 @@
 	$template->assign('th_call_direction',          $th_call_direction);
 
 //invoke pre-render hook
-	app::dispatch_list_pre_render('call_recording_list_page_hook', $url_paging, $template);
+	app::dispatch_list_pre_render('call_recording_list_page_hook', $url, $template);
 
 //include the header
 	$document['title'] = $text['title-call_recordings'];
@@ -338,7 +338,7 @@
 	$html = $template->render('call_recordings_list.tpl');
 
 //invoke post-render hook
-	app::dispatch_list_post_render('call_recording_list_page_hook', $url_paging, $html);
+	app::dispatch_list_post_render('call_recording_list_page_hook', $url, $html);
 	echo $html;
 
 //include the footer

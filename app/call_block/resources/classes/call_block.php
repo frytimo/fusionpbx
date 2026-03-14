@@ -11,6 +11,15 @@ class call_block extends app {
 	const app_name = 'call_block';
 	const app_uuid = '9ed63276-e085-4897-839c-4f2e36d92d6c';
 
+	// class-level configuration constants
+	const PERMISSION_PREFIX = 'call_block_';
+	const LIST_PAGE         = 'call_block.php';
+	const TABLE             = 'call_block';
+	const UUID_PREFIX       = 'call_block_';
+	const TOGGLE_FIELD      = 'call_block_enabled';
+	const TOGGLE_VALUES     = ['true', 'false'];
+
+
 	/**
 	 * Domain name set in the constructor. This can be passed in through the $settings_array associative array or set
 	 * in the session global array
@@ -22,12 +31,7 @@ class call_block extends app {
 	/**
 	 * declare private variables
 	 */
-	protected $permission_prefix;
 	protected $list_page;
-	protected $table;
-	protected $uuid_prefix;
-	protected $toggle_field;
-	protected $toggle_values;
 
 	/**
 	 * declare public variables
@@ -57,12 +61,7 @@ class call_block extends app {
 		$this->settings = $setting_array['settings'] ?? new settings(['database' => $this->database, 'domain_uuid' => $this->domain_uuid, 'user_uuid' => $this->user_uuid]);
 
 		//assign private variables
-		$this->permission_prefix = 'call_block_';
 		$this->list_page         = 'call_block.php';
-		$this->table             = 'call_block';
-		$this->uuid_prefix       = 'call_block_';
-		$this->toggle_field      = 'call_block_enabled';
-		$this->toggle_values     = ['true', 'false'];
 
 		//call parent constructor to initialize has_* flags
 		parent::__construct();
@@ -78,7 +77,7 @@ class call_block extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function delete($records) {
-		if (permission_exists($this->permission_prefix . 'delete')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'delete')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -104,14 +103,14 @@ class call_block extends app {
 
 				//get necessary call block details
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql = "select " . $this->uuid_prefix . "uuid as uuid, call_block_number from v_" . $this->table . " ";
+					$sql = "select " . static::UUID_PREFIX . "uuid as uuid, call_block_number from v_" . static::TABLE . " ";
 					$sql .= "where ( ";
 					$sql .= "	domain_uuid = :domain_uuid ";
 					if (permission_exists('call_block_domain')) {
 						$sql .= " or domain_uuid is null ";
 					}
 					$sql                       .= ") ";
-					$sql                       .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+					$sql                       .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
 					$rows                      = $this->database->select($sql, $parameters, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
@@ -125,9 +124,9 @@ class call_block extends app {
 				//build the delete array
 				$x = 0;
 				foreach ($call_block_numbers as $call_block_uuid => $call_block_number) {
-					$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $call_block_uuid;
+					$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $call_block_uuid;
 					if (!permission_exists('call_block_domain')) {
-						$array[$this->table][$x]['domain_uuid'] = $this->domain_uuid;
+						$array[static::TABLE][$x]['domain_uuid'] = $this->domain_uuid;
 					}
 					$x++;
 				}
@@ -163,7 +162,7 @@ class call_block extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function toggle($records) {
-		if (permission_exists($this->permission_prefix . 'edit')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'edit')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -187,9 +186,9 @@ class call_block extends app {
 					}
 				}
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql                       = "select " . $this->uuid_prefix . "uuid as uuid, " . $this->toggle_field . " as toggle, call_block_number from v_" . $this->table . " ";
+					$sql                       = "select " . static::UUID_PREFIX . "uuid as uuid, " . static::TOGGLE_FIELD . " as toggle, call_block_number from v_" . static::TABLE . " ";
 					$sql                       .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
-					$sql                       .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+					$sql                       .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
 					$rows                      = $this->database->select($sql, $parameters, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
@@ -204,8 +203,8 @@ class call_block extends app {
 				//build update array
 				$x = 0;
 				foreach ($states as $uuid => $state) {
-					$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $uuid;
-					$array[$this->table][$x][$this->toggle_field]         = $state == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
+					$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $uuid;
+					$array[static::TABLE][$x][static::TOGGLE_FIELD]         = $state == static::TOGGLE_VALUES[0] ? static::TOGGLE_VALUES[1] : static::TOGGLE_VALUES[0];
 					$x++;
 				}
 
@@ -242,7 +241,7 @@ class call_block extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function copy($records) {
-		if (permission_exists($this->permission_prefix . 'add')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'add')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -268,9 +267,9 @@ class call_block extends app {
 
 				//create insert array from existing data
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql                       = "select * from v_" . $this->table . " ";
+					$sql                       = "select * from v_" . static::TABLE . " ";
 					$sql                       .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
-					$sql                       .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+					$sql                       .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
 					$rows                      = $this->database->select($sql, $parameters, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
@@ -285,11 +284,11 @@ class call_block extends app {
 							}
 
 							//copy data
-							$array[$this->table][$x] = $row;
+							$array[static::TABLE][$x] = $row;
 
 							//overwrite
-							$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = uuid();
-							$array[$this->table][$x]['call_block_description']    = trim($row['call_block_description'] . ' (' . $text['label-copy'] . ')');
+							$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = uuid();
+							$array[static::TABLE][$x]['call_block_description']    = trim($row['call_block_description'] . ' (' . $text['label-copy'] . ')');
 
 						}
 					}
@@ -324,7 +323,7 @@ class call_block extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function add($records) {
-		if (permission_exists($this->permission_prefix . 'add')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'add')) {
 
 			//add multi-lingual support
 			$language = new text;

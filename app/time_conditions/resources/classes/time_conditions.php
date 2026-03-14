@@ -33,6 +33,15 @@ class time_conditions extends app {
 	const app_name = 'time_conditions';
 	const app_uuid = '4b821450-926b-175a-af93-a03c441818b1';
 
+	// class-level configuration constants
+	const PERMISSION_PREFIX = 'time_condition_';
+	const LIST_PAGE         = 'time_conditions.php';
+	const TABLE             = 'dialplans';
+	const UUID_PREFIX       = 'dialplan_';
+	const TOGGLE_FIELD      = 'dialplan_enabled';
+	const TOGGLE_VALUES     = ['true', 'false'];
+
+
 	/**
 	 * Username set in the constructor. This can be passed in through the $settings_array associative array or set in
 	 * the session global array
@@ -52,12 +61,7 @@ class time_conditions extends app {
 	/**
 	 * declare public/private properties
 	 */
-	protected $permission_prefix;
 	protected $list_page;
-	protected $table;
-	protected $uuid_prefix;
-	protected $toggle_field;
-	protected $toggle_values;
 	private $dialplan_global;
 
 	/**
@@ -79,12 +83,7 @@ class time_conditions extends app {
 		$this->dialplan_global = false;
 
 		//assign property defaults
-		$this->permission_prefix = 'time_condition_';
 		$this->list_page         = 'time_conditions.php';
-		$this->table             = 'dialplans';
-		$this->uuid_prefix       = 'dialplan_';
-		$this->toggle_field      = 'dialplan_enabled';
-		$this->toggle_values     = ['true', 'false'];
 
 		//initialize the parent class
 		parent::__construct();
@@ -100,7 +99,7 @@ class time_conditions extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function delete($records) {
-		if (permission_exists($this->permission_prefix . 'delete')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'delete')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -122,7 +121,7 @@ class time_conditions extends app {
 					if (!empty($record['checked']) && $record['checked'] == 'true' && is_uuid($record['uuid'])) {
 
 						//build delete array
-						$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $record['uuid'];
+						$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $record['uuid'];
 						$array['dialplan_details'][$x]['dialplan_uuid']       = $record['uuid'];
 
 						//get the dialplan context
@@ -165,7 +164,7 @@ class time_conditions extends app {
 					}
 
 					//set message
-					message::add($text['message-delete'] . ': ' . @sizeof($array[$this->table]));
+					message::add($text['message-delete'] . ': ' . @sizeof($array[static::TABLE]));
 
 				}
 				unset($records, $array);
@@ -184,7 +183,7 @@ class time_conditions extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function toggle($records) {
-		if (permission_exists($this->permission_prefix . 'edit')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'edit')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -208,9 +207,9 @@ class time_conditions extends app {
 					}
 				}
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
-					$sql                       = "select " . $this->uuid_prefix . "uuid as uuid, " . $this->toggle_field . " as toggle, dialplan_context from v_" . $this->table . " ";
+					$sql                       = "select " . static::UUID_PREFIX . "uuid as uuid, " . static::TOGGLE_FIELD . " as toggle, dialplan_context from v_" . static::TABLE . " ";
 					$sql                       .= "where (domain_uuid = :domain_uuid or domain_uuid is null) ";
-					$sql                       .= "and " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+					$sql                       .= "and " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					$parameters['domain_uuid'] = $this->domain_uuid;
 					$rows                      = $this->database->select($sql, $parameters, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
@@ -225,8 +224,8 @@ class time_conditions extends app {
 				//build update array
 				$x = 0;
 				foreach ($states as $uuid => $state) {
-					$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $uuid;
-					$array[$this->table][$x][$this->toggle_field]         = $state == $this->toggle_values[0] ? $this->toggle_values[1] : $this->toggle_values[0];
+					$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $uuid;
+					$array[static::TABLE][$x][static::TOGGLE_FIELD]         = $state == static::TOGGLE_VALUES[0] ? static::TOGGLE_VALUES[1] : static::TOGGLE_VALUES[0];
 					$x++;
 				}
 
@@ -278,7 +277,7 @@ class time_conditions extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function copy($records) {
-		if (permission_exists($this->permission_prefix . 'add')) {
+		if (permission_exists(static::PERMISSION_PREFIX . 'add')) {
 
 			//add multi-lingual support
 			$language = new text;
@@ -306,8 +305,8 @@ class time_conditions extends app {
 				if (is_array($uuids) && @sizeof($uuids) != 0) {
 
 					//primary table
-					$sql  = "select * from v_" . $this->table . " ";
-					$sql  .= "where " . $this->uuid_prefix . "uuid in (" . implode(', ', $uuids) . ") ";
+					$sql  = "select * from v_" . static::TABLE . " ";
+					$sql  .= "where " . static::UUID_PREFIX . "uuid in (" . implode(', ', $uuids) . ") ";
 					$rows = $this->database->select($sql, $parameters ?? null, 'all');
 					if (is_array($rows) && @sizeof($rows) != 0) {
 						$y = 0;
@@ -323,11 +322,11 @@ class time_conditions extends app {
 							}
 
 							//copy data
-							$array[$this->table][$x] = $row;
+							$array[static::TABLE][$x] = $row;
 
 							//overwrite
-							$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $primary_uuid;
-							$array[$this->table][$x]['dialplan_description']      = trim($row['dialplan_description'] . ' (' . $text['label-copy'] . ')');
+							$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $primary_uuid;
+							$array[static::TABLE][$x]['dialplan_description']      = trim($row['dialplan_description'] . ' (' . $text['label-copy'] . ')');
 
 							//details sub table
 							$sql_2                         = "select * from v_dialplan_details where dialplan_uuid = :dialplan_uuid";

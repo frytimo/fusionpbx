@@ -68,7 +68,7 @@ class fax extends app {
 	 * declare private variables
 	 */
 	protected $permission_prefix;
-	protected $list_page;
+	protected $LIST_PAGE;
 	protected $table;
 	protected $uuid_prefix;
 	protected $toggle_field;
@@ -245,7 +245,7 @@ class fax extends app {
 
 		//set private variables
 		$this->permission_prefix = 'fax_extension_';
-		$this->list_page         = 'fax.php';
+		$this->LIST_PAGE         = 'fax.php';
 		$this->table             = 'fax';
 		$this->uuid_prefix       = 'fax_';
 
@@ -259,7 +259,7 @@ class fax extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -408,7 +408,7 @@ class fax extends app {
 
 		//set private variables
 		$this->permission_prefix = 'fax_file_';
-		$this->list_page         = 'fax_files.php?id=' . urlencode($this->fax_uuid) . '&box=' . urlencode($this->box);
+		$this->LIST_PAGE         = 'fax_files.php?id=' . urlencode($this->fax_uuid) . '&box=' . urlencode($this->box);
 		$this->table             = 'fax_files';
 		$this->uuid_prefix       = 'fax_file_';
 
@@ -422,7 +422,7 @@ class fax extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -518,7 +518,7 @@ class fax extends app {
 
 		//set private variables
 		$this->permission_prefix = 'fax_log_';
-		$this->list_page         = 'fax_logs.php?id=' . urlencode($this->fax_uuid);
+		$this->LIST_PAGE         = 'fax_logs.php?id=' . urlencode($this->fax_uuid);
 		$this->table             = 'fax_logs';
 		$this->uuid_prefix       = 'fax_log_';
 
@@ -532,7 +532,7 @@ class fax extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -575,7 +575,7 @@ class fax extends app {
 
 		//set private variables
 		$this->permission_prefix = 'fax_extension_';
-		$this->list_page         = 'fax.php';
+		$this->LIST_PAGE         = 'fax.php';
 		$this->table             = 'fax';
 		$this->uuid_prefix       = 'fax_';
 
@@ -589,7 +589,7 @@ class fax extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 

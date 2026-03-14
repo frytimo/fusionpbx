@@ -294,7 +294,7 @@
 	$template->assign('email_status_options_html', $email_status_options_html);
 
 //invoke pre-render hook
-	app::dispatch_list_pre_render('email_queue_list_page_hook', $url_paging, $template);
+	app::dispatch_list_pre_render('email_queue_list_page_hook', $url, $template);
 
 //include the header
 	$document['title'] = $text['title-email_queue'];
@@ -304,7 +304,7 @@
 	$html = $template->render('email_queue_list.tpl');
 
 //invoke post-render hook
-	app::dispatch_list_post_render('email_queue_list_page_hook', $url_paging, $html);
+	app::dispatch_list_post_render('email_queue_list_page_hook', $url, $html);
 	echo $html;
 
 //include the footer

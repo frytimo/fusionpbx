@@ -37,7 +37,7 @@ class sip_profiles extends app {
 	 * declare private variables
 	 */
 	protected $permission_prefix;
-	protected $list_page;
+	protected $LIST_PAGE;
 	protected $table;
 	protected $uuid_prefix;
 	protected $toggle_field;
@@ -67,7 +67,7 @@ class sip_profiles extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'sip_profile_';
-		$this->list_page         = 'sip_profiles.php';
+		$this->LIST_PAGE         = 'sip_profiles.php';
 		$this->table             = 'sip_profiles';
 		$this->uuid_prefix       = 'sip_profile_';
 		$this->toggle_field      = 'sip_profile_enabled';
@@ -97,7 +97,7 @@ class sip_profiles extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -201,7 +201,7 @@ class sip_profiles extends app {
 	public function delete_domains($records) {
 		//assign private variables
 		$this->permission_prefix = 'sip_profile_domain_';
-		$this->list_page         = 'sip_profile_edit.php?id=' . $this->sip_profile_uuid;
+		$this->LIST_PAGE         = 'sip_profile_edit.php?id=' . $this->sip_profile_uuid;
 		$this->table             = 'sip_profile_domains';
 		$this->uuid_prefix       = 'sip_profile_domain_';
 
@@ -215,7 +215,7 @@ class sip_profiles extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -280,7 +280,7 @@ class sip_profiles extends app {
 	public function delete_settings($records) {
 		//assign private variables
 		$this->permission_prefix = 'sip_profile_setting_';
-		$this->list_page         = 'sip_profile_edit.php?id=' . $this->sip_profile_uuid;
+		$this->LIST_PAGE         = 'sip_profile_edit.php?id=' . $this->sip_profile_uuid;
 		$this->table             = 'sip_profile_settings';
 		$this->uuid_prefix       = 'sip_profile_setting_';
 
@@ -294,7 +294,7 @@ class sip_profiles extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -368,7 +368,7 @@ class sip_profiles extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 

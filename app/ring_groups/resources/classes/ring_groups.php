@@ -44,7 +44,7 @@ class ring_groups extends app {
 	 * declare private variables
 	 */
 	protected $permission_prefix;
-	protected $list_page;
+	protected $LIST_PAGE;
 	protected $table;
 	protected $uuid_prefix;
 	protected $toggle_field;
@@ -68,7 +68,7 @@ class ring_groups extends app {
 
 		//assign private variables
 		$this->permission_prefix = 'ring_group_';
-		$this->list_page         = 'ring_groups.php';
+		$this->LIST_PAGE         = 'ring_groups.php';
 		$this->table             = 'ring_groups';
 		$this->uuid_prefix       = 'ring_group_';
 		$this->toggle_field      = 'ring_group_enabled';
@@ -98,7 +98,7 @@ class ring_groups extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -211,7 +211,7 @@ class ring_groups extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('L$ring_group_uuidocation: ' . $this->list_page);
+				header('L$ring_group_uuidocation: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -288,7 +288,7 @@ class ring_groups extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 
@@ -388,7 +388,7 @@ class ring_groups extends app {
 			$token = new token;
 			if (!$token->validate($_SERVER['PHP_SELF'])) {
 				message::add($text['message-invalid_token'], 'negative');
-				header('Location: ' . $this->list_page);
+				header('Location: ' . $this->LIST_PAGE);
 				exit;
 			}
 

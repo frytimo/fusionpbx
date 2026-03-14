@@ -35,6 +35,13 @@ class xml_cdr extends app {
 	const app_name = 'xml_cdr';
 	const app_uuid = '4a085c51-7635-ff03-f67b-86e834422848';
 
+	// class-level configuration constants
+	const PERMISSION_PREFIX = 'xml_cdr_';
+	const LIST_PAGE         = 'xml_cdr.php';
+	const TABLE             = 'xml_cdr';
+	const UUID_PREFIX       = 'xml_cdr_';
+
+
 	/**
 	 * Domain UUID set in the constructor. This can be passed in through the $settings_array associative array or set
 	 * in the session global array
@@ -88,10 +95,7 @@ class xml_cdr extends app {
 	/**
 	 * delete method
 	 */
-	protected $permission_prefix;
 	protected $list_page;
-	protected $table;
-	protected $uuid_prefix;
 	private $xml_cdr_dir;
 
 	/**
@@ -126,10 +130,7 @@ class xml_cdr extends app {
 		}
 
 		//assign private variables (for delete method)
-		$this->permission_prefix = 'xml_cdr_';
 		$this->list_page         = 'xml_cdr.php';
-		$this->table             = 'xml_cdr';
-		$this->uuid_prefix       = 'xml_cdr_';
 
 		//initialize the parent class
 		parent::__construct();
@@ -2258,7 +2259,7 @@ class xml_cdr extends app {
 	 * @return void No return value; this method modifies the database state and sets a message.
 	 */
 	public function delete($records) {
-		if (!permission_exists($this->permission_prefix . 'delete')) {
+		if (!permission_exists(static::PERMISSION_PREFIX . 'delete')) {
 			return false;
 		}
 
@@ -2302,7 +2303,7 @@ class xml_cdr extends app {
 			}
 
 			//build the delete array
-			$array[$this->table][$x][$this->uuid_prefix . 'uuid'] = $record['uuid'];
+			$array[static::TABLE][$x][static::UUID_PREFIX . 'uuid'] = $record['uuid'];
 
 			//increment counter
 			$records_deleted++;
