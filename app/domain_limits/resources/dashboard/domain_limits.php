@@ -201,38 +201,38 @@
 					switch ($category) {
 						case 'users':
 							if (!$has_user_view) { continue 2; }
-							$url = '/core/users/users.php';
+							$url_path = '/core/users/users.php';
 							break;
 						case 'call_center_queues':
 							if (!$has_call_center_active_view) { continue 2; }
-							$url = '/app/call_centers/call_center_queues.php';
+							$url_path = '/app/call_centers/call_center_queues.php';
 							break;
 						case 'destinations':
 							if (!$has_destination_view) { continue 2; }
-							$url = '/app/destinations/destinations.php';
+							$url_path = '/app/destinations/destinations.php';
 							break;
 						case 'devices':
 							if (!$has_device_view) { continue 2; }
-							$url = '/app/devices/devices.php';
+							$url_path = '/app/devices/devices.php';
 							break;
 						case 'extensions':
 							if (!$has_extension_view) { continue 2; }
-							$url = '/app/extensions/extensions.php';
+							$url_path = '/app/extensions/extensions.php';
 							break;
 						case 'gateways':
 							if (!$has_gateway_view) { continue 2; }
-							$url = '/app/gateways/gateways.php';
+							$url_path = '/app/gateways/gateways.php';
 							break;
 						case 'ivr_menus':
 							if (!$has_ivr_menu_view) { continue 2; }
-							$url = '/app/ivr_menus/ivr_menus.php';
+							$url_path = '/app/ivr_menus/ivr_menus.php';
 							break;
 						case 'ring_groups':
 							if (!$has_ring_group_view) { continue 2; }
-							$url = '/app/ring_groups/ring_groups.php';
+							$url_path = '/app/ring_groups/ring_groups.php';
 							break;
 					}
-					$tr_link = "href='".PROJECT_PATH.$url."'";
+					$tr_link = "href='".PROJECT_PATH.$url_path."'";
 					echo "<tr ".$tr_link." style='cursor: pointer;'>\n";
 					echo "<td valign='top' class='".$row_style[$c]." hud_text'><a ".$tr_link.">".$text['label-'.$category]."</a></td>\n";
 					echo "<td valign='top' class='".$row_style[$c]." hud_text' style='text-align: center;'>".$used."</td>\n";

@@ -45,6 +45,8 @@ if (!class_exists('auto_loader')) {
 }
 
 // Use a global url instance that parses all requests and provides utility functions for working with URLs.
+
+/** @var url $url Url object used to modify the current url parameters given */
 global $url;
 $url = url::from_request();
 
