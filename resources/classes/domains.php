@@ -29,7 +29,7 @@ sreis
  * domains class
  *
  */
-class domains {
+class domains implements domain_event {
 
 	/**
 	 * declare constant variables
@@ -904,6 +904,49 @@ class domains {
 			return $result;
 		}
 		return '';
+	}
+
+	/**
+	 * Implementation of domain_event interface.
+	 * Executed when the active domain is changed.
+	 * Updates session state with the new domain details and refreshes setting arrays.
+	 *
+	 * @param settings $settings The current settings object.
+	 * @param string $domain_uuid The UUID of the domain being switched to.
+	 * @return void
+	 */
+	public static function on_domain_changed(settings $settings, string $domain_uuid): void {
+		// include the domains app if restricted by permission
+		if (file_exists(PROJECT_ROOT . "/app/domains/app_config.php") && !permission_exists('domain_all')) {
+			include_once PROJECT_ROOT . "/app/domains/domains.php";
+		}
+
+		// update the domain session variables
+		$_SESSION['previous_domain_uuid'] = $_SESSION['domain_uuid'];
+		$_SESSION['domain_uuid'] = $domain_uuid;
+
+		// get the domain details
+		$database = database::new();
+		$sql = "select * from v_domains ";
+		$sql .= "order by domain_name asc ";
+		$domains = $database->select($sql, null, 'all');
+		if (!empty($domains)) {
+			foreach ($domains as $row) {
+				$_SESSION['domains'][$row['domain_uuid']] = $row;
+			}
+		}
+		unset($sql, $domains);
+
+		// update the domain name and context session variables
+		$_SESSION['domain_name'] = $_SESSION['domains'][$domain_uuid]['domain_name'];
+		$_SESSION['context'] = $_SESSION['domain_name'];
+
+		// clear the extension array so that it is regenerated for the selected domain
+		unset($_SESSION['extension_array']);
+
+		// refresh the setting arrays for the new domain
+		$domain = new domains();
+		$domain->set();
 	}
 
 }

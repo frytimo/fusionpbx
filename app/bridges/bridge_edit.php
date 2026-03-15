@@ -37,10 +37,9 @@
 	$text = new text()->get();
 
 //action add or update
-	if (!empty($_REQUEST["id"]) && is_uuid($_REQUEST["id"])) {
+	if (!empty($url->get('id')) && is_uuid($url->get('id'))) {
 		$action = "update";
-		$bridge_uuid = $_REQUEST["id"];
-		$id = $_REQUEST["id"];
+		$bridge_uuid = $url->get('id');
 	}
 	else {
 		$action = "add";
@@ -53,25 +52,25 @@
 	$bridge_description = '';
 
 //get http post variables and set them to php variables
-	if (!empty($_POST)) {
-		$bridge_uuid = $_POST["bridge_uuid"] ?? null;
-		$bridge_name = $_POST["bridge_name"] ?? null;
-		$bridge_action = $_POST["bridge_action"] ?? null;
-		$bridge_profile = $_POST["bridge_profile"] ?? null;
-		$bridge_variables = $_POST["bridge_variables"] ?? null;
-		$bridge_gateways = $_POST["bridge_gateways"] ?? null;
-		$destination_number = $_POST["destination_number"] ?? null;
-		$bridge_destination = $_POST["bridge_destination"] ?? null;
-		$bridge_enabled = $_POST["bridge_enabled"] ?? null;
-		$bridge_description = $_POST["bridge_description"] ?? null;
+	if ($url->has_post('bridge_name') || $url->has_post('bridge_uuid')) {
+		$bridge_uuid = $url->post('bridge_uuid');
+		$bridge_name = $url->post('bridge_name');
+		$bridge_action = $url->post('bridge_action');
+		$bridge_profile = $url->post('bridge_profile');
+		$bridge_variables = $url->post('bridge_variables');
+		$bridge_gateways = $url->post('bridge_gateways');
+		$destination_number = $url->post('destination_number');
+		$bridge_destination = $url->post('bridge_destination');
+		$bridge_enabled = $url->post('bridge_enabled');
+		$bridge_description = $url->post('bridge_description');
 	}
 
 //process the user data and save it to the database
-	if (!empty($_POST) && empty($_POST["persistformvar"])) {
+	if (($url->has_post('bridge_name') || $url->has_post('bridge_uuid')) && $url->post('persistformvar') === null) {
 
 		//delete the bridge
 			if ($has_bridge_delete) {
-				if ($_POST['action'] == 'delete' && is_uuid($bridge_uuid)) {
+				if ($url->post('action') == 'delete' && is_uuid($bridge_uuid)) {
 					//prepare
 						$array[0]['checked'] = 'true';
 						$array[0]['uuid'] = $bridge_uuid;
@@ -79,22 +78,20 @@
 						$obj = new bridges;
 						$obj->delete($array);
 					//redirect
-						header('Location: bridges.php');
-						exit;
+						url::redirect('bridges.php');
 				}
 			}
 
 		//get the uuid from the POST
 			if ($action == "update") {
-				$bridge_uuid = $_POST["bridge_uuid"];
+				$bridge_uuid = $url->post('bridge_uuid');
 			}
 
 		//validate the token
 			$token = new token;
-			if (!$token->validate($_SERVER['PHP_SELF'])) {
+			if (!$token->validate($url->get_path())) {
 				message::add($text['message-invalid_token'],'negative');
-				header('Location: bridges.php');
-				exit;
+				url::redirect('bridges.php');
 			}
 
 		//check for all required data
@@ -102,7 +99,7 @@
 			if (empty($bridge_name)) { $msg .= $text['message-required']." ".$text['label-bridge_name']."<br>\n"; }
 			//if (empty($bridge_destination)) { $msg .= $text['message-required']." ".$text['label-bridge_destination']."<br>\n"; }
 			if (empty($bridge_enabled)) { $msg .= $text['message-required']." ".$text['label-bridge_enabled']."<br>\n"; }
-			if (!empty($msg) && empty($_POST["persistformvar"])) {
+			if (!empty($msg) && $url->post('persistformvar') === null) {
 				require_once "resources/header.php";
 				require_once "resources/persist_form_var.php";
 				echo "<div align='center'>\n";
@@ -178,14 +175,13 @@
 				if ($action == "update") {
 					$_SESSION["message"] = $text['message-update'];
 				}
-				header('Location: bridges.php');
-				return;
+				url::redirect('bridges.php');
 			}
 	}
 
 //pre-populate the form
-	if (!empty($_GET) && is_array($_GET) && (empty($_POST["persistformvar"]) || $_POST["persistformvar"] != "true")) {
-		$bridge_uuid = $_GET["id"];
+	if ($url->get_query_param('id') !== null && $url->post('persistformvar') === null) {
+		$bridge_uuid = $url->get_query_param('id');
 		$sql = "select * from v_bridges ";
 		$sql .= "where bridge_uuid = :bridge_uuid ";
 		$parameters['bridge_uuid'] = $bridge_uuid;
@@ -350,7 +346,7 @@
 
 //create token
 	$object = new token;
-	$token = $object->create($_SERVER['PHP_SELF']);
+	$token = $object->create($url->get_path());
 
 //show the header
 	$document['title'] = $text['title-bridge'];
@@ -390,12 +386,12 @@
 	echo "</script>\n";
 
 //show the content
-	echo "<form name='frm' id='frm' method='post'>\n";
+	echo "<form name='frm' id='frm' method='post' action='".escape($url->build_relative())."'>\n";
 
 	echo "<div class='action_bar' id='action_bar'>\n";
 	echo "	<div class='heading'><b>".$text['title-bridge']."</b></div>\n";
 	echo "	<div class='actions'>\n";
-	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','style'=>'margin-right: 15px;','link'=>'bridges.php']);
+	echo button::create(['type'=>'button','label'=>$text['button-back'],'icon'=>$settings->get('theme', 'button_icon_back'),'id'=>'btn_back','style'=>'margin-right: 15px;','link'=>$url->delete('id')->set_resource('bridges.php')->build_relative()]);
 	if ($action == 'update' && $has_bridge_delete) {
 		echo button::create(['type'=>'button','label'=>$text['button-delete'],'icon'=>$settings->get('theme', 'button_icon_delete'),'name'=>'btn_delete','style'=>'margin-right: 15px;','onclick'=>"modal_open('modal-delete','btn_delete');"]);
 	}

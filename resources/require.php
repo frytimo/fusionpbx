@@ -46,7 +46,7 @@ if (!class_exists('auto_loader')) {
 
 // Use a global url instance that parses all requests and provides utility functions for working with URLs.
 global $url;
-$url = new url();
+$url = url::from_request();
 
 // load config file
 global $config;
@@ -88,6 +88,7 @@ $user_uuid = $_SESSION['user_uuid'] ?? '';
 // load settings
 global $settings;
 $settings = new settings(['database' => $database, 'domain_uuid' => $domain_uuid, 'user_uuid' => $user_uuid]);
+$url->set_settings($settings);
 
 // check if the cidr range is valid
 global $no_cidr;
@@ -107,35 +108,9 @@ if (file_exists(__DIR__ . '/switch.php')) {
 
 // change the domain
 if (!empty($_GET["domain_uuid"]) && is_uuid($_GET["domain_uuid"]) && !empty($_GET["domain_change"]) && $_GET["domain_change"] == "true" && permission_exists('domain_select')) {
-	// include domains
-	if (file_exists(dirname(__DIR__, 1) . "/app/domains/app_config.php") && !permission_exists('domain_all')) {
-		include_once "app/domains/domains.php";
-	}
-
-	// update the domain session variables
 	$domain_uuid = $_GET["domain_uuid"];
-	$_SESSION["previous_domain_uuid"] = $_SESSION['domain_uuid'];
-	$_SESSION['domain_uuid'] = $domain_uuid;
-
-	// get the domain details
-	$sql = "select * from v_domains ";
-	$sql .= "order by domain_name asc ";
-	$domains = $database->select($sql, null, 'all');
-	if (!empty($domains)) {
-		foreach ($domains as $row) {
-			$_SESSION['domains'][$row['domain_uuid']] = $row;
-		}
+	$listeners = $autoload->get_interface_list('domain_event');
+	foreach ($listeners as $class) {
+		$class::on_domain_changed($settings, $domain_uuid);
 	}
-	unset($sql, $domains);
-
-	// update the domain session variables
-	$_SESSION["domain_name"] = $_SESSION['domains'][$domain_uuid]['domain_name'];
-	$_SESSION["context"] = $_SESSION["domain_name"];
-
-	// clear the extension array so that it is regenerated for the selected domain
-	unset($_SESSION['extension_array']);
-
-	// set the setting arrays
-	$domain = new domains();
-	$domain->set();
 }
