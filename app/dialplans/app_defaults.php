@@ -183,6 +183,108 @@ if ($domains_processed == 1) {
 	unset($sql, $num_rows);
 }
 
+// add default setting for inline LED true color
+if ($domains_processed == 1) {
+	$sql = "select count(*) as num_rows from v_default_settings ";
+	$sql .= "where default_setting_category = 'theme' ";
+	$sql .= "and default_setting_subcategory = 'dialplan_editor_inline_true_color' ";
+	$sql .= "and default_setting_name = 'text' ";
+	$num_rows = $database->select($sql, null, 'column');
+	if ($num_rows == 0) {
+		$sql = "insert into v_default_settings ";
+		$sql .= "(";
+		$sql .= "default_setting_uuid, ";
+		$sql .= "default_setting_category, ";
+		$sql .= "default_setting_subcategory, ";
+		$sql .= "default_setting_name, ";
+		$sql .= "default_setting_value, ";
+		$sql .= "default_setting_enabled, ";
+		$sql .= "default_setting_description ";
+		$sql .= ")";
+		$sql .= "values ";
+		$sql .= "(";
+		$sql .= "'a1b2c3d4-e5f6-7890-abcd-ef1234567890', ";
+		$sql .= "'theme', ";
+		$sql .= "'dialplan_editor_inline_true_color', ";
+		$sql .= "'text', ";
+		$sql .= "'#40bb62', ";
+		$sql .= "'true', ";
+		$sql .= "'LED color for the Inline button when inline=true' ";
+		$sql .= ")";
+		$database->execute($sql);
+		unset($sql);
+	}
+	unset($sql, $num_rows);
+}
+
+// add default setting for inline LED false color
+if ($domains_processed == 1) {
+	$sql = "select count(*) as num_rows from v_default_settings ";
+	$sql .= "where default_setting_category = 'theme' ";
+	$sql .= "and default_setting_subcategory = 'dialplan_editor_inline_false_color' ";
+	$sql .= "and default_setting_name = 'text' ";
+	$num_rows = $database->select($sql, null, 'column');
+	if ($num_rows == 0) {
+		$sql = "insert into v_default_settings ";
+		$sql .= "(";
+		$sql .= "default_setting_uuid, ";
+		$sql .= "default_setting_category, ";
+		$sql .= "default_setting_subcategory, ";
+		$sql .= "default_setting_name, ";
+		$sql .= "default_setting_value, ";
+		$sql .= "default_setting_enabled, ";
+		$sql .= "default_setting_description ";
+		$sql .= ")";
+		$sql .= "values ";
+		$sql .= "(";
+		$sql .= "'b2c3d4e5-f6a7-8901-bcde-f12345678901', ";
+		$sql .= "'theme', ";
+		$sql .= "'dialplan_editor_inline_false_color', ";
+		$sql .= "'text', ";
+		$sql .= "'#e03030', ";
+		$sql .= "'true', ";
+		$sql .= "'LED color for the Inline button when inline=false' ";
+		$sql .= ")";
+		$database->execute($sql);
+		unset($sql);
+	}
+	unset($sql, $num_rows);
+}
+
+// add default setting for inline LED null color
+if ($domains_processed == 1) {
+	$sql = "select count(*) as num_rows from v_default_settings ";
+	$sql .= "where default_setting_category = 'theme' ";
+	$sql .= "and default_setting_subcategory = 'dialplan_editor_inline_null_color' ";
+	$sql .= "and default_setting_name = 'text' ";
+	$num_rows = $database->select($sql, null, 'column');
+	if ($num_rows == 0) {
+		$sql = "insert into v_default_settings ";
+		$sql .= "(";
+		$sql .= "default_setting_uuid, ";
+		$sql .= "default_setting_category, ";
+		$sql .= "default_setting_subcategory, ";
+		$sql .= "default_setting_name, ";
+		$sql .= "default_setting_value, ";
+		$sql .= "default_setting_enabled, ";
+		$sql .= "default_setting_description ";
+		$sql .= ")";
+		$sql .= "values ";
+		$sql .= "(";
+		$sql .= "'c3d4e5f6-a7b8-9012-cdef-123456789012', ";
+		$sql .= "'theme', ";
+		$sql .= "'dialplan_editor_inline_null_color', ";
+		$sql .= "'text', ";
+		$sql .= "'#404040', ";
+		$sql .= "'true', ";
+		$sql .= "'LED dim color for the Inline button when inline is unset (null)' ";
+		$sql .= ")";
+		$database->execute($sql);
+		unset($sql);
+	}
+	unset($sql, $num_rows);
+}
+
 // add not found dialplan to inbound routes
 
 /*

@@ -313,6 +313,20 @@ $_led_r = hexdec(substr($_led_hex, 0, 2)); $_led_g = hexdec(substr($_led_hex, 2,
 $led_color_dark  = sprintf('#%02x%02x%02x', (int)($_led_r * 0.55), (int)($_led_g * 0.55), (int)($_led_b * 0.55));
 $led_glow_color  = "rgba({$_led_r}, {$_led_g}, {$_led_b}, 0.55)";
 unset($_led_hex, $_led_r, $_led_g, $_led_b);
+// LED colours for the INLINE single-button (three states: true / false / null)
+$inline_led_true_color  = $settings->get('theme', 'dialplan_editor_inline_true_color',  '#40bb62');
+$_hex = ltrim($inline_led_true_color, '#');
+$_r = hexdec(substr($_hex, 0, 2)); $_g = hexdec(substr($_hex, 2, 2)); $_b = hexdec(substr($_hex, 4, 2));
+$inline_led_true_dark   = sprintf('#%02x%02x%02x', (int)($_r * 0.55), (int)($_g * 0.55), (int)($_b * 0.55));
+$inline_led_true_glow   = "rgba({$_r}, {$_g}, {$_b}, 0.55)";
+unset($_hex, $_r, $_g, $_b);
+$inline_led_false_color = $settings->get('theme', 'dialplan_editor_inline_false_color', '#e03030');
+$_hex = ltrim($inline_led_false_color, '#');
+$_r = hexdec(substr($_hex, 0, 2)); $_g = hexdec(substr($_hex, 2, 2)); $_b = hexdec(substr($_hex, 4, 2));
+$inline_led_false_dark  = sprintf('#%02x%02x%02x', (int)($_r * 0.55), (int)($_g * 0.55), (int)($_b * 0.55));
+$inline_led_false_glow  = "rgba({$_r}, {$_g}, {$_b}, 0.55)";
+unset($_hex, $_r, $_g, $_b);
+$inline_led_null_color  = $settings->get('theme', 'dialplan_editor_inline_null_color',  '#404040');
 // LED visibility — each can be disabled independently via Default Settings › theme
 $led_node_enabled   = $settings->get('theme', 'dialplan_editor_led_node_enabled',   'true') !== 'false';
 $led_break_enabled  = $settings->get('theme', 'dialplan_editor_led_break_enabled',  'true') !== 'false';
@@ -916,59 +930,6 @@ require_once "resources/header.php";
 .node-status-dot { display: none; }
 <?php endif; ?>
 
-/* 3-position pill toggle (INLINE field) */
-.tri-toggle-wrapper {
-	flex: 0 0 auto;
-	min-width: 100px;
-}
-
-.tri-toggle {
-	position: relative;
-	display: flex;
-	height: 24px;
-	border-radius: 12px;
-	background: #e0e0e0;
-	overflow: hidden;
-	user-select: none;
-	cursor: pointer;
-	--pill-pos: 0;
-}
-
-.tri-toggle-opt {
-	flex: 1;
-	text-align: center;
-	font-size: 10px;
-	line-height: 24px;
-	cursor: pointer;
-	z-index: 2;
-	position: relative;
-	color: #666;
-	transition: color 0.2s;
-	white-space: nowrap;
-}
-
-.tri-toggle-opt.active {
-	color: <?php echo $button_text_color ?? '#ffffff'; ?>;
-	font-weight: bold;
-}
-
-.tri-toggle-pill {
-	position: absolute;
-	top: 2px;
-	height: 20px;
-	width: calc(33.333% - 4px);
-	left: calc(var(--pill-pos) * 33.333% + 2px);
-	border-radius: 10px;
-	background: linear-gradient(to bottom,
-		<?php echo $button_background_color ?? '#4f4f4f'; ?>,
-		<?php echo $button_background_color_bottom ?? '#000000'; ?>
-	);
-	box-shadow: 0 1px 3px rgba(0,0,0,0.25);
-	transition: left 0.2s ease;
-	z-index: 1;
-	pointer-events: none;
-}
-
 /* Compact button group (BREAK, REGEX mode) — rocker style */
 .compact-btn-group-wrapper {
 	flex: 0 0 auto;
@@ -1023,30 +984,24 @@ require_once "resources/header.php";
 	transform: translateY(1px);
 }
 
-/* Inline rocker toggle (action / anti-action block) */
-.inline-rocker-wrapper {
+/* Inline LED button (action / anti-action block) */
+/* Use higher-specificity selector to override .dialplan-node-form > div (flex: 1) */
+.dialplan-node-form > .inline-rocker-wrapper {
 	flex: 0 0 auto;
-	display: flex;
-	flex-direction: column;
-	gap: 3px;
-	min-width: 90px;
-}
-
-.inline-rocker-group {
-	display: flex;
-	gap: 5px;
-	align-items: center;
+	min-width: 0;
 }
 
 .inline-rocker-btn {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 40px;
-	height: 30px;
-	padding: 0;
-	padding-top: 6px;
-	font-size: 10px;
+	width: fit-content;
+	min-width: 75px;
+	height: auto;
+	min-height: 38px;
+	padding: 2px 4px;
+	padding-top: 7px;
+	font-size: 9px;
 	font-weight: 700;
 	font-family: inherit;
 	border-radius: 3px;
@@ -1054,7 +1009,7 @@ require_once "resources/header.php";
 	user-select: none;
 	letter-spacing: 0.02em;
 	position: relative;
-	/* Raised / out state */
+	/* Raised / out state — null/omitted */
 	background: linear-gradient(to bottom, #f0f0f0 0%, #d8d8d8 100%);
 	border: 1px solid #aaa;
 	border-bottom-width: 2px;
@@ -1069,14 +1024,19 @@ require_once "resources/header.php";
 	background: linear-gradient(to bottom, #e8e8e8 0%, #d0d0d0 100%);
 }
 
-/* Pressed / “in” state */
-.inline-rocker-btn.pressed {
+/* Pressed / “in” state — true */
+.inline-rocker-btn.state-true {
 	border-bottom-width: 1px;
 	box-shadow: inset 0 2px 4px rgba(0,0,0,0.28), 0 1px 0 rgba(255,255,255,0.25);
 	transform: translateY(1px);
 }
 
-/* True / False pressed: no colour tint — LED handles all colour feedback */
+/* Pressed / “in” state — false */
+.inline-rocker-btn.state-false {
+	border-bottom-width: 1px;
+	box-shadow: inset 0 2px 4px rgba(0,0,0,0.28), 0 1px 0 rgba(255,255,255,0.25);
+	transform: translateY(1px);
+}
 
 /* LED indicator at top — shared by compact-btn and inline-rocker-btn */
 <?php if ($led_break_enabled): ?>
@@ -1101,7 +1061,7 @@ require_once "resources/header.php";
 }
 <?php endif; ?>
 <?php if ($led_inline_enabled): ?>
-/* LED indicator — INLINE True/False rocker (Default Settings › theme › dialplan_editor_led_inline_enabled) */
+/* LED indicator — INLINE single button (Default Settings › theme › dialplan_editor_led_inline_enabled) */
 .inline-rocker-btn::before {
 	content: '';
 	position: absolute;
@@ -1111,14 +1071,18 @@ require_once "resources/header.php";
 	width: 8px;
 	height: 3px;
 	border-radius: 2px;
-	background: rgba(80, 20, 20, 0.28);
+	background: <?= $inline_led_null_color ?>;
 	box-shadow: none;
 	transition: background 0.12s, box-shadow 0.12s;
 	pointer-events: none;
 }
-.inline-rocker-btn.pressed::before {
-	background: linear-gradient(to right, <?= $led_color_dark ?>, <?= $setting_led_color ?>, <?= $led_color_dark ?>);
-	box-shadow: 0 0 4px 2px <?= $led_glow_color ?>;
+.inline-rocker-btn.state-true::before {
+	background: linear-gradient(to right, <?= $inline_led_true_dark ?>, <?= $inline_led_true_color ?>, <?= $inline_led_true_dark ?>);
+	box-shadow: 0 0 4px 2px <?= $inline_led_true_glow ?>;
+}
+.inline-rocker-btn.state-false::before {
+	background: linear-gradient(to right, <?= $inline_led_false_dark ?>, <?= $inline_led_false_color ?>, <?= $inline_led_false_dark ?>);
+	box-shadow: 0 0 4px 2px <?= $inline_led_false_glow ?>;
 }
 <?php endif; ?>
 
@@ -2347,109 +2311,37 @@ require_once "resources/header.php";
 		});
 	}
 
-	// 3-position pill toggle for the INLINE field (values: '', 'true', 'false')
-	function createTriToggle(label, currentValue, onChange) {
-		const opts = ['', 'true', 'false'];
-		const optLabels = ['–', 'True', 'False'];
-		let posIndex = opts.indexOf(currentValue);
-		if (posIndex < 0) posIndex = 0;
-
-		const wrapper = document.createElement('div');
-		wrapper.className = 'tri-toggle-wrapper';
-
-		const labelEl = document.createElement('label');
-		labelEl.textContent = label;
-		wrapper.appendChild(labelEl);
-
-		const track = document.createElement('div');
-		track.className = 'tri-toggle';
-
-		const pill = document.createElement('span');
-		pill.className = 'tri-toggle-pill';
-
-		const optEls = [];
-		opts.forEach(function(opt, i) {
-			const span = document.createElement('span');
-			span.className = 'tri-toggle-opt' + (i === posIndex ? ' active' : '');
-			span.textContent = optLabels[i];
-			span.dataset.idx = i;
-			optEls.push(span);
-			track.appendChild(span);
-		});
-		track.appendChild(pill);
-
-		function updatePill(idx) {
-			optEls.forEach(function(el, i) {
-				el.classList.toggle('active', i === idx);
-			});
-			track.style.setProperty('--pill-pos', idx);
-		}
-
-		track.addEventListener('click', function(e) {
-			const span = e.target.closest('.tri-toggle-opt');
-			if (!span) return;
-			const idx = parseInt(span.dataset.idx, 10);
-			posIndex = idx;
-			updatePill(idx);
-			onChange(opts[idx]);
-		});
-
-		wrapper.appendChild(track);
-		updatePill(posIndex);
-		return wrapper;
-	}
-
-	// Rocker toggle for the INLINE field in action / anti-action nodes
+	// Single LED button for the INLINE field in action / anti-action nodes.
+	// Cycles: '' (null/omitted) → 'true' → 'false' → '' on each click.
 	function createInlineRocker(currentValue, onChange) {
 		const wrapper = document.createElement('div');
 		wrapper.className = 'inline-rocker-wrapper';
 
-		const labelEl = document.createElement('label');
-		labelEl.textContent = 'Inline';
-		wrapper.appendChild(labelEl);
-
-		const group = document.createElement('div');
-		group.className = 'inline-rocker-group';
-
-		const trueBtn = document.createElement('button');
-		trueBtn.type = 'button';
-		trueBtn.className = 'inline-rocker-btn inline-rocker-true';
-		trueBtn.textContent = 'True';
-		trueBtn.title = 'true';
-
-		const falseBtn = document.createElement('button');
-		falseBtn.type = 'button';
-		falseBtn.className = 'inline-rocker-btn inline-rocker-false';
-		falseBtn.textContent = 'False';
-		falseBtn.title = 'false';
+		const btn = document.createElement('button');
+		btn.type = 'button';
+		btn.className = 'inline-rocker-btn';
+		btn.textContent = 'Inline';
 
 		const state = { value: currentValue };
 
+		const stateLabels = { 'true': 'True', 'false': 'False', '': 'Null (omitted)' };
+
 		function apply(val) {
-			trueBtn.classList.toggle('pressed', val === 'true');
-			falseBtn.classList.toggle('pressed', val === 'false');
+			btn.classList.toggle('state-true',  val === 'true');
+			btn.classList.toggle('state-false', val === 'false');
+			btn.title = stateLabels[val] ?? 'Null (omitted)';
 		}
 
-		trueBtn.addEventListener('click', function() {
-			const newVal = state.value === 'true' ? '' : 'true';
-			state.value = newVal;
-			apply(newVal);
-			onChange(newVal);
-		});
-
-		falseBtn.addEventListener('click', function() {
-			const newVal = state.value === 'false' ? '' : 'false';
+		btn.addEventListener('click', function() {
+			const cycle = { '': 'true', 'true': 'false', 'false': '' };
+			const newVal = cycle[state.value] ?? '';
 			state.value = newVal;
 			apply(newVal);
 			onChange(newVal);
 		});
 
 		apply(currentValue);
-
-		group.appendChild(trueBtn);
-		group.appendChild(falseBtn);
-		wrapper.appendChild(group);
-
+		wrapper.appendChild(btn);
 		return wrapper;
 	}
 
