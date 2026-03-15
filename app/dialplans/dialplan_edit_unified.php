@@ -306,6 +306,17 @@ $setting_theme = !empty($settings->get('editor', 'theme')) ? $settings->get('edi
 $setting_invisibles = $settings->get('editor', 'invisibles', 'false');
 $setting_indenting = $settings->get('editor', 'indent_guides', 'false');
 $setting_numbering = $settings->get('editor', 'line_numbers', 'true');
+// LED active colour for dialplan editor push-buttons (Default Settings › theme › dialplan_editor_led_color)
+$setting_led_color = !empty($settings->get('theme', 'dialplan_editor_led_color')) ? $settings->get('theme', 'dialplan_editor_led_color') : '#40bb62';
+$_led_hex = ltrim($setting_led_color, '#');
+$_led_r = hexdec(substr($_led_hex, 0, 2)); $_led_g = hexdec(substr($_led_hex, 2, 2)); $_led_b = hexdec(substr($_led_hex, 4, 2));
+$led_color_dark  = sprintf('#%02x%02x%02x', (int)($_led_r * 0.55), (int)($_led_g * 0.55), (int)($_led_b * 0.55));
+$led_glow_color  = "rgba({$_led_r}, {$_led_g}, {$_led_b}, 0.55)";
+unset($_led_hex, $_led_r, $_led_g, $_led_b);
+// LED visibility — each can be disabled independently via Default Settings › theme
+$led_node_enabled   = $settings->get('theme', 'dialplan_editor_led_node_enabled',   'true') !== 'false';
+$led_break_enabled  = $settings->get('theme', 'dialplan_editor_led_break_enabled',  'true') !== 'false';
+$led_inline_enabled = $settings->get('theme', 'dialplan_editor_led_inline_enabled', 'true') !== 'false';
 
 // button theme settings for drag zone styling
 $button_background_color = $settings->get('theme', 'button_background_color', '#4f4f4f');
@@ -347,95 +358,104 @@ require_once "resources/header.php";
 }
 
 .dialplan-editor-container {
-	display: flex;
-	gap: 0;
+	display: block;
 	position: relative;
-	isolation: isolate;
 }
 
 .dialplan-visual-panel {
-	flex: 1;
-	min-width: 0;
+	width: 100%;
 	position: relative;
-	transition: flex 0.3s ease;
 	padding: 10px;
 	isolation: isolate;
 }
 
 .dialplan-xml-panel {
-	width: 40%;
-	min-width: 200px;
-	max-width: 80%;
+	width: 100%;
 	display: flex;
 	flex-direction: column;
-	border-left: 1px solid var(--border-color, #ccc);
 	position: relative;
 	isolation: isolate;
+	border-top: 1px solid var(--border-color, #ddd);
 }
 
+/* Tab-controlled panel visibility */
+.panel-hidden {
+	display: none !important;
+}
+
+/* Legacy collapsed state */
 .dialplan-xml-panel.collapsed {
-	width: 0 !important;
-	min-width: 0 !important;
-	overflow: hidden;
-	border-left: none;
+	display: none !important;
 }
 
-/* Resize handle for XML panel - modern grip style with 6 dots */
-.xml-resize-handle {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 12px;
-	height: 100%;
-	cursor: col-resize;
-	background: var(--border-color, #ddd);
-	z-index: 10;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.xml-resize-handle::before {
-	content: '';
-	width: 6px;
-	height: 24px;
-	background-image: radial-gradient(circle, var(--text-color, #666) 1.5px, transparent 1.5px);
-	background-size: 4px 8px;
-	background-position: center;
-	opacity: 0.6;
-}
-
-.xml-resize-handle:hover::before,
-.xml-resize-handle.dragging::before {
-	opacity: 1;
-}
-
-/* Toggle button - only visible when panel is collapsed */
-.dialplan-panel-toggle {
-	position: sticky;
-	top: 100px;
-	align-self: flex-start;
-	z-index: 2;
-	background: var(--button-background-color, #f0f0f0);
-	border: 1px solid var(--border-color, #ccc);
-	border-radius: 4px;
-	padding: 8px 4px;
-	cursor: pointer;
-	margin-left: -12px;
-	margin-right: -12px;
-	display: none;
-}
-
-.dialplan-panel-toggle.visible {
-	display: block;
-}
-
+/* Resize handle and old panel toggle — not used in tab layout */
+.xml-resize-handle,
+.xml-resize-handle::before,
+.dialplan-panel-toggle,
+.dialplan-panel-toggle.visible,
 .dialplan-panel-toggle:hover {
-	background: var(--button-background-color-hover, #e0e0e0);
+	display: none !important;
 }
 
 #editor {
-	height: 500px;
+	height: calc(100vh - 200px);
+	min-height: 400px;
+}
+
+/* XML panel editor toolbar */
+.xml-panel-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 5px 10px;
+	border-bottom: 1px solid var(--border-color, #ccc);
+	background: var(--card-background-color, #f8f8f8);
+	flex-wrap: wrap;
+	min-height: 40px;
+}
+
+.xml-tool-btn {
+	width: 28px;
+	height: 28px;
+	border: 1px solid var(--border-color, #ccc);
+	border-radius: 3px;
+	background: transparent;
+	cursor: pointer;
+	color: var(--text-color, #555);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 13px;
+	transition: background 0.15s, color 0.15s;
+}
+
+.xml-tool-btn:hover {
+	background: rgba(0, 0, 0, 0.08);
+}
+
+.xml-tool-btn.active {
+	background: #0275d8;
+	border-color: #0275d8;
+	color: #fff;
+}
+
+.xml-tool-select {
+	height: 28px;
+	font-size: 12px;
+	border: 1px solid var(--border-color, #ccc);
+	border-radius: 3px;
+	background: var(--input-background-color, #fff);
+	color: var(--text-color, #444);
+	padding: 0 4px;
+	cursor: pointer;
+}
+
+.xml-toolbar-sep {
+	width: 1px;
+	height: 18px;
+	background: var(--border-color, #ddd);
+	margin: 0 4px;
+	flex-shrink: 0;
 }
 
 /* Stale/Error overlay */
@@ -657,6 +677,7 @@ require_once "resources/header.php";
 	letter-spacing: 0.5px;
 	white-space: nowrap;
 	pointer-events: none;
+	margin-left: 6px;
 }
 
 /* Remove old header styles */
@@ -745,60 +766,6 @@ require_once "resources/header.php";
 .dialplan-node-form > div.field-data {
 	flex: 2;
 	min-width: 180px;
-}
-
-.dialplan-node-form > div.field-enabled {
-	flex: 0 0 auto;
-	min-width: 50px;
-	max-width: 60px;
-}
-
-/* Self-contained toggle switch for node enabled/disabled */
-.node-toggle-switch {
-	position: relative;
-	display: inline-block;
-	width: 44px;
-	height: 24px;
-	margin-top: 2px;
-}
-
-.node-toggle-switch input {
-	opacity: 0;
-	width: 0;
-	height: 0;
-}
-
-.node-toggle-slider {
-	position: absolute;
-	cursor: pointer;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background-color: <?php echo $toggle_color_disabled; ?>;
-	border-radius: 24px;
-	transition: 0.3s;
-	z-index: 5;
-}
-
-.node-toggle-slider:before {
-	position: absolute;
-	content: '';
-	height: 18px;
-	width: 18px;
-	left: 3px;
-	bottom: 3px;
-	background-color: <?php echo $toggle_handle_color; ?>;
-	border-radius: 50%;
-	transition: 0.3s;
-}
-
-.node-toggle-switch input:checked + .node-toggle-slider {
-	background-color: <?php echo $toggle_color_enabled; ?>;
-}
-
-.node-toggle-switch input:checked + .node-toggle-slider:before {
-	transform: translateX(20px);
 }
 
 /* Property toggle switches (larger version for properties panel) */
@@ -925,6 +892,236 @@ require_once "resources/header.php";
 	color: #999;
 }
 
+<?php if ($led_node_enabled): ?>
+/* Portrait LED pill — left edge of drag zone (Default Settings › theme › dialplan_editor_led_node_enabled) */
+.node-status-dot {
+	position: absolute;
+	left: 3px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 4px;
+	height: 9px;
+	border-radius: 2px;
+	background: linear-gradient(to bottom, <?= $led_color_dark ?>, <?= $setting_led_color ?>, <?= $led_color_dark ?>);
+	box-shadow: 0 0 5px 2px <?= $led_glow_color ?>;
+	pointer-events: none;
+	transition: background 0.3s, box-shadow 0.3s;
+	z-index: 12;
+}
+.dialplan-node.node-disabled > .node-status-dot {
+	background: rgba(80, 20, 20, 0.35);
+	box-shadow: none;
+}
+<?php else: ?>
+.node-status-dot { display: none; }
+<?php endif; ?>
+
+/* 3-position pill toggle (INLINE field) */
+.tri-toggle-wrapper {
+	flex: 0 0 auto;
+	min-width: 100px;
+}
+
+.tri-toggle {
+	position: relative;
+	display: flex;
+	height: 24px;
+	border-radius: 12px;
+	background: #e0e0e0;
+	overflow: hidden;
+	user-select: none;
+	cursor: pointer;
+	--pill-pos: 0;
+}
+
+.tri-toggle-opt {
+	flex: 1;
+	text-align: center;
+	font-size: 10px;
+	line-height: 24px;
+	cursor: pointer;
+	z-index: 2;
+	position: relative;
+	color: #666;
+	transition: color 0.2s;
+	white-space: nowrap;
+}
+
+.tri-toggle-opt.active {
+	color: <?php echo $button_text_color ?? '#ffffff'; ?>;
+	font-weight: bold;
+}
+
+.tri-toggle-pill {
+	position: absolute;
+	top: 2px;
+	height: 20px;
+	width: calc(33.333% - 4px);
+	left: calc(var(--pill-pos) * 33.333% + 2px);
+	border-radius: 10px;
+	background: linear-gradient(to bottom,
+		<?php echo $button_background_color ?? '#4f4f4f'; ?>,
+		<?php echo $button_background_color_bottom ?? '#000000'; ?>
+	);
+	box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+	transition: left 0.2s ease;
+	z-index: 1;
+	pointer-events: none;
+}
+
+/* Compact button group (BREAK, REGEX mode) — rocker style */
+.compact-btn-group-wrapper {
+	flex: 0 0 auto;
+	min-width: 130px;
+}
+
+.compact-btn-group-wrapper.regex-mode-wrapper {
+	min-width: 100px;
+}
+
+.compact-btn-group {
+	display: flex;
+	gap: 2px;
+}
+
+.compact-btn {
+	padding: 2px 4px;
+	padding-top: 7px;
+	font-size: 9px;
+	height: auto;
+	min-height: 28px;
+	line-height: 1.2;
+	border-radius: 3px;
+	/* Raised / out state */
+	background: linear-gradient(to bottom, #f0f0f0 0%, #d8d8d8 100%);
+	border: 1px solid #aaa;
+	border-bottom-width: 2px;
+	border-bottom-color: #888;
+	color: #555;
+	cursor: pointer;
+	white-space: normal;
+	word-break: keep-all;
+	flex: 1;
+	min-width: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	position: relative;
+	box-shadow: 0 2px 3px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.8);
+	transform: translateY(0px);
+	transition: background 0.08s, box-shadow 0.08s, transform 0.08s, color 0.08s;
+}
+
+.compact-btn:hover {
+	background: linear-gradient(to bottom, #e8e8e8 0%, #d0d0d0 100%);
+}
+
+.compact-btn.active {
+	border-bottom-width: 1px;
+	box-shadow: inset 0 2px 4px rgba(0,0,0,0.22), 0 1px 0 rgba(255,255,255,0.2);
+	transform: translateY(1px);
+}
+
+/* Inline rocker toggle (action / anti-action block) */
+.inline-rocker-wrapper {
+	flex: 0 0 auto;
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	min-width: 90px;
+}
+
+.inline-rocker-group {
+	display: flex;
+	gap: 5px;
+	align-items: center;
+}
+
+.inline-rocker-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 30px;
+	padding: 0;
+	padding-top: 6px;
+	font-size: 10px;
+	font-weight: 700;
+	font-family: inherit;
+	border-radius: 3px;
+	cursor: pointer;
+	user-select: none;
+	letter-spacing: 0.02em;
+	position: relative;
+	/* Raised / out state */
+	background: linear-gradient(to bottom, #f0f0f0 0%, #d8d8d8 100%);
+	border: 1px solid #aaa;
+	border-bottom-width: 2px;
+	border-bottom-color: #888;
+	color: #555;
+	box-shadow: 0 2px 3px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.8);
+	transform: translateY(0px);
+	transition: background 0.08s, box-shadow 0.08s, transform 0.08s;
+}
+
+.inline-rocker-btn:hover {
+	background: linear-gradient(to bottom, #e8e8e8 0%, #d0d0d0 100%);
+}
+
+/* Pressed / “in” state */
+.inline-rocker-btn.pressed {
+	border-bottom-width: 1px;
+	box-shadow: inset 0 2px 4px rgba(0,0,0,0.28), 0 1px 0 rgba(255,255,255,0.25);
+	transform: translateY(1px);
+}
+
+/* True / False pressed: no colour tint — LED handles all colour feedback */
+
+/* LED indicator at top — shared by compact-btn and inline-rocker-btn */
+<?php if ($led_break_enabled): ?>
+/* LED indicator — BREAK / regex mode buttons (Default Settings › theme › dialplan_editor_led_break_enabled) */
+.compact-btn::before {
+	content: '';
+	position: absolute;
+	top: 3px;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 8px;
+	height: 3px;
+	border-radius: 2px;
+	background: rgba(80, 20, 20, 0.28);
+	box-shadow: none;
+	transition: background 0.12s, box-shadow 0.12s;
+	pointer-events: none;
+}
+.compact-btn.active::before {
+	background: linear-gradient(to right, <?= $led_color_dark ?>, <?= $setting_led_color ?>, <?= $led_color_dark ?>);
+	box-shadow: 0 0 4px 2px <?= $led_glow_color ?>;
+}
+<?php endif; ?>
+<?php if ($led_inline_enabled): ?>
+/* LED indicator — INLINE True/False rocker (Default Settings › theme › dialplan_editor_led_inline_enabled) */
+.inline-rocker-btn::before {
+	content: '';
+	position: absolute;
+	top: 3px;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 8px;
+	height: 3px;
+	border-radius: 2px;
+	background: rgba(80, 20, 20, 0.28);
+	box-shadow: none;
+	transition: background 0.12s, box-shadow 0.12s;
+	pointer-events: none;
+}
+.inline-rocker-btn.pressed::before {
+	background: linear-gradient(to right, <?= $led_color_dark ?>, <?= $setting_led_color ?>, <?= $led_color_dark ?>);
+	box-shadow: 0 0 4px 2px <?= $led_glow_color ?>;
+}
+<?php endif; ?>
+
 /* Inline content row (form + delete button) */
 .dialplan-node-content {
 	display: flex;
@@ -970,60 +1167,67 @@ require_once "resources/header.php";
 }
 
 /* Mobile responsive */
-@media (max-width: 1024px) {
-	.dialplan-editor-container {
-		flex-direction: column;
-	}
-
-	.dialplan-visual-panel,
-	.dialplan-xml-panel {
-		width: 100% !important;
-		min-width: 100% !important;
-	}
-
-	.dialplan-xml-panel {
-		border-left: none;
-		border-top: 1px solid var(--border-color, #ccc);
-	}
-
-	.dialplan-panel-toggle {
-		display: none;
-	}
-
-	.mobile-panel-tabs {
-		display: flex !important;
-	}
-
-	.dialplan-visual-panel.mobile-hidden,
-	.dialplan-xml-panel.mobile-hidden {
-		display: none !important;
-	}
-}
-
-@media (min-width: 1025px) {
-	.mobile-panel-tabs {
-		display: none !important;
-	}
-}
-
+/* Editor tab bar — always visible at all screen sizes */
 .mobile-panel-tabs {
-	display: none;
-	border-bottom: 1px solid var(--border-color, #ccc);
-	margin-bottom: 10px;
+	display: flex;
+	align-items: stretch;
+	border-bottom: 2px solid var(--border-color, #ddd);
+	margin-bottom: 0;
+	background: var(--card-background-color, #f8f8f8);
 }
 
 .mobile-panel-tabs button {
-	flex: 1;
-	padding: 10px;
+	padding: 9px 18px;
 	border: none;
-	background: #f5f5f5;
+	border-bottom: 3px solid transparent;
+	margin-bottom: -2px;
+	background: transparent;
 	cursor: pointer;
+	font-size: 13px;
 	font-weight: 500;
+	color: var(--text-color, #666);
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	transition: color 0.15s, border-color 0.15s, background 0.15s;
+	white-space: nowrap;
+}
+
+.mobile-panel-tabs button:hover {
+	color: #0275d8;
+	background: rgba(2, 117, 216, 0.06);
 }
 
 .mobile-panel-tabs button.active {
-	background: var(--button-background-color-active, #0275d8);
-	color: white;
+	color: #0275d8;
+	border-bottom-color: #0275d8;
+	background: transparent;
+}
+
+.mobile-panel-tabs .tab-spacer {
+	flex: 1;
+}
+
+.mobile-panel-tabs .tab-popout-btn {
+	font-size: 12px;
+	padding: 9px 14px;
+	color: var(--text-color, #888);
+}
+
+.mobile-panel-tabs .tab-popout-btn:hover {
+	color: #17a2b8;
+	background: rgba(23, 162, 184, 0.06);
+}
+
+.mobile-panel-tabs .tab-popout-btn.popped-out {
+	color: #17a2b8;
+	border-bottom-color: #17a2b8;
+}
+
+.mobile-panel-tabs button.tab-disabled {
+	opacity: 0.4;
+	cursor: default;
+	pointer-events: none;
 }
 
 /* Migration warning */
@@ -1357,13 +1561,17 @@ require_once "resources/header.php";
 	</div>
 </div>
 
-<!-- Mobile Panel Tabs -->
+<!-- Editor Tab Bar -->
 <div class="mobile-panel-tabs">
-	<button type="button" id="tab-visual" class="active" onclick="switchMobilePanel('visual');">
+	<button type="button" id="tab-visual" class="active" onclick="switchPanel('visual');">
 		<i class="fas fa-project-diagram"></i> <?php echo $text['label-visual_editor'] ?? 'Visual Editor'; ?>
 	</button>
-	<button type="button" id="tab-xml" onclick="switchMobilePanel('xml');">
+	<button type="button" id="tab-xml" onclick="switchPanel('xml');">
 		<i class="fas fa-code"></i> <?php echo $text['label-xml'] ?? 'XML'; ?>
+	</button>
+	<span class="tab-spacer"></span>
+	<button type="button" id="tab-popout" class="tab-popout-btn" style="display:none;" onclick="popoutXmlPanel();" title="<?php echo $text['label-popout_xml'] ?? 'Pop out XML editor into a separate window'; ?>">
+		<i class="fas fa-external-link-alt"></i> <?php echo $text['label-popout'] ?? 'Pop out'; ?>
 	</button>
 </div>
 
@@ -1412,18 +1620,19 @@ require_once "resources/header.php";
 			</div>
 		</div>
 
-		<!-- Toggle Button -->
-		<button type="button" class="dialplan-panel-toggle <?php echo !$xml_panel_visible ? 'visible' : ''; ?>" id="panel-toggle" onclick="toggleXmlPanel();" title="<?php echo $text['label-toggle_xml'] ?? 'Toggle XML Panel'; ?>">
-			<i class="fas <?php echo $xml_panel_visible ? 'fa-chevron-right' : 'fa-chevron-left'; ?>" id="toggle-icon"></i>
-		</button>
-
-		<!-- XML Panel -->
-		<div class="dialplan-xml-panel <?php echo !$xml_panel_visible ? 'collapsed' : ''; ?>" id="xml-panel">
-			<!-- Resize Handle -->
-			<div class="xml-resize-handle" id="xml-resize-handle" title="<?php echo $text['label-drag_to_resize'] ?? 'Drag to resize'; ?>"></div>
-			<div style="padding: 8px; padding-left: 14px; border-bottom: 1px solid var(--border-color, #ccc); display: flex; align-items: center; justify-content: space-between;">
-				<strong><i class="fas fa-code"></i> <?php echo $text['label-xml'] ?? 'XML'; ?></strong>
-				<select id="theme" class="formfld" style="width: auto;" onchange="changeTheme();">
+		<!-- XML Panel (shown via tab bar) -->
+		<div class="dialplan-xml-panel panel-hidden" id="xml-panel">
+			<div class="xml-panel-toolbar">
+				<button type="button" class="xml-tool-btn<?php echo $setting_numbering === 'true' ? ' active' : ''; ?>" id="btn-line-numbers" onclick="toggleEditorOption('line_numbers');" title="<?php echo $text['label-line_numbers'] ?? 'Line numbers'; ?>"><i class="fas fa-list-ol"></i></button>
+				<button type="button" class="xml-tool-btn<?php echo $setting_invisibles === 'true' ? ' active' : ''; ?>" id="btn-invisibles" onclick="toggleEditorOption('invisibles');" title="<?php echo $text['label-show_invisibles'] ?? 'Show invisible characters'; ?>"><i class="fas fa-paragraph"></i></button>
+				<button type="button" class="xml-tool-btn<?php echo $setting_indenting === 'true' ? ' active' : ''; ?>" id="btn-indent-guides" onclick="toggleEditorOption('indent_guides');" title="<?php echo $text['label-indent_guides'] ?? 'Indent guides'; ?>"><i class="fas fa-indent"></i></button>
+				<span class="xml-toolbar-sep"></span>
+				<select id="font-size" class="xml-tool-select" style="width: 68px;" onchange="changeEditorFontSize();" title="<?php echo $text['label-font_size'] ?? 'Font size'; ?>">
+					<?php foreach (['10px','11px','12px','13px','14px','16px','18px','20px','24px'] as $sz): ?>
+					<option value="<?php echo $sz; ?>"<?php echo $sz === $setting_size ? ' selected' : ''; ?>><?php echo $sz; ?></option>
+					<?php endforeach; ?>
+				</select>
+				<select id="theme" class="xml-tool-select" style="min-width: 120px;" onchange="changeTheme();" title="<?php echo $text['label-theme'] ?? 'Theme'; ?>">
 					<?php
 					$themes = [
 						'Light' => ['chrome', 'clouds', 'crimson_editor', 'dawn', 'dreamweaver', 'eclipse', 'github', 'iplastic', 'katzenmilch', 'kuroir', 'solarized_light', 'sqlserver', 'textmate', 'tomorrow', 'xcode'],
@@ -1490,7 +1699,11 @@ require_once "resources/header.php";
 	'use strict';
 
 	// Available applications from FreeSWITCH (for autocomplete validation)
-	const availableApplications = <?php echo json_encode($applications ?? []); ?>;
+	// 'system' and 'shell' are permanently removed for security
+	const availableApplications = <?php echo json_encode($applications ?? []); ?>.filter(function(app) {
+		const lower = app.toLowerCase();
+		return lower !== 'system' && lower !== 'shell';
+	});
 
 	// Available condition/regex fields (for autocomplete)
 	const availableFields = [
@@ -1795,6 +2008,13 @@ require_once "resources/header.php";
 	let draggedParentArray = null;
 	let draggedIndex = null;
 	let draggedParentNode = null;
+	let isDragging = false;
+
+	// Pop-out XML editor state
+	let xmlPopoutWindow = null;
+	let xmlChannel = null;
+	let xmlPopoutWasEditing = false;
+	const xmlChannelId = 'fpbx-dialplan-<?php echo preg_replace('/[^a-f0-9\-]/', '', $_SESSION['user_uuid'] ?? 'shared'); ?>';
 
 	// Create DOM element for a node
 	function createNodeElement(node, index, parentArray, parentNode) {
@@ -1827,7 +2047,7 @@ require_once "resources/header.php";
 		const nodeTypeClass = 'type-' + displayType.replace('_', '-');
 		dragZone.className = 'dialplan-node-drag-zone ' + nodeTypeClass;
 		dragZone.draggable = true;
-		dragZone.title = '<?php echo $text['label-drag_to_reorder'] ?? 'Drag to reorder or nest'; ?>';
+		dragZone.title = '<?php echo $text['label-drag_to_reorder'] ?? 'Click to enable/disable · Drag to reorder'; ?>';
 
 		// Add rotated label text
 		const typeLabel = document.createElement('span');
@@ -1842,6 +2062,18 @@ require_once "resources/header.php";
 		}
 		dragZone.appendChild(typeLabel);
 
+		// Set initial disabled state
+		if (node.enabled === false) {
+			div.classList.add('node-disabled');
+		} else {
+			node.enabled = true;
+		}
+
+		// Status dot — sibling of drag zone so it is unaffected by the zone's grayscale filter
+		const statusDot = document.createElement('span');
+		statusDot.className = 'node-status-dot';
+		div.appendChild(statusDot);
+
 		dragZone.addEventListener('dragstart', function(e) {
 			// Set the parent node as the dragged element
 			e.stopPropagation();
@@ -1850,6 +2082,11 @@ require_once "resources/header.php";
 		dragZone.addEventListener('dragend', function(e) {
 			e.stopPropagation();
 			handleDragEnd(e, div);
+		});
+		dragZone.addEventListener('click', function(e) {
+			if (isDragging) return;
+			e.stopPropagation();
+			toggleNodeEnabled(node, div);
 		});
 		div.appendChild(dragZone);
 
@@ -1862,20 +2099,18 @@ require_once "resources/header.php";
 		form.className = 'dialplan-node-form';
 
 		if (node.type === 'condition') {
-			form.appendChild(createEnabledToggle(node, div, dragZone, typeLabel));
-
 			if (isRegexCond) {
 				// Regex Condition parent - only shows Regex mode and Break
 				// Field/Expression belong to the child <regex> elements
-				form.appendChild(createFormField('Regex', 'regex', node.attributes.regex || 'all', function(val) {
+				form.appendChild(createCompactButtonGroup('Regex', ['all', 'any', 'xor'], node.attributes.regex || 'all', function(val) {
 					node.attributes.regex = val || 'all';
 					node.isRegexCondition = true;
 					updateXmlFromTree();
-				}, ['all', 'any', 'xor']));
-				form.appendChild(createFormField('Break', 'break', node.attributes.break || '', function(val) {
+				}, 'compact-btn-group-wrapper regex-mode-wrapper'));
+				form.appendChild(createBreakButtonGroup(node.attributes.break || '', function(val) {
 					node.attributes.break = val;
 					updateXmlFromTree();
-				}, ['', 'on-true', 'on-false', 'always', 'never']));
+				}));
 			} else {
 				// Regular Condition - shows Field, Expression, Break
 				form.appendChild(createFormField('Field', 'field', node.attributes.field || '', function(val) {
@@ -1886,14 +2121,13 @@ require_once "resources/header.php";
 					node.attributes.expression = val;
 					updateXmlFromTree();
 				}, null, 'field-data'));
-				form.appendChild(createFormField('Break', 'break', node.attributes.break || '', function(val) {
+				form.appendChild(createBreakButtonGroup(node.attributes.break || '', function(val) {
 					node.attributes.break = val;
 					updateXmlFromTree();
-				}, ['', 'on-true', 'on-false', 'always', 'never']));
+				}));
 			}
 
 		} else if (node.type === 'regex') {
-			form.appendChild(createEnabledToggle(node, div, dragZone, typeLabel));
 			form.appendChild(createFormField('Field', 'field', node.attributes.field || '', function(val) {
 				node.attributes.field = val;
 				updateXmlFromTree();
@@ -1902,13 +2136,12 @@ require_once "resources/header.php";
 				node.attributes.expression = val;
 				updateXmlFromTree();
 			}, null, 'field-data'));
-			form.appendChild(createFormField('Break', 'break', node.attributes.break || '', function(val) {
+			form.appendChild(createBreakButtonGroup(node.attributes.break || '', function(val) {
 				node.attributes.break = val;
 				updateXmlFromTree();
-			}, ['', 'on-true', 'on-false', 'always', 'never']));
+			}));
 
 		} else if (node.type === 'action' || node.type === 'anti-action') {
-			form.appendChild(createEnabledToggle(node, div, dragZone, typeLabel));
 			form.appendChild(createFormField('Application', 'application', node.attributes.application || '', function(val) {
 				node.attributes.application = val;
 				updateXmlFromTree();
@@ -1917,10 +2150,10 @@ require_once "resources/header.php";
 				node.attributes.data = val;
 				updateXmlFromTree();
 			}, null, 'field-data'));
-			form.appendChild(createFormField('Inline', 'inline', node.attributes.inline || '', function(val) {
+			form.appendChild(createInlineRocker(node.attributes.inline || '', function(val) {
 				node.attributes.inline = val;
 				updateXmlFromTree();
-			}, ['', 'true', 'false']));
+			}));
 		}
 
 		contentRow.appendChild(form);
@@ -2051,63 +2284,31 @@ require_once "resources/header.php";
 	}
 
 	// Create enabled toggle switch
-	function createEnabledToggle(node, nodeElement, dragZone, typeLabel) {
-		const wrapper = document.createElement('div');
-		wrapper.className = 'field-enabled';
+	// Toggle node enabled/disabled via drag bar click
+	function toggleNodeEnabled(node, nodeElement) {
+		const isEnabled = !node.enabled;
+		node.enabled = isEnabled;
 
-		const labelEl = document.createElement('label');
-		labelEl.textContent = '<?php echo $text['label-enabled'] ?? 'Enabled'; ?>';
-		wrapper.appendChild(labelEl);
-
-		// Create toggle switch using checkbox
-		const toggleLabel = document.createElement('label');
-		toggleLabel.className = 'node-toggle-switch';
-
-		const checkbox = document.createElement('input');
-		checkbox.type = 'checkbox';
-
-		// Default to enabled if not explicitly set to false
-		if (node.enabled !== false) {
-			node.enabled = true;
-			checkbox.checked = true;
+		if (isEnabled) {
+			nodeElement.classList.remove('node-disabled');
+			// Re-enable all children when parent is re-enabled (conditions only)
+			if (node.type === 'condition' && node.children) {
+				enableAllChildren(node.children);
+			}
 		} else {
-			checkbox.checked = false;
 			nodeElement.classList.add('node-disabled');
-		}
-
-		checkbox.onchange = function() {
-			const isEnabled = this.checked;
-			node.enabled = isEnabled;
-
-			if (isEnabled) {
-				nodeElement.classList.remove('node-disabled');
-				// Re-enable all children when parent is re-enabled (conditions only)
-				if (node.type === 'condition' && node.children) {
-					enableAllChildren(node.children);
-				}
-			} else {
-				nodeElement.classList.add('node-disabled');
-				// Disable all children when parent is disabled (conditions only)
-				if (node.type === 'condition' && node.children) {
-					disableAllChildren(node.children);
-					// For regex conditions, also disable all child regex elements specifically
-					if (node.isRegexCondition) {
-						disableChildRegexElements(node.children);
-					}
+			// Disable all children when parent is disabled (conditions only)
+			if (node.type === 'condition' && node.children) {
+				disableAllChildren(node.children);
+				// For regex conditions, also disable all child regex elements specifically
+				if (node.isRegexCondition) {
+					disableChildRegexElements(node.children);
 				}
 			}
+		}
 
-			updateXmlFromTree();
-			renderTree(); // Re-render to update child toggle states
-		};
-
-		const slider = document.createElement('span');
-		slider.className = 'node-toggle-slider';
-
-		toggleLabel.appendChild(checkbox);
-		toggleLabel.appendChild(slider);
-		wrapper.appendChild(toggleLabel);
-		return wrapper;
+		updateXmlFromTree();
+		renderTree(); // Re-render to update child states
 	}
 
 	// Recursively disable all children (simulates clicking off their toggles)
@@ -2144,6 +2345,165 @@ require_once "resources/header.php";
 				enableAllChildren(child.children);
 			}
 		});
+	}
+
+	// 3-position pill toggle for the INLINE field (values: '', 'true', 'false')
+	function createTriToggle(label, currentValue, onChange) {
+		const opts = ['', 'true', 'false'];
+		const optLabels = ['–', 'True', 'False'];
+		let posIndex = opts.indexOf(currentValue);
+		if (posIndex < 0) posIndex = 0;
+
+		const wrapper = document.createElement('div');
+		wrapper.className = 'tri-toggle-wrapper';
+
+		const labelEl = document.createElement('label');
+		labelEl.textContent = label;
+		wrapper.appendChild(labelEl);
+
+		const track = document.createElement('div');
+		track.className = 'tri-toggle';
+
+		const pill = document.createElement('span');
+		pill.className = 'tri-toggle-pill';
+
+		const optEls = [];
+		opts.forEach(function(opt, i) {
+			const span = document.createElement('span');
+			span.className = 'tri-toggle-opt' + (i === posIndex ? ' active' : '');
+			span.textContent = optLabels[i];
+			span.dataset.idx = i;
+			optEls.push(span);
+			track.appendChild(span);
+		});
+		track.appendChild(pill);
+
+		function updatePill(idx) {
+			optEls.forEach(function(el, i) {
+				el.classList.toggle('active', i === idx);
+			});
+			track.style.setProperty('--pill-pos', idx);
+		}
+
+		track.addEventListener('click', function(e) {
+			const span = e.target.closest('.tri-toggle-opt');
+			if (!span) return;
+			const idx = parseInt(span.dataset.idx, 10);
+			posIndex = idx;
+			updatePill(idx);
+			onChange(opts[idx]);
+		});
+
+		wrapper.appendChild(track);
+		updatePill(posIndex);
+		return wrapper;
+	}
+
+	// Rocker toggle for the INLINE field in action / anti-action nodes
+	function createInlineRocker(currentValue, onChange) {
+		const wrapper = document.createElement('div');
+		wrapper.className = 'inline-rocker-wrapper';
+
+		const labelEl = document.createElement('label');
+		labelEl.textContent = 'Inline';
+		wrapper.appendChild(labelEl);
+
+		const group = document.createElement('div');
+		group.className = 'inline-rocker-group';
+
+		const trueBtn = document.createElement('button');
+		trueBtn.type = 'button';
+		trueBtn.className = 'inline-rocker-btn inline-rocker-true';
+		trueBtn.textContent = 'True';
+		trueBtn.title = 'true';
+
+		const falseBtn = document.createElement('button');
+		falseBtn.type = 'button';
+		falseBtn.className = 'inline-rocker-btn inline-rocker-false';
+		falseBtn.textContent = 'False';
+		falseBtn.title = 'false';
+
+		const state = { value: currentValue };
+
+		function apply(val) {
+			trueBtn.classList.toggle('pressed', val === 'true');
+			falseBtn.classList.toggle('pressed', val === 'false');
+		}
+
+		trueBtn.addEventListener('click', function() {
+			const newVal = state.value === 'true' ? '' : 'true';
+			state.value = newVal;
+			apply(newVal);
+			onChange(newVal);
+		});
+
+		falseBtn.addEventListener('click', function() {
+			const newVal = state.value === 'false' ? '' : 'false';
+			state.value = newVal;
+			apply(newVal);
+			onChange(newVal);
+		});
+
+		apply(currentValue);
+
+		group.appendChild(trueBtn);
+		group.appendChild(falseBtn);
+		wrapper.appendChild(group);
+
+		return wrapper;
+	}
+
+	// Compact rocker group for the BREAK field (no – option; both-out = empty)
+	function createBreakButtonGroup(currentValue, onChange) {
+		return createCompactButtonGroup('Break',
+			[{value: 'on-true', label: 'On<br>True', title: 'on-true'},
+			 {value: 'on-false', label: 'On<br>False', title: 'on-false'},
+			 {value: 'always', label: 'always', title: 'always'},
+			 {value: 'never', label: 'never', title: 'never'}],
+			currentValue, onChange, undefined, true);
+	}
+
+	// Generic compact button group (BREAK, REGEX mode, etc.)
+	// optionDefs: array of strings or {value, label, title} objects
+	// allowDeselect: clicking an already-active button deactivates it (value -> '')
+	function createCompactButtonGroup(label, optionDefs, currentValue, onChange, wrapperClass, allowDeselect) {
+		const wrapper = document.createElement('div');
+		wrapper.className = wrapperClass || 'compact-btn-group-wrapper';
+
+		const labelEl = document.createElement('label');
+		labelEl.textContent = label;
+		wrapper.appendChild(labelEl);
+
+		const group = document.createElement('div');
+		group.className = 'compact-btn-group';
+
+		optionDefs.forEach(function(opt) {
+			const val = (typeof opt === 'object') ? opt.value : opt;
+			const lbl = (typeof opt === 'object') ? opt.label : opt;
+			const ttl = (typeof opt === 'object') ? opt.title : null;
+			const btn = document.createElement('button');
+			btn.type = 'button';
+			btn.className = 'compact-btn' + (val === currentValue ? ' active' : '');
+			btn.dataset.value = val;
+			btn.innerHTML = lbl;
+			if (ttl) btn.title = ttl;
+			btn.addEventListener('click', function() {
+				if (allowDeselect && btn.classList.contains('active')) {
+					btn.classList.remove('active');
+					onChange('');
+				} else {
+					group.querySelectorAll('.compact-btn').forEach(function(b) {
+						b.classList.remove('active');
+					});
+					btn.classList.add('active');
+					onChange(val);
+				}
+			});
+			group.appendChild(btn);
+		});
+
+		wrapper.appendChild(group);
+		return wrapper;
 	}
 
 	// Create form field element
@@ -2190,10 +2550,16 @@ require_once "resources/header.php";
 			// Filter and show dropdown
 			function showDropdown(filterText) {
 				dropdown.innerHTML = '';
-				const filter = filterText.toLowerCase();
-				const matches = availableApplications.filter(function(app) {
-					return app.toLowerCase().includes(filter);
-				}).slice(0, 20); // Limit to 20 results
+				const filter = filterText.toLowerCase().trim();
+				let matches;
+				if (filter === '') {
+					// No filter — show all available applications
+					matches = availableApplications.slice();
+				} else {
+					matches = availableApplications.filter(function(app) {
+						return app.toLowerCase().includes(filter);
+					}).slice(0, 30);
+				}
 
 				if (matches.length === 0) {
 					dropdown.classList.remove('visible');
@@ -2431,6 +2797,7 @@ require_once "resources/header.php";
 		}
 		if (!nodeEl) return;
 
+		isDragging = true;
 		draggedNode = nodeEl;
 		draggedNodeData = nodeEl._nodeData;
 		draggedParentArray = nodeEl._parentArray;
@@ -2460,6 +2827,7 @@ require_once "resources/header.php";
 		draggedParentArray = null;
 		draggedParentNode = null;
 		draggedIndex = null;
+		setTimeout(function() { isDragging = false; }, 50);
 	}
 
 	function handleDragOver(e) {
@@ -2691,6 +3059,11 @@ require_once "resources/header.php";
 
 		// Stay in synced state since UI changed the XML
 		setSyncState('synced');
+
+		// Broadcast updated XML to popup if open
+		if (xmlChannel && xmlPopoutWindow && !xmlPopoutWindow.closed) {
+			xmlChannel.postMessage({ type: 'xml-init', xml: xml });
+		}
 	}
 
 	// Add node to extension root
@@ -2850,32 +3223,155 @@ require_once "resources/header.php";
 		}).catch(function() {});
 	}
 
-	// Mobile panel switching
-	window.switchMobilePanel = function(panel) {
+	// Panel switching — tabs at all screen sizes
+	window.switchPanel = function(panel) {
 		const visualPanel = document.getElementById('visual-panel');
 		const xmlPanel = document.getElementById('xml-panel');
 		const tabVisual = document.getElementById('tab-visual');
 		const tabXml = document.getElementById('tab-xml');
+		const tabPopout = document.getElementById('tab-popout');
 
 		if (panel === 'visual') {
-			visualPanel.classList.remove('mobile-hidden');
-			xmlPanel.classList.add('mobile-hidden');
+			visualPanel.classList.remove('panel-hidden');
+			xmlPanel.classList.add('panel-hidden');
 			tabVisual.classList.add('active');
 			tabXml.classList.remove('active');
+			// Pop-out button only makes sense when XML tab is visible
+			if (tabPopout) tabPopout.style.display = 'none';
 		} else {
-			visualPanel.classList.add('mobile-hidden');
-			xmlPanel.classList.remove('mobile-hidden');
+			// If XML is already popped out, try to focus the popup
+			if (xmlPopoutWindow && !xmlPopoutWindow.closed) {
+				try { xmlPopoutWindow.focus(); } catch (_) {}
+				return;
+			}
+			visualPanel.classList.add('panel-hidden');
+			xmlPanel.classList.remove('panel-hidden');
 			tabVisual.classList.remove('active');
 			tabXml.classList.add('active');
-			setTimeout(function() { editor.resize(); }, 100);
+			// Show pop-out button alongside the XML tab
+			if (tabPopout) tabPopout.style.display = '';
+			setTimeout(function() { if (editor) editor.resize(); }, 100);
 		}
 	};
+
+	// Backward-compat alias
+	window.switchMobilePanel = window.switchPanel;
+
+	// Pop out XML editor into a separate browser window
+	window.popoutXmlPanel = function() {
+		if (xmlPopoutWindow && !xmlPopoutWindow.closed) {
+			// Popup already open — try to focus it (may be blocked by browser security)
+			try { xmlPopoutWindow.focus(); } catch (_) {}
+			return;
+		}
+
+		// Switch to visual tab — popup owns the XML view
+		switchPanel('visual');
+
+		// Disable XML tab and hide pop-out button while popup is open
+		const tabXml = document.getElementById('tab-xml');
+		const tabPopout = document.getElementById('tab-popout');
+		if (tabXml) tabXml.classList.add('tab-disabled');
+		if (tabPopout) tabPopout.style.display = 'none';
+
+		// Open BroadcastChannel before opening window to avoid race
+		if (xmlChannel) { xmlChannel.close(); xmlChannel = null; }
+		xmlPopoutWasEditing = false;
+		xmlChannel = new BroadcastChannel(xmlChannelId);
+		xmlChannel.addEventListener('message', function(e) {
+			if (e.data.type === 'ready') {
+				// Popup is ready — send current XML
+				xmlChannel.postMessage({ type: 'xml-init', xml: editor.getValue() });
+			} else if (e.data.type === 'xml-update') {
+				// Popup edited XML — update main editor
+				xmlPopoutWasEditing = true;
+				skipAceChange = true;
+				editor.setValue(e.data.xml, -1);
+				skipAceChange = false;
+				setSyncState('stale');
+				isDirty = true;
+			} else if (e.data.type === 'close') {
+				handlePopupClosed();
+			}
+		});
+
+		const url = '<?php echo PROJECT_PATH; ?>/app/dialplans/dialplan_xml_popout.php?channel=' + encodeURIComponent(xmlChannelId);
+		xmlPopoutWindow = window.open(url, 'dialplan-xml-popout', 'width=950,height=750,resizable=yes,scrollbars=yes');
+
+		// Poll for popup close (fallback in case beforeunload broadcast is blocked)
+		const closePoller = setInterval(function() {
+			if (xmlPopoutWindow && xmlPopoutWindow.closed) {
+				clearInterval(closePoller);
+				handlePopupClosed();
+			}
+		}, 1000);
+	};
+
+	function handlePopupClosed() {
+		xmlPopoutWindow = null;
+		if (xmlChannel) { xmlChannel.close(); xmlChannel = null; }
+
+		// Re-enable XML tab
+		const tabXml = document.getElementById('tab-xml');
+		if (tabXml) tabXml.classList.remove('tab-disabled');
+
+		// Pop-out button stays hidden — we land on Visual tab after popup closes
+		// (it will appear again when user manually clicks the XML tab)
+
+		// Auto-visualize if popup made edits, so tree is in sync
+		if (xmlPopoutWasEditing) {
+			xmlPopoutWasEditing = false;
+			visualizeXml();
+		}
+	}
 
 	// Change ACE theme
 	window.changeTheme = function() {
 		const theme = document.getElementById('theme').value;
 		editor.setTheme('ace/theme/' + theme);
+		broadcastEditorSettings();
 	};
+
+	window.changeEditorFontSize = function() {
+		const size = document.getElementById('font-size').value;
+		document.getElementById('editor').style.fontSize = size;
+		broadcastEditorSettings();
+	};
+
+	window.toggleEditorOption = function(option) {
+		const optionMap = {
+			'line_numbers':   { aceKey: 'showLineNumbers',    btnId: 'btn-line-numbers' },
+			'invisibles':     { aceKey: 'showInvisibles',     btnId: 'btn-invisibles' },
+			'indent_guides':  { aceKey: 'displayIndentGuides', btnId: 'btn-indent-guides' }
+		};
+		const def = optionMap[option];
+		if (!def) return;
+		const current = editor.getOption(def.aceKey);
+		const newVal = !current;
+		editor.setOption(def.aceKey, newVal);
+		const btn = document.getElementById(def.btnId);
+		if (btn) btn.classList.toggle('active', newVal);
+		broadcastEditorSettings();
+	};
+
+	function broadcastEditorSettings() {
+		if (xmlChannel && xmlPopoutWindow && !xmlPopoutWindow.closed) {
+			xmlChannel.postMessage({
+				type: 'settings-update',
+				settings: getEditorSettings()
+			});
+		}
+	}
+
+	function getEditorSettings() {
+		return {
+			theme:        (document.getElementById('theme') || {}).value         || 'cobalt',
+			font_size:    (document.getElementById('font-size') || {}).value     || '12px',
+			line_numbers: editor.getOption('showLineNumbers'),
+			invisibles:   editor.getOption('showInvisibles'),
+			indent_guides: editor.getOption('displayIndentGuides')
+		};
+	}
 
 	// Validate regex conditions have at least one regex child
 	function validateRegexConditions(nodes) {
@@ -2958,8 +3454,13 @@ require_once "resources/header.php";
 		}
 	});
 
-	// Unsaved changes warning
+	// Unsaved changes warning — also close popup so it doesn't linger orphaned
 	window.addEventListener('beforeunload', function(e) {
+		if (xmlPopoutWindow && !xmlPopoutWindow.closed) {
+			try { xmlPopoutWindow.close(); } catch (_) {}
+			if (xmlChannel) { xmlChannel.close(); xmlChannel = null; }
+			xmlPopoutWindow = null;
+		}
 		if (isDirty) {
 			e.preventDefault();
 			e.returnValue = '';
@@ -2971,11 +3472,7 @@ require_once "resources/header.php";
 	const mediaQuery = window.matchMedia('(max-width: 1024px)');
 	mediaQuery.addEventListener('change', function(e) {
 		isMobile = e.matches;
-		if (isMobile) {
-			// Default to visual panel on mobile
-			switchMobilePanel('visual');
-		}
-		setTimeout(function() { editor.resize(); }, 100);
+		setTimeout(function() { if (editor) editor.resize(); }, 100);
 	});
 
 	// Sync dialplan name with extension name
