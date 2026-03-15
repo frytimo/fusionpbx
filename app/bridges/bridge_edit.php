@@ -48,8 +48,8 @@ $bridge_uuid        = $url->get('bridge_uuid', $bridge_id);
 $bridge_name        = $url->get('bridge_name', '');
 $bridge_action      = $url->get('bridge_action', '');
 $bridge_profile     = $url->get('bridge_profile', '');
-$bridge_variables   = $url->get('bridge_variables', '');
-$bridge_gateways    = $url->get('bridge_gateways', '');
+$bridge_variables   = $url->get('bridge_variables', []);
+$bridge_gateways    = $url->get('bridge_gateways', []);
 $destination_number = $url->get('destination_number', '');
 $bridge_destination = $url->get('bridge_destination', '');
 $bridge_enabled     = $url->get('bridge_enabled', '');
@@ -67,20 +67,15 @@ if (($url->has_post('bridge_name') || $url->has_post('bridge_uuid')) && $url->po
 			$array[0]['checked'] = 'true';
 			$array[0]['uuid']    = $bridge_uuid;
 			// delete
-			$obj                 = new bridges;
-			$obj->delete($array);
+			$bridges = new bridges();
+			$bridges->delete($array);
 			// redirect
 			url::redirect('bridges.php');
 		}
 	}
 
-	// get the uuid from the POST
-	if ($action == "update") {
-		$bridge_uuid = $url->post('bridge_uuid', '');
-	}
-
 	// validate the token
-	$token = new token;
+	$token = new token();
 	if (!$token->validate($url->get_path())) {
 		message::add($text['message-invalid_token'], 'negative');
 		url::redirect('bridges.php');
@@ -161,8 +156,8 @@ if (($url->has_post('bridge_name') || $url->has_post('bridge_uuid')) && $url->po
 	$array['bridges'][0]['bridge_description'] = $bridge_description;
 
 	// save to the data (uses app::save with pre/post hooks)
-	$obj = new bridges;
-	$obj->save($array);
+	$bridges = new bridges;
+	$bridges->save($array);
 
 	// redirect the user
 	if (isset($action)) {
@@ -218,7 +213,7 @@ if (!empty($_SESSION['bridge']['variable'])) {
 
 // get the bridge variables from the database bridge_destination value
 $database_variables = [];
-$x                  = 0;
+$x = 0;
 if (!empty($bridge_destination)) {
 	// get the variables from inside the { and } brackets
 	preg_match('/^\{([^}]+)\}/', $bridge_destination, $matches);
@@ -235,9 +230,17 @@ if (!empty($bridge_destination)) {
 	$x = 0;
 	if (!empty($variables) && is_array($variables)) {
 		foreach ($variables as $variable) {
-			$pairs                           = explode("=", $variable);
+			$pairs = explode("=", $variable);
 			$database_variables[$x]['name']  = $pairs[0];
-			$database_variables[$x]['value'] = $pairs[1];
+			switch (count($pairs)) {
+				case 2:
+					$database_variables[$x]['value'] = $pairs[1];
+				case 1:
+					$database_variables[$x]['value'] = '';
+					break;
+				default:
+					$database_variables[$x]['value'] = implode("=", array_slice($pairs, 1));
+			}
 			$database_variables[$x]['label'] = ucwords(str_replace('_', ' ', $pairs[0]));
 			$database_variables[$x]['label'] = str_replace('Effective Caller Id', 'Caller ID', $database_variables[$x]['label']);
 			$x++;
@@ -299,6 +302,7 @@ foreach ($database_variables as $row) {
 }
 
 // get the gateways
+$bridge_gateways = [];
 $actions = explode(',', $bridge_destination ?? '');
 foreach ($actions as $action) {
 	$action_array = explode('/', $action);
@@ -497,13 +501,13 @@ for ($x = 0; $x <= 2; $x++) {
 				echo "</optgroup>";
 				echo "<optgroup label='&nbsp; &nbsp;" . $domain_name . "'>\n";
 			}
-			if (!empty($bridge_gateways) && is_array($bridge_gateways) && $row['gateway_uuid'] == $bridge_gateways[$x]) {
+			if (!empty($bridge_gateways) && is_array($bridge_gateways) && $row['gateway_uuid'] == ($bridge_gateways[$x]?? '')) {
 				echo "<option value=\"" . escape($row['gateway_uuid']) . ":" . escape($row['gateway']) . "\" selected=\"selected\">" . escape($row['gateway']) . "</option>\n";  // ." db:".$row['gateway_uuid']." bg:".$bridge_gateways[$x]
 			} else {
 				echo "<option value=\"" . escape($row['gateway_uuid']) . ":" . escape($row['gateway']) . "\">" . escape($row['gateway']) . "</option>\n";
 			}
 		} else {
-			if (!empty($bridge_gateways) && is_array($bridge_gateways) && $row['gateway_uuid'] == $bridge_gateways[$x]) {
+			if (!empty($bridge_gateways) && is_array($bridge_gateways) && $row['gateway_uuid'] == ($bridge_gateways[$x] ?? '')) {
 				echo "<option value=\"" . escape($row['gateway_uuid']) . ":" . escape($row['gateway']) . "\" $onchange selected=\"selected\">" . escape($row['gateway']) . "</option>\n";
 			} else {
 				echo "<option value=\"" . escape($row['gateway_uuid']) . ":" . escape($row['gateway']) . "\">" . escape($row['gateway']) . "</option>\n";
