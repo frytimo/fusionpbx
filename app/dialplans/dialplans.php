@@ -81,7 +81,9 @@ $url->add_query_filter(function (string $key, mixed $value, callable $next) use 
 // Check if app_uuid is set and valid, if not redirect to dialplans.php without app_uuid
 $app_uuid = $url->get('app_uuid', '');
 if (!empty($app_uuid) && is_uuid($app_uuid) && !in_array($app_uuid, $allowed_app_uuids)) {
-	$url->redirect('dialplans.php');
+	// redirect without the invalid app_uuid (avoid loop from url::from_request() preserving it)
+	header('Location: dialplans.php');
+	exit;
 }
 
 // get posted data

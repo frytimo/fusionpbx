@@ -76,8 +76,9 @@ if (!empty($dialplan_uuid_check) && is_uuid($dialplan_uuid_check)) {
 	unset($sql, $parameters);
 }
 
-// redirect to unified editor if appropriate
-if ($dialplan_editor_version === 'unified' || ($dialplan_editor_default === 'unified' && $dialplan_editor_version !== 'legacy')) {
+// redirect to unified editor if appropriate (skip when editor=legacy is explicitly requested)
+$force_legacy_editor = !empty($_GET['editor']) && $_GET['editor'] === 'legacy';
+if (!$force_legacy_editor && ($dialplan_editor_version === 'unified' || ($dialplan_editor_default === 'unified' && $dialplan_editor_version !== 'legacy'))) {
 	$app_uuid_param = !empty($_GET['app_uuid']) && is_uuid($_GET['app_uuid']) ? '&app_uuid=' . urlencode($_GET['app_uuid']) : '';
 	header('Location: dialplan_edit_unified.php?id=' . urlencode($dialplan_uuid_check) . $app_uuid_param);
 	exit;

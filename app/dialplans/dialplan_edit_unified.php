@@ -1130,6 +1130,34 @@ require_once "resources/header.php";
 	border-color: #999;
 }
 
+/* Lint badge — small severity indicator attached to each node */
+.node-lint-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	border-radius: 50%;
+	font-size: 11px;
+	flex-shrink: 0;
+	cursor: default;
+	pointer-events: auto;
+}
+.node-lint-badge.lint-error   { background: #c0392b; color: #fff; }
+.node-lint-badge.lint-warning  { background: #e67e22; color: #fff; }
+.node-lint-badge.lint-info     { background: #2980b9; color: #fff; }
+
+/* Lint summary in the action bar */
+#lint-summary {
+	display: none;
+	margin-left: 12px;
+	font-size: 12px;
+	vertical-align: middle;
+}
+.lint-summary-error   { color: #c0392b; margin-right: 6px; }
+.lint-summary-warning { color: #d35400; margin-right: 6px; }
+.lint-summary-info    { color: #2980b9; margin-right: 6px; }
+
 /* Mobile responsive */
 /* Editor tab bar — always visible at all screen sizes */
 .mobile-panel-tabs {
@@ -1379,10 +1407,10 @@ require_once "resources/header.php";
 	<div class="heading"><b><?php echo escape($text['title-dialplan_edit']); ?></b></div>
 	<div class="actions">
 		<?php
-		echo button::create(['type' => 'button', 'label' => $text['button-back'], 'icon' => $settings->get('theme', 'button_icon_back'), 'id' => 'btn_back', 'link' => $url->set_path('/app/dialplans/dialplans.php')->build_absolute()]);
+		echo button::create(['type' => 'button', 'label' => $text['button-back'], 'icon' => $settings->get('theme', 'button_icon_back'), 'id' => 'btn_back', 'link' => $url->set_path('/app/dialplans/dialplans.php')->unset_query_param('id')->build_absolute()]);
 
 		if ($action === 'update' && $has_dialplan_xml) {
-			echo button::create(['type' => 'button', 'label' => $text['button-legacy_editor'] ?? 'Legacy Editor', 'icon' => 'history', 'style' => 'margin-left: 15px;', 'link' => $url->set_path('/app/dialplans/dialplan_edit.php')->set_query_param('id', $dialplan_uuid)->set_query_param('app_uuid', $app_uuid)->build_absolute()]);
+			echo button::create(['type' => 'button', 'label' => $text['button-legacy_editor'] ?? 'Legacy Editor', 'icon' => 'history', 'style' => 'margin-left: 15px;', 'link' => $url->set_path('/app/dialplans/dialplan_edit.php')->set_query_param('id', $dialplan_uuid)->set_query_param('app_uuid', $app_uuid)->set_query_param('editor', 'legacy')->build_absolute()]);
 		}
 		?>
 
@@ -1391,6 +1419,7 @@ require_once "resources/header.php";
 			<i class="fas fa-check-circle"></i>
 			<span id="sync-status-text"><?php echo $text['label-in_sync'] ?? 'In sync'; ?></span>
 		</span>
+		<span id="lint-summary"></span>
 
 		<?php
 		echo button::create(['type' => 'button', 'label' => $text['button-visualize'] ?? 'Visualize', 'icon' => 'eye', 'id' => 'btn_visualize', 'style' => 'margin-left: 15px;', 'onclick' => 'visualizeXml();']);
@@ -1657,6 +1686,8 @@ require_once "resources/header.php";
 
 <script type="text/javascript" src="<?php echo PROJECT_PATH; ?>/resources/ace/ace.js" charset="utf-8"></script>
 <script type="text/javascript" src="<?php echo PROJECT_PATH; ?>/resources/javascript/dialplan_parser.js?v=<?php echo time(); ?>"></script>
+<script type="text/javascript" src="<?php echo PROJECT_PATH; ?>/resources/javascript/dialplan_linter.js?v=<?php echo time(); ?>"></script>
+<script type="text/javascript" src="<?php echo PROJECT_PATH; ?>/resources/javascript/dialplan_lint_rules.js?v=<?php echo time(); ?>"></script>
 
 <script type="text/javascript">
 (function() {
@@ -1820,10 +1851,15 @@ require_once "resources/header.php";
 		}
 
 		// Listen for changes
+		const debouncedLintFromXml = debounce(function() {
+			lintFromXml();
+		}, 600);
+
 		editor.on('change', function() {
 			if (skipAceChange) return;
 			isDirty = true;
 			setSyncState('stale');
+			debouncedLintFromXml();
 		});
 
 		// Remove certain keyboard shortcuts
@@ -1954,6 +1990,34 @@ require_once "resources/header.php";
 		renderTree();
 	}
 
+	// Simple debounce helper
+	function debounce(fn, delay) {
+		let timer = null;
+		return function() {
+			clearTimeout(timer);
+			timer = setTimeout(fn, delay);
+		};
+	}
+
+	// Silently parse the current XML and run the linter — updates the action-bar
+	// summary without touching the rendered tree or node badges.  Called on every
+	// edit so the user gets feedback without having to click Visualize.
+	function lintFromXml() {
+		if (typeof DialplanLinter === 'undefined' || typeof DialplanLintRules === 'undefined') return;
+		const xml = editor.getValue();
+		if (!xml.trim()) {
+			updateLintSummary([]);
+			return;
+		}
+		const result = DialplanParser.parseXmlToTree(xml);
+		if (!result.success) {
+			// XML is currently unparseable — leave the last summary in place
+			return;
+		}
+		const findings = DialplanLinter.run(result.tree, DialplanLintRules);
+		updateLintSummary(findings);
+	}
+
 	// Render tree to DOM
 	function renderTree() {
 		const container = document.getElementById('extension-children');
@@ -1964,6 +2028,82 @@ require_once "resources/header.php";
 				container.appendChild(createNodeElement(child, index, tree.children, tree));
 			});
 		}
+
+		runLinter();
+	}
+
+	// Run lint rules and annotate nodes with findings
+	function runLinter() {
+		// Clear all existing badges first
+		document.querySelectorAll('.node-lint-badge').forEach(function(el) {
+			el.style.display = 'none';
+			el.className = 'node-lint-badge';
+			el.title = '';
+			el.innerHTML = '';
+		});
+
+		const summaryEl = document.getElementById('lint-summary');
+
+		if (!tree || typeof DialplanLinter === 'undefined' || typeof DialplanLintRules === 'undefined') {
+			if (summaryEl) summaryEl.style.display = 'none';
+			return;
+		}
+
+		const findings = DialplanLinter.run(tree, DialplanLintRules);
+
+		// Group findings by node object reference
+		const byNode = new Map();
+		findings.forEach(function(f) {
+			if (!byNode.has(f.node)) byNode.set(f.node, []);
+			byNode.get(f.node).push(f);
+		});
+
+		// Apply badges to matching DOM elements
+		const severityOrder = {error: 3, warning: 2, info: 1};
+		const severityIcon  = {error: 'fa-times-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle'};
+
+		document.querySelectorAll('.dialplan-node').forEach(function(el) {
+			if (!el._nodeData) return;
+			const nodeFindings = byNode.get(el._nodeData);
+			if (!nodeFindings || !nodeFindings.length) return;
+
+			// Pick worst severity
+			let worst = 'info';
+			nodeFindings.forEach(function(f) {
+				if ((severityOrder[f.severity] || 0) > (severityOrder[worst] || 0)) worst = f.severity;
+			});
+
+			const badge = el.querySelector(':scope > .dialplan-node-content > .dialplan-node-actions > .node-lint-badge');
+			if (!badge) return;
+
+			badge.className    = 'node-lint-badge lint-' + worst;
+			badge.title        = nodeFindings.map(function(f) { return f.message; }).join('\n');
+			badge.innerHTML    = '<i class="fas ' + (severityIcon[worst] || 'fa-info-circle') + '"></i>';
+			badge.style.display = '';
+		});
+
+		// Update action-bar summary
+		updateLintSummary(findings);
+	}
+
+	// Update the action-bar lint summary from a findings array.
+	// Called by both runLinter() (after Visualize) and lintFromXml() (on edit).
+	function updateLintSummary(findings) {
+		const summaryEl = document.getElementById('lint-summary');
+		if (!summaryEl) return;
+		if (!findings || !findings.length) {
+			summaryEl.style.display = 'none';
+			return;
+		}
+		const errors   = findings.filter(function(f) { return f.severity === 'error'; }).length;
+		const warnings = findings.filter(function(f) { return f.severity === 'warning'; }).length;
+		const infos    = findings.filter(function(f) { return f.severity === 'info'; }).length;
+		const parts = [];
+		if (errors)   parts.push('<span class="lint-summary-error"><i class="fas fa-times-circle"></i> ' + errors + '</span>');
+		if (warnings) parts.push('<span class="lint-summary-warning"><i class="fas fa-exclamation-triangle"></i> ' + warnings + '</span>');
+		if (infos)    parts.push('<span class="lint-summary-info"><i class="fas fa-info-circle"></i> ' + infos + '</span>');
+		summaryEl.innerHTML    = parts.join('');
+		summaryEl.style.display = '';
 	}
 
 	// Drag and drop state
@@ -2149,6 +2289,11 @@ require_once "resources/header.php";
 				renderTree();
 			};
 		}
+		// Lint badge — populated by runLinter() after renderTree()
+		const lintBadge = document.createElement('span');
+		lintBadge.className = 'node-lint-badge';
+		lintBadge.style.display = 'none';
+		actions.appendChild(lintBadge);
 		actions.appendChild(deleteBtn);
 		contentRow.appendChild(actions);
 
@@ -2959,6 +3104,10 @@ require_once "resources/header.php";
 
 		// Stay in synced state since UI changed the XML
 		setSyncState('synced');
+
+		// Re-run lint immediately: the tree was mutated in-place so _nodeData
+		// references on existing DOM nodes are still valid — no re-render needed.
+		runLinter();
 
 		// Broadcast updated XML to popup if open
 		if (xmlChannel && xmlPopoutWindow && !xmlPopoutWindow.closed) {
