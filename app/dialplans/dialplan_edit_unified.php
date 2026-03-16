@@ -2345,14 +2345,22 @@ require_once "resources/header.php";
 		return wrapper;
 	}
 
-	// Compact rocker group for the BREAK field (no – option; both-out = empty)
+	// Compact rocker group for the BREAK field.
+	// 'on-false' is the FreeSWITCH default (omitted attribute), so we display it
+	// as selected when the stored value is empty, and store '' when it is chosen
+	// so the XML generator omits the attribute (keeping the XML minimal).
 	function createBreakButtonGroup(currentValue, onChange) {
+		var displayValue = currentValue || 'on-false';
+		function wrappedOnChange(val) {
+			// 'on-false' is the default — store as '' so the attribute is omitted from XML
+			onChange(val === 'on-false' ? '' : val);
+		}
 		return createCompactButtonGroup('Break',
 			[{value: 'on-true', label: 'On<br>True', title: 'on-true'},
-			 {value: 'on-false', label: 'On<br>False', title: 'on-false'},
+			 {value: 'on-false', label: 'On<br>False', title: 'on-false (default)'},
 			 {value: 'always', label: 'always', title: 'always'},
 			 {value: 'never', label: 'never', title: 'never'}],
-			currentValue, onChange, undefined, true);
+			displayValue, wrappedOnChange, undefined, true);
 	}
 
 	// Generic compact button group (BREAK, REGEX mode, etc.)

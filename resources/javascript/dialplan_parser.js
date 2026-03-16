@@ -140,7 +140,7 @@ var DialplanParser = (function () {
 
                 // Disabled condition with children:
                 //   <!-- <condition ...> --> ... <!-- </condition> -->
-                var condOpen = commentText.match(/^<condition(\s[\s\S]*)?>$/);
+                var condOpen = commentText.match(/^<condition(\s[\s\S]*)?(?<!\/)>$/);
                 if (condOpen) {
                     i++;
                     var condChildren = [];
