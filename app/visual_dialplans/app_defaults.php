@@ -28,7 +28,7 @@
 // update dialplan details when group is null set to 0
 if ($domains_processed == 1) {
 	// change dialplan context ${domain_name} to global
-	$sql  = "update v_dialplan_details set dialplan_detail_group = '0' ";
+	$sql = "update v_dialplan_details set dialplan_detail_group = '0' ";
 	$sql .= "where dialplan_detail_group is null;\n";
 	$database->execute($sql);
 	unset($sql);
@@ -37,7 +37,7 @@ if ($domains_processed == 1) {
 // get the $apps array from the installed apps from the core and mod directories
 if ($domains_processed == 1) {
 	// get the list of domains
-	$sql     = "select * from v_domains ";
+	$sql = "select * from v_domains ";
 	$domains = $database->select($sql, null, 'all');
 	unset($sql);
 
@@ -62,11 +62,11 @@ if ($domains_processed == 1) {
 	unset($sql);
 
 	// change recording_slots to recording_id
-	$sql  = "update v_dialplan_details set dialplan_detail_data = 'recording_id=true' ";
+	$sql = "update v_dialplan_details set dialplan_detail_data = 'recording_id=true' ";
 	$sql .= "where dialplan_uuid in (select dialplan_uuid from v_dialplans where app_uuid = '430737df-5385-42d1-b933-22600d3fb79e') ";
 	$sql .= "and dialplan_detail_data = 'recording_slots=true'; \n";
 	$database->execute($sql);
-	$sql  = "update v_dialplan_details set dialplan_detail_data = 'recording_id=false' ";
+	$sql = "update v_dialplan_details set dialplan_detail_data = 'recording_id=false' ";
 	$sql .= "where dialplan_uuid in (select dialplan_uuid from v_dialplans where app_uuid = '430737df-5385-42d1-b933-22600d3fb79e') ";
 	$sql .= "and dialplan_detail_data = 'recording_slots=false'; \n";
 	$database->execute($sql);
@@ -76,25 +76,25 @@ if ($domains_processed == 1) {
 // additional dialplan upgrade commands
 if ($domains_processed == 1) {
 	// add xml for each dialplan where the dialplan xml is empty
-	$sql     = "select domain_name ";
-	$sql    .= "from v_domains \n";
+	$sql = "select domain_name ";
+	$sql .= "from v_domains \n";
 	$results = $database->select($sql, null, 'all');
 	if (is_array($results) && @sizeof($results) != 0) {
 		foreach ($results as $row) {
-			$dialplans              = new dialplan;
-			$dialplans->source      = "details";
+			$dialplans = new dialplan;
+			$dialplans->source = "details";
 			$dialplans->destination = "database";
-			$dialplans->context     = $row["domain_name"];
-			$dialplans->is_empty    = "dialplan_xml";
-			$array                  = $dialplans->xml();
+			$dialplans->context = $row["domain_name"];
+			$dialplans->is_empty = "dialplan_xml";
+			$array = $dialplans->xml();
 		}
 	}
 	unset($sql, $results);
-	$dialplans              = new dialplan;
-	$dialplans->source      = "details";
+	$dialplans = new dialplan;
+	$dialplans->source = "details";
 	$dialplans->destination = "database";
-	$dialplans->is_empty    = "dialplan_xml";
-	$array                  = $dialplans->xml();
+	$dialplans->is_empty = "dialplan_xml";
+	$array = $dialplans->xml();
 
 	// delete the follow me bridge dialplan
 	$sql = "delete from v_dialplan_details where dialplan_uuid = '8ed73d1f-698f-466c-8a7a-1cf4cd229f7f' ";
@@ -104,7 +104,7 @@ if ($domains_processed == 1) {
 	unset($sql);
 
 	// change dialplan context ${domain_name} to global
-	$sql  = "update v_dialplans set dialplan_context = 'global' ";
+	$sql = "update v_dialplans set dialplan_context = 'global' ";
 	$sql .= "where dialplan_context = '\${domain_name}';\n";
 	$database->execute($sql);
 	unset($sql);
@@ -128,23 +128,159 @@ if ($domains_processed == 1) {
 
 // remove origination_callee_id_name from domain-variables dialplan
 if ($domains_processed == 1) {
-	$sql      = "select count(*) from v_dialplans ";
-	$sql     .= "where dialplan_name = 'domain-variables' ";
-	$sql     .= "and dialplan_xml like '%origination_callee_id_name%' ";
+	$sql = "select count(*) from v_dialplans ";
+	$sql .= "where dialplan_name = 'domain-variables' ";
+	$sql .= "and dialplan_xml like '%origination_callee_id_name%' ";
 	$num_rows = $database->select($sql, null, 'column');
 	if ($num_rows > 0) {
-		$sql  = "update v_dialplan_details set dialplan_detail_data = 'origination_callee_id_name=\${caller_destination}', update_date = now() \n";
+		$sql = "update v_dialplan_details set dialplan_detail_data = 'origination_callee_id_name=\${caller_destination}', update_date = now() \n";
 		$sql .= "where dialplan_uuid in (select dialplan_uuid from v_dialplans where dialplan_name = 'domain-variables' or dialplan_name = 'variables') \n";
 		$sql .= "and dialplan_detail_data = 'origination_callee_id_name=\${destination_number}'; \n";
 		$database->execute($sql);
 
-		$sql  = "update v_dialplans set dialplan_xml = REPLACE(dialplan_xml, '<action application=\"export\" data=\"origination_callee_id_name=\${destination_number}\"/>', '<action application=\"export\" data=\"origination_callee_id_name=\${caller_destination}\"/>'), update_date = now() \n";
+		$sql = "update v_dialplans set dialplan_xml = REPLACE(dialplan_xml, '<action application=\"export\" data=\"origination_callee_id_name=\${destination_number}\"/>', '<action application=\"export\" data=\"origination_callee_id_name=\${caller_destination}\"/>'), update_date = now() \n";
 		$sql .= "where dialplan_uuid in (select dialplan_uuid from v_dialplans where dialplan_name = 'domain-variables' or dialplan_name = 'variables'); \n";
 		$database->execute($sql);
 
-		$sql  = "update v_dialplans set dialplan_xml = REPLACE(dialplan_xml, '<action application=\"export\" data=\"origination_callee_id_name=\${destination_number}\" inline=\"true\"/>', '<action application=\"export\" data=\"origination_callee_id_name=\${caller_destination}\" inline=\"true\"/>'), update_date = now() \n";
+		$sql = "update v_dialplans set dialplan_xml = REPLACE(dialplan_xml, '<action application=\"export\" data=\"origination_callee_id_name=\${destination_number}\" inline=\"true\"/>', '<action application=\"export\" data=\"origination_callee_id_name=\${caller_destination}\" inline=\"true\"/>'), update_date = now() \n";
 		$sql .= "where dialplan_uuid in (select dialplan_uuid from v_dialplans where dialplan_name = 'domain-variables' or dialplan_name = 'variables'); \n";
 		$database->execute($sql);
+	}
+	unset($sql, $num_rows);
+}
+
+// add default setting for suppress_migration_notice
+if ($domains_processed == 1) {
+	$sql = "select count(*) as num_rows from v_default_settings ";
+	$sql .= "where default_setting_category = 'dialplan' ";
+	$sql .= "and default_setting_subcategory = 'suppress_migration_notice' ";
+	$sql .= "and default_setting_name = 'boolean' ";
+	$num_rows = $database->select($sql, null, 'column');
+	if ($num_rows == 0) {
+		$sql = "insert into v_default_settings ";
+		$sql .= "(";
+		$sql .= "default_setting_uuid, ";
+		$sql .= "default_setting_category, ";
+		$sql .= "default_setting_subcategory, ";
+		$sql .= "default_setting_name, ";
+		$sql .= "default_setting_value, ";
+		$sql .= "default_setting_enabled, ";
+		$sql .= "default_setting_description ";
+		$sql .= ")";
+		$sql .= "values ";
+		$sql .= "(";
+		$sql .= "'3f8a1c2e-7b4d-4e9f-a5c6-1d2e3f4a5b6c', ";
+		$sql .= "'dialplan', ";
+		$sql .= "'suppress_migration_notice', ";
+		$sql .= "'boolean', ";
+		$sql .= "'false', ";
+		$sql .= "'true', ";
+		$sql .= "'Suppress the migration notice shown when opening a legacy dialplan in the unified editor' ";
+		$sql .= ")";
+		$database->execute($sql);
+		unset($sql);
+	}
+	unset($sql, $num_rows);
+}
+
+// add default setting for inline LED true color
+if ($domains_processed == 1) {
+	$sql = "select count(*) as num_rows from v_default_settings ";
+	$sql .= "where default_setting_category = 'theme' ";
+	$sql .= "and default_setting_subcategory = 'dialplan_editor_inline_true_color' ";
+	$sql .= "and default_setting_name = 'text' ";
+	$num_rows = $database->select($sql, null, 'column');
+	if ($num_rows == 0) {
+		$sql = "insert into v_default_settings ";
+		$sql .= "(";
+		$sql .= "default_setting_uuid, ";
+		$sql .= "default_setting_category, ";
+		$sql .= "default_setting_subcategory, ";
+		$sql .= "default_setting_name, ";
+		$sql .= "default_setting_value, ";
+		$sql .= "default_setting_enabled, ";
+		$sql .= "default_setting_description ";
+		$sql .= ")";
+		$sql .= "values ";
+		$sql .= "(";
+		$sql .= "'a1b2c3d4-e5f6-7890-abcd-ef1234567890', ";
+		$sql .= "'theme', ";
+		$sql .= "'dialplan_editor_inline_true_color', ";
+		$sql .= "'text', ";
+		$sql .= "'#40bb62', ";
+		$sql .= "'true', ";
+		$sql .= "'LED color for the Inline button when inline=true' ";
+		$sql .= ")";
+		$database->execute($sql);
+		unset($sql);
+	}
+	unset($sql, $num_rows);
+}
+
+// add default setting for inline LED false color
+if ($domains_processed == 1) {
+	$sql = "select count(*) as num_rows from v_default_settings ";
+	$sql .= "where default_setting_category = 'theme' ";
+	$sql .= "and default_setting_subcategory = 'dialplan_editor_inline_false_color' ";
+	$sql .= "and default_setting_name = 'text' ";
+	$num_rows = $database->select($sql, null, 'column');
+	if ($num_rows == 0) {
+		$sql = "insert into v_default_settings ";
+		$sql .= "(";
+		$sql .= "default_setting_uuid, ";
+		$sql .= "default_setting_category, ";
+		$sql .= "default_setting_subcategory, ";
+		$sql .= "default_setting_name, ";
+		$sql .= "default_setting_value, ";
+		$sql .= "default_setting_enabled, ";
+		$sql .= "default_setting_description ";
+		$sql .= ")";
+		$sql .= "values ";
+		$sql .= "(";
+		$sql .= "'b2c3d4e5-f6a7-8901-bcde-f12345678901', ";
+		$sql .= "'theme', ";
+		$sql .= "'dialplan_editor_inline_false_color', ";
+		$sql .= "'text', ";
+		$sql .= "'#e03030', ";
+		$sql .= "'true', ";
+		$sql .= "'LED color for the Inline button when inline=false' ";
+		$sql .= ")";
+		$database->execute($sql);
+		unset($sql);
+	}
+	unset($sql, $num_rows);
+}
+
+// add default setting for inline LED null color
+if ($domains_processed == 1) {
+	$sql = "select count(*) as num_rows from v_default_settings ";
+	$sql .= "where default_setting_category = 'theme' ";
+	$sql .= "and default_setting_subcategory = 'dialplan_editor_inline_null_color' ";
+	$sql .= "and default_setting_name = 'text' ";
+	$num_rows = $database->select($sql, null, 'column');
+	if ($num_rows == 0) {
+		$sql = "insert into v_default_settings ";
+		$sql .= "(";
+		$sql .= "default_setting_uuid, ";
+		$sql .= "default_setting_category, ";
+		$sql .= "default_setting_subcategory, ";
+		$sql .= "default_setting_name, ";
+		$sql .= "default_setting_value, ";
+		$sql .= "default_setting_enabled, ";
+		$sql .= "default_setting_description ";
+		$sql .= ")";
+		$sql .= "values ";
+		$sql .= "(";
+		$sql .= "'c3d4e5f6-a7b8-9012-cdef-123456789012', ";
+		$sql .= "'theme', ";
+		$sql .= "'dialplan_editor_inline_null_color', ";
+		$sql .= "'text', ";
+		$sql .= "'#404040', ";
+		$sql .= "'true', ";
+		$sql .= "'LED dim color for the Inline button when inline is unset (null)' ";
+		$sql .= ")";
+		$database->execute($sql);
+		unset($sql);
 	}
 	unset($sql, $num_rows);
 }

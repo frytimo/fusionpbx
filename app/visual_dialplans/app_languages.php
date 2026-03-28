@@ -1,5 +1,78 @@
 <?php
 
+// unified editor language strings
+$text['label-unified_editor']['en-us'] = "Visual Editor";
+$text['label-unified_editor']['en-gb'] = "Visual Editor";
+
+$text['label-visual_editor']['en-us'] = "Visual Editor";
+$text['label-visual_editor']['en-gb'] = "Visual Editor";
+
+$text['label-xml']['en-us'] = "XML";
+$text['label-xml']['en-gb'] = "XML";
+
+$text['label-extension']['en-us'] = "Extension";
+$text['label-extension']['en-gb'] = "Extension";
+
+$text['label-condition']['en-us'] = "Condition";
+$text['label-condition']['en-gb'] = "Condition";
+
+$text['label-in_sync']['en-us'] = "In sync";
+$text['label-in_sync']['en-gb'] = "In sync";
+
+$text['label-ui_outdated']['en-us'] = "UI outdated";
+$text['label-ui_outdated']['en-gb'] = "UI outdated";
+
+$text['label-parse_error']['en-us'] = "Parse error";
+$text['label-parse_error']['en-gb'] = "Parse error";
+
+$text['label-toggle_xml']['en-us'] = "Toggle XML Panel";
+$text['label-toggle_xml']['en-gb'] = "Toggle XML Panel";
+
+$text['label-properties']['en-us'] = "Properties";
+$text['label-properties']['en-gb'] = "Properties";
+
+$text['label-migration_notice']['en-us'] = "Migration Notice";
+$text['label-migration_notice']['en-gb'] = "Migration Notice";
+
+$text['button-visualize']['en-us'] = "Visualize";
+$text['button-visualize']['en-gb'] = "Visualize";
+
+$text['button-legacy_editor']['en-us'] = "Legacy Editor";
+$text['button-legacy_editor']['en-gb'] = "Legacy Editor";
+
+$text['button-try_new_editor']['en-us'] = "Try New Editor";
+$text['button-try_new_editor']['en-gb'] = "Try New Editor";
+
+$text['message-xml_modified']['en-us'] = "XML modified — click Visualize to update editor";
+$text['message-xml_modified']['en-gb'] = "XML modified — click Visualize to update editor";
+
+$text['message-parse_error']['en-us'] = "Unable to visualize — XML has errors";
+$text['message-parse_error']['en-gb'] = "Unable to visualize — XML has errors";
+
+$text['message-migration_warning']['en-us'] = "This dialplan will be migrated to the unified editor on save. XML will become the only source. Existing detail rows will be preserved for CLI recovery but will no longer be used.";
+$text['message-migration_warning']['en-gb'] = "This dialplan will be migrated to the unified editor on save. XML will become the only source. Existing detail rows will be preserved for CLI recovery but will no longer be used.";
+
+$text['message-migration_confirm']['en-us'] = "This will migrate the dialplan to the unified editor. XML will become the only source. Continue?";
+$text['message-migration_confirm']['en-gb'] = "This will migrate the dialplan to the unified editor. XML will become the only source. Continue?";
+
+$text['message-save_stale']['en-us'] = "Visual editor is not synced with XML. Save anyway?";
+$text['message-save_stale']['en-gb'] = "Visual editor is not synced with XML. Save anyway?";
+
+$text['message-save_error']['en-us'] = "XML has parse errors. Saving may result in a broken dialplan. Save anyway?";
+$text['message-save_error']['en-gb'] = "XML has parse errors. Saving may result in a broken dialplan. Save anyway?";
+
+$text['message-unified_editor_available']['en-us'] = "A new visual editor is available with side-by-side XML preview and nested condition support.";
+$text['message-unified_editor_available']['en-gb'] = "A new visual editor is available with side-by-side XML preview and nested condition support.";
+
+$text['message-invalid_xml']['en-us'] = "XML contains invalid or dangerous content.";
+$text['message-invalid_xml']['en-gb'] = "XML contains invalid or dangerous content.";
+
+$text['description-dialplan-edit-unified']['en-us'] = "Edit the dialplan using the visual editor. Changes to the visual editor update the XML immediately. To apply XML changes to the visual editor, click Visualize.";
+$text['description-dialplan-edit-unified']['en-gb'] = "Edit the dialplan using the visual editor. Changes to the visual editor update the XML immediately. To apply XML changes to the visual editor, click Visualize.";
+
+$text['label-drag_to_reorder']['en-us'] = "Drag to reorder or nest inside conditions";
+$text['label-drag_to_reorder']['en-gb'] = "Drag to reorder or nest inside conditions";
+
 $text['title-dialplan_manager']['en-us'] = "Dialplan Manager";
 $text['title-dialplan_manager']['en-gb'] = "Dialplan Manager";
 $text['title-dialplan_manager']['ar-eg'] = "مدير برنامج";
