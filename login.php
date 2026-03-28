@@ -158,4 +158,4 @@ $view->assign('messages', $messages);
 // show the view
 echo $view;
 
-exit;
+exit(0);
