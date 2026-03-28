@@ -3344,7 +3344,7 @@ require_once "resources/header.php";
 			}
 		});
 
-		const url = '<?php echo PROJECT_PATH; ?>/app/dialplans/dialplan_xml_popout.php?channel=' + encodeURIComponent(xmlChannelId);
+		const url = '<?php echo PROJECT_PATH; ?>/app/visual_dialplans/dialplan_xml_popout.php?channel=' + encodeURIComponent(xmlChannelId);
 		xmlPopoutWindow = window.open(url, 'dialplan-xml-popout', 'width=950,height=750,resizable=yes,scrollbars=yes');
 
 		// Poll for popup close (fallback in case beforeunload broadcast is blocked)
