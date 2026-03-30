@@ -166,14 +166,14 @@ During dispatch, the autoloader retrieves all classes implementing `event_listen
 
 ```php
 // emit event with contextual payload
-$dialplan_event = event::dialplan_updated([
+$dialplan_update_event = event::dialplan_updated([
     'dialplan_uuid' => $dialplan_uuid,
     'domain_uuid' => 'target_domain_uuid_here',
 ]);
 
-echo "Dialplan updated by: " . $dialplan_event->get_user_uuid(); // Shows logged in user
-echo "Current domain: " . $dialplan_event->get_domain_uuid(); // Shows the currently active domain uuid
-echo "Dialplan changed for domain: " . $dialplan_event->get('domain_uuid');
+echo "Dialplan updated by: " . $dialplan_update_event->get_user_uuid(); // Shows logged in user
+echo "Current domain: " . $dialplan_update_event->get_domain_uuid(); // Shows the currently active domain uuid
+echo "Dialplan changed for domain: " . $dialplan_update_event->get('domain_uuid');
 ```
 
-This pattern is useful for decoupling side effects such as logging, notifications, cache invalidation, or integration hooks.
+This pattern decouples base code from plugins and app code.
