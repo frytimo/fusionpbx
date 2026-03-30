@@ -80,8 +80,10 @@ class event {
 			// Update event data with any new data provided when the event is called
 			$this->payload = array_merge($this->payload, $payload);
 		} else {
-			// If payload is not an array, set it directly
-			$this->payload = $payload;
+			if ($payload !== null) {
+				// If the existing payload is not an array, overwrite it with the new payload
+				$this->payload = $payload;
+			}
 		}
 
 		// Update event data with any new data provided when the event is called
