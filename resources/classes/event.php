@@ -64,6 +64,7 @@ class event {
 		$this->domain_uuid = null;
 		$this->user_uuid   = null;
 		$this->settings    = null;
+		$this->payload     = null;
 	}
 
 	/**
@@ -92,33 +93,25 @@ class event {
 	}
 
 	/**
-	 * Retrieves a value from the event's data payload or properties.
+	 * Retrieves a value from the event's data payload.
 	 *
-	 * This method first checks if the specified key exists as a property of the event object. If it does,
-	 * it returns the value of that property. If not, it checks if the key exists in the event's payload
-	 * array and returns that value if found. If the key is not found in either place, it returns the
-	 * provided default value.
+	 * This method checks if the key exists in the event's payload array and returns that value if found.
+	 * If the key is not found, it returns the provided default value.
 	 *
 	 * @param string $key     The key to look for in the event's properties and payload.
 	 * @param mixed  $default The default value to return if the key is not found. Defaults to null.
 	 *
-	 * @return mixed The value associated with the specified key from the event's properties or
-	 *               payload, or the default value if the key is not found.
+	 * @return mixed The value associated with the specified key from the event's payload,
+	 *               or the default value if the key is not found.
 	 */
 	public function get($key, $default = null) {
-		// First check if the key exists as a property of the event object, then check the data array,
-		// and return default if not found
-		if (property_exists($this, $key)) {
-			return $this->$key;
-		}
-
 		// Data is public so make sure it's an array before checking for the key in the data array
-		if (is_array($this->payload) && isset($this->payload[$key])) {
+		if ($this->payload !== null && is_array($this->payload) && isset($this->payload[$key])) {
 			return $this->payload[$key];
 		}
 
-		// return default if the key is not found in either place
-		return $default;
+		// return default if the payload is null
+		return $this->payload ?? $default;
 	}
 
 	/**
