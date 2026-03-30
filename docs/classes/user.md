@@ -42,7 +42,7 @@ $user = user::login($database, 'example.com', 'john.doe', 'password123');
 
 if ($user !== null) {
     echo "Login successful! Welcome " . $user->get_username();
-    
+
     // User is now logged in
     if ($user->is_logged_in()) {
         // Proceed with authenticated operations
@@ -223,28 +223,28 @@ Called before session creation. Ideal for:
 public static function on_login_pre_session_create(settings $settings): void {
     $database = database::new();
     $user_uuid = $_POST['user_uuid'] ?? null;
-    
+
     if ($user_uuid) {
         // Check failed login attempts in last 15 minutes
-        $sql = "SELECT COUNT(*) as attempt_count 
-                FROM v_user_logs 
-                WHERE user_uuid = :user_uuid 
+        $sql = "SELECT COUNT(*) as attempt_count
+                FROM v_user_logs
+                WHERE user_uuid = :user_uuid
                 AND log_type = 'login_failed'
                 AND log_date > (NOW() - INTERVAL '15 minutes')";
         $parameters = ['user_uuid' => $user_uuid];
         $row = $database->select($sql, $parameters, 'row');
-        
+
         if ($row['attempt_count'] >= 5) {
             throw new Exception('Account temporarily locked due to too many failed attempts');
         }
-        
+
         // Check password age
         $sql = "SELECT password_updated_date FROM v_users WHERE user_uuid = :user_uuid";
         $row = $database->select($sql, $parameters, 'row');
-        
+
         $password_age = strtotime('now') - strtotime($row['password_updated_date']);
         $max_age = 90 * 24 * 3600; // 90 days
-        
+
         if ($password_age > $max_age) {
             $_SESSION['password_change_required'] = true;
         }
@@ -275,7 +275,7 @@ Called after session creation. Ideal for:
 public static function on_login_post_session_create(settings $settings): void {
     if (isset($_SESSION['user_uuid']) && is_uuid($_SESSION['user_uuid'])) {
         $database = database::new();
-        
+
         // Log successful login
         $sql = "INSERT INTO v_user_logs (user_log_uuid, user_uuid, log_type, log_date, ip_address, user_agent)
                 VALUES (:user_log_uuid, :user_uuid, 'login_success', NOW(), :ip_address, :user_agent)";
@@ -286,12 +286,12 @@ public static function on_login_post_session_create(settings $settings): void {
             'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? ''
         ];
         $database->execute($sql, $parameters);
-        
+
         // Update last login
         $sql = "UPDATE v_users SET last_login_date = NOW() WHERE user_uuid = :user_uuid";
         $parameters = ['user_uuid' => $_SESSION['user_uuid']];
         $database->execute($sql, $parameters);
-        
+
         // Load user data into session
         $user = new user($database, $_SESSION['user_uuid']);
         $_SESSION['username'] = $user->get_username();
@@ -333,17 +333,17 @@ $user = user::login($database, 'example.com', 'username', 'password');
 
 if ($user !== null && $user->is_logged_in()) {
     // User authenticated
-    
+
     // Permission check (same)
     if ($user->has_permission('user_edit')) {
         // ...
     }
-    
+
     // Group check (renamed)
     if ($user->is_member_of('admin')) {
         // ...
     }
-    
+
     // Access user data
     echo $user->get_username();
     echo $user->get_user_email();
@@ -397,7 +397,7 @@ if ($user !== null && $user->is_logged_in()) {
    user::on_login_pre_session_create($settings);
    // ... create session ...
    user::on_login_post_session_create($settings);
-   
+
    // In logout.php
    user::on_logout_pre_session_destroy($settings);
    // ... destroy session ...
@@ -416,23 +416,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $domain_name = $_POST['domain'] ?? '';
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
-    
+
     // Pre-login checks
     user::on_login_pre_session_create($settings);
-    
+
     // Attempt login
     $user = user::login($database, $domain_name, $username, $password);
-    
+
     if ($user !== null && $user->is_logged_in()) {
         // Login successful - create session
         session_start();
         $_SESSION['user_uuid'] = $user->get_user_uuid();
         $_SESSION['domain_uuid'] = $user->get_domain_uuid();
         $_SESSION['username'] = $user->get_username();
-        
+
         // Post-login setup
         user::on_login_post_session_create($settings);
-        
+
         // Redirect to dashboard
         header('Location: /');
         exit;
@@ -452,7 +452,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php if (isset($error)): ?>
         <div class="error"><?php echo htmlspecialchars($error); ?></div>
     <?php endif; ?>
-    
+
     <form method="post">
         <input type="text" name="domain" placeholder="Domain" required>
         <input type="text" name="username" placeholder="Username" required>
