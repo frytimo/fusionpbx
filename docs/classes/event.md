@@ -161,6 +161,7 @@ During dispatch, the autoloader retrieves all classes implementing `event_listen
 - Listener methods are invoked statically (`$listener::$event_name($event)`). Ensure listener handlers are declared `public static`.
 - If event name resolves to an empty value, dispatch exits early.
 - Using the static method replaces the payload with the given array. This means that if the domain_uuid, user_uuid, or settings is given in the array, the *payload* contains the domain_uuid given in the array and the domain_uuid is set in the object using the $_SESSION.
+- Setting the event name to an [empty](https://php.net/empty) value will cause the event loop dispatcher to exit effectively short-circuiting the event for any further execution tasks.
 
 ## Typical Usage Pattern
 

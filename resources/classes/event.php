@@ -210,6 +210,17 @@ class event {
 	}
 
 	/**
+	 * Set the name of the event
+	 *
+	 * @param string|null $name The name to set for the event
+	 *
+	 * @return void
+	 */
+	public function set_name(?string $name): void {
+		$this->name = $name;
+	}
+
+	/**
 	 * Set the domain UUID for the event
 	 *
 	 * @param string|null $domain_uuid The domain UUID to set for the event
@@ -360,6 +371,10 @@ class event {
 			if (method_exists($listener, $event_name)) {
 				// Call the event in that class and pass the event object with the payload
 				$listener::$event_name($event);
+			}
+			// Check for short-circuiting the event dispatch
+			if (empty($event->get_name())) {
+				break;
 			}
 		}
 	}
