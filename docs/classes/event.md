@@ -31,7 +31,7 @@ $user_create_event->set_payload([
     'username' => $username,
 ]);
 
-$user_create_event(); // dispatch via __invoke()
+$user_create_event(); // dispatch the event
 ```
 
 You can also pass payload at call time:
@@ -160,16 +160,18 @@ During dispatch, the autoloader retrieves all classes implementing `event_listen
 - `get_payload()` and `get_data()` are typed as `?array`; passing non-array payloads can conflict with that expectation.
 - Listener methods are invoked statically (`$listener::$event_name($event)`). Ensure listener handlers are declared `public static`.
 - If event name resolves to an empty value, dispatch exits early.
+- Using the static method replaces the payload with the given array. This means that if the domain_uuid, user_uuid, or settings is given in the array, the *payload* contains the domain_uuid given in the array and the domain_uuid is set in the object using the $_SESSION.
 
 ## Typical Usage Pattern
 
 ```php
 // emit event with contextual payload
-event::dialplan_updated([
+$dialplan_event = event::dialplan_updated([
     'dialplan_uuid' => $dialplan_uuid,
-    'domain_uuid' => $_SESSION['domain_uuid'] ?? null,
-    'updated_by' => $_SESSION['username'] ?? null,
+    'domain_uuid' => 'new_uuid_here',
 ]);
+
+echo "Dialplan updated by: " . $dialplan_event->get_user_uuid(); // Shows logged in user
 ```
 
 This pattern is useful for decoupling side effects such as logging, notifications, cache invalidation, or integration hooks.
