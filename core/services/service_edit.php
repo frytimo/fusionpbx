@@ -63,6 +63,7 @@
 		$service_category = $_POST["service_category"];
 		$service_enabled = $_POST["service_enabled"];
 		$service_description = $_POST["service_description"];
+		$service_job_action = $_POST["service_job_action"] ?? '';
 	}
 
 // process the data and save it to the database
@@ -132,6 +133,7 @@
 			$array['services'][0]['service_category'] = $service_category;
 			$array['services'][0]['service_enabled'] = $service_enabled;
 			$array['services'][0]['service_description'] = $service_description;
+			$array['services'][0]['service_job_action'] = $service_job_action;
 
 		// save the data
 			$database->save($array);
@@ -157,7 +159,8 @@
 		$sql .= " service_name, ";
 		$sql .= " service_category, ";
 		$sql .= " service_enabled , ";
-		$sql .= " service_description ";
+		$sql .= " service_description, ";
+		$sql .= " service_job_action ";
 		$sql .= "from v_services ";
 		$sql .= "where service_uuid = :service_uuid ";
 		$parameters['service_uuid'] = $service_uuid;
@@ -167,6 +170,7 @@
 			$service_category = $row["service_category"];
 			$service_enabled = $row["service_enabled"];
 			$service_description = $row["service_description"];
+			$service_job_action = $row["service_job_action"];
 		}
 		unset($sql, $parameters, $row);
 	}
@@ -265,6 +269,22 @@
 	echo "	<input class='formfld' type='text' name='service_description' maxlength='255' value='".escape($service_description)."'>\n";
 	echo "<br />\n";
 	echo $text['description-service_description']."\n";
+	echo "</td>\n";
+	echo "</tr>\n";
+
+	echo "<tr>\n";
+	echo "<td class='vncell' valign='top' align='left' nowrap='nowrap'>\n";
+	echo "\t".$text['label-service_job_action']."\n";
+	echo "</td>\n";
+	echo "<td class='vtable' style='position: relative;' align='left'>\n";
+	echo "\t<select class='formfld' name='service_job_action'>\n";
+	echo "\t\t<option value='' ".($service_job_action == '' ? "selected='selected'" : null)."></option>\n";
+	echo "\t\t<option value='start' ".($service_job_action == 'start' ? "selected='selected'" : null).">".$text['option-start']."</option>\n";
+	echo "\t\t<option value='stop' ".($service_job_action == 'stop' ? "selected='selected'" : null).">".$text['option-stop']."</option>\n";
+	echo "\t\t<option value='restart' ".($service_job_action == 'restart' ? "selected='selected'" : null).">".$text['option-restart']."</option>\n";
+	echo "\t</select>\n";
+	echo "<br />\n";
+	echo $text['description-service_job_action']."\n";
 	echo "</td>\n";
 	echo "</tr>\n";
 

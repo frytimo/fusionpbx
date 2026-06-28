@@ -305,6 +305,69 @@ class services {
 	}
 
 	/**
+	 * Queue start/stop/restart actions for services.
+	 *
+	 * @param array $records Array of selected services and row actions.
+	 * @return void
+	 */
+	public function start_jobs($records) {
+		// Permission not found
+		if (!permission_exists($this->name.'_edit')) {
+			return;
+		}
+
+		// Add multi-lingual support
+		$language = new text;
+		$text = $language->get();
+
+		// Validate the token
+		$token = new token;
+		if (!$token->validate($_SERVER['PHP_SELF'])) {
+			message::add($text['message-invalid_token'],'negative');
+			header('Location: '.$this->location);
+			exit;
+		}
+
+		// Process selected records and set service_job_action on v_services
+		if (is_array($records) && @sizeof($records) != 0) {
+			$array = [];
+			$services = '';
+			$i = 0;
+			$allowed_actions = ['start', 'stop', 'restart'];
+
+			foreach ($records as $record) {
+				if ($record['checked'] != 'true' || !is_uuid($record['uuid'])) {
+					continue;
+				}
+
+				$job_action = $record['job_action'] ?? null;
+				if (!in_array($job_action, $allowed_actions, true)) {
+					continue;
+				}
+
+				$array['services'][$i]['service_uuid'] = $record['uuid'];
+				$array['services'][$i]['service_job_action'] = $job_action;
+				$services .= "<li>".$record['uuid']." (".$job_action.")</li>\n";
+				$i++;
+			}
+
+			if (!empty($array)) {
+				$this->database->save($array);
+				$message = "<strong>".$text['message-services_starting'].":</strong><br />\n";
+				$message .= "<div style='display: flex; justify-content: center;'>\n";
+				$message .= "\t<ul style='text-align: left; margin: 0;'>\n";
+				$message .= $services;
+				$message .= "\t</ul>\n";
+				$message .= "</div>\n";
+				message::add($message);
+			}
+			else {
+				message::add($text['message-no_services_with_actions'], 'warning');
+			}
+		}
+	}
+
+	/**
 	 * Get the list of services
 	 *
 	 * This function iterates through all service files found in the application's

@@ -467,3 +467,23 @@ $text['message-added_new_services']['tr-tr'] = 'Yeni Hizmetler Eklendi';
 $text['message-added_new_services']['zh-cn'] = '添加了新服务';
 $text['message-added_new_services']['ja-jp'] = '新しいサービスが追加されました';
 $text['message-added_new_services']['ko-kr'] = '새로운 서비스가 추가되었습니다';
+
+	$text['label-service_job_action']['en-us'] = 'Start Action';
+	$text['label-service_job_action']['en-gb'] = 'Start Action';
+	$text['description-service_job_action']['en-us'] = 'Select the action to perform when starting the service via cron.';
+	$text['description-service_job_action']['en-gb'] = 'Select the action to perform when starting the service via cron.';
+
+	$text['option-start']['en-us'] = 'Start';
+	$text['option-start']['en-gb'] = 'Start';
+	$text['option-stop']['en-us'] = 'Stop';
+	$text['option-stop']['en-gb'] = 'Stop';
+	$text['option-restart']['en-us'] = 'Restart';
+	$text['option-restart']['en-gb'] = 'Restart';
+
+	$text['button-start']['en-us'] = 'Start';
+	$text['button-start']['en-gb'] = 'Start';
+
+	$text['message-services_starting']['en-us'] = 'Services Starting';
+	$text['message-services_starting']['en-gb'] = 'Services Starting';
+	$text['message-no_services_with_actions']['en-us'] = 'No services with configured actions were selected.';
+	$text['message-no_services_with_actions']['en-gb'] = 'No services with configured actions were selected.';
