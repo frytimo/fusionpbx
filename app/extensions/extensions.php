@@ -52,7 +52,7 @@
 	$order = ($_GET['order'] ?? '') === 'desc' ? 'desc' : 'asc';
 	$sort = $order_by == 'extension' ? 'natural' : null;
 	$search = $_GET['search'] ?? '';
-	$show = $_GET['show'] ?? '';
+	$show_all = ($_GET['show'] ?? '') === 'all';
 
 // Build the query string
 	$url_params = [];
@@ -68,8 +68,8 @@
 	if (!empty($search)) {
 		$url_params['search'] = $search;
 	}
-	if (!empty($show) && $show == 'all' && permission_exists('extension_all')) {
-		$url_params['show'] = $show;
+	if ($show_all && permission_exists('extension_all')) {
+		$url_params['show'] = 'all';
 	}
 	$query_string = http_build_query($url_params);
 
@@ -110,7 +110,7 @@
 //get total extension count
 	$sql = "select count(*) from v_extensions ";
 	$sql .= "where true ";
-	if (!($show == "all" && permission_exists('extension_all'))) {
+	if (!($show_all && permission_exists('extension_all'))) {
 		$sql .= "and domain_uuid = :domain_uuid ";
 		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
 	}
@@ -367,7 +367,7 @@
 		echo "		<input type='checkbox' id='checkbox_all' name='checkbox_all' onclick='list_all_toggle(); checkbox_on_change(this);' ".(empty($extensions) ? "style='visibility: hidden;'" : null).">\n";
 		echo "	</th>\n";
 	}
-	if (!empty($_GET['show']) && $_GET['show'] == "all" && permission_exists('extension_all')) {
+	if ($show_all && permission_exists('extension_all')) {
 		echo "<th>".$text['label-domain']."</th>\n";
 		//echo th_order_by('domain_name', $text['label-domain'], $order_by, $order);
 	}
@@ -418,7 +418,7 @@
 				echo "		<input type='hidden' name='extensions[$x][uuid]' value='".escape($row['extension_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
-			if (!empty($_GET['show']) && $_GET['show'] == "all" && permission_exists('extension_all')) {
+			if ($show_all && permission_exists('extension_all')) {
 				echo "	<td>".escape($_SESSION['domains'][$row['domain_uuid']]['domain_name'])."</td>\n";
 			}
 			if (permission_exists('extension_registered')) {
