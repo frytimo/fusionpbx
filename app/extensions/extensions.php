@@ -48,7 +48,7 @@
 
 // Set variables from http GET parameters
 	$page = is_numeric($_GET['page'] ?? '') ? $_GET['page'] : 0;
-	$order_by = preg_replace('#[^a-zA-Z0-9_\-]#', '', $_GET['order_by'] ?? '');
+	$order_by = preg_replace('#[^a-zA-Z0-9_\-]#', '', $_GET['order_by'] ?? 'extension');
 	$order = ($_GET['order'] ?? '') === 'desc' ? 'desc' : 'asc';
 	$sort = $order_by == 'extension' ? 'natural' : null;
 	$search = $_GET['search'] ?? '';
@@ -59,10 +59,10 @@
 	if (!empty($page)) {
 		$url_params['page'] = $page;
 	}
-	if (!empty($_GET['order_by'])) {
+	if (!empty($order_by)) {
 		$url_params['order_by'] = $order_by;
 	}
-	if (!empty($_GET['order'])) {
+	if (!empty($order)) {
 		$url_params['order'] = $order;
 	}
 	if (!empty($search)) {
