@@ -200,6 +200,15 @@ class router {
 			$action_name = 'index';
 			$file_path = $prefix_name . '/' . $app_name . '/index.php';
 		}
+		elseif (!empty($file_name) && (
+					str_ends_with($file_name, 'css.php')
+					|| str_ends_with($file_name, 'js.php')
+				)
+			) {
+			// Check for assets like css or js files that are dynamically generated (e.g., style.css.php, script.js.php)
+			$action_name = 'asset';
+			$file_path = $decoded_path ?? $script_name;
+		}
 		elseif (!empty($file_name)) {
 			// App name equals file name (e.g., /app/extensions/extensions -> extensions_list.php)
 			$action_name = 'list';
