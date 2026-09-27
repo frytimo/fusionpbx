@@ -144,6 +144,7 @@ class router {
 		// Initialize the variable
 		$target_file = null;
 		$file_path = null;
+		$action_name = null;
 
 		// Prevent using an unsafe script_name (after URL decoding)
 		if (!$this->is_safe_component($script_name)) {
