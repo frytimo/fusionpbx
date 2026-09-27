@@ -209,15 +209,15 @@ class router {
 			$action_name = 'asset';
 			$file_path = $decoded_path ?? $script_name;
 		}
-		elseif (!empty($file_name)) {
-			// App name equals file name (e.g., /app/extensions/extensions -> extensions_list.php)
-			$action_name = 'list';
-			$file_path = $prefix_name . '/' . $app_name . '/' . $app_name . '.php';
-		}
 		elseif (!empty($file_name) && $file_name == 'index.php') {
 			// Index file
 			$action_name = 'index';
 			$file_path = $prefix_name . '/' . $app_name . '/' . 'index.php';
+		}
+		elseif (!empty($file_name) && str_ends_with($file_name, '.php')) {
+			// Direct access request
+			$action_name = 'direct';
+			$file_path = $decoded_path ?? $script_name;
 		}
 		else {
 			// Other files (images, videos, css, etc.)
