@@ -44,10 +44,8 @@ class router {
 	 * @return string The normalized request path
 	 */
 	public function get_request_path(): string {
-		$request_uri = $_SERVER['REQUEST_URI'] ?? '/';
-
 		// Decode URL-encoded characters for security analysis
-		$path = parse_url($request_uri, PHP_URL_PATH);
+		$path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 		if ($path === false) {
 			$path = '/';
 		}
@@ -59,10 +57,10 @@ class router {
 		}
 
 		// Remove script name prefix if present
-		$script_name = $_SERVER['SCRIPT_NAME'] ?? '';
-		if (strpos($path, $script_name) === 0 && $script_name !== '/') {
-			$path = substr($path, strlen($script_name));
-		}
+		// $script_name = $_SERVER['SCRIPT_NAME'] ?? '';
+		// if (strpos($path, $script_name) === 0 && $script_name !== '/') {
+		// 	$path = substr($path, strlen($script_name));
+		// }
 
 		// Normalize path
 		$path = trim($path, '/') === '' ? '/' : '/' . trim($path, '/');
@@ -538,7 +536,7 @@ class router {
 	/**
 	 * Handle health check endpoint
 	 *
-	 * @return void
+	 * @return string
 	 */
 	public function handle_health_check(): string {
 		http_response_code(200);
