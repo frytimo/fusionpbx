@@ -564,13 +564,13 @@ class router {
 	}
 }
 
+// Create router instance
+$router = new router();
+
 /**
  * Main routing logic with error handling
  */
 try {
-	// Create router instance
-	$router = new router();
-
 	// Get the clean request path
 	$request_path = $router->get_request_path();
 
