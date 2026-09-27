@@ -144,7 +144,7 @@
 		 */
 		function switch_gateway_status($gateway_uuid, $result_type = 'xml') {
 			global $esl;
-			if (!isset($esl) || !$esl instanceof event_socket) {
+			if ($esl === null) {
 				$esl = event_socket::create();
 				if (!$esl->is_connected()) {
 					$esl->connect();
