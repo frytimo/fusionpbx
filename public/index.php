@@ -391,63 +391,6 @@ class router {
 	}
 
 	/**
-	 * Set security headers
-	 *
-	 * @param string $file_ext The file extension
-	 */
-	private function set_security_headers(string $file_ext): void {
-		// X-Frame-Options: Prevent clickjacking
-		header('X-Frame-Options: SAMEORIGIN');
-
-		// X-Content-Type-Options: Prevent MIME type sniffing
-		header('X-Content-Type-Options: nosniff');
-
-		// X-XSS-Protection: Legacy XSS filter (deprecated but still useful for older browsers)
-		header('X-XSS-Protection: 1; mode=block');
-
-		// Referrer-Policy: Control referrer information
-		header('Referrer-Policy: strict-origin-when-cross-origin');
-
-		// Permissions-Policy (formerly Feature-Policy)
-		header('Permissions-Policy: geolocation=(), microphone=(), camera=()');
-
-		/**
-		 * Content Security Policy
-		 *
-		 * Note: This is a restrictive default. Adjust based on your application's needs.
-		 * Common adjustments:
-		 * - Add 'unsafe-inline' for inline scripts/styles (not recommended)
-		 * - Add external domains for CDNs, analytics, etc.
-		 * - Add nonce or hash values for specific inline scripts
-		 */
-		$csp = [
-			'default-src' => "'self'",
-			'script-src' => "'self' 'unsafe-inline'",
-			'style-src' => "'self' 'unsafe-inline'",
-			'img-src' => "'self' data: https:",
-			'font-src' => "'self' data:",
-			'connect-src' => "'self'",
-			'frame-src' => "'self'",
-			'object-src' => "'none'",
-			'base-uri' => "'self'",
-			'form-action' => "'self'",
-		];
-
-		// Build CSP header string
-		$csp_header = implode('; ', array_map(function ($key, $value) {
-			return "$key $value";
-		}, array_keys($csp), $csp));
-
-		header("Content-Security-Policy: $csp_header");
-
-		// Cache-Control for dynamic content
-		if ($file_ext === 'php') {
-			header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-			header('Pragma: no-cache');
-		}
-	}
-
-	/**
 	 * Handle 404 Not Found
 	 */
 	public function handle_404(): void {
