@@ -24,6 +24,9 @@
 	Mark J Crane <markjcrane@fusionpbx.com>
 */
 
+//declare globals
+	global $database, $settings, $text;
+
 //includes files
 	require_once dirname(__DIR__, 2) . "/resources/require.php";
 	require_once "resources/check_auth.php";
@@ -36,7 +39,6 @@
 	}
 
 //add multi-lingual support
-	global $text;
 	$language = new text;
 	$text = $language->get();
 
