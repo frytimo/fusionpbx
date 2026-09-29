@@ -36,6 +36,7 @@
 	}
 
 //add multi-lingual support
+	global $text;
 	$language = new text;
 	$text = $language->get();
 
