@@ -283,9 +283,13 @@ class router {
 	 * Follow the resolved route
 	 *
 	 * @param array $route The route array from route()
+	 * @param string|null $request_uri The original request URI (optional)
 	 */
-	public function follow_route(array $route): void {
+	public function follow_route(array $route, ?string $request_uri = null): void {
 		global $config, $database, $settings;
+		if ($request_uri === null) {
+			$request_uri = $_SERVER['REQUEST_URI'] ?? '/';
+		}
 
 		// Set the target file
 		$target_file = $route['target'];
@@ -385,6 +389,13 @@ class router {
 
 		// Load the PHP target file
 		if ($file_ext === 'php') {
+			// Set the browser-facing script path so link generation (e.g. paging
+			// controls and column sorting) uses the actual requested page instead
+			// of the SPOE entry point (/index.php).
+			$script_path = parse_url($request_uri, PHP_URL_PATH) ?: '/';
+			$_SERVER['SCRIPT_NAME'] = $script_path;
+			$_SERVER['PHP_SELF'] = $script_path;
+
 			// Include the target file
 			include $target_file;
 		}
