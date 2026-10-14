@@ -286,7 +286,7 @@ class router {
 	 * @param string|null $request_uri The original request URI (optional)
 	 */
 	public function follow_route(array $route, ?string $request_uri = null): void {
-		global $config, $database, $settings;
+		global $config, $database, $settings, $autoload;
 		if ($request_uri === null) {
 			$request_uri = $_SERVER['REQUEST_URI'] ?? '/';
 		}
