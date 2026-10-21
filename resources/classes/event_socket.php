@@ -300,7 +300,7 @@ class event_socket {
 	 * @return void
 	 */
 	public function close() {
-		//fp is public access so ensure it is a resource before closing it
+		// fp is public access so ensure it is a resource before closing it
 		if (is_resource($this->fp)) {
 			try {
 				// Failing to empty the incoming buffer prevents the socket from closing
@@ -308,11 +308,11 @@ class event_socket {
 				// Close the stream with the '@' to suppress warnings (new PHP versions may emit warnings on fclose)
 				@fclose($this->fp);
 			} catch (Throwable $t) {
-				//silently fail
+				// Silently fail
 			}
 		}
 
-		//force fp to be false
+		// Force fp to be false
 		$this->fp = false;
 	}
 
@@ -330,16 +330,16 @@ class event_socket {
 	 * @throws Throwable if an error occurs while restoring the stream's blocking state
 	 */
 	public function drain(): void {
-		// if the stream is not a valid resource, there is nothing to drain
+		// If the stream is not a valid resource, there is nothing to drain
 		if (!is_resource($this->fp)) {
 			return;
 		}
 		
-		// the $fp can be passed in the constructor and may be a non-blocking stream, so capture the original blocking state so it is preserved on restore
+		// The $fp can be passed in the constructor and may be a non-blocking stream, so capture the original blocking state so it is preserved on restore
 		$meta = stream_get_meta_data($this->fp);
 		$blocking = $meta['blocked'] ?? true;
 
-		// set the stream to non-blocking when necessary to drain the buffer without blocking
+		// Set the stream to non-blocking when necessary to drain the buffer without blocking
 		if ($blocking && !stream_set_blocking($this->fp, false)) {
 			// failed to set the stream to non-blocking mode, cannot drain
 			return;
@@ -349,23 +349,23 @@ class event_socket {
 		$max_read_bytes = 1 * 1024 * 1024; // 1 MB
 
 		try {
-			// read the data until the eof is reached or no more data is available
+			// Read the data until the eof is reached or no more data is available
 			while (!feof($this->fp)) {
 				$bytes = fread($this->fp, 8196);
 				if ($bytes === false || $bytes === '') {
 					break;
 				}
 
-				// decrement the remaining allowed read bytes and check if the limit has been reached
+				// Decrement the remaining allowed read bytes and check if the limit has been reached
 				$max_read_bytes -= strlen($bytes);
 
-				// stop draining if the maximum allowed read bytes have been reached
+				// Stop draining if the maximum allowed read bytes have been reached
 				if ($max_read_bytes <= 0) {
 					break;
 				}
 			}
 		} finally {
-			// restore the original blocking state of the stream
+			// Restore the original blocking state of the stream
 			stream_set_blocking($this->fp, $blocking);
 		}
 
