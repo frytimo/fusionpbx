@@ -419,9 +419,16 @@ class event_socket {
 	}
 
 	/**
-	 * Alias of connected()
+	 * Drain the inbound data buffer and discard any pending data
+	 * 
+	 * The drain method ensures that any pending data in the socket buffer is read and discarded, preventing
+	 * blocking issues when closing the socket. Some streams may be non-blocking already, in which case this
+	 * method will not alter their state. This method is typically used internally before closing the socket
+	 * to ensure no data is left unread. Draining the buffer should not be used for normal data processing,
+	 * as it discards all incoming data. Drain should not be used with unix domain sockets as it may
+	 * interfere with normal socket operations.
 	 *
-	 * @return bool Returns true when connected or false when not connected
+	 * @return bool
 	 */
 	public function is_connected(): bool {
 		return $this->connected();
