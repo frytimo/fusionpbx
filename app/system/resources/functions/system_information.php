@@ -94,6 +94,7 @@
 	function system_information(): array {
 		global $database, $db_type;
 		$system_information = [];
+		$memcache_status = [];
 		$esl = event_socket::create();
 
 		//php and switch version
@@ -328,7 +329,7 @@
 							$memcache_status[$memcache_temp[0]] = $memcache_temp[1];
 						}
 					}
-					if (is_array($memcache_status) && sizeof($memcache_status) > 0) {
+					if (sizeof($memcache_status) > 0) {
 						$system_information['memcache'] = $memcache_status;
 						$memcache_fail = false;
 					}
