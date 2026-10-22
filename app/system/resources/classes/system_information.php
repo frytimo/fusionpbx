@@ -89,23 +89,6 @@ abstract class system_information {
 	 * @return ?system_information The system information object for the current OS, or null if not supported.
 	 */
 	public static function new(): ?system_information {
-		// Compatibility with PHP 7.1 and below
-		if (!defined('PHP_OS_FAMILY')) {
-			if (stripos(PHP_OS, 'linux') === 0) {
-				define('PHP_OS_FAMILY', 'Linux');
-			} elseif (stripos(PHP_OS, 'bsd') !== false) {
-				define('PHP_OS_FAMILY', 'BSD');
-			} elseif (stripos(PHP_OS, 'dar') === 0) {
-				define('PHP_OS_FAMILY', 'Darwin');
-			} elseif (stripos(PHP_OS, 'sunos') === 0) {
-				define('PHP_OS_FAMILY', 'Solaris');
-			} elseif (stripos(PHP_OS, 'win') === 0) {
-				define('PHP_OS_FAMILY', 'Windows');
-			} else {
-				define('PHP_OS_FAMILY', 'Unknown');
-			}
-		}
-
 		// Determine the class name based on the OS family
 		$class = strtolower(PHP_OS_FAMILY) . '_system_information';
 
