@@ -9,9 +9,6 @@
 		exit;
 	}
 
-//includes files
-	require_once "resources/pdo.php";
-
 //increase limits
 	set_time_limit(0);
 	ini_set('max_execution_time', 0);

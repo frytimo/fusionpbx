@@ -1002,7 +1002,7 @@ class database {
 			}
 		}
 		return $result;
-	}  // delete
+	}
 
 	/**
 	 * Checks if the table exists in the database.
@@ -1063,7 +1063,7 @@ class database {
 		} else {
 			return false;  // table doesn't exist
 		}
-	}  // count
+	}
 
 	/**
 	 * Checks if the column exists in the database.
@@ -1145,7 +1145,7 @@ class database {
 			}
 			unset($prep_statement);
 		}
-	}  // select
+	}
 
 	/**
 	 * Queries {@link database::table_info()} to return the fields.
@@ -1388,7 +1388,7 @@ class database {
 		} else {
 			return false;
 		}
-	}  // end function copy
+	}
 
 	public function delete(array $array) {
 		// set the default value
@@ -1755,7 +1755,7 @@ class database {
 			unset($sql);
 		}
 		return $retval;
-	}  // end function toggle
+	}
 
 	/**
 	 * Converts a plural English word to singular.
@@ -1790,7 +1790,7 @@ class database {
 		} else {
 			return rtrim($word, 's');
 		}
-	}  // save method
+	}
 
 	/**
 	 * Get Relations searches through all fields to find relations
@@ -3752,14 +3752,6 @@ class database {
 		//return the results
 		return $array;
 	}
-}  // class database
-
-// addtitional functions for sqlite
-if (!function_exists('php_md5')) {
-	function php_md5($string)
-	{
-		return md5($string);
-	}
 }
 
 if (!function_exists('php_unix_time_stamp')) {
@@ -3780,34 +3772,3 @@ if (!function_exists('php_left')) {
 		return substr($string, 0, $num);
 	}
 }
-
-if (!function_exists('php_right')) {
-	function php_right($string, $num) {
-		return substr($string, (strlen($string) - $num), strlen($string));
-	}
-}
-
-/*
- * //example usage
- * 	//find
- * 		$database->domain_uuid = $_SESSION["domain_uuid"];
- * 		$database->type = $db_type;
- * 		$database->table = "v_extensions";
- * 		$where[0]['name'] = 'domain_uuid';
- * 		$where[0]['value'] = $_SESSION["domain_uuid"];
- * 		$where[0]['operator'] = '=';
- * 		$database->where = $where;
- * 		$order_by[0]['name'] = 'extension';
- * 		$database->order_by = $order_by;
- * 		$database->order_type = 'desc';
- * 		$database->limit = '2';
- * 		$database->offset = '0';
- * 		$database->find();
- * 		print_r($database->result);
- * 	//insert
- * 		$database->domain_uuid = $_SESSION["domain_uuid"];
- * 		$database->table = "v_ivr_menus";
- * 		$fields[0]['name'] = 'domain_uuid';
- * 		$fields[0]['value'] = $_SESSION["domain_uuid"];
- * 		echo $database->count();
- */
