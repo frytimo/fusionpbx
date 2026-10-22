@@ -156,6 +156,11 @@
 			}
 
 			$system_information['php']['version'] = phpversion();
+			$php_v = shell_exec('php -v 2>/dev/null');
+			$system_information['php']['build'] = 'unknown';
+			if (!empty($php_v) && preg_match('/built:\s*(.+?)\s*\)/', $php_v, $m)) {
+				$system_information['php']['build'] = trim($m[1]);
+			}
 			$system_information['php']['apcu'] = (function_exists('apcu_enabled') && apcu_enabled()) ? 'true' : 'false';
 
 			if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {

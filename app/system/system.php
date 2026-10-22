@@ -195,6 +195,13 @@ Con	Portions created by the Initial Developer are Copyright (C) 2008-2025
 		echo "	<td class=\"row_style1\">".$system_information['php']['version']."</td>\n";
 		echo "</tr>\n";
 
+		echo "<tr>\n";
+		echo "	<td width='20%' class=\"vncell\" style='text-align: left;'>\n";
+		echo "	".$text['label-php']." ".$text['label-build']."\n";
+		echo "	</td>\n";
+		echo "	<td class=\"row_style1\">".$system_information['php']['build']."</td>\n";
+		echo "</tr>\n";
+
 		echo "</table>\n";
 		echo "</div>\n";
 
@@ -472,6 +479,7 @@ Con	Portions created by the Initial Developer are Copyright (C) 2008-2025
 		$system_support .= "  - path: ".$system_information['path']."\n";
 		$system_support .= "- PHP\n";
 		$system_support .= "  - version: ".$system_information['php']['version']."\n";
+		$system_support .= "  - build: ".$system_information['php']['build']."\n";
 		$system_support .= "  - apcu enabled: ".$system_information['php']['apcu']."\n";
 		if (isset($system_information['switch']['version'])) {
 			$system_support .= "- Switch\n";
