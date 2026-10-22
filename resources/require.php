@@ -24,6 +24,10 @@
 	Mark J Crane <markjcrane@fusionpbx.com>
 */
 
+if (version_compare(PHP_VERSION, '8.2.35', '<')) {
+	die("FusionPBX requires PHP 8.2.35 or higher. You are using PHP " . PHP_VERSION);
+}
+
 //class auto loader
 	if (!class_exists('auto_loader')) {
 		require_once __DIR__ . "/classes/auto_loader.php";
