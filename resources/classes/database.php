@@ -938,52 +938,8 @@ class database {
 		unset($prep_statement);
 	}
 
-	public function execute($sql, $parameters = null, $return_type = 'all') {
-		// connect to the database if needed
-		if (!$this->db) {
-			$this->connect();
-		}
-
-		// set the error mode
-		$this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-		// run the query, and return the results
-		try {
-			$prep_statement = $this->db->prepare($sql);
-			if (is_array($parameters)) {
-				$prep_statement->execute($parameters);
-			} else {
-				$prep_statement->execute();
-			}
-			$message['message'] = 'OK';
-			$message['code'] = '200';
-			$message['sql'] = $sql;
-			if (is_array($parameters)) {
-				$message['parameters'] = $parameters;
-			}
-			$this->message = $message;
-
-			// return the results
-			switch ($return_type) {
-				case 'all':
-					return $prep_statement->fetchAll(PDO::FETCH_ASSOC);
-				case 'row':
-					return $prep_statement->fetch(PDO::FETCH_ASSOC);
-				case 'column':
-					return $prep_statement->fetchColumn();
-				default:
-					return $prep_statement->fetchAll(PDO::FETCH_ASSOC);
-			}
-		} catch (PDOException $e) {
-			$message['message'] = $e->getMessage();
-			$message['code'] = $e->getCode();
-			$message['line'] = $e->getLine();
-			$message['file'] = $e->getFile();
-			$message['trace'] = $e->getTraceAsString();
-			$message['debug'] = debug_backtrace();
-			$this->message = $message;
-			return false;
-		}
+	public function execute(string $sql, $parameters = null, $return_type = 'all') {
+		return $this->select($sql, $parameters, $return_type);
 	}
 
 	// Use this function to run complex queries
