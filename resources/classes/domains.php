@@ -116,22 +116,15 @@ class domains {
 	 * @returns array all enabled domains with uuid as array key
 	 */
 	public static function enabled() {
-
-		//define database as global
-		global $database;
-
 		//define default return value
 		$domains = [];
 
 		//get the domains from the database
 		$sql = "select * from v_domains ";
 		$sql .= "where domain_enabled = true ";
-		$sql .= "order by domain_name asc; ";
-		$result = $database->select($sql, null, 'all');
+		$result = database::new()->select($sql, null, 'all');
 		if (!empty($result)) {
-			foreach ($result as $row) {
-				$domains[$row['domain_uuid']] = $row;
-			}
+			$domains = array_column($result, null, 'domain_uuid');
 		}
 
 		//return the domains array
@@ -144,22 +137,15 @@ class domains {
 	 * @returns array all disabled domains with uuid as array key
 	 */
 	public static function disabled() {
-
-		//define database as global
-		global $database;
-
 		//define default return value
 		$domains = [];
 
 		//get the domains from the database
 		$sql = "select * from v_domains ";
 		$sql .= "where domain_enabled = false ";
-		$sql .= "order by domain_name asc; ";
-		$result = $database->select($sql, null, 'all');
+		$result = database::new()->select($sql, null, 'all');
 		if (!empty($result)) {
-			foreach ($result as $row) {
-				$domains[$row['domain_uuid']] = $row;
-			}
+			$domains = array_column($result, null, 'domain_uuid');
 		}
 
 		//return the domains array
@@ -876,20 +862,14 @@ class domains {
 	 */
 	public static function all() {
 
-		//define database as global
-		global $database;
-
 		//define default return value
 		$domains = [];
 
 		//get the domains from the database
 		$sql = "select * from v_domains ";
-		$sql .= "order by domain_name asc; ";
-		$result = $database->select($sql, null, 'all');
+		$result = database::new()->select($sql, null, 'all');
 		if (!empty($result)) {
-			foreach ($result as $row) {
-				$domains[$row['domain_uuid']] = $row;
-			}
+			$domains = array_column($result, null, 'domain_uuid');
 		}
 
 		//return the domains array
