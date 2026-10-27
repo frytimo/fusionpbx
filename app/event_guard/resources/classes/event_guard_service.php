@@ -188,9 +188,13 @@ class event_guard_service extends service {
 							$this->debug('subscribed to event '.$row['subcategory'].' '. print_r($result, true));
 						}
 					}
+					static $initialized = false;
 					// Reset the liveness baseline after a successful (re)connect.
 					$this->last_event_time = time();
-					$this->notice('Re-connected to event socket');
+					$this->notice(($initialized ? 'Re-initialized and connected' : 'Connected') . ' to event socket');
+					if (!$initialized) {
+						$initialized = true;
+					}
 				}
 			}
 
