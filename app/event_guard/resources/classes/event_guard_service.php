@@ -13,6 +13,29 @@ class event_guard_service extends service {
 	protected static $allow_run_as_root = true;
 
 	/**
+	 * Microseconds to wait for the next event when polling the event socket. The default
+	 * 10 ms used by event_socket::read_event() busy-spins roughly 100 times per second
+	 * and burns CPU even when no events arrive. A longer wait keeps the idle path asleep;
+	 * stream_select still returns as soon as data is available, so real events are not
+	 * delayed and the async SIGTERM handler still interrupts the wait for graceful stop.
+	 *
+	 * @var int
+	 */
+	private const IDLE_POLL_MICROSECONDS = 1000000;
+
+	/**
+	 * Maximum time (seconds) to wait for any event socket activity, including a
+	 * HEARTBEAT, before treating the connection as stale and forcing a reconnect.
+	 * The switch emits a HEARTBEAT on a fixed interval (20 seconds by default);
+	 * this threshold tolerates several missed heartbeats before reconnecting. It is
+	 * what lets the service recover from a silent TCP drop that produces no
+	 * FIN/EOF, which neither feof() nor connected() can detect on their own.
+	 *
+	 * @var int
+	 */
+	private const CONNECTION_TIMEOUT_SECONDS = 90;
+
+	/**
 	 * database object
 	 * @var database
 	 */
@@ -41,6 +64,14 @@ class event_guard_service extends service {
 	 * @var event_socket
 	 */
 	private $socket;
+
+	/**
+	 * Unix timestamp of the last confirmed event socket activity (any event,
+	 * including a HEARTBEAT). Used by the connection liveness watchdog to detect a
+	 * silent half-open TCP drop.
+	 * @var int
+	 */
+	private $last_event_time = 0;
 
 	/**
 	 * Reloads settings from database, config file and websocket server.
@@ -122,37 +153,83 @@ class event_guard_service extends service {
 
 				// Check if connected
 				if ($this->socket->connected()) {
-					// Define the events
+					// Define the events: the CUSTOM events of interest plus a HEARTBEAT
+					// subscription. HEARTBEAT is a global event emitted by the switch on a
+					// fixed interval and is used here purely as a liveness signal - it proves
+					// the switch is still responding on this socket. Without periodic traffic,
+					// a silent TCP drop that produces no FIN/EOF can never be seen by feof()
+					// or connected(), so nothing else would break the read stall. The sibling
+					// services (active_calls, active_conferences) use the same heartbeat-as-
+					// liveness approach. The filter below lets the heartbeat through the
+					// otherwise CUSTOM-only filter set.
 					$switch_events = [
 						['category' => 'Event-Subclass', 'subcategory' => 'sofia::pre_register'],
 						['category' => 'Event-Subclass', 'subcategory' => 'sofia::register_failure'],
-						['category' => 'Event-Subclass', 'subcategory' => 'event_guard:unblock']
+						['category' => 'Event-Subclass', 'subcategory' => 'event_guard:unblock'],
+						['category' => 'Event-Name', 'subcategory' => 'HEARTBEAT']
 					];
 
-					// Add the event filters
-					$cmd = "event json ALL";
+					// Subscribe to the CUSTOM events we act on plus HEARTBEAT. This keeps the
+					// irrelevant channel/presence/etc. events on the FreeSWITCH side (lower
+					// client CPU) while still receiving the periodic heartbeat the connection
+					// liveness watchdog relies on. Receiving one small heartbeat every ~20s has
+					// no meaningful idle CPU cost; idle CPU is governed by the read loop, not
+					// by subscription breadth.
+					$cmd = "event json CUSTOM HEARTBEAT";
 					$result = $this->socket->request($cmd);
-					$this->info('subscribe to ALL events '. print_r($result, true));
+					if ($this->is_debug_mode()) {
+						$this->debug('subscribed to CUSTOM+HEARTBEAT event mode '. print_r($result, true));
+					}
 					foreach($switch_events as $row) {
+						// Add the event filters to limit the events received
 						$cmd = "filter ".$row['category']." ".$row['subcategory'];
 						$result = $this->socket->request($cmd);
-						$this->info('subscribe to CUSTOM events '. print_r($result, true));
+						if ($this->is_debug_mode()) {
+							$this->debug('subscribed to event '.$row['subcategory'].' '. print_r($result, true));
+						}
 					}
+					// Reset the liveness baseline after a successful (re)connect.
+					$this->last_event_time = time();
 					$this->notice('Re-connected to event socket');
 				}
 			}
 
-			// Read the socket
-			$json_response = $this->socket->read_event();
+			// Read the socket. Use a long poll so an idle connection sleeps instead of
+			// busy-polling every 10 ms (which is what drives idle CPU when no traffic
+			// arrives). stream_select returns immediately once an event is ready, so
+			// incoming events are still processed without added latency. The bounded wait
+			// also lets this loop iterate every second so the connection-liveness watchdog
+			// below can detect a silent half-open TCP drop.
+			$json_response = $this->socket->read_event(self::IDLE_POLL_MICROSECONDS);
 
-			// Decode the response
+			// Decode the response and reset the liveness baseline whenever anything at all
+			// (including a HEARTBEAT) is received from the switch.
+			$received_event = false;
 			if (isset($json_response) && $json_response != '') {
+				$received_event = true;
+				$this->last_event_time = time();
 				$json_array = json_decode($json_response['$'], true);
 				unset($json_response);
 			}
 
-			// Debug the event array
-			$this->debug('Event array '. print_r($json_array, true));
+			// Connection-liveness watchdog. A healthy connection receives a HEARTBEAT every
+			// HEARTBEAT interval (20s by default). If nothing has arrived for
+			// CONNECTION_TIMEOUT_SECONDS the socket is treated as stale - this covers a
+			// silent TCP drop with no FIN/EOF that feof() and connected() cannot see. Close
+			// it so the reconnect block above re-establishes the connection on the next
+			// iteration.
+			if (!$received_event && (time() - $this->last_event_time) > self::CONNECTION_TIMEOUT_SECONDS) {
+				$this->warning('No event socket activity for ' . (time() - $this->last_event_time) . ' seconds; forcing reconnect');
+				$this->socket->close();
+				$this->socket = null;
+				continue;
+			}
+
+			// Debug the event array (build the string only when debug logging is enabled
+			// so the per-event print_r is not evaluated on every iteration)
+			if ($this->is_debug_mode()) {
+				$this->debug('Event array '. print_r($json_array, true));
+			}
 
 			// Registration failed - block IP address unless they are registered
 			if (is_array($json_array) && ($json_array['Event-Subclass'] ?? '') == 'sofia::register_failure') {
