@@ -36,6 +36,18 @@ class event_guard_service extends service {
 	private const CONNECTION_TIMEOUT_SECONDS = 90;
 
 	/**
+	 * POSIX signal used to clear all blocked IP addresses from the firewall of a running
+	 * event_guard service instance.
+	 *
+	 * The base service already maps SIGUSR1 and SIGHUP to a settings reload and SIGUSR2 and
+	 * SIGTERM to a graceful shutdown, so a dedicated signal is used for the clear blocked list
+	 * action handled by this service.
+	 *
+	 * @var int
+	 */
+	private const CLEAR_BLOCKED_SIGNAL = SIGURG;
+
+	/**
 	 * database object
 	 * @var database
 	 */
@@ -131,6 +143,9 @@ class event_guard_service extends service {
 	}
 
 	public function run(): int {
+		// Register a signal handler to clear all blocked IP addresses from the firewall and clear the in-memory list
+		pcntl_signal(self::CLEAR_BLOCKED_SIGNAL, [$this, 'clear_all_blocked']);
+
 		// Reload the settings
 		$this->reload_settings();
 
@@ -355,7 +370,57 @@ class event_guard_service extends service {
 	}
 
 	protected static function set_command_options() {
+		parent::append_command_option(
+			command_option::new()
+				->description('Clear all blocked IP addresses from the firewall and exit')
+				->short_option('b')
+				->short_description('-b')
+				->long_option('clear-blocked')
+				->long_description('--clear-blocked')
+				->callback('clear_blocked')
+				->callback('exit')
+		);
+	}
 
+	/**
+	 * Clear all blocked IP addresses from the firewall and clear the in-memory list of blocked addresses.
+	 *
+	 * Sends a signal to the running service instance which deletes all of the blocked IP addresses
+	 * from the firewall and clears the in-memory blocked address list.
+	 *
+	 * @return bool True if the signal was sent successfully, false if no service is running
+	 */
+	public static function clear_blocked(): bool {
+		// Send a signal to the running instance to clear all of the blocked IP addresses
+		// from the firewall and clear the in-memory list of blocked addresses.
+		return parent::send_signal(self::CLEAR_BLOCKED_SIGNAL);
+	}
+
+	/**
+	 * Clear all of the blocked IP addresses from the firewall and clear the in-memory list of blocked addresses.
+	 *
+	 * Gets the list of addresses that are currently blocked from the firewall and deletes each
+	 * of them from the firewall. The in-memory list of blocked addresses is cleared as part of
+	 * the delete so stale blocked addresses are not kept in memory.
+	 *
+	 * @return void
+	 */
+	public function clear_all_blocked(): void {
+		// Get the list of blocked addresses from the firewall
+		$blocked = $this->firewall->block_list('all');
+		if (is_array($blocked)) {
+			foreach ($blocked as $filter => $ip_addresses) {
+				if (!is_array($ip_addresses)) {
+					continue;
+				}
+				foreach ($ip_addresses as $ip_address) {
+					if (filter_var($ip_address, FILTER_VALIDATE_IP)) {
+						// Delete the address from the firewall and clear it from the in-memory list
+						$this->block_delete($ip_address, $filter);
+					}
+				}
+			}
+		}
 	}
 
 	/**
