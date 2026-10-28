@@ -60,6 +60,16 @@ class event_guard_service extends service {
 	private $firewall;
 
 	/**
+	 * In-memory list of the blocked IP addresses, kept as $blocked[$filter][$ip_address] = true.
+	 * The addresses the firewall has already blocked are loaded into this list when the service
+	 * starts, and addresses are added and removed from the same list as they are blocked and
+	 * unblocked, so repeated events are answered without querying the firewall each time.
+	 *
+	 * @var array
+	 */
+	private $blocked = [];
+
+	/**
 	 * socket object
 	 * @var event_socket
 	 */
@@ -109,6 +119,9 @@ class event_guard_service extends service {
 		if (!($this->firewall instanceof event_guard_interface)) {
 			throw new Exception("Must be an event_guard_interface firewall");
 		}
+
+		// Load the addresses that are already blocked into memory
+		$this->load_blocked();
 
 		// Get the hostname
 		$this->hostname = gethostname();
@@ -372,6 +385,9 @@ class event_guard_service extends service {
 		// Block the IP address
 		$result = $this->firewall->block_add($ip_address, $filter);
 		if ($result) {
+			// Add the address to the in-memory list of blocked addresses
+			$this->blocked[$filter][$ip_address] = true;
+
 			// Prepare the extension
 			$to_user = $event['to-user'] ?? '';
 			$to_host = $event['to-host'] ?? '';
@@ -409,11 +425,61 @@ class event_guard_service extends service {
 		// Unblock the IP address
 		$result = $this->firewall->block_delete($ip_address, $filter);
 
+		// Remove the address from the in-memory list of blocked addresses
+		if ($result) {
+			if ($filter == 'all') {
+				foreach (array_keys($this->blocked) as $filter_name) {
+					unset($this->blocked[$filter_name][$ip_address]);
+				}
+			}
+			else {
+				unset($this->blocked[$filter][$ip_address]);
+			}
+		}
+
 		// Send debug information to the console
 		$this->warning("unblocked: [ip_address: " . $ip_address . ", filter: " . $filter . ", line " . __LINE__ . "]");
 
 		// Return the result
 		return $result;
+	}
+
+	/**
+	 * Load the IP addresses that the firewall has already blocked into memory.
+	 *
+	 * This runs when the service starts and when the settings are reloaded so the addresses
+	 * blocked by a previous run are known without querying the firewall for every event.
+	 * Addresses are added to and removed from the same list as the service runs.
+	 *
+	 * @return void
+	 */
+	private function load_blocked(): void {
+		// Clear the list before loading the current state of the firewall
+		$this->blocked = [];
+
+		// Get the blocked addresses of each filter from the firewall
+		$blocked = $this->firewall->block_list('all');
+		if (is_array($blocked)) {
+			foreach ($blocked as $filter => $ip_addresses) {
+				if (!is_array($ip_addresses)) {
+					continue;
+				}
+				foreach ($ip_addresses as $ip_address) {
+					if (filter_var($ip_address, FILTER_VALIDATE_IP)) {
+						$this->blocked[$filter][$ip_address] = true;
+					}
+				}
+			}
+		}
+
+		// Count the addresses in the list
+		$count = 0;
+		foreach ($this->blocked as $ip_addresses) {
+			$count += sizeof($ip_addresses);
+		}
+
+		// Send the count of loaded addresses to the log
+		$this->notice("loaded " . $count . " blocked " . ($count === 1 ? "address" : "addresses") . " from the firewall, line " . __LINE__);
 	}
 
 	public function block_exists(string $ip_address, string $filter) : bool {
@@ -422,8 +488,21 @@ class event_guard_service extends service {
 			return false;
 		}
 
+		// Check the in-memory list of blocked addresses before querying the firewall
+		if (isset($this->blocked[$filter][$ip_address])) {
+			// Send debug information to the console
+			$this->debug("Address Exists " . $ip_address . ", line " . __LINE__);
+
+			// Return the result
+			return true;
+		}
+
 		// Check if the address is blocked
 		$result = $this->firewall->block_exists($ip_address, $filter);
+		if ($result) {
+			// Add the address to the list so later events do not query the firewall again
+			$this->blocked[$filter][$ip_address] = true;
+		}
 
 		// Send debug information to the console
 		$this->debug("Address Exists " . $ip_address . ", line " . __LINE__);
@@ -645,9 +724,8 @@ class event_guard_service extends service {
 
 		// Check if the IP address is registered
 		$registered = false;
-		$command = "fs_cli -x 'show registrations as json' 2>/dev/null";
-		$result = shell_exec($command);
-		$array = json_decode((string) $result, true);
+		$response = $this->socket->request('api show registrations as json');
+		$array = json_decode((string) $response, true);
 		if (is_array($array) && is_array($array['rows'])) {
 			foreach ($array['rows'] as $row) {
 				if (is_array($row) && ($row['network_ip'] ?? '') == $ip_address) {

@@ -185,4 +185,54 @@ class event_guard_nftables implements event_guard_interface {
 		// Return failed
 		return false;
 	}
+
+	/**
+	 * List the IP addresses blocked in the configured chains.
+	 *
+	 * @param string $filter The chain name, or 'all' for every chain used by this class.
+	 *
+	 * @return array An associative array keyed by chain name where each value is a list
+	 *               of IP addresses blocked by that chain.
+	 */
+	public function block_list(string $filter) : array {
+		// Select the chains to list
+		if ($filter == 'all') {
+			$chains = $this->chains;
+		}
+		else {
+			$chains = [$filter];
+		}
+
+		// Get the addresses of each chain
+		$blocked = [];
+		foreach ($chains as $chain) {
+			// Example: nft -a list chain inet filter sip-auth-fail
+			unset($lines);
+			$command = $this->firewall_path . ' -a list chain inet filter ' . escapeshellarg($chain) . ' 2>/dev/null';
+			exec($command, $lines, $exit_code);
+			if ($exit_code !== 0) {
+				// The chain does not exist
+				continue;
+			}
+
+			// Match the rules for a single address, example: ip saddr 192.0.2.1 counter drop
+			foreach ($lines as $line) {
+				if (!preg_match('/\bip saddr\s+(\S+)\s.*\bdrop\b/', $line, $matches)) {
+					continue;
+				}
+
+				// Only single addresses are tracked, addresses with a prefix length are skipped
+				$ip_address = $matches[1];
+				if (!filter_var($ip_address, FILTER_VALIDATE_IP)) {
+					continue;
+				}
+
+				// Add the address to the list for the chain
+				$blocked[$chain][] = $ip_address;
+			}
+		}
+
+		// Return the list of blocked addresses
+		return $blocked;
+	}
 }

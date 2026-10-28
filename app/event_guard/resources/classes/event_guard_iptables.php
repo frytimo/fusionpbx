@@ -177,4 +177,61 @@ class event_guard_iptables implements event_guard_interface {
 		// Return the result
 		return $exit_code === 0;
 	}
+
+	/**
+	 * List the IP addresses blocked in the configured chains.
+	 *
+	 * @param string $filter The chain name, or 'all' for every chain used by this class.
+	 *
+	 * @return array An associative array keyed by chain name where each value is a list
+	 *               of IP addresses blocked by that chain.
+	 */
+	public function block_list(string $filter) : array {
+		// Select the chains to list
+		if ($filter == 'all') {
+			$chains = $this->chains;
+		}
+		else {
+			$chains = [$filter];
+		}
+
+		// Get the addresses of each chain
+		$blocked = [];
+		foreach ($chains as $chain) {
+			// Example: iptables -S sip-auth-fail
+			unset($lines);
+			$command = $this->firewall_path . ' -S ' . escapeshellarg($chain) . ' 2>/dev/null';
+			exec($command, $lines, $exit_code);
+			if ($exit_code !== 0) {
+				// The chain does not exist
+				continue;
+			}
+
+			// Match the rules for a single address, example: -A sip-auth-fail -s 192.0.2.1/32 -j DROP
+			foreach ($lines as $line) {
+				if (!preg_match('/^-A\s+\S+\s+-s\s+(\S+)\s.*-j\s+DROP$/', trim($line), $matches)) {
+					continue;
+				}
+
+				// Separate the address from the prefix length, only single addresses are tracked
+				$ip_address = $matches[1];
+				$prefix_length = '';
+				if (str_contains($ip_address, '/')) {
+					[$ip_address, $prefix_length] = explode('/', $ip_address, 2);
+				}
+				if ($prefix_length !== '' && $prefix_length != '32' && $prefix_length != '128') {
+					continue;
+				}
+				if (!filter_var($ip_address, FILTER_VALIDATE_IP)) {
+					continue;
+				}
+
+				// Add the address to the list for the chain
+				$blocked[$chain][] = $ip_address;
+			}
+		}
+
+		// Return the list of blocked addresses
+		return $blocked;
+	}
 }

@@ -159,4 +159,49 @@ class event_guard_pf implements event_guard_interface {
 		// Return the result
 		return false;
 	}
+
+	/**
+	 * List the IP addresses in the configured tables.
+	 *
+	 * @param string $filter The table name, or 'all' for every table used by this class.
+	 *
+	 * @return array An associative array keyed by table name where each value is a list
+	 *               of IP addresses in that table.
+	 */
+	public function block_list(string $filter) : array {
+		// Select the tables to list
+		if ($filter == 'all') {
+			$tables = $this->filters;
+		}
+		else {
+			$tables = [$filter];
+		}
+
+		// Get the addresses of each table
+		$blocked = [];
+		foreach ($tables as $table) {
+			// Example: pfctl -t sip-auth-fail -Ts
+			unset($lines);
+			$command = $this->firewall_path . ' -t ' . escapeshellarg($table) . ' -Ts 2>/dev/null';
+			exec($command, $lines, $exit_code);
+			if ($exit_code !== 0) {
+				// The table does not exist
+				continue;
+			}
+
+			// Each line contains a single address
+			foreach ($lines as $line) {
+				$ip_address = trim($line);
+				if (!filter_var($ip_address, FILTER_VALIDATE_IP)) {
+					continue;
+				}
+
+				// Add the address to the list for the table
+				$blocked[$table][] = $ip_address;
+			}
+		}
+
+		// Return the list of blocked addresses
+		return $blocked;
+	}
 }
