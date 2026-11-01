@@ -76,14 +76,6 @@
 		return tostring(value)
 	end
 
---nil-safe: convert a value to a string for console logging (returns "nil" for nil)
-	local function log_str(value)
-		if (value == nil) then
-			return "nil"
-		end
-		return tostring(value)
-	end
-
 --set channel variables to lua variables
 	domain_uuid = env:getHeader("domain_uuid");
 	domain_name = env:getHeader("domain_name");
