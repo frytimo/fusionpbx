@@ -349,7 +349,7 @@ if ($continue) {
 			$fax_name = md5($_files['name'][$index]);
 
 			// rename the file
-			$attachment_file_name = $_files['name'][$index];
+			$attachment_file_name = basename($_files['name'][$index]);
 			if ($attachment_file_name != $fax_name . '.' . $fax_file_extension) {
 				rename($dir_fax_temp . '/' . $attachment_file_name, $dir_fax_temp . '/' . $fax_name . '.' . $fax_file_extension);
 			}
