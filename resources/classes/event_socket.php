@@ -1,18 +1,42 @@
 <?php
 
+/**
+ * Accumulates incoming socket data and extracts it in delimited or fixed size chunks.
+ */
 class buffer {
+	/**
+	 * @var string The accumulated content that has not been read yet
+	 */
 	private $content;
+	/**
+	 * @var string The line delimiter used to separate the content into lines
+	 */
 	private $eol;
 
+	/**
+	 * Initializes an empty buffer with a line feed as the end of line delimiter
+	 */
 	public function __construct() {
 		$this->content = '';
 		$this->eol = "\n";
 	}
 
+	/**
+	 * Appends a string to the end of the buffered content
+	 *
+	 * @param string $str String to append to the buffer
+	 *
+	 * @return void
+	 */
 	public function append($str) {
 		$this->content .= $str;
 	}
 
+	/**
+	 * Reads the next line from the buffer and removes it from the content
+	 *
+	 * @return string|false The line without its delimiter, or false when no complete line is available
+	 */
 	public function read_line() {
 		$ar = explode($this->eol, $this->content, 2);
 		if (count($ar) != 2) {
@@ -22,6 +46,13 @@ class buffer {
 		return $ar[0];
 	}
 
+	/**
+	 * Reads a fixed number of bytes from the start of the buffer and removes them from the content
+	 *
+	 * @param int $n Number of bytes to read from the buffer
+	 *
+	 * @return string|false The requested data, or false when fewer bytes than requested are buffered
+	 */
 	public function read_n($n) {
 		if (strlen($this->content) < $n) {
 			return false;
@@ -31,6 +62,13 @@ class buffer {
 		return $s;
 	}
 
+	/**
+	 * Reads all of the buffered content and empties the buffer
+	 *
+	 * @param int $n Unused parameter retained for signature compatibility
+	 *
+	 * @return string All content that was in the buffer
+	 */
 	public function read_all($n) {
 		$tmp = $this->content;
 		$this->content = '';
@@ -45,11 +83,15 @@ class buffer {
 
 /**
  * Subscribes to the event socket of the FreeSWITCH (c) Event Socket Server
- *
- * @depends buffer::class
  */
 class event_socket {
+	/**
+	 * @var self|null Shared instance used by create()
+	 */
 	private static $socket = null;
+	/**
+	 * @var resource|false The FreeSWITCH event socket stream
+	 */
 	public $fp;
 	/**
 	 * Used as a flag to determine if the socket should be created automatically
@@ -57,13 +99,20 @@ class event_socket {
 	 * @var bool
 	 */
 	protected $auto_create;
+	/**
+	 * @var buffer Buffer used to accumulate inbound socket data
+	 */
 	private $buffer;
+	/**
+	 * @var config Configuration used for the event socket host, port, and password
+	 */
 	private $config;
 
 	/**
 	 * Create a new connection to the socket
 	 *
-	 * @param resource|false $fp
+	 * @param resource|false $fp    Existing stream to use instead of creating a new connection
+	 * @param config|null    $config Configuration used for the event socket settings, loaded when omitted
 	 */
 	public function __construct($fp = false, ?config $config = null) {
 		$this->buffer = new buffer;
@@ -75,7 +124,7 @@ class event_socket {
 	/**
 	 * Sends an API command on the socket
 	 *
-	 * @param string $api_cmd
+	 * @param string $api_cmd API command to send to FreeSWITCH
 	 *
 	 * @return string|false Response from server or false if failed
 	 * @static
@@ -87,7 +136,7 @@ class event_socket {
 	/**
 	 * Sends a command on the socket blocking for a response
 	 *
-	 * @param string $cmd
+	 * @param string $cmd Command to send through the socket
 	 *
 	 * @return string|false Response from server or false if failed
 	 * @static
@@ -103,7 +152,6 @@ class event_socket {
 	 * @param string $cmd Command to send through the socket
 	 *
 	 * @return mixed Returns the response from FreeSWITCH or false if not connected
-	 * @depends read_event()
 	 */
 	public function request($cmd) {
 		if (!$this->connected()) {
@@ -129,8 +177,7 @@ class event_socket {
 	 * 
 	 * @param int|null $timeout the timeout in microseconds for stream_select, Default 10000
 	 * 
-	 * @return mixed Content body or false if not connected or empty message
-	 * @depends buffer::class
+	 * @return array|false The event headers as an array with the body under the '$' key when Content-Length is present, or false if not connected
 	 */
 	public function read_event($timeout = 10000) {
 		if (!$this->connected()) {
@@ -277,7 +324,7 @@ class event_socket {
 	 *
 	 * @param string $cmd API command to send
 	 *
-	 * @returns string $job_id the Job ID for tracking completion status
+	 * @return string|false The Job ID for tracking completion status, or false when the command failed
 	 * @static
 	 */
 	public static function async(string $cmd) {
@@ -372,9 +419,9 @@ class event_socket {
 	}
 
 	/**
-	 * alias of connected
+	 * Alias of connected()
 	 *
-	 * @return bool
+	 * @return bool Returns true when connected or false when not connected
 	 */
 	public function is_connected(): bool {
 		return $this->connected();
