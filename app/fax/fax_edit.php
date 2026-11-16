@@ -527,7 +527,7 @@
 		$button_margin = 'margin-left: 15px;';
 		if (permission_exists('fax_extension_advanced')) {
 			$button_margin = 'margin-left: 15px;';
-			if (function_exists("imap_open") && file_exists("fax_files_remote.php")) {
+			if (function_exists("imap_open") && file_exists(__DIR__ . "/fax_files_remote.php")) {
 				echo button::create(['type'=>'button','label'=>$text['button-advanced'],'icon'=>'tools','style'=>($button_margin ?? ''),'link'=>'fax_advanced.php?id='.urlencode($fax_uuid).($query_string ? '&'.$query_string : '')]);
 			}
 			unset($button_margin);
