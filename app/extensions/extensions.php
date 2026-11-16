@@ -287,7 +287,11 @@
 
 //add the responsive styles
 	echo "<style>\n";
-	echo "/* small screens: wrap the action bar buttons and let the card scroll horizontally */\n";
+	echo "/* all widths: let the card scroll horizontally so the table never overflows outside the card */\n";
+	echo "div.card {\n";
+	echo "	overflow-x: auto;\n";
+	echo "}\n";
+	echo "/* small screens: wrap the action bar buttons */\n";
 	echo "@media (max-width: 767.98px) {\n";
 	echo "	div.action_bar {\n";
 	echo "		display: flex;\n";
@@ -449,7 +453,7 @@
 		echo th_order_by('device_template', $text['label-device_template'], $order_by, $order, null, "class='hide-md-dn'", $query_string);
 	}
 	if (permission_exists("extension_user_context")) {
-		echo th_order_by('user_context', $text['label-user_context'], $order_by, $order, null, "class='hide-md-dn'", $query_string);
+		echo th_order_by('user_context', $text['label-user_context'], $order_by, $order, null, "class='hide-lg-dn'", $query_string);
 	}
 	echo th_order_by('enabled', $text['label-enabled'], $order_by, $order, null, "class='center no-wrap'", $query_string);
 	echo th_order_by('description', $text['label-description'], $order_by, $order, null, "class='hide-sm-dn'", $query_string);
@@ -535,7 +539,7 @@
 				echo "	<td class='hide-md-dn'><a href='" . PROJECT_PATH . "/app/devices/device_edit.php?id=".urlencode($row['device_uuid'] ?? '')."'>".escape($row['device_template'] ?? '')."</td>\n";
 			}
 			if (permission_exists("extension_user_context")) {
-				echo "	<td class='hide-md-dn'>".escape($row['user_context'])."</td>\n";
+				echo "	<td class='hide-lg-dn'>".escape($row['user_context'])."</td>\n";
 			}
 			if (permission_exists('extension_enabled')) {
 				echo "	<td class='no-link center no-wrap'>";
