@@ -56,11 +56,23 @@ class router {
 			return '/';
 		}
 
-		// Remove script name prefix if present
-		// $script_name = $_SERVER['SCRIPT_NAME'] ?? '';
-		// if (strpos($path, $script_name) === 0 && $script_name !== '/') {
-		// 	$path = substr($path, strlen($script_name));
-		// }
+		// Strip the configured URL base for installations hosted below the domain root.
+		$project_path = trim(PROJECT_PATH, '/');
+		if ($project_path !== '') {
+			$project_prefix = '/' . $project_path;
+			if ($path === $project_prefix || str_starts_with($path, $project_prefix . '/')) {
+				$path = substr($path, strlen($project_prefix)) ?: '/';
+			}
+		}
+
+		// Accept front-controller path-info URLs independently of the web server's
+		// SCRIPT_NAME value, which may describe the rewrite target or requested URL.
+		foreach ([ENTRY_PATH, '/index.php'] as $entry_path) {
+			if ($path === $entry_path || str_starts_with($path, $entry_path . '/')) {
+				$path = substr($path, strlen($entry_path)) ?: '/';
+				break;
+			}
+		}
 
 		// Normalize path
 		$path = trim($path, '/') === '' ? '/' : '/' . trim($path, '/');
@@ -267,6 +279,31 @@ class router {
 			exit;
 		}
 
+		// Root entry scripts do not follow the app/core route structure.
+		$root_script = ltrim($request_path, '/');
+		if ($request_path === '/' || $request_path === '/public') {
+			$root_script = 'index.php';
+		}
+		if (in_array($root_script, ['index.php', 'login.php', 'logout.php'], true)) {
+			$application_root = realpath(dirname(__DIR__));
+			$target_file = $application_root !== false
+				? realpath($application_root . DIRECTORY_SEPARATOR . $root_script)
+				: false;
+			if ($target_file !== false && $application_root !== false
+				&& str_starts_with($target_file, $application_root . DIRECTORY_SEPARATOR)
+				&& is_file($target_file)) {
+				return [
+					'target' => $target_file,
+					'app_name' => null,
+					'action' => 'direct',
+					'file' => $root_script,
+					'query' => $query,
+				];
+			}
+			http_response_code(404);
+			return null;
+		}
+
 		// Check for routes starting with /app/, /core/, or /modules/
 		// $query is the parsed query string, e.g. ?a=1&b=2&c=3 -> ['a'=>'1','b'=>'2','c'=>'3']
 		try {
@@ -365,11 +402,8 @@ class router {
         // 	exit;
         // }
 
-		// Set SCRIPT_FILENAME for proper app context detection
-		// This allows the text class to auto-detect the app path
-		if (!isset($_SERVER['SCRIPT_FILENAME'])) {
-			$_SERVER['SCRIPT_FILENAME'] = $target_file;
-		}
+		// Set the included script as the active script for app-context detection.
+		$_SERVER['SCRIPT_FILENAME'] = $target_file;
 
 		// Set security headers
 		//$this->set_security_headers($file_ext);
@@ -392,7 +426,7 @@ class router {
 			// Set the browser-facing script path so link generation (e.g. paging
 			// controls and column sorting) uses the actual requested page instead
 			// of the SPOE entry point (/index.php).
-			$script_path = parse_url($request_uri, PHP_URL_PATH) ?: '/';
+			$script_path = $this->get_request_path();
 			$_SERVER['SCRIPT_NAME'] = $script_path;
 			$_SERVER['PHP_SELF'] = $script_path;
 
@@ -538,9 +572,6 @@ try {
 		if ($resolved_route !== null) {
 			// Route found - follow
 			$router->follow_route($resolved_route);
-		} elseif ($request_path === '/' || $request_path === '/public') {
-			// Root path - load main index
-			include PROJECT_ROOT . '/index.php';
 		} else {
 			// No route found - handle 404
 			$router->handle_404();
@@ -548,19 +579,22 @@ try {
 	}
 } catch (\Throwable $e) {
 	// Catch-all error handler
-	error_log("Routing error: " . $e->getMessage());
+	error_log("Routing error: " . get_class($e) . ': ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
 	error_log("Stack trace: " . $e->getTraceAsString());
 
-	// In production, show generic error; in debug mode, show details
-	if (defined('DEBUG') && DEBUG) {
+	// An exception is a server error, not a missing resource. Only show the
+	// details when display_errors is enabled (error.reporting dev/all in config).
+	if (!headers_sent()) {
 		http_response_code(500);
+	}
+	if ((defined('DEBUG') && DEBUG) || filter_var(ini_get('display_errors'), FILTER_VALIDATE_BOOLEAN)) {
 		echo '<pre>';
-		echo 'Fatal Error: ' . htmlspecialchars($e->getMessage()) . "\n";
+		echo 'Fatal Error: ' . htmlspecialchars(get_class($e) . ': ' . $e->getMessage()) . "\n";
 		echo 'File: ' . htmlspecialchars($e->getFile()) . ':' . $e->getLine() . "\n\n";
 		echo 'Stack Trace:' . "\n";
 		echo htmlspecialchars($e->getTraceAsString());
 		echo '</pre>';
 	} else {
-		$router->handle_404();
+		echo '500 - Internal Server Error';
 	}
 }
