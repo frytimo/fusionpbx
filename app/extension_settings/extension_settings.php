@@ -46,13 +46,28 @@
 //get the http post data
 	if (!empty($_POST['extension_settings'])) {
 		$action = $_POST['action'];
-		$search = $_POST['search'] ?? '';
+		$search = is_string($_POST['search'] ?? null) ? $_POST['search'] : '';
 		$extension_settings = $_POST['extension_settings'];
 	}
 
 //action add or update
 	if (!empty($_REQUEST["id"]) && is_uuid($_REQUEST["id"])) {
 		$extension_uuid = $_REQUEST["id"];
+	}
+
+//verify the extension belongs to the current domain unless allowed to access all domains
+	if (!permission_exists('extension_setting_all')) {
+		$sql = "select extension_uuid from v_extensions ";
+		$sql .= "where extension_uuid = :extension_uuid ";
+		$sql .= "and domain_uuid = :domain_uuid ";
+		$parameters['extension_uuid'] = $extension_uuid;
+		$parameters['domain_uuid'] = $_SESSION['domain_uuid'];
+		$row = $database->select($sql, $parameters, 'row');
+		if (empty($row)) {
+			echo "access denied";
+			exit;
+		}
+		unset($sql, $parameters, $row);
 	}
 
 //process the http post data by action
@@ -99,7 +114,7 @@
 	$order = $_GET["order"] ?? '';
 
 //add the search
-	if (isset($_GET["search"])) {
+	if (isset($_GET["search"]) && is_string($_GET["search"])) {
 		$search = strtolower($_GET["search"]);
 	}
 
@@ -107,6 +122,7 @@
 	$sql = "select count(extension_setting_uuid) ";
 	$sql .= "from v_extension_settings ";
 	$sql .= "where extension_uuid = :extension_uuid ";
+	$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 	if (isset($search)) {
 		$sql .= "and (";
 		$sql .= "	lower(extension_setting_type) like :search ";
@@ -116,13 +132,12 @@
 		$parameters['search'] = '%'.$search.'%';
 	}
 	else {
-		$sql .= "and (domain_uuid = :domain_uuid or domain_uuid is null) ";
 		if (isset($sql_search)) {
 			$sql .= "and ".$sql_search;
 		}
-		$parameters['domain_uuid'] = $domain_uuid;
 	}
 	$parameters['extension_uuid'] = $extension_uuid;
+	$parameters['domain_uuid'] = $domain_uuid;
 	$num_rows = $database->select($sql, $parameters, 'column');
 	unset($sql, $parameters);
 
@@ -235,6 +250,9 @@
 			$extension_setting_type = $row['extension_setting_type'];
 			$extension_setting_type = strtolower($extension_setting_type);
 
+			//md5 keeps the id safe for any type and matches how types are grouped
+			$extension_setting_type_id = md5($extension_setting_type);
+
 			$label_extension_setting_type = $row['extension_setting_type'];
 			$label_extension_setting_type = str_replace("_", " ", $label_extension_setting_type);
 			$label_extension_setting_type = str_replace("-", " ", $label_extension_setting_type);
@@ -250,7 +268,7 @@
 				echo "<tr class='list-header'>\n";
 				if (permission_exists('extension_setting_add') || permission_exists('extension_setting_edit') || permission_exists('extension_setting_delete')) {
 					echo "	<th class='checkbox'>\n";
-					echo "		<input type='checkbox' id='checkbox_all_".$extension_setting_type."' name='checkbox_all' onclick=\"list_all_toggle('".$extension_setting_type."'); checkbox_on_change(this);\">\n";
+					echo "		<input type='checkbox' id='checkbox_all_".$extension_setting_type_id."' name='checkbox_all' onclick=\"list_all_toggle('".$extension_setting_type_id."'); checkbox_on_change(this);\">\n";
 					echo "	</th>\n";
 				}
 				//if ($_GET['show'] == 'all' && permission_exists('extension_setting_all')) {
@@ -279,7 +297,7 @@
 			echo "<tr class='list-row' href='".$list_row_url."'>\n";
 			if (permission_exists('extension_setting_add') || permission_exists('extension_setting_edit') || permission_exists('extension_setting_delete')) {
 				echo "	<td class='checkbox'>\n";
-				echo "		<input type='checkbox' name='extension_settings[$x][checked]' id='checkbox_".$x."' class='checkbox_".$extension_setting_type."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all_".$extension_setting_type."').checked = false; }\">\n";
+				echo "		<input type='checkbox' name='extension_settings[$x][checked]' id='checkbox_".$x."' class='checkbox_".$extension_setting_type_id."' value='true' onclick=\"checkbox_on_change(this); if (!this.checked) { document.getElementById('checkbox_all_".$type_modifier."').checked = false; }\">\n";
 				echo "		<input type='hidden' name='extension_settings[$x][uuid]' value='".escape($row['extension_setting_uuid'])."' />\n";
 				echo "	</td>\n";
 			}
