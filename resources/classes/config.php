@@ -184,7 +184,7 @@ final class config {
 	 */
 	private function define_project_paths() {
 		// Load the document root
-		$doc_root = $this->get('document.root', '/var/www/fusionpbx');
+		$doc_root = $this->get('document.root', dirname(__DIR__, 2));
 		$doc_path = $this->get('document.path', '');
 		//set the server variables and define project path constant
 		if (!empty($doc_path)) {
