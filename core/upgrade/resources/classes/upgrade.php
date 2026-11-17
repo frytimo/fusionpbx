@@ -205,6 +205,8 @@ class upgrade {
 			$conf .= "error.reporting = 'E_ALL ^ E_NOTICE ^ E_WARNING'\n";
 
 			// Write the config file
+			if (!file_exists($config_file)) { @touch($config_file); }
+			@chmod($config_file, 0640);
 			$file_handle = fopen($config_file,"w");
 			if (!$file_handle){ echo "Failed to write the config file\n"; exit; }
 			fwrite($file_handle, $conf);

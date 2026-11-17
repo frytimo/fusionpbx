@@ -41,6 +41,11 @@
 			echo "access denied";
 			exit;
 		}
+		// Reject requests initiated from another site, this page updates the database and defaults
+		if (!token::same_origin()) {
+			echo "access denied";
+			exit;
+		}
 		$display_type = 'html'; //html, text
 	}
 
