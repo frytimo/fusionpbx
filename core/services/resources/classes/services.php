@@ -138,7 +138,7 @@ class services {
 			$x = 0;
 			foreach ($records as $record) {
 				// Add to the array
-				if ($record['checked'] == 'true' && is_uuid($record['uuid'])) {
+				if (is_array($record) && ($record['checked'] ?? '') == 'true' && is_uuid($record['uuid'] ?? '')) {
 					$array[$this->table][$x][$this->name.'_uuid'] = $record['uuid'];
 				}
 
@@ -193,7 +193,7 @@ class services {
 			$services = '';
 			// Get current toggle state
 			foreach($records as $record) {
-				if ($record['checked'] == 'true' && is_uuid($record['uuid'])) {
+				if (is_array($record) && ($record['checked'] ?? '') == 'true' && is_uuid($record['uuid'] ?? '')) {
 					$uuids[] = "'".$record['uuid']."'";
 				}
 			}
@@ -267,7 +267,7 @@ class services {
 			$uuids = [];
 			// Get current reload state
 			foreach($records as $record) {
-				if ($record['checked'] == 'true' && is_uuid($record['uuid'])) {
+				if (is_array($record) && ($record['checked'] ?? '') == 'true' && is_uuid($record['uuid'] ?? '')) {
 					$uuids[] = "'".$record['uuid']."'";
 				}
 			}
