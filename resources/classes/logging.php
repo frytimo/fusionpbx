@@ -69,8 +69,6 @@ class logging {
 		}
 	}
 
-	// write message to the log file
-
 	/**
 	 * Ensure all data arrives on disk
 	 *

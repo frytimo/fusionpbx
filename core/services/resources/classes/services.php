@@ -550,275 +550,300 @@ class services {
 	}
 
 	/**
-	 * Upgrade services by copying and enabling them.
+	 * Install new or changed service files.
 	 *
-	 * This function iterates through all service files found in the application's
-	 * core and app directories, copies each one to /etc/systemd/system, reloads
-	 * the daemon, and enables the service.
+	 * Each enabled service file is compared with the installed copy and only new or changed
+	 * files are copied. On Linux, systemd is reloaded once and the changed units are enabled
+	 * with a single systemctl call.
 	 *
-	 * @param string $name Service name to upgrade, or 'all' to upgrade all services. (default: 'all')
+	 * @param string $name  Service name to upgrade, or 'all' to upgrade all services. (default: 'all')
+	 * @param bool   $start Start the installed services after enabling them. (default: true)
 	 *
-	 * @return void No return value;
+	 * @return array Names of the services that were installed or updated.
 	 */
-	public function upgrade($name = 'all') {
-		// Get the list of services
-		$services = $this->get_services();
-
-		// Update the services
-		foreach($services as $service) {
-			// Skip upgrade if not enabled
-			if ($service['enabled'] != 'true') {
+	public function upgrade($name = 'all', bool $start = true): array {
+		// Copy only the service files that are new or have changed
+		$changed = [];
+		foreach ($this->get_target_services($name, true) as $service) {
+			$service_file = $this->resolve_service_file($service);
+			if (empty($service_file)) {
 				continue;
 			}
 
-			// Skip if specific service requested and not this one
-			if ($name !== 'all' && $service['name'] !== $name) {
+			$installed_file = $this->installed_service_file($service['name']);
+			if (file_exists($installed_file) && hash_file('sha256', $service_file) === hash_file('sha256', $installed_file)) {
 				continue;
 			}
 
-			// Validate the service is in the $services array
-			if ($name !== 'all') {
-				$service_found = false;
-				foreach ($services as $service) {
-					if ($service['name'] === $name) {
-						$service_found = true;
-						break;
-					}
-				}
-				if (!$service_found) {
-					return;
-				}
+			if (!@copy($service_file, $installed_file)) {
+				$this->output("Failed to install " . $service['name'] . " to " . $installed_file . "\n");
+				continue;
 			}
+			chmod($installed_file, stristr(PHP_OS, 'BSD') ? 0755 : 0644);
+			$changed[] = $service['name'];
+		}
 
-			// Sanitize the service name
-			$service_name = preg_replace('/[^a-zA-Z0-9_-]/', '', $service['name']);
+		if (empty($changed)) {
+			$this->output("No new or changed services\n");
+			return [];
+		}
+		$this->output_names($changed);
 
-			// Output to the console
-			if (PHP_SAPI === 'cli' && stristr(PHP_OS, 'Linux')) {
-				echo $service_name."\n";
-			}
-
-			// Set the service file variable from the database if the file exists
-			$service_file = '';
-			if (file_exists($service['file'])) {
-				$service_file = $service['file'];
-			}
-
-			// Upgrade the service
-			if (stristr(PHP_OS, 'Linux')) {
-				// Add previous locations for backwards compatibility
-				$temp_service_file = dirname(__DIR__, 4) . "/app/" . $service_name . "/resources/service/debian.service";
-				if (empty($service_file) && file_exists($temp_service_file)) {
-					$service_file = $temp_service_file;
-				}
-				$temp_service_file = dirname(__DIR__, 4) . "/app/" . $service_name . "/resources/service/" . $service_name . ".service";
-				if (empty($service_file) && file_exists($temp_service_file)) {
-					$service_file = $temp_service_file;
-				}
-
-				// If the service_file is empty then skip this service
-				if (empty($service_file)) {
-					continue;
-				}
-
-				// Install the service
-				system("cp " . escapeshellarg($service_file) . " /etc/systemd/system/" . escapeshellarg($service_name) . ".service");
-				system("systemctl daemon-reload");
-				system("systemctl enable " . escapeshellarg($service_name));
-				system("systemctl start " . escapeshellarg($service_name));
-			}
-			if (stristr(PHP_OS, 'BSD')) {
-				if ($service['enabled'] == 'true') {
-					// Add previous locations for backwards compatibility
-					$temp_service_file = dirname(__DIR__, 4) . "/app/" . $service_name . "/resources/service/freebsd.service";
-					if (empty($service_file) && file_exists($temp_service_file)) {
-						$service_file = $temp_service_file;
-					}
-
-					// If the service_file is empty then skip this service
-					if (empty($service_file)) {
-						continue;
-					}
-
-					// Install the service
-					$service_name = preg_replace('/[^a-zA-Z0-9_-]/', '', $service_name);
-					system("cp " . escapeshellarg($service_file) . " /usr/local/etc/rc.d/" . escapeshellarg($service_name));
-					system("sysrc " . escapeshellarg($service_name) . "_enable=YES");
-					system("chmod 755 /usr/local/etc/rc.d/" . escapeshellarg($service_name));
-
-					// Start the service
-					system("service " . escapeshellarg($service_name) . " start");
+		// Register the changed services with the init system
+		if (stristr(PHP_OS, 'Linux')) {
+			$this->run_command('systemctl daemon-reload');
+			$this->systemctl('enable', $changed, $start ? ['--now'] : []);
+		}
+		if (stristr(PHP_OS, 'BSD')) {
+			foreach ($changed as $service_name) {
+				$this->run_command("sysrc " . escapeshellarg($service_name . "_enable=YES"));
+				if ($start) {
+					$this->run_command("service " . escapeshellarg($service_name) . " start");
 				}
 			}
 		}
 
+		return $changed;
 	}
 
 	/**
-	 * Starts running services by name.
-	 *
-	 * This function iterates over all service files, extracts the service names,
-	 * and starts each service.
+	 * Starts enabled services.
 	 *
 	 * @param string $name Service name to start, or 'all' to start all services. (default: 'all')
 	 *
 	 * @return void
 	 */
 	public function start($name = 'all') {
-		// Get the list of services
-		$services = $this->get_services();
-
-		// Validate the service is in the services array
-		if ($name !== 'all') {
-			$service_found = false;
-			foreach ($services as $service) {
-				if ($service['name'] === $name) {
-					$service_found = true;
-					break;
-				}
-			}
-			if (!$service_found) {
-				return;
-			}
-		}
-
-		// Stop all services if equal to all stop one service if the name is not equal to all
-		foreach($services as $service) {
-			// Skip start if not enabled
-			if ($service['enabled'] !== 'true') {
-				continue;
-			}
-
-			// Skip if specific service requested and not this one
-			if ($name !== 'all' && $service['name'] !== $name) {
-				continue;
-			}
-
-			// Sanitize the service name
-			$service_name = preg_replace('/[^a-zA-Z0-9_-]/', '', $service['name']);
-
-			// Output to the console
-			if (PHP_SAPI === 'cli' && stristr(PHP_OS, 'Linux')) {
-				echo $service_name."\n";
-			}
-
-			// Run the start command
-			if (stristr(PHP_OS, 'Linux')) {
-				system("systemctl start ".escapeshellarg($service_name));
-			}
-			if (stristr(PHP_OS, 'BSD')) {
-				system("service ".escapeshellarg($service_name). "start");
-			}
-		}
+		$this->service_action('start', $this->get_installed_service_names($name, true));
 	}
 
 	/**
-	 * Restarts all services
+	 * Restarts enabled services.
 	 *
-	 * This function restarts all core and app services.
+	 * On Linux all services are restarted with a single systemctl call so they restart in parallel.
 	 *
 	 * @param string $name Service name to restart, or 'all' to restart all services. (default: 'all')
 	 *
 	 * @return void No return value;
 	 */
 	public function restart($name = 'all') {
-		// Get the list of services
-		$services = $this->get_services();
-
-		// Validate the service is in the services array
-		if ($name !== 'all') {
-			$service_found = false;
-			foreach ($services as $service) {
-				if ($service['name'] === $name) {
-					$service_found = true;
-					break;
-				}
-			}
-			if (!$service_found) {
-				return;
-			}
-		}
-
-		// Restart all services
-		foreach($services as $service) {
-			// Skip restart if not enabled
-			if ($service['enabled'] !== 'true') {
-				continue;
-			}
-
-			// Skip if specific service requested and not this one
-			if ($name !== 'all' && $service['name'] !== $name) {
-				continue;
-			}
-
-			// Sanitize the service name
-			$service_name = preg_replace('/[^a-zA-Z0-9_-]/', '', $service['name']);
-
-			// Output to the console
-			if (PHP_SAPI === 'cli' && stristr(PHP_OS, 'Linux')) {
-				echo $service_name."\n";
-			}
-
-			// Run the restart command
-			if (stristr(PHP_OS, 'Linux')) {
-				system("systemctl restart ".escapeshellarg($service_name));
-			}
-			if (stristr(PHP_OS, 'BSD')) {
-				system("service ".escapeshellarg($service_name). "restart");
-			}
-		}
+		$this->service_action('restart', $this->get_installed_service_names($name, true));
 	}
 
 	/**
-	 * Stops running services by name.
-	 *
-	 * This function iterates over all service files, extracts the service names,
-	 * and stops each service.
+	 * Stops services, including services that are disabled in the database.
 	 *
 	 * @param string $name Service name to stop, or 'all' to stop all services. (default: 'all')
 	 *
 	 * @return void No return value;
 	 */
 	public function stop($name = 'all') {
-		// Get the list of services
-		$services = $this->get_services();
+		$this->service_action('stop', $this->get_installed_service_names($name, false));
+	}
 
-		// Validate the service is in the $services array
-		if ($name !== 'all') {
-			$service_found = false;
-			foreach ($services as $service) {
-				if ($service['name'] === $name) {
-					$service_found = true;
-					break;
+	/**
+	 * Sends SIGHUP to the main process of running enabled services so they reload their settings.
+	 *
+	 * @param string $name Service name to signal, or 'all' to signal all services. (default: 'all')
+	 *
+	 * @return array Names of the services that were signaled.
+	 */
+	public function send_sighup($name = 'all'): array {
+		$names = $this->get_installed_service_names($name, true);
+		$signaled = [];
+
+		if (stristr(PHP_OS, 'Linux') && !empty($names)) {
+			// Only running units can be signaled; is-active prints one state per unit in order
+			$states = [];
+			exec('systemctl is-active ' . implode(' ', array_map('escapeshellarg', $names)) . ' 2>/dev/null', $states);
+			foreach ($names as $i => $service_name) {
+				if (($states[$i] ?? '') === 'active') {
+					$signaled[] = $service_name;
 				}
 			}
-			if (!$service_found) {
-				return;
+			$this->systemctl('kill', $signaled, ['--kill-who=main', '--signal=SIGHUP']);
+		}
+		if (stristr(PHP_OS, 'BSD')) {
+			// The rc.d scripts store the PID in /var/run/<name>.pid
+			foreach ($names as $service_name) {
+				$pid_file = '/var/run/' . $service_name . '.pid';
+				$pid = is_readable($pid_file) ? (int)trim(file_get_contents($pid_file)) : 0;
+				if ($pid > 0 && posix_kill($pid, 1)) {
+					$signaled[] = $service_name;
+				}
 			}
 		}
 
-		// Stop all services
-		foreach($services as $service) {
-			// Skip if specific service requested and not this one
+		$this->output_names($signaled);
+		return $signaled;
+	}
+
+	/**
+	 * Gets the enabled or all services from the database filtered by name with sanitized names.
+	 *
+	 * @param string $name         Service name, or 'all' for all services.
+	 * @param bool   $enabled_only Only return services that are enabled.
+	 *
+	 * @return array List of services keyed numerically.
+	 */
+	private function get_target_services(string $name, bool $enabled_only): array {
+		$targets = [];
+		foreach ($this->get_services() as $service) {
 			if ($name !== 'all' && $service['name'] !== $name) {
 				continue;
 			}
-
-			// Sanitize the service name
+			if ($enabled_only && $service['enabled'] !== 'true') {
+				continue;
+			}
 			$service_name = preg_replace('/[^a-zA-Z0-9_-]/', '', $service['name']);
+			if ($service_name === '') {
+				continue;
+			}
+			$service['name'] = $service_name;
+			$targets[$service_name] = $service;
+		}
+		return array_values($targets);
+	}
 
-			// Output to the console
-			if (PHP_SAPI === 'cli' && stristr(PHP_OS, 'Linux')) {
-				echo $service_name."\n";
+	/**
+	 * Gets the names of the target services that are installed in the init system.
+	 *
+	 * @param string $name         Service name, or 'all' for all services.
+	 * @param bool   $enabled_only Only return services that are enabled.
+	 *
+	 * @return array List of service names.
+	 */
+	private function get_installed_service_names(string $name, bool $enabled_only): array {
+		$names = [];
+		foreach ($this->get_target_services($name, $enabled_only) as $service) {
+			if (file_exists($this->installed_service_file($service['name']))) {
+				$names[] = $service['name'];
 			}
+		}
+		return $names;
+	}
 
-			// Run the stop command
-			if (stristr(PHP_OS, 'Linux')) {
-				system("systemctl stop ".escapeshellarg($service['name']));
+	/**
+	 * Gets the source service file, falling back to previous locations for backwards compatibility.
+	 *
+	 * @param array $service Service array with sanitized 'name' and 'file' keys.
+	 *
+	 * @return string The service file path, or an empty string if none was found.
+	 */
+	private function resolve_service_file(array $service): string {
+		if (!empty($service['file']) && file_exists($service['file'])) {
+			return $service['file'];
+		}
+		$service_dir = dirname(__DIR__, 4) . "/app/" . $service['name'] . "/resources/service/";
+		$candidates = [];
+		if (stristr(PHP_OS, 'Linux')) {
+			$candidates = [$service_dir . "debian.service", $service_dir . $service['name'] . ".service"];
+		}
+		if (stristr(PHP_OS, 'BSD')) {
+			$candidates = [$service_dir . "freebsd.service"];
+		}
+		foreach ($candidates as $candidate) {
+			if (file_exists($candidate)) {
+				return $candidate;
 			}
-			if (stristr(PHP_OS, 'BSD')) {
-				system("service ".escapeshellarg($service['name']). "stop");
+		}
+		return '';
+	}
+
+	/**
+	 * Gets the path where the init system expects the service file.
+	 *
+	 * @param string $service_name Sanitized service name.
+	 *
+	 * @return string The installed service file path.
+	 */
+	protected function installed_service_file(string $service_name): string {
+		if (stristr(PHP_OS, 'BSD')) {
+			return "/usr/local/etc/rc.d/" . $service_name;
+		}
+		return "/etc/systemd/system/" . $service_name . ".service";
+	}
+
+	/**
+	 * Runs a start, stop or restart action on the services.
+	 *
+	 * @param string $action       The action to run.
+	 * @param array  $service_names Sanitized service names.
+	 *
+	 * @return void
+	 */
+	private function service_action(string $action, array $service_names) {
+		if (empty($service_names)) {
+			return;
+		}
+		$this->output_names($service_names);
+		if (stristr(PHP_OS, 'Linux')) {
+			$this->systemctl($action, $service_names);
+		}
+		if (stristr(PHP_OS, 'BSD')) {
+			foreach ($service_names as $service_name) {
+				$this->run_command("service " . escapeshellarg($service_name) . " " . escapeshellarg($action));
 			}
+		}
+	}
+
+	/**
+	 * Runs one systemctl command for all the given units.
+	 *
+	 * @param string $action        The systemctl verb.
+	 * @param array  $service_names Sanitized service names.
+	 * @param array  $options       Additional systemctl options.
+	 *
+	 * @return int The exit code, or 0 when there was nothing to do.
+	 */
+	private function systemctl(string $action, array $service_names, array $options = []): int {
+		if (empty($service_names)) {
+			return 0;
+		}
+		$command = 'systemctl';
+		foreach ($options as $option) {
+			$command .= ' ' . escapeshellarg($option);
+		}
+		$command .= ' ' . escapeshellarg($action) . ' ' . implode(' ', array_map('escapeshellarg', $service_names));
+		return $this->run_command($command);
+	}
+
+	/**
+	 * Runs a shell command and passes its output through.
+	 *
+	 * @param string $command The escaped command to run.
+	 *
+	 * @return int The exit code.
+	 */
+	protected function run_command(string $command): int {
+		$result_code = 0;
+		system($command, $result_code);
+		return $result_code;
+	}
+
+	/**
+	 * Writes a message to the console when running from the command line.
+	 *
+	 * @param string $message The message.
+	 *
+	 * @return void
+	 */
+	private function output(string $message) {
+		if (PHP_SAPI === 'cli') {
+			echo $message;
+		}
+	}
+
+	/**
+	 * Writes each service name to the console when running from the command line.
+	 *
+	 * @param array $service_names The service names.
+	 *
+	 * @return void
+	 */
+	private function output_names(array $service_names) {
+		foreach ($service_names as $service_name) {
+			$this->output($service_name . "\n");
 		}
 	}
 
